@@ -1,8 +1,7 @@
 # DUO System Improvement Project
 
 ### Overview
-This repository contains the source files, documentation, and assets for the **DUO System Improvement Capstone Project**.  
-Our goal is to modernize and streamline DUO Mission’s client registration and data management process used on their outreach buses.
+This repository contains the source files, documentation, and assets for the **DUO System Improvement Capstone Project**. Our goal is to modernize and streamline DUO Mission’s client registration and data management process used on their outreach buses.
 
 ### Team
 - **Matthew Hodges** – Scrum Master  
@@ -17,9 +16,9 @@ Our goal is to modernize and streamline DUO Mission’s client registration and 
 Focus: Environment setup, GitHub integration, and initial architecture planning.
 
 ### Repository Structure
-/frontend → UI components and interface design
-/backend → API, logic, and database communication
-/docs → Meeting notes, sprint plans, and diagrams
+- /frontend → UI components and interface design
+- /backend → API, logic, and database communication
+- /docs → Meeting notes, sprint plans, and diagrams
 
 ### Notes
 This README is **temporary** and will be expanded as the project develops.  
