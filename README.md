@@ -1,7 +1,7 @@
-# DUO System Improvement Project
+# DUO Plus
 
 ### Overview
-This repository contains the early development files for the **DUO System Improvement Capstone Project**.  The goal is to rebuild DUO Mission’s existing system from scratch using a modern, role-based structure that supports client registration, check-in, and service tracking.
+This repository contains the early development files for the **DUO Plus**.  The goal is to rebuild DUO Mission’s existing system from scratch using a modern, role-based structure that supports client registration, check-in, and service tracking.
 
 ---
 
@@ -28,4 +28,4 @@ This repository contains the early development files for the **DUO System Improv
 
 ---
 
-**DUO System Improvement Capstone Team — 2025**
+**DUO Plus — 2025**
