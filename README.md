@@ -9,7 +9,7 @@ This repository contains the early development files for the **DUO Plus**.  The 
 - **Frontend:** Plain HTML, JavaScript, Bootstrap (HopeUI Theme)  
 - **Backend:** PHP  
 - **Database:** Local MySQL  
-- **Documentation:** Stored in OneNote  
+- **Documentation:** OneNote  
 
 ---
 
