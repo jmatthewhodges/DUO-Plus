@@ -24,7 +24,6 @@ This repository contains the early development files for the **DUO Plus**.  The 
 ### Notes
 - This setup is **temporary** and will evolve as the rebuild progresses.  
 - Documentation, sprint notes, and process diagrams are managed in OneNote.  
-- OpenEMR integration and full backend logic will be added in later sprints.  
 
 ---
 
