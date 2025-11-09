@@ -32,6 +32,7 @@ vendor/
 # Local PHP config files
 includes/config-local.php
 config-local.php
+api/config.php
 
 # Cache & session files
 sessions/
