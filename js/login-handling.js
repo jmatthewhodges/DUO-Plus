@@ -168,7 +168,7 @@ function handleLoginSuccess(data) {
         window.location.href = data.redirect;
     } else {
         // Default redirect to volunteer dashboard
-        window.location.href = '../pages/volunteer-dashboard.html';
+        window.location.href = '../pages/volunteer-dashboard.php';
     }
 }
 
