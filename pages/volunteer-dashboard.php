@@ -66,7 +66,7 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
         <h1>Volunteer Dashboard</h1>
         <p class="welcome">Welcome, <?php echo htmlspecialchars($userName); ?>!</p>
         
-        <a href="qr-scan.php" class="qr-button">Scan QR Code</a>
+        <a href="qrcode.php" class="qr-button">Scan QR Code</a>
     </div>
 </body>
 </html>
