@@ -9,17 +9,32 @@
   <link href="assets/css/bootstrap.min.css" rel="stylesheet">
   <link href="assets/css/hope-ui.min.css" rel="stylesheet">
   <link href="assets/css/custom.css" rel="stylesheet">
+
+  <!-- Custom CSS for Volunteer Button -->
+  <style>
+    .btn-volunteer {
+      color: #174593;
+      border: 2px solid #174593;
+      background-color: transparent;
+      transition: all 0.3s ease;
+    }
+
+    .btn-volunteer:hover {
+      background-color: #174593;
+      color: #fff;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body class="d-flex align-items-center justify-content-center vh-100">
-
 
   <div class="container text-center" style="max-width: 400px;">
     <!-- Logo Section -->
     <div class="logo-section mb-3">
       <img src="assets/images/DUOPlusDropLogo.png"
-     alt="DUO Logo"
-     class="mb-3"
-     style="width: 200px;">
+           alt="DUO Logo"
+           class="mb-3"
+           style="width: 200px;">
     </div>
 
     <!-- Subtitle -->
@@ -41,7 +56,13 @@
             <input type="password" id="password" class="form-control" placeholder="ex: password123" required>
           </div>
 
-          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Login</button>
+          <!-- Main Login Button -->
+          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
+
+          <!-- Volunteer Login Button -->
+          <a href="volunteer-login.html" class="btn btn-volunteer w-100 rounded-2">
+            Volunteer Login
+          </a>
         </form>
       </div>
     </div>
@@ -58,9 +79,9 @@
 
       <div class="d-flex flex-column align-items-center">
         <img src="assets/images/lifeChurchLogo.webp"
-     alt="Life Church Logo"
-     class="mb-1"
-     style="width: 200px;">
+             alt="Life Church Logo"
+             class="mb-1"
+             style="width: 200px;">
       </div>
     </div>
   </div>
