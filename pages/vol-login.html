@@ -1,109 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volunteer Login - DUO Plus</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .login-form {
-            border: 1px solid #ddd;
-            padding: 30px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px;
-            display: none;
-        }
-        .back-link {
-            margin-top: 15px;
-            text-align: center;
-        }
-        .back-link a {
-            color: #007bff;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volunteer Login - DUO Plus</title>
+
+  <!-- Bootstrap + HopeUI CSS -->
+  <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+  <link href="../assets/css/custom.css" rel="stylesheet">
 </head>
-<body>
-    <div class="login-form">
-        <h2>Volunteer Login</h2>
-        
-        <!-- Error message display (hidden by default) -->
-        <div class="error-message" id="errorMessage"></div>
-        
-        <!-- Login Form -->
-        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    required 
-                    autocomplete="email"
-                    placeholder="Enter your email"
-                >
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    required 
-                    autocomplete="current-password"
-                    placeholder="Enter your password"
-                >
-            </div>
-            
-            <button type="submit">Login</button>
-        </form>
-        
-        <div class="back-link">
-            <a href="../index.html">← Back to Home</a>
-        </div>
+
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+  <div class="container text-center" style="max-width: 400px;">
+
+    <!-- Logo -->
+    <div class="logo-section mb-3">
+      <img src="../assets/images/DUOvolunteerlogo.png"
+           alt="DUO Logo"
+           class="mb-3"
+           style="width: 200px;">
     </div>
 
-    <!-- Login Handling JavaScript -->
-    <script src="../js/login-handling.js"></script>
+    <!-- Subtitle -->
+    <h5 style="color: #174593;" class="fw-medium mb-4">
+      Volunteer access portal<br>for DUO Volunteers
+    </h5>
+
+    <!-- Login Card -->
+    <div class="card shadow-lg border-0 rounded-4 mb-4">
+      <div class="card-body p-5">
+
+        <!-- Error message -->
+        <div class="error-message text-danger mb-2" id="errorMessage" style="display:none;"></div>
+
+        <!-- Login Form -->
+        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php">
+
+          <div class="mb-3 text-start">
+            <label for="email" class="form-label fw-semibold">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              placeholder="Enter your email"
+              required
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="mb-3 text-start">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password"
+            >
+          </div>
+
+          <!-- Login Button -->
+          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
+            Login
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="register-section">
+      <div class="d-flex align-items-center justify-content-center mb-2">
+        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
+        <span class="mx-2 text-muted fw-semibold">Or</span>
+        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
+      </div>
+
+      <a href="../index.html" style="color: #174593;" class="fw-semibold d-block mb-3 text-decoration-none">
+        Back to Patient Login
+      </a>
+    </div>
+
+  </div>
+
+  <!-- JS Dependencies -->
+  <script src="../assets/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/hope-ui.min.js"></script>
+  <script src="../js/login-handling.js"></script>
 </body>
 </html>
-
