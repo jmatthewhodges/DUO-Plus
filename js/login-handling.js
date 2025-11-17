@@ -103,10 +103,6 @@ async function submitLogin(email, password, errorDiv) {
         // Hash password before sending to server
         const hashedPassword = await hashPassword(password);
         
-        // Log password hash for verification (not exposing actual password)
-        console.log('Password hash (SHA-256):', hashedPassword);
-        console.log('Hash length:', hashedPassword.length, 'characters');
-        
         // Create form data with hashed password
         const formData = new FormData();
         formData.append('email', email);

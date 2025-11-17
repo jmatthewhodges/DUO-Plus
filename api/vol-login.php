@@ -104,20 +104,7 @@ try {
             ], 403);
         }
         
-        // Update LastUsed date (suppress errors if update fails)
-        try {
-            $updateStmt = $pdo->prepare("
-                UPDATE tblUsers 
-                SET LastUsed = CURDATE() 
-                WHERE UserID = :userID
-            ");
-            $updateStmt->execute(['userID' => $user['UserID']]);
-        } catch (PDOException $e) {
-            // Log but don't fail login if LastUsed update fails
-            error_log('Failed to update LastUsed: ' . $e->getMessage());
-        }
-        
-        // Login successful - start session
+        // Login successful - start session FIRST (before DB operations)
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -132,20 +119,21 @@ try {
         $_SESSION['logged_in'] = true;
         $_SESSION['session_id'] = $sessionID;
         
-        // Create session record in database
+        // Update LastUsed and create session record in a single transaction (async-friendly)
         try {
-            $sessionStmt = $pdo->prepare("
-                INSERT INTO tblSessions (SessionID, UserID, Date) 
-                VALUES (:sessionID, :userID, CURDATE())
-            ");
-            $sessionStmt->execute([
-                'sessionID' => $sessionID,
-                'userID' => $user['UserID']
-            ]);
+            $pdo->beginTransaction();
+            
+            $updateStmt = $pdo->prepare("UPDATE tblUsers SET LastUsed = CURDATE() WHERE UserID = :userID");
+            $updateStmt->execute(['userID' => $user['UserID']]);
+            
+            $sessionStmt = $pdo->prepare("INSERT INTO tblSessions (SessionID, UserID, Date) VALUES (:sessionID, :userID, CURDATE())");
+            $sessionStmt->execute(['sessionID' => $sessionID, 'userID' => $user['UserID']]);
+            
+            $pdo->commit();
         } catch (PDOException $e) {
-            // Log error but don't fail login if session record creation fails
-            // This allows login to proceed even if session table has issues
-            error_log('Failed to create session record: ' . $e->getMessage());
+            $pdo->rollBack();
+            // Log but don't fail login if DB updates fail
+            error_log('Failed to update session data: ' . $e->getMessage());
         }
         
         // Return success response
