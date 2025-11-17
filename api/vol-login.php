@@ -118,17 +118,41 @@ try {
         }
         
         // Login successful - start session
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        // Generate unique session ID (format: S + 3 digits + timestamp for uniqueness)
+        $sessionID = 'S' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) . substr(time(), -6);
+        
+        // Store session data
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_email'] = $user['Email'];
         $_SESSION['user_name'] = trim($user['FirstName'] . ' ' . $user['LastName']);
         $_SESSION['logged_in'] = true;
+        $_SESSION['session_id'] = $sessionID;
+        
+        // Create session record in database
+        try {
+            $sessionStmt = $pdo->prepare("
+                INSERT INTO tblSessions (SessionID, UserID, Date) 
+                VALUES (:sessionID, :userID, CURDATE())
+            ");
+            $sessionStmt->execute([
+                'sessionID' => $sessionID,
+                'userID' => $user['UserID']
+            ]);
+        } catch (PDOException $e) {
+            // Log error but don't fail login if session record creation fails
+            // This allows login to proceed even if session table has issues
+            error_log('Failed to create session record: ' . $e->getMessage());
+        }
         
         // Return success response
         sendJsonResponse([
             'success' => true,
             'message' => 'Login successful.',
-            'redirect' => '../pages/volunteer-dashboard.html',
+            'redirect' => '../pages/volunteer-dashboard.php',
             'user' => [
                 'id' => $user['UserID'],
                 'email' => $user['Email'],
