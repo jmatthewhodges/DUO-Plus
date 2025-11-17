@@ -13,10 +13,14 @@
   <!-- Custom CSS for Volunteer Button -->
   <style>
     .btn-volunteer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
       color: #174593;
       border: 2px solid #174593;
       background-color: transparent;
       transition: all 0.3s ease;
+      z-index: 9999;
     }
 
     .btn-volunteer:hover {
@@ -58,11 +62,6 @@
 
           <!-- Main Login Button -->
           <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
-
-          <!-- Volunteer Login Button -->
-          <a href="volunteer-login.html" class="btn btn-volunteer w-100 rounded-2">
-            Volunteer Login
-          </a>
         </form>
       </div>
     </div>
@@ -85,6 +84,11 @@
       </div>
     </div>
   </div>
+
+  <!-- Floating Volunteer Login Button (Bottom Right) -->
+  <a href="volunteer-login.html" class="btn btn-volunteer rounded-2">
+    Volunteer Login
+  </a>
 
   <!-- JS Dependencies -->
   <script src="assets/js/bootstrap.bundle.min.js"></script>
