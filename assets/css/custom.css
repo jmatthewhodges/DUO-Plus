@@ -6,6 +6,20 @@
 * NOTE: This file contains the styling for Template.
 *
 */
+
+body {
+  background: linear-gradient(to bottom, #72B2D4 0%, #ffffff 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  min-height: 100vh;
+
+  /* Optional: For smooth centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 :focus {
   outline: none;
 }
