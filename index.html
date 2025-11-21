@@ -1,16 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUO Plus</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUO+ | Client Login</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+
+  <!-- Bootstrap + HopeUI CSS -->
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/css/hope-ui.min.css" rel="stylesheet">
+  <link href="assets/css/custom.css" rel="stylesheet">
+
+  <!-- Custom CSS for Volunteer Button -->
+  <style>
+    .btn-volunteer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: #174593;
+      border: 2px solid #174593;
+      background-color: transparent;
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+
+    .btn-volunteer:hover {
+      background-color: #174593;
+      color: #fff;
+      text-decoration: none;
+    }
+  </style>
 </head>
-<body>
-    <h1>DUO Plus</h1>
-    
-    <!-- Volunteer Login Button -->
-    <a href="/pages/vol-login.html">
-        <button type="button">Volunteer Login</button>
-    </a>
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+  <div class="container text-center" style="max-width: 400px;">
+    <!-- Logo Section -->
+    <div class="logo-section mb-3">
+      <img src="assets/images/DUOPlusDropLogo.png"
+           alt="DUO Logo"
+           class="mb-3"
+           style="width: 200px;">
+    </div>
+
+    <!-- Subtitle -->
+    <h5 style="color: #174593;" class="fw-medium mb-4">
+      Connecting patients with free<br>care through DUO
+    </h5>
+
+    <!-- Login Box -->
+    <div class="card shadow-lg border-0 rounded-4 mb-4">
+      <div class="card-body p-5">
+        <form>
+          <div class="mb-3 text-start">
+            <label for="email" class="form-label fw-semibold">Email</label>
+            <input type="email" id="email" class="form-control" placeholder="ex: johndoe@gmail.com" required>
+          </div>
+
+          <div class="mb-3 text-start">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <input type="password" id="password" class="form-control" placeholder="ex: password123" required>
+          </div>
+
+          <!-- Main Login Button -->
+          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Register Section -->
+    <div class="register-section">
+      <div class="d-flex align-items-center justify-content-center mb-2">
+        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
+        <span class="mx-2 text-muted fw-semibold">Or</span>
+        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
+      </div>
+
+      <a href="#" style="color: #174593;" class="fw-semibold d-block mb-3 text-decoration-none">Register</a>
+
+      <div class="d-flex flex-column align-items-center">
+        <img src="assets/images/lifeChurchLogo.webp"
+             alt="Life Church Logo"
+             class="mb-1"
+             style="width: 200px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Volunteer Login Button (Bottom Right) -->
+  <a href="./pages/vol-login.html" class="btn btn-volunteer rounded-2">
+    Volunteer Login
+  </a>
+
+  <!-- JS Dependencies -->
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/hope-ui.min.js"></script>
 </body>
 </html>

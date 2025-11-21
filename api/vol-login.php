@@ -104,31 +104,43 @@ try {
             ], 403);
         }
         
-        // Update LastUsed date (suppress errors if update fails)
-        try {
-            $updateStmt = $pdo->prepare("
-                UPDATE tblUsers 
-                SET LastUsed = CURDATE() 
-                WHERE UserID = :userID
-            ");
-            $updateStmt->execute(['userID' => $user['UserID']]);
-        } catch (PDOException $e) {
-            // Log but don't fail login if LastUsed update fails
-            error_log('Failed to update LastUsed: ' . $e->getMessage());
+        // Login successful - start session FIRST (before DB operations)
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
         
-        // Login successful - start session
-        session_start();
+        // Generate unique session ID (format: S + 3 digits + timestamp for uniqueness)
+        $sessionID = 'S' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) . substr(time(), -6);
+        
+        // Store session data
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_email'] = $user['Email'];
         $_SESSION['user_name'] = trim($user['FirstName'] . ' ' . $user['LastName']);
         $_SESSION['logged_in'] = true;
+        $_SESSION['session_id'] = $sessionID;
+        
+        // Update LastUsed and create session record in a single transaction (async-friendly)
+        try {
+            $pdo->beginTransaction();
+            
+            $updateStmt = $pdo->prepare("UPDATE tblUsers SET LastUsed = CURDATE() WHERE UserID = :userID");
+            $updateStmt->execute(['userID' => $user['UserID']]);
+            
+            $sessionStmt = $pdo->prepare("INSERT INTO tblSessions (SessionID, UserID, Date) VALUES (:sessionID, :userID, CURDATE())");
+            $sessionStmt->execute(['sessionID' => $sessionID, 'userID' => $user['UserID']]);
+            
+            $pdo->commit();
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            // Log but don't fail login if DB updates fail
+            error_log('Failed to update session data: ' . $e->getMessage());
+        }
         
         // Return success response
         sendJsonResponse([
             'success' => true,
             'message' => 'Login successful.',
-            'redirect' => '../pages/volunteer-dashboard.html',
+            'redirect' => '../pages/volunteer-dashboard.php',
             'user' => [
                 'id' => $user['UserID'],
                 'email' => $user['Email'],
