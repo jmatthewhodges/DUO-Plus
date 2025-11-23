@@ -1,23 +1,16 @@
 <?php
 /**
- * Client Login API Endpoint - based off of Matthew's work on Voluteer Login
- * Handles Client Login authentication with hashed password verification
- * 
+ * Client Login API Endpoint - Handles Client Login authentication with hashed password verification
+ *
  * Database Table: tblClients
  * - ClientID VARCHAR(50) PRIMARY KEY
  * - Email VARCHAR(250)
- * - FirstName VARCHAR(50)
- * - MiddleName VARCHAR(50)
- * - LastName VARCHAR(50)
  * - Password VARCHAR(400) - Stores SHA-256 hash
- * - CreateDate DATE
- * - DOB DATE
- * - Sex VARCHAR(10)
  */
 
-// Turn on error display, keep error logging. (I suspect a lot of errors will need to be displayed bilingualy - miguel)
+// Turn off error display, keep error logging
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 // Set content type to JSON and prevent any output before JSON
@@ -55,23 +48,35 @@ function sendJsonResponse($data, $statusCode = 200) {
     exit;
 }
 
-// Only allow GET requests
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+// Helper to log login attempts to a file
+function logLoginAttempt($email, $ip, $userAgent, $status, $note = '') {
+    $logDir = __DIR__ . '/logs';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    $logFile = $logDir . '/login_attempts.log';
+    $time = date('Y-m-d H:i:s');
+    $entry = sprintf("[%s] IP=%s Email=%s Status=%s Note=%s UA=%s\n", $time, $ip, $email, $status, $note, $userAgent);
+    @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
+}
+
+// Only allow POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse([
         'success' => false,
-        'message' => 'Method not allowed. Only GET requests are accepted.'
+        'message' => 'Method not allowed. Only POST requests are accepted. / Método no permitido. Solo se aceptan solicitudes POST.'
     ], 405);
 }
 
 // Get and sanitize input
-$email = filter_input(INPUT_GET, 'email', FILTER_SANITIZE_EMAIL);
-$passwordHash = filter_input(INPUT_GET, 'password_hash', FILTER_SANITIZE_STRING);
+$email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+$passwordHash = filter_input(INPUT_POST, 'password_hash', FILTER_SANITIZE_STRING);
 
 // Validate input
 if (empty($email) || empty($passwordHash)) {
     sendJsonResponse([
         'success' => false,
-        'message' => 'Email and password are required. / correo electronico y contraseña son requeridos.'
+        'message' => 'Email and password are required. / Correo electrónico y contraseña son requeridos.'
     ], 400);
 }
 
@@ -79,68 +84,104 @@ if (empty($email) || empty($passwordHash)) {
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     sendJsonResponse([
         'success' => false,
-        'message' => 'Invalid email format. / formato de correo electronico no valido.' 
+        'message' => 'Invalid email format. / Formato de correo electrónico no válido.'
     ], 400);
 }
 
 try {
-    // Query database for user with matching email
-    $stmt = $pdo->prepare("
-        SELECT ClientID, Email, FirstName, MiddleName, LastName, Password, Status 
-        FROM tblClients 
-        WHERE Email = :email 
-        LIMIT 1
-    ");
-    
+    // Query database for client with matching email
+    $stmt = $pdo->prepare("SELECT ClientID, Email, FirstName, LastName, Password, Status FROM tblClients WHERE Email = :email LIMIT 1");
     $stmt->execute(['email' => $email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Check if user exists, is active, and password hash matches
-    if ($user && $user['Password'] === $passwordHash) {
-        // Check if user account is active (assuming 'Active' or similar status)
-        if (!empty($user['Status']) && strtolower($user['Status']) !== 'active') {
+    $client = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Prepare info used for logging
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+
+    // Check if client exists and verify password using timing-safe compare
+    $storedHash = $client['Password'] ?? '';
+    $passwordMatch = false;
+    if ($client && $storedHash !== '') {
+        // Use lowercase to avoid case differences in hex and use hash_equals for timing-safe compare
+        $passwordMatch = hash_equals(strtolower($storedHash), strtolower($passwordHash));
+    }
+
+    // Check if client exists, is active, and password hash matches
+    if ($client && $passwordMatch) {
+        if (!empty($client['Status']) && strtolower($client['Status']) !== 'active') {
+            // Log inactive attempts
+            logLoginAttempt($email, $ip, $userAgent, 'inactive', 'Account not active');
             sendJsonResponse([
                 'success' => false,
-                'message' => 'Your account is not active. Please contact administrator. / Su cuenta no esta activa.  Porfavor contacte al administrador.'
+                'message' => 'Your account is not active. Please contact administrator. / Su cuenta no está activa. Por favor, contacte al administrador.'
             ], 403);
         }
-        
-        // Update LastUsed date (suppress errors if update fails)
+
+        // Start session and generate unique client session ID
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        // Generate a cryptographically secure token for the session
         try {
-            $updateStmt = $pdo->prepare("
-                UPDATE tblUsers 
-                SET LastUsed = CURDATE() 
-                WHERE UserID = :userID
-            ");
-            $updateStmt->execute(['userID' => $user['UserID']]);
+            $clientSessionID = bin2hex(random_bytes(32)); // 64-char token
+        } catch (Exception $e) {
+            // Fallback to less-secure token if random_bytes fails
+            $clientSessionID = 'C' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) . substr(time(), -6);
+        }
+
+        // Token expiry (1 hour)
+        $tokenExpiry = time() + 3600;
+
+        // Store session data
+        $_SESSION['client_id'] = $client['ClientID'];
+        $_SESSION['client_email'] = $client['Email'];
+        $_SESSION['client_name'] = trim($client['FirstName'] . ' ' . $client['LastName']);
+        $_SESSION['logged_in'] = true;
+        $_SESSION['client_session_id'] = $clientSessionID;
+        $_SESSION['client_session_expires'] = $tokenExpiry;
+
+        // Update LastUsed date
+        try {
+            $updateStmt = $pdo->prepare("UPDATE tblClients SET LastUsed = CURDATE() WHERE ClientID = :clientID");
+            $updateStmt->execute(['clientID' => $client['ClientID']]);
         } catch (PDOException $e) {
             // Log but don't fail login if LastUsed update fails
             error_log('Failed to update LastUsed: ' . $e->getMessage());
         }
-        
-        // Login successful - start session
-        session_start();
-        $_SESSION['user_id'] = $user['UserID'];
-        $_SESSION['user_email'] = $user['Email'];
-        $_SESSION['user_name'] = trim($user['FirstName'] . ' ' . $user['LastName']);
-        $_SESSION['logged_in'] = true;
-        
+
+        // Try to insert session record into tblSessions (best-effort)
+        try {
+            $sessionStmt = $pdo->prepare("INSERT INTO tblSessions (SessionID, UserID, Date) VALUES (:sessionID, :userID, NOW())");
+            $sessionStmt->execute(['sessionID' => $clientSessionID, 'userID' => $client['ClientID']]);
+        } catch (PDOException $e) {
+            // Not fatal — log for diagnostics
+            error_log('Failed to write session record: ' . $e->getMessage());
+        }
+
+        // Log successful login
+        logLoginAttempt($email, $ip, $userAgent, 'success', 'Login successful');
+
         // Return success response
         sendJsonResponse([
             'success' => true,
-            'message' => 'Login successful.',
-            'redirect' => '../pages/Index.html',
-            'user' => [
-                'id' => $user['UserID'],
-                'email' => $user['Email'],
-                'name' => trim($user['FirstName'] . ' ' . $user['LastName'])
+            'message' => 'Login successful. / Inicio de sesión exitoso.',
+            'redirect' => '../pages/client-dashboard.php',
+            'client' => [
+                'id' => $client['ClientID'],
+                'email' => $client['Email'],
+                'name' => trim($client['FirstName'] . ' ' . $client['LastName'])
             ]
         ]);
     } else {
-        // Invalid credentials
+        // Invalid credentials — log attempt
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+        logLoginAttempt($email, $ip, $userAgent, 'failure', 'Invalid credentials');
+
+        // Generic failure response to avoid user enumeration
         sendJsonResponse([
             'success' => false,
-            'message' => 'Invalid email or password. Please Contact a Volunteer to assist you. / email o password invalido.  Por favor contacte un volintario para asistirlo.'
+            'message' => 'Invalid email or password. / Correo electrónico o contraseña inválidos.'
         ], 401);
     }
     
@@ -149,14 +190,14 @@ try {
     error_log('Login database error: ' . $e->getMessage());
     sendJsonResponse([
         'success' => false,
-        'message' => 'An error occurred during login. Please try again later. / Se produjo un error durante el inicio de sesion.  Por favor intente de nuevo mas tarde.'
+        'message' => 'An error occurred during login. Please try again later. / Se produjo un error durante el inicio de sesión. Por favor, inténtelo de nuevo más tarde.'
     ], 500);
 } catch (Exception $e) {
     // General error - log but don't expose details to client
     error_log('Login error: ' . $e->getMessage());
     sendJsonResponse([
         'success' => false,
-        'message' => 'An error occurred during login. Please try again later. / Se produjo un error durante el inicio de sesion.  Por favor intente de nuevo mas tarde.'
+        'message' => 'An error occurred during login. Please try again later. / Se produjo un error durante el inicio de sesión. Por favor, inténtelo de nuevo más tarde.'
     ], 500);
 }
 ?>
