@@ -75,7 +75,7 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
 
         <!-- Action Buttons -->
         <button class="scan-btn">Open Scanner</button>
-        <button class="back-btn" onclick="window.location.href='volunteer-dashboard.php'">Back to Dashboard</button>
+        <button class="back-btn" id="backToDashboard">Back to Dashboard</button>
     </div>
 
     <!-- QR Scanner Overlay Modal -->
