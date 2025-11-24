@@ -531,24 +531,50 @@ body.v-center-page {
 }
 
 .login-container,
-.dashboard-container { max-width: 400px; width: 90%; }
+.dashboard-container {
+  max-width: 400px;
+  width: 90%;
+}
 
 @media (min-width: 768px) {
-  .login-container { max-width: 500px; }
-  .dashboard-container { max-width: 500px; }
+  .login-container {
+    max-width: 500px;
+  }
+  .dashboard-container {
+    max-width: 500px;
+  }
 }
 @media (min-width: 1200px) {
-  .login-container { max-width: 550px; }
-  .dashboard-container { max-width: 550px; }
+  .login-container {
+    max-width: 550px;
+  }
+  .dashboard-container {
+    max-width: 550px;
+  }
 }
 
 /* Mobile height-constrained adjustments */
 @media (max-height: 700px) {
-  .logo-section img { width:120px !important; margin-bottom:0.5rem !important; }
-  .subtitle-text, .welcome-text { font-size:0.9rem !important; margin-bottom:0.75rem !important; }
-  .card-body { padding:1.5rem !important; }
-  .form-label { font-size:0.875rem; margin-bottom:0.25rem !important; }
-  .form-control { padding:0.5rem 0.75rem; font-size:0.875rem; }
+  .logo-section img {
+    width: 120px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .subtitle-text,
+  .welcome-text {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  .card-body {
+    padding: 1.5rem !important;
+  }
+  .form-label {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem !important;
+  }
+  .form-control {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
   .mb-3 { margin-bottom:0.75rem !important; }
   .mb-4 { margin-bottom:1rem !important; }
   .register-section { margin-top:0.5rem; }
