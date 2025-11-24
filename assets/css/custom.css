@@ -582,7 +582,7 @@ body.page-qrcode { background: linear-gradient(to bottom, #7fb1d6, #cfe7f5); min
   body.page-qrcode { padding:10px; }
   .main-card { padding:15px; }
   .logo { width:140px !important; margin-bottom:10px !important; }
-  h5 { font-size:1rem !important; }
+  .main-card h5 { font-size:1rem !important; }
   .scan-btn, .back-btn { padding:10px !important; font-size:16px !important; margin-top:10px !important; }
 }
 @media (min-width:768px) {
