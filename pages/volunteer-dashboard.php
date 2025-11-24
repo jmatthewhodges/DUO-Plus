@@ -17,57 +17,126 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUO+ | Volunteer Dashboard</title>
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Bootstrap + HopeUI CSS -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+
+    <!-- Responsive Layout Styles -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            position: relative;
+            overflow: hidden;
+            height: 100vh;
         }
-        
+
         .dashboard-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 30px;
+            max-width: 400px;
+            width: 90%;
         }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
+
+        /* Mobile optimizations */
+        @media (max-height: 700px) {
+            .logo-section img {
+                width: 120px !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .welcome-text {
+                font-size: 1rem !important;
+                margin-bottom: 0.75rem !important;
+            }
+            .card-body {
+                padding: 1.5rem !important;
+            }
+            .mb-3 {
+                margin-bottom: 0.75rem !important;
+            }
+            .mb-4 {
+                margin-bottom: 1rem !important;
+            }
         }
-        
-        .welcome {
-            color: #666;
-            margin-bottom: 30px;
+
+        /* Tablet and larger screens */
+        @media (min-width: 768px) {
+            .dashboard-container {
+                max-width: 500px;
+            }
+            .card-body {
+                padding: 3rem !important;
+            }
+            .logo-section img {
+                width: 240px !important;
+            }
+            .welcome-text {
+                font-size: 1.25rem !important;
+            }
         }
-        
-        .qr-button {
-            width: 100%;
-            padding: 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-            text-align: center;
+
+        /* Desktop and larger */
+        @media (min-width: 1200px) {
+            .dashboard-container {
+                max-width: 550px;
+            }
         }
-        
-        .qr-button:hover {
-            background-color: #0056b3;
+
+        /* Button hover effect */
+        .btn-primary {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            background-color: #0f3468 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(23, 69, 147, 0.4) !important;
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(23, 69, 147, 0.3) !important;
         }
     </style>
 </head>
-<body>
-    <div class="dashboard-container">
-        <h1>Volunteer Dashboard</h1>
-        <p class="welcome">Welcome, <?php echo htmlspecialchars($userName); ?>!</p>
-        
-        <a href="qrcode.php" class="qr-button">Scan QR Code</a>
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+    <div class="container text-center dashboard-container">
+        <!-- Logo Section -->
+        <div class="logo-section mb-3">
+            <img src="../assets/images/DUOvolunteerlogo.png"
+                 alt="DUO Volunteer Logo"
+                 class="mb-3"
+                 style="width: 200px;">
+        </div>
+
+        <!-- Welcome Message -->
+        <h5 class="welcome-text fw-medium mb-4" style="color: #174593;">
+            Welcome, <?php echo htmlspecialchars($userName); ?>!
+        </h5>
+
+        <!-- Dashboard Card -->
+        <div class="card shadow-lg border-0 rounded-4 mb-4">
+            <div class="card-body p-5">
+                <p class="text-muted mb-4">Access volunteer tools and features</p>
+                
+                <a href="qrcode.php" 
+                   style="background-color: #174593;" 
+                   class="btn btn-primary w-100 rounded-2 mb-3 text-decoration-none">
+                    Scan QR Code
+                </a>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <!-- <div class="back-section">
+            <a href="../index.html" 
+               style="color: #174593;" 
+               class="fw-semibold d-block text-decoration-none">
+                Back to Login
+            </a>
+        </div> -->
     </div>
+
+    <!-- JS Dependencies -->
 </body>
 </html>

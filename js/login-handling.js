@@ -142,13 +142,24 @@ async function submitLogin(email, password, errorDiv) {
  * @param {Object} data - Response data from server
  */
 function handleLoginSuccess(data) {
-    // Redirect to volunteer dashboard or specified redirect URL
-    if (data.redirect) {
-        window.location.href = data.redirect;
-    } else {
-        // Default redirect to volunteer dashboard
-        window.location.href = '../pages/volunteer-dashboard.php';
-    }
+    // Show SweetAlert success message
+    Swal.fire({
+        title: 'Login Successful!',
+        text: 'Redirecting to dashboard...',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(() => {
+        // Redirect to volunteer dashboard or specified redirect URL
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            // Default redirect to volunteer dashboard
+            window.location.href = '../pages/volunteer-dashboard.php';
+        }
+    });
 }
 
 /**

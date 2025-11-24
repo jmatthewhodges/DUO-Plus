@@ -31,7 +31,7 @@ function validateLoginForm(emailInput, passwordInput) {
         emailInput.setAttribute('aria-invalid', 'true');
         isValid = false;
     } else {
-        emailInput.classList.add('is-valid');
+        emailInput.classList.remove('is-invalid');
     }
 
     // Validate Password Length (Min 6 chars)
@@ -40,7 +40,7 @@ function validateLoginForm(emailInput, passwordInput) {
         passwordInput.setAttribute('aria-invalid', 'true');
         isValid = false;
     } else {
-        passwordInput.classList.add('is-valid');
+       passwordInput.classList.remove('is-invalid');
     }
 
     return isValid;
@@ -65,6 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
                  alert('Login successful');
                  // clientForm.submit(); // Uncomment when ready to connect to PHP
             }
+        });
+
+        // Allow Enter key to submit from input fields
+        const formInputs = clientForm.querySelectorAll('input');
+        formInputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clientForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            });
         });
     }
 });
