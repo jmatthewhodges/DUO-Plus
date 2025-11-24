@@ -22,83 +22,9 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
 
-    <!-- Responsive Layout Styles -->
-    <style>
-        body {
-            position: relative;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .dashboard-container {
-            max-width: 400px;
-            width: 90%;
-        }
-
-        /* Mobile optimizations */
-        @media (max-height: 700px) {
-            .logo-section img {
-                width: 120px !important;
-                margin-bottom: 0.5rem !important;
-            }
-            .welcome-text {
-                font-size: 1rem !important;
-                margin-bottom: 0.75rem !important;
-            }
-            .card-body {
-                padding: 1.5rem !important;
-            }
-            .mb-3 {
-                margin-bottom: 0.75rem !important;
-            }
-            .mb-4 {
-                margin-bottom: 1rem !important;
-            }
-        }
-
-        /* Tablet and larger screens */
-        @media (min-width: 768px) {
-            .dashboard-container {
-                max-width: 500px;
-            }
-            .card-body {
-                padding: 3rem !important;
-            }
-            .logo-section img {
-                width: 240px !important;
-            }
-            .welcome-text {
-                font-size: 1.25rem !important;
-            }
-        }
-
-        /* Desktop and larger */
-        @media (min-width: 1200px) {
-            .dashboard-container {
-                max-width: 550px;
-            }
-        }
-
-        /* Button hover effect */
-        .btn-primary {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary:hover {
-            background-color: #0f3468 !important;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(23, 69, 147, 0.4) !important;
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 10px rgba(23, 69, 147, 0.3) !important;
-        }
-    </style>
+    <!-- Inline page styles moved to custom.css -->
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
     <div class="container text-center dashboard-container">
         <!-- Logo Section -->
