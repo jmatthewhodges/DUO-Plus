@@ -37,7 +37,7 @@
         <div class="error-message text-danger mb-2" id="errorMessage" style="display:none;"></div>
 
         <!-- Login Form -->
-        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php">
+        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php" novalidate>
 
           <div class="mb-3 text-start">
             <label for="email" class="form-label fw-semibold">Email</label>
@@ -49,7 +49,13 @@
               placeholder="Enter your email"
               required
               autocomplete="email"
-            >
+              aria-describedby="volEmailError">
+            
+              <div class="invalid-feedback" 
+              id="volEmailError" 
+              aria-live="polite">
+              Please enter a valid email address. Please include an '@' in the email address.
+              </div>
           </div>
 
           <div class="mb-3 text-start">
@@ -62,9 +68,15 @@
               placeholder="Enter your password"
               required
               autocomplete="current-password"
-            >
+              aria-describedby="volPassError">
+            
+              <div class="invalid-feedback" 
+              id="volPassError" 
+              aria-live="polite">
+                Password must be at least 6 characters long.
+              </div>
           </div>
-
+          
           <!-- Login Button -->
           <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
             Login
@@ -92,6 +104,7 @@
   <!-- JS Dependencies -->
   <script src="../assets/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/hope-ui.min.js"></script>
+  <script src="../js/login-validation.js"></script>
   <script src="../js/login-handling.js"></script>
 </body>
 </html>
