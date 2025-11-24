@@ -965,30 +965,39 @@ function decode(data, version) {
             return result;
         }
         else if (mode === ModeByte.ECI) {
-            if (stream.readBits(1) === 0) {
+            // ECI assignment number is encoded in a variable-length format:
+            // If first bit is 0, next 7 bits are the assignment number.
+            // If first bit is 1 and second bit is 0, next 14 bits.
+            // If first two bits are 1 and third bit is 0, next 21 bits.
+            // Otherwise, data is corrupted.
+            var firstBit = stream.readBits(1);
+            if (firstBit === 0) {
                 result.chunks.push({
                     type: Mode.ECI,
                     assignmentNumber: stream.readBits(7),
                 });
-            }
-            else if (stream.readBits(1) === 0) {
-                result.chunks.push({
-                    type: Mode.ECI,
-                    assignmentNumber: stream.readBits(14),
-                });
-            }
-            else if (stream.readBits(1) === 0) {
-                result.chunks.push({
-                    type: Mode.ECI,
-                    assignmentNumber: stream.readBits(21),
-                });
-            }
-            else {
-                // ECI data seems corrupted
-                result.chunks.push({
-                    type: Mode.ECI,
-                    assignmentNumber: -1,
-                });
+            } else {
+                var secondBit = stream.readBits(1);
+                if (secondBit === 0) {
+                    result.chunks.push({
+                        type: Mode.ECI,
+                        assignmentNumber: stream.readBits(14),
+                    });
+                } else {
+                    var thirdBit = stream.readBits(1);
+                    if (thirdBit === 0) {
+                        result.chunks.push({
+                            type: Mode.ECI,
+                            assignmentNumber: stream.readBits(21),
+                        });
+                    } else {
+                        // ECI data seems corrupted
+                        result.chunks.push({
+                            type: Mode.ECI,
+                            assignmentNumber: -1,
+                        });
+                    }
+                }
             }
         }
         else if (mode === ModeByte.Numeric) {
