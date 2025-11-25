@@ -22,11 +22,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Get form values
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        
+        const email = emailInput.value.replace(/\s/g, '');
+        const password = passwordInput.value.replace(/\s/g, '');
+
+        /**
+        * Validate login form fields
+        * @param {string} email - User email
+        * @param {string} password - User password
+        * @param {HTMLElement} errorDiv - Error message container
+        * @returns {boolean} - True if validation passes
+        */
         
         // Client-side validation
-        if (!validateLoginForm(email, password, errorDiv)) {
+        // validateLoginForm is now in login-validation.js
+        if (!validateLoginForm(emailInput, passwordInput)) {
             return false;
         }
         
@@ -38,35 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-/**
- * Validate login form fields
- * @param {string} email - User email
- * @param {string} password - User password
- * @param {HTMLElement} errorDiv - Error message container
- * @returns {boolean} - True if validation passes
- */
-function validateLoginForm(email, password, errorDiv) {
-    // Check if fields are filled
-    if (!email || !password) {
-        showError('Please fill in all fields.', errorDiv);
-        return false;
-    }
-    
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showError('Please enter a valid email address.', errorDiv);
-        return false;
-    }
-    
-    // Validate password length (minimum 6 characters)
-    if (password.length < 6) {
-        showError('Password must be at least 6 characters long.', errorDiv);
-        return false;
-    }
-    
-    return true;
-}
 
 /**
  * Hash password using SHA-256 before sending to server
@@ -159,13 +142,24 @@ async function submitLogin(email, password, errorDiv) {
  * @param {Object} data - Response data from server
  */
 function handleLoginSuccess(data) {
-    // Redirect to volunteer dashboard or specified redirect URL
-    if (data.redirect) {
-        window.location.href = data.redirect;
-    } else {
-        // Default redirect to volunteer dashboard
-        window.location.href = '../pages/volunteer-dashboard.php';
-    }
+    // Show SweetAlert success message
+    Swal.fire({
+        title: 'Login Successful!',
+        text: 'Redirecting to dashboard...',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(() => {
+        // Redirect to volunteer dashboard or specified redirect URL
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            // Default redirect to volunteer dashboard
+            window.location.href = '../pages/volunteer-dashboard.php';
+        }
+    });
 }
 
 /**

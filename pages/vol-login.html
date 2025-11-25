@@ -7,14 +7,15 @@
   <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
 
   <!-- Bootstrap + HopeUI CSS -->
-  <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
   <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
   <link href="../assets/css/custom.css" rel="stylesheet">
+
+  <!-- Inline page styles moved to custom.css -->
 </head>
 
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
-  <div class="container text-center" style="max-width: 400px;">
+  <div class="container text-center login-container">
 
     <!-- Logo -->
     <div class="logo-section mb-3">
@@ -25,7 +26,7 @@
     </div>
 
     <!-- Subtitle -->
-    <h5 style="color: #174593;" class="fw-medium mb-4">
+    <h5 class="subtitle-text fw-medium mb-4" style="color: #174593;">
       Volunteer access portal<br>for DUO Volunteers
     </h5>
 
@@ -37,7 +38,7 @@
         <div class="error-message text-danger mb-2" id="errorMessage" style="display:none;"></div>
 
         <!-- Login Form -->
-        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php">
+        <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php" novalidate>
 
           <div class="mb-3 text-start">
             <label for="email" class="form-label fw-semibold">Email</label>
@@ -46,10 +47,16 @@
               id="email"
               name="email"
               class="form-control"
-              placeholder="Enter your email"
+              placeholder="ex: johndoe@gmail.com"
               required
               autocomplete="email"
-            >
+              aria-describedby="volEmailError">
+            
+              <div class="invalid-feedback" 
+              id="volEmailError" 
+              aria-live="polite">
+              Please enter a valid email address.
+              </div>
           </div>
 
           <div class="mb-3 text-start">
@@ -59,12 +66,18 @@
               id="password"
               name="password"
               class="form-control"
-              placeholder="Enter your password"
+              placeholder="ex: password123"
               required
               autocomplete="current-password"
-            >
+              aria-describedby="volPassError">
+            
+              <div class="invalid-feedback" 
+              id="volPassError" 
+              aria-live="polite">
+                Please enter a valid password.
+              </div>
           </div>
-
+          
           <!-- Login Button -->
           <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
             Login
@@ -90,8 +103,8 @@
   </div>
 
   <!-- JS Dependencies -->
-  <script src="../assets/js/bootstrap.bundle.min.js"></script>
-  <script src="../assets/js/hope-ui.min.js"></script>
+  <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+  <script src="../js/login-validation.js"></script>
   <script src="../js/login-handling.js"></script>
 </body>
 </html>

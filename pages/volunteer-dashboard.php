@@ -17,57 +17,52 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUO+ | Volunteer Dashboard</title>
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .dashboard-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 30px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .welcome {
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .qr-button {
-            width: 100%;
-            padding: 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-        }
-        
-        .qr-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+
+    <!-- Bootstrap + HopeUI CSS -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+
+    <!-- Inline page styles moved to custom.css -->
 </head>
-<body>
-    <div class="dashboard-container">
-        <h1>Volunteer Dashboard</h1>
-        <p class="welcome">Welcome, <?php echo htmlspecialchars($userName); ?>!</p>
-        
-        <a href="qrcode.php" class="qr-button">Scan QR Code</a>
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+
+    <div class="container text-center dashboard-container">
+        <!-- Logo Section -->
+        <div class="logo-section mb-3">
+            <img src="../assets/images/DUOvolunteerlogo.png"
+                 alt="DUO Volunteer Logo"
+                 class="mb-3"
+                 style="width: 200px;">
+        </div>
+
+        <!-- Welcome Message -->
+        <h5 class="welcome-text fw-medium mb-4" style="color: #174593;">
+            Welcome, <?php echo htmlspecialchars($userName); ?>!
+        </h5>
+
+        <!-- Dashboard Card -->
+        <div class="card shadow-lg border-0 rounded-4 mb-4">
+            <div class="card-body p-5">
+                <p class="text-muted mb-4">Access volunteer tools and features</p>
+                
+                <a href="qrcode.php" 
+                   style="background-color: #174593;" 
+                   class="btn btn-primary w-100 rounded-2 mb-3 text-decoration-none">
+                    Scan QR Code
+                </a>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <!-- <div class="back-section">
+            <a href="../index.html" 
+               style="color: #174593;" 
+               class="fw-semibold d-block text-decoration-none">
+                Back to Login
+            </a>
+        </div> -->
     </div>
+
+    <!-- JS Dependencies -->
 </body>
 </html>

@@ -7,58 +7,49 @@
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 
   <!-- Bootstrap + HopeUI CSS -->
-  <link href="assets/css/bootstrap.min.css" rel="stylesheet">
   <link href="assets/css/hope-ui.min.css" rel="stylesheet">
   <link href="assets/css/custom.css" rel="stylesheet">
 
-  <!-- Custom CSS for Volunteer Button -->
-  <style>
-    .btn-volunteer {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      color: #174593;
-      border: 2px solid #174593;
-      background-color: transparent;
-      transition: all 0.3s ease;
-      z-index: 9999;
-    }
-
-    .btn-volunteer:hover {
-      background-color: #174593;
-      color: #fff;
-      text-decoration: none;
-    }
-  </style>
+  <!-- Inline page styles moved to custom.css -->
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
-  <div class="container text-center" style="max-width: 400px;">
+  <div class="container text-center login-container">
     <!-- Logo Section -->
     <div class="logo-section mb-3">
       <img src="assets/images/DUOPlusDropLogo.png"
            alt="DUO Logo"
-           class="mb-3"
+           class="mb-1"
            style="width: 200px;">
     </div>
 
     <!-- Subtitle -->
-    <h5 style="color: #174593;" class="fw-medium mb-4">
+    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
       Connecting patients with free<br>care through DUO
     </h5>
 
     <!-- Login Box -->
-    <div class="card shadow-lg border-0 rounded-4 mb-4">
+    <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-5">
-        <form>
+        <form id="clientLoginForm" novalidate> <!-- novalidate removes the default alert and replacces it with ours -->
+          <!-- When we eventually run this page through validation with the database, 
+          we will want to replace it with something like 
+          <form id="clientLoginForm" action="api/vol-login.php" method="POST" novalidate> 
+          similar to vol-login.html calling vol-login.php -->
           <div class="mb-3 text-start">
             <label for="email" class="form-label fw-semibold">Email</label>
-            <input type="email" id="email" class="form-control" placeholder="ex: johndoe@gmail.com" required>
+            <input type="email" id="email" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
+            <div class="invalid-feedback" id="emailError" aria-live="polite">
+              Please enter a valid email address.
+            </div>
           </div>
 
           <div class="mb-3 text-start">
             <label for="password" class="form-label fw-semibold">Password</label>
-            <input type="password" id="password" class="form-control" placeholder="ex: password123" required>
+            <input type="password" id="password" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
+            <div class="invalid-feedback" id="passwordError" aria-live="polite">
+              Please enter a valid password.
+            </div>
           </div>
 
           <!-- Main Login Button -->
@@ -86,13 +77,12 @@
     </div>
   </div>
 
-  <!-- Floating Volunteer Login Button (Bottom Right) -->
-  <a href="./pages/vol-login.html" class="btn btn-volunteer rounded-2">
+  <!-- Volunteer Login Button (Top Right) -->
+  <a href="./pages/vol-login.html" class="btn btn-volunteer rounded-pill">
     Volunteer Login
   </a>
 
   <!-- JS Dependencies -->
-  <script src="assets/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/hope-ui.min.js"></script>
+  <script src="js/login-validation.js"></script>
 </body>
 </html>
