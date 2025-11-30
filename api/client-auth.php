@@ -2,7 +2,7 @@
 /**
  * Client Login API Endpoint - Handles Client Login authentication with hashed password verification
  *
- * Database Table: tblClients
+ * Database Table: tblClientLogin
  * - ClientID VARCHAR(50) PRIMARY KEY
  * - Email VARCHAR(250)
  * - Password VARCHAR(400) - Stores SHA-256 hash
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Get and sanitize input
 $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-$passwordHash = filter_input(INPUT_POST, 'password_hash', FILTER_SANITIZE_STRING);
+$passwordHash = filter_input(INPUT_POST, 'password_hash', FILTER_UNSAFE_RAW);
 
 // Validate input
 if (empty($email) || empty($passwordHash)) {
@@ -90,7 +90,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 try {
     // Query database for client with matching email
-    $stmt = $pdo->prepare("SELECT ClientID, Email, FirstName, LastName, Password, Status FROM tblClients WHERE Email = :email LIMIT 1");
+    $stmt = $pdo->prepare("SELECT ClientID, Email, FirstName, LastName, Password, Status FROM tblClientLogin WHERE Email = :email LIMIT 1");
     $stmt->execute(['email' => $email]);
     $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -126,7 +126,7 @@ try {
             $clientSessionID = bin2hex(random_bytes(32)); // 64-char token
         } catch (Exception $e) {
             // Fallback to less-secure token if random_bytes fails
-            $clientSessionID = 'C' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) . substr(time(), -6);
+            $clientSessionID = 'C' . str_pad(uniqid(mt_rand(1, 999), true)) . substr(time(), -6);
         }
 
         // Token expiry (1 hour)
@@ -142,7 +142,7 @@ try {
 
         // Update LastUsed date
         try {
-            $updateStmt = $pdo->prepare("UPDATE tblClients SET LastUsed = CURDATE() WHERE ClientID = :clientID");
+            $updateStmt = $pdo->prepare("UPDATE tblClientLogin SET LastUsed = CURDATE() WHERE ClientID = :clientID");
             $updateStmt->execute(['clientID' => $client['ClientID']]);
         } catch (PDOException $e) {
             // Log but don't fail login if LastUsed update fails
@@ -174,8 +174,6 @@ try {
         ]);
     } else {
         // Invalid credentials — log attempt
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
         logLoginAttempt($email, $ip, $userAgent, 'failure', 'Invalid credentials');
 
         // Generic failure response to avoid user enumeration
