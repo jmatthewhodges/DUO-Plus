@@ -32,7 +32,7 @@
 
     <!-- Login Card -->
     <div class="card shadow-lg border-0 rounded-4 mb-4">
-      <div class="card-body p-5">
+      <div class="card-body p-4">
 
         <!-- Error message -->
         <div class="error-message text-danger mb-2" id="errorMessage" style="display:none;"></div>
@@ -41,10 +41,10 @@
         <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php" novalidate>
 
           <div class="mb-3 text-start">
-            <label for="email" class="form-label fw-semibold">Email</label>
+            <label for="txtVolEmail" class="form-label fw-semibold">Email</label>
             <input
               type="email"
-              id="email"
+              id="txtVolEmail"
               name="email"
               class="form-control"
               placeholder="ex: johndoe@gmail.com"
@@ -55,15 +55,15 @@
               <div class="invalid-feedback" 
               id="volEmailError" 
               aria-live="polite">
-              Please enter a valid email address.
+              Please enter an email address.
               </div>
           </div>
 
           <div class="mb-3 text-start">
-            <label for="password" class="form-label fw-semibold">Password</label>
+            <label for="txtVolPassword" class="form-label fw-semibold">Password</label>
             <input
               type="password"
-              id="password"
+              id="txtVolPassword"
               name="password"
               class="form-control"
               placeholder="ex: password123"
@@ -74,12 +74,12 @@
               <div class="invalid-feedback" 
               id="volPassError" 
               aria-live="polite">
-                Please enter a valid password.
+                Please enter a password.
               </div>
           </div>
           
           <!-- Login Button -->
-          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
+          <button id="btnVolLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
             Login
           </button>
 
@@ -104,7 +104,6 @@
 
   <!-- JS Dependencies -->
   <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
-  <script src="../js/login-validation.js"></script>
   <script src="../js/login-handling.js"></script>
 </body>
 </html>

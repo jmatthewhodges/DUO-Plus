@@ -30,30 +30,26 @@
 
     <!-- Login Box -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
-      <div class="card-body p-5">
-        <form id="clientLoginForm" novalidate> <!-- novalidate removes the default alert and replacces it with ours -->
-          <!-- When we eventually run this page through validation with the database, 
-          we will want to replace it with something like 
-          <form id="clientLoginForm" action="api/vol-login.php" method="POST" novalidate> 
-          similar to vol-login.html calling vol-login.php -->
+      <div class="card-body p-4">
+        <form id="clientLoginForm" novalidate method="POST" action="../api/client-login.php">  <!-- novalidate removes the default alert and replacces it with ours -->
           <div class="mb-3 text-start">
-            <label for="email" class="form-label fw-semibold">Email</label>
-            <input type="email" id="email" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
+            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
+            <input type="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
             <div class="invalid-feedback" id="emailError" aria-live="polite">
-              Please enter a valid email address.
+              Please enter an email address.
             </div>
           </div>
 
           <div class="mb-3 text-start">
-            <label for="password" class="form-label fw-semibold">Password</label>
-            <input type="password" id="password" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
+            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
+            <input type="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
-              Please enter a valid password.
+              Please enter a password.
             </div>
           </div>
 
           <!-- Main Login Button -->
-          <button type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
+          <button id="btnClientLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
         </form>
       </div>
     </div>
@@ -83,6 +79,6 @@
   </a>
 
   <!-- JS Dependencies -->
-  <script src="js/login-validation.js"></script>
+  <script src="js/login-handling.js"></script>
 </body>
 </html>
