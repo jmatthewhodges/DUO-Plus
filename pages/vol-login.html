@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUO+ | Volunteer Login</title>
+  <title>DUO+ | Volunteer</title>
   <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
 
   <!-- Bootstrap + HopeUI CSS -->
@@ -40,8 +40,7 @@
         <!-- Login Form -->
         <form id="volunteerLoginForm" method="POST" action="../api/vol-login.php" novalidate>
 
-          <div class="mb-3 text-start">
-            <label for="txtVolEmail" class="form-label fw-semibold">Email</label>
+          <div class="form-floating mb-3 text-start">
             <input
               type="email"
               id="txtVolEmail"
@@ -51,6 +50,8 @@
               required
               autocomplete="email"
               aria-describedby="volEmailError">
+              <label for="txtVolEmail" class="form-label fw-semibold">Email</label>
+
             
               <div class="invalid-feedback" 
               id="volEmailError" 
@@ -59,8 +60,7 @@
               </div>
           </div>
 
-          <div class="mb-3 text-start">
-            <label for="txtVolPassword" class="form-label fw-semibold">Password</label>
+          <div class="form-floating mb-3 text-start">
             <input
               type="password"
               id="txtVolPassword"
@@ -70,16 +70,22 @@
               required
               autocomplete="current-password"
               aria-describedby="volPassError">
-            
+              <label for="txtVolPassword" class="form-label fw-semibold">Password</label>
+
               <div class="invalid-feedback" 
               id="volPassError" 
               aria-live="polite">
                 Please enter a password.
               </div>
           </div>
+
+          <div class="form-check form-switch text-start mb-3">
+            <input class="form-check-input" type="checkbox" id="toggleVolPassword" aria-label="Show password">
+            <label class="form-check-label" for="toggleVolPassword">Show password</label>
+          </div>
           
           <!-- Login Button -->
-          <button id="btnVolLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">
+          <button id="btnVolLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">
             Login
           </button>
 
@@ -98,6 +104,13 @@
       <a href="../index.html" style="color: #174593;" class="fw-semibold d-block mb-3 text-decoration-none">
         Back to Patient Login
       </a>
+
+      <div class="d-flex flex-column align-items-center">
+        <img src="../assets/images/lifeChurchLogo.webp"
+             alt="Life Church Logo"
+             class="mb-3"
+             style="width: 200px;">
+      </div>
     </div>
 
   </div>

@@ -75,18 +75,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const clientLoginBtn = document.getElementById('btnClientLogin');
     const clientEmailInput = document.getElementById('txtClientEmail');
     const clientPasswordInput = document.getElementById('txtClientPassword');
+    const clientPasswordToggle = document.getElementById('toggleClientPassword');
     
     if (clientLoginBtn && clientEmailInput && clientPasswordInput) {
-        const clientSubmitHandler = createSubmitHandler(submitClientLogin, 'txtClientEmail', 'txtClientPassword');
-        clientLoginBtn.addEventListener('click', clientSubmitHandler);
-        clientEmailInput.addEventListener('keypress', (e) => e.key === 'Enter' && clientSubmitHandler(e));
-        clientPasswordInput.addEventListener('keypress', (e) => e.key === 'Enter' && clientSubmitHandler(e));
+        // Direct click handler for client login button
+        clientLoginBtn.addEventListener('click', () => {
+            if (!validateLoginForm(clientEmailInput, clientPasswordInput)) {
+                return;
+            }
+            const email = clientEmailInput.value.trim();
+            const password = clientPasswordInput.value.trim();
+            submitClientLogin(email, password);
+        });
+        
+        // Enter key support
+        clientEmailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                clientLoginBtn.click();
+            }
+        });
+        clientPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                clientLoginBtn.click();
+            }
+        });
+    }
+
+    // Client password visibility toggle
+    if (clientPasswordInput && clientPasswordToggle) {
+        clientPasswordToggle.addEventListener('change', () => {
+            clientPasswordInput.type = clientPasswordToggle.checked ? 'text' : 'password';
+        });
     }
 
     // ------------ Volunteer Login Form Handling ------------
     const volLoginBtn = document.getElementById('btnVolLogin');
     const volEmailInput = document.getElementById('txtVolEmail');
     const volPasswordInput = document.getElementById('txtVolPassword');
+    const volPasswordToggle = document.getElementById('toggleVolPassword');
     const errorDiv = document.getElementById('errorMessage');
     
     if (volLoginBtn && volEmailInput && volPasswordInput) {
@@ -94,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
         volLoginBtn.addEventListener('click', volSubmitHandler);
         volEmailInput.addEventListener('keypress', (e) => e.key === 'Enter' && volSubmitHandler(e));
         volPasswordInput.addEventListener('keypress', (e) => e.key === 'Enter' && volSubmitHandler(e));
+    }
+
+    // Volunteer password visibility toggle
+    if (volPasswordInput && volPasswordToggle) {
+        volPasswordToggle.addEventListener('change', () => {
+            volPasswordInput.type = volPasswordToggle.checked ? 'text' : 'password';
+        });
     }
 });
 
@@ -155,7 +188,7 @@ async function submitClientLogin(email, password) {
         if (data.success) {
             handleLoginSuccess(data);
         } else {
-            alert(data.message || 'Login failed. Please check your credentials.');
+            showError(data.message || 'Login failed. Please check your credentials.');
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -164,7 +197,7 @@ async function submitClientLogin(email, password) {
             ? 'Server error. Please contact administrator if the problem persists.'
             : error.message || 'An error occurred during login. Please try again.';
         
-        alert(errorMessage);
+        showError(errorMessage);
     }
 }
 
@@ -235,11 +268,47 @@ function handleLoginSuccess(data) {
  * @param {HTMLElement} errorDiv - Error message container
  */
 function showError(message, errorDiv) {
-    if (errorDiv) {
+    // Clear input fields on error
+    const clearInputs = () => {
+        const volEmailInput = document.getElementById('txtVolEmail');
+        const volPasswordInput = document.getElementById('txtVolPassword');
+        const clientEmailInput = document.getElementById('txtClientEmail');
+        const clientPasswordInput = document.getElementById('txtClientPassword');
+        
+        if (volEmailInput) volEmailInput.value = '';
+        if (volPasswordInput) volPasswordInput.value = '';
+        if (clientEmailInput) clientEmailInput.value = '';
+        if (clientPasswordInput) clientPasswordInput.value = '';
+        
+        // Reset password toggle switches
+        const volPasswordToggle = document.getElementById('toggleVolPassword');
+        const clientPasswordToggle = document.getElementById('toggleClientPassword');
+        if (volPasswordToggle) volPasswordToggle.checked = false;
+        if (clientPasswordToggle) clientPasswordToggle.checked = false;
+        
+        // Reset password fields to type="password"
+        if (volPasswordInput) volPasswordInput.type = 'password';
+        if (clientPasswordInput) clientPasswordInput.type = 'password';
+    };
+    
+    // Use SweetAlert for volunteer login errors
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Login Failed',
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Try Again',
+            confirmButtonColor: '#174593'
+        }).then(() => {
+            clearInputs();
+        });
+    } else if (errorDiv) {
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
+        clearInputs();
     } else {
         console.error('Login error:', message);
         alert(message);
+        clearInputs();
     }
 }

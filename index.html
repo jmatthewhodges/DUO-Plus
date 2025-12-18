@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DUO+ | Client Login</title>
+  <title>DUO+</title>
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 
   <!-- Bootstrap + HopeUI CSS -->
@@ -32,24 +32,29 @@
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-4">
         <form id="clientLoginForm" novalidate method="POST" action="../api/client-login.php">  <!-- novalidate removes the default alert and replacces it with ours -->
-          <div class="mb-3 text-start">
-            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
+          <div class="form-floating mb-3 text-start">
             <input type="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
+            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <div class="invalid-feedback" id="emailError" aria-live="polite">
               Please enter an email address.
             </div>
           </div>
 
-          <div class="mb-3 text-start">
-            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
+          <div class="form-floating mb-3 text-start">
             <input type="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
+            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
               Please enter a password.
             </div>
           </div>
 
+          <div class="form-check form-switch text-start mb-3">
+            <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
+            <label class="form-check-label" for="toggleClientPassword">Show password</label>
+          </div>
+
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 mb-3">Login</button>
+          <button id="btnClientLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
     </div>
@@ -67,18 +72,19 @@
       <div class="d-flex flex-column align-items-center">
         <img src="assets/images/lifeChurchLogo.webp"
              alt="Life Church Logo"
-             class="mb-1"
+             class="mb-3"
              style="width: 200px;">
+        
+        <!-- Volunteer Login Button -->
+        <a href="./pages/vol-login.html" class="btn btn-primary btn-sm rounded-2" style="background-color: #174593;">
+          Volunteer Login
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- Volunteer Login Button (Top Right) -->
-  <a href="./pages/vol-login.html" class="btn btn-volunteer rounded-pill">
-    Volunteer Login
-  </a>
-
   <!-- JS Dependencies -->
+  <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
   <script src="js/login-handling.js"></script>
 </body>
 </html>
