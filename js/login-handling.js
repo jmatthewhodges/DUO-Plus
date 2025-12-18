@@ -1,137 +1,244 @@
 /**
- * Login Handling JavaScript
- * Handles client-side login validation and form submission
+ * Validate login form fields using Hope UI/Bootstrap classes
+ * @param {HTMLInputElement} emailInput - The email input element
+ * @param {HTMLInputElement} passwordInput - The password input element
+ * @returns {boolean} True if validation passes
  */
+function validateLoginForm(emailInput, passwordInput) {
+    let isValid = true;
 
-// Initialize login form handler when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('volunteerLoginForm');
-    const errorDiv = document.getElementById('errorMessage');
-    
-    if (!loginForm) {
-        return; // Exit if form doesn't exist on this page
+    // Reset validation states
+    [emailInput, passwordInput].forEach(input => {
+        input.classList.remove('is-invalid', 'is-valid');
+        input.removeAttribute('aria-invalid');
+    });
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    // Validate email format
+    if (!email || !email.includes('@') || !email.includes('.')) {
+        emailInput.classList.add('is-invalid');
+        emailInput.setAttribute('aria-invalid', 'true');
+        isValid = false;
     }
-    
-    // Handle form submission
-    loginForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
+
+    // Validate password length (minimum 6 characters)
+    if (!password || password.length < 6) {
+        passwordInput.classList.add('is-invalid');
+        passwordInput.setAttribute('aria-invalid', 'true');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+/**
+ * Create form submission handler
+ * @param {Function} submitFunction - Function to call on form submission
+ * @param {string} emailInputId - ID of email input
+ * @param {string} passwordInputId - ID of password input
+ * @param {HTMLElement} errorDiv - Error message container (optional)
+ * @returns {Function} Event handler function
+ */
+function createSubmitHandler(submitFunction, emailInputId, passwordInputId, errorDiv = null) {
+    return function(e) {
+        e.preventDefault();
         
-        // Hide any previous error messages
         if (errorDiv) {
             errorDiv.style.display = 'none';
         }
         
-        // Get form values
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
+        const emailInput = document.getElementById(emailInputId);
+        const passwordInput = document.getElementById(passwordInputId);
         
-        const email = emailInput.value.replace(/\s/g, '');
-        const password = passwordInput.value.replace(/\s/g, '');
-
-        /**
-        * Validate login form fields
-        * @param {string} email - User email
-        * @param {string} password - User password
-        * @param {HTMLElement} errorDiv - Error message container
-        * @returns {boolean} - True if validation passes
-        */
-        
-        // Client-side validation
-        // validateLoginForm is now in login-validation.js
         if (!validateLoginForm(emailInput, passwordInput)) {
-            return false;
+            return;
         }
         
-        // Submit login request (password will be hashed before sending)
-        submitLogin(email, password, errorDiv).catch(error => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        submitFunction(email, password, errorDiv).catch(error => {
             console.error('Login submission error:', error);
-            showError('An error occurred during login. Please try again.', errorDiv);
+            const errorMessage = 'An error occurred during login. Please try again.';
+            errorDiv ? showError(errorMessage, errorDiv) : alert(errorMessage);
         });
-    });
-});
-
-
-/**
- * Hash password using SHA-256 before sending to server
- * @param {string} password - Plain text password
- * @returns {Promise<string>} - Hashed password as hex string
- */
-async function hashPassword(password) {
-    // Convert password to ArrayBuffer
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    
-    // Hash the password using SHA-256
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    
-    // Convert ArrayBuffer to hex string
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    return hashHex;
+    };
 }
 
 /**
- * Submit login request to server
+ * Initialize login form handlers when DOM is loaded
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // ------------ Client Login Form Handling ------------
+    const clientLoginBtn = document.getElementById('btnClientLogin');
+    const clientEmailInput = document.getElementById('txtClientEmail');
+    const clientPasswordInput = document.getElementById('txtClientPassword');
+    const clientPasswordToggle = document.getElementById('toggleClientPassword');
+    
+    if (clientLoginBtn && clientEmailInput && clientPasswordInput) {
+        // Direct click handler for client login button
+        clientLoginBtn.addEventListener('click', () => {
+            if (!validateLoginForm(clientEmailInput, clientPasswordInput)) {
+                return;
+            }
+            const email = clientEmailInput.value.trim();
+            const password = clientPasswordInput.value.trim();
+            submitClientLogin(email, password);
+        });
+        
+        // Enter key support
+        clientEmailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                clientLoginBtn.click();
+            }
+        });
+        clientPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                clientLoginBtn.click();
+            }
+        });
+    }
+
+    // Client password visibility toggle
+    if (clientPasswordInput && clientPasswordToggle) {
+        clientPasswordToggle.addEventListener('change', () => {
+            clientPasswordInput.type = clientPasswordToggle.checked ? 'text' : 'password';
+        });
+    }
+
+    // ------------ Volunteer Login Form Handling ------------
+    const volLoginBtn = document.getElementById('btnVolLogin');
+    const volEmailInput = document.getElementById('txtVolEmail');
+    const volPasswordInput = document.getElementById('txtVolPassword');
+    const volPasswordToggle = document.getElementById('toggleVolPassword');
+    const errorDiv = document.getElementById('errorMessage');
+    
+    if (volLoginBtn && volEmailInput && volPasswordInput) {
+        const volSubmitHandler = createSubmitHandler(submitVolunteerLogin, 'txtVolEmail', 'txtVolPassword', errorDiv);
+        volLoginBtn.addEventListener('click', volSubmitHandler);
+        volEmailInput.addEventListener('keypress', (e) => e.key === 'Enter' && volSubmitHandler(e));
+        volPasswordInput.addEventListener('keypress', (e) => e.key === 'Enter' && volSubmitHandler(e));
+    }
+
+    // Volunteer password visibility toggle
+    if (volPasswordInput && volPasswordToggle) {
+        volPasswordToggle.addEventListener('change', () => {
+            volPasswordInput.type = volPasswordToggle.checked ? 'text' : 'password';
+        });
+    }
+});
+
+/**
+ * Hash password using SHA-256
+ * @param {string} password - Plain text password
+ * @returns {Promise<string>} Hashed password as hex string
+ */
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Process login response from server
+ * @param {Response} response - Fetch API response
+ * @returns {Promise<Object>} Parsed JSON data
+ */
+async function processLoginResponse(response) {
+    const responseText = await response.text();
+    
+    try {
+        return JSON.parse(responseText);
+    } catch (jsonError) {
+        console.error('Invalid JSON response:', responseText);
+        throw new Error('Server returned an invalid response. Please check the server logs.');
+    }
+}
+
+/**
+ * Submit client login request to server
  * @param {string} email - User email
  * @param {string} password - User password (will be hashed before sending)
- * @param {HTMLElement} errorDiv - Error message container
  */
-async function submitLogin(email, password, errorDiv) {
+async function submitClientLogin(email, password) {
     try {
-        // Get form action URL
-        const form = document.getElementById('volunteerLoginForm');
+        const form = document.getElementById('clientLoginForm');
         const actionUrl = form.getAttribute('action');
-        
-        // Hash password before sending to server
         const hashedPassword = await hashPassword(password);
         
-        // Create form data with hashed password
         const formData = new FormData();
         formData.append('email', email);
         formData.append('password_hash', hashedPassword);
         
-        // Submit login request
         const response = await fetch(actionUrl, {
             method: 'POST',
             body: formData
         });
         
-        // Get response text first to check if it's valid JSON
-        const responseText = await response.text();
+        const data = await processLoginResponse(response);
         
-        // Try to parse as JSON
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (jsonError) {
-            // If response is not valid JSON, it's likely a PHP error
-            console.error('Invalid JSON response:', responseText);
-            throw new Error('Server returned an invalid response. Please check the server logs.');
-        }
-        
-        // Check if response indicates an error status
         if (!response.ok) {
             throw new Error(data.message || 'Network response was not ok');
         }
         
         if (data.success) {
-            // Login successful - redirect or handle success
             handleLoginSuccess(data);
         } else {
-            // Login failed - show error message
+            showError(data.message || 'Login failed. Please check your credentials.');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        const errorMessage = error.message.includes('invalid response')
+            ? 'Server error. Please contact administrator if the problem persists.'
+            : error.message || 'An error occurred during login. Please try again.';
+        
+        showError(errorMessage);
+    }
+}
+
+/**
+ * Submit volunteer login request to server
+ * @param {string} email - User email
+ * @param {string} password - User password (will be hashed before sending)
+ * @param {HTMLElement} errorDiv - Error message container
+ */
+async function submitVolunteerLogin(email, password, errorDiv) {
+    try {
+        const form = document.getElementById('volunteerLoginForm');
+        const actionUrl = form.getAttribute('action');
+        const hashedPassword = await hashPassword(password);
+        
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password_hash', hashedPassword);
+        
+        const response = await fetch(actionUrl, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await processLoginResponse(response);
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'Network response was not ok');
+        }
+        
+        if (data.success) {
+            handleLoginSuccess(data);
+        } else {
             showError(data.message || 'Login failed. Please check your credentials.', errorDiv);
         }
     } catch (error) {
         console.error('Login error:', error);
         
-        // Provide more specific error messages
-        let errorMessage = 'An error occurred during login. Please try again.';
-        if (error.message.includes('invalid response')) {
-            errorMessage = 'Server error. Please contact administrator if the problem persists.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
+        const errorMessage = error.message.includes('invalid response')
+            ? 'Server error. Please contact administrator if the problem persists.'
+            : error.message || 'An error occurred during login. Please try again.';
         
         showError(errorMessage, errorDiv);
     }
@@ -142,7 +249,6 @@ async function submitLogin(email, password, errorDiv) {
  * @param {Object} data - Response data from server
  */
 function handleLoginSuccess(data) {
-    // Show SweetAlert success message
     Swal.fire({
         title: 'Login Successful!',
         text: 'Redirecting to dashboard...',
@@ -152,13 +258,7 @@ function handleLoginSuccess(data) {
         allowOutsideClick: false,
         allowEscapeKey: false
     }).then(() => {
-        // Redirect to volunteer dashboard or specified redirect URL
-        if (data.redirect) {
-            window.location.href = data.redirect;
-        } else {
-            // Default redirect to volunteer dashboard
-            window.location.href = '../pages/volunteer-dashboard.php';
-        }
+        window.location.href = data.redirect || '../pages/volunteer-dashboard.php';
     });
 }
 
@@ -168,12 +268,43 @@ function handleLoginSuccess(data) {
  * @param {HTMLElement} errorDiv - Error message container
  */
 function showError(message, errorDiv) {
-    if (errorDiv) {
+    // Clear input fields on error
+    const clearInputs = () => {
+        const volPasswordInput = document.getElementById('txtVolPassword');
+        const clientPasswordInput = document.getElementById('txtClientPassword');
+        
+        if (volPasswordInput) volPasswordInput.value = '';
+        if (clientPasswordInput) clientPasswordInput.value = '';
+        
+        // Reset password toggle switches
+        const volPasswordToggle = document.getElementById('toggleVolPassword');
+        const clientPasswordToggle = document.getElementById('toggleClientPassword');
+        if (volPasswordToggle) volPasswordToggle.checked = false;
+        if (clientPasswordToggle) clientPasswordToggle.checked = false;
+        
+        // Reset password fields to type="password"
+        if (volPasswordInput) volPasswordInput.type = 'password';
+        if (clientPasswordInput) clientPasswordInput.type = 'password';
+    };
+    
+    // Use SweetAlert for volunteer login errors
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Login Failed',
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Try Again',
+            confirmButtonColor: '#174593'
+        }).then(() => {
+            clearInputs();
+        });
+    } else if (errorDiv) {
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
+        clearInputs();
     } else {
         console.error('Login error:', message);
-        alert(message); // Fallback if error div doesn't exist
+        alert(message);
+        clearInputs();
     }
 }
-

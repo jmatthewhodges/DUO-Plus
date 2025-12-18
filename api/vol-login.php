@@ -151,7 +151,7 @@ try {
         // Invalid credentials
         sendJsonResponse([
             'success' => false,
-            'message' => 'Invalid email or password.'
+            'message' => 'Invalid email or password. Please check your credentials and try again.'
         ], 401);
     }
     
