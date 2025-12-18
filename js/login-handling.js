@@ -270,14 +270,10 @@ function handleLoginSuccess(data) {
 function showError(message, errorDiv) {
     // Clear input fields on error
     const clearInputs = () => {
-        const volEmailInput = document.getElementById('txtVolEmail');
         const volPasswordInput = document.getElementById('txtVolPassword');
-        const clientEmailInput = document.getElementById('txtClientEmail');
         const clientPasswordInput = document.getElementById('txtClientPassword');
         
-        if (volEmailInput) volEmailInput.value = '';
         if (volPasswordInput) volPasswordInput.value = '';
-        if (clientEmailInput) clientEmailInput.value = '';
         if (clientPasswordInput) clientPasswordInput.value = '';
         
         // Reset password toggle switches
