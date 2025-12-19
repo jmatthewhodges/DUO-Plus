@@ -230,6 +230,9 @@ function showStep(stepNumber) {
     const stepCircle2 = document.getElementById('stepCircle2');
     const stepLine1 = document.getElementById('stepLine1');
     
+    const footerSection = document.getElementById('footerSection');
+    const lifeLogo = document.getElementById('lifeLogo');
+    
     if (stepNumber === 1) {
         // Show step 1, hide step 2
         step1.style.display = 'block';
@@ -241,6 +244,10 @@ function showStep(stepNumber) {
         stepCircle2.classList.remove('active');
         stepLine1.classList.remove('completed');
         
+        // Show footer during step 1
+        if (footerSection) footerSection.style.display = 'block';
+        if (lifeLogo) lifeLogo.style.display = 'block';
+        
     } else if (stepNumber === 2) {
         // Hide step 1, show step 2
         step1.style.display = 'none';
@@ -251,6 +258,10 @@ function showStep(stepNumber) {
         stepCircle1.classList.add('completed');
         stepCircle2.classList.add('active');
         stepLine1.classList.add('completed');
+        
+        // Hide footer during step 2 to save space
+        if (footerSection) footerSection.style.display = 'none';
+        if (lifeLogo) lifeLogo.style.display = 'none';
     }
     
     // Scroll to top of card
@@ -338,6 +349,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (step2BackBtn) {
         step2BackBtn.addEventListener('click', () => {
             goBackToStep1();
+        });
+    }
+    
+    // Step 2: Address checkbox toggle
+    const chkNoAddress = document.getElementById('chkNoAddress');
+    const addressFields = document.getElementById('addressFields');
+    if (chkNoAddress && addressFields) {
+        chkNoAddress.addEventListener('change', () => {
+            const shouldHide = chkNoAddress.checked;
+            addressFields.style.display = shouldHide ? 'none' : 'block';
+            
+            // Toggle required attribute on address fields
+            const addressInputs = addressFields.querySelectorAll('input[required]');
+            addressInputs.forEach(input => {
+                if (shouldHide) {
+                    input.removeAttribute('required');
+                } else {
+                    input.setAttribute('required', '');
+                }
+            });
         });
     }
     

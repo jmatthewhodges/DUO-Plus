@@ -52,8 +52,9 @@ hr {
 /* Shared layout for login and dashboard pages */
 body.v-center-page {
   position: relative;
-  overflow: hidden;
-  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 .login-container,
@@ -65,14 +66,14 @@ body.v-center-page {
 @media (min-width: 768px) {
   .login-container,
   .dashboard-container {
-    max-width: 500px;
+    max-width: 480px;
   }
 }
 
 @media (min-width: 1200px) {
   .login-container,
   .dashboard-container {
-    max-width: 550px;
+    max-width: 520px;
   }
 }
 

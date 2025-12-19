@@ -10,25 +10,25 @@
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+<body class="d-flex align-items-start justify-content-center v-center-page" style="padding: 40px 0;">
     <!-- <h1 style="color: white; text-shadow: 5px 5px 10px black;">Registration Coming Soon!</h1> -->
 
     <div class="container text-center login-container">
     <!-- Logo Section -->
-    <div class="logo-section mb-2">
+    <div class="logo-section mb-1">
       <img src="../assets/images/DUOPlusDropLogo.png"
            alt="DUO Logo"
            class="mb-1"
-           style="width: 200px;">
+           style="width: 180px;">
     </div>
 
     <!-- Subtitle -->
-    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-3">
+    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-2">
       Create an account to start receiving <br>free care through DUO
     </h5>
 
     <!-- Progress Indicator -->
-    <div class="progress-indicator mb-4 mt-4">
+    <div class="progress-indicator mb-3 mt-3">
         <div class="d-flex justify-content-center align-items-center gap-2">
             <div class="step-circle active" id="stepCircle1">
                 <span>1</span>
@@ -51,13 +51,13 @@
     </div>
 
     <!-- Registration Card -->
-    <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
-        <div class="card-body p-4">
+    <div class="card shadow-lg border-0 rounded-4 mb-3 mt-3">
+        <div class="card-body p-3">
             <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
                 
                 <!-- Step 1: Email & Password -->
                 <div id="step1" class="registration-step">
-                    <div class="form-floating mb-3 text-start">
+                    <div class="form-floating mb-2 text-start">
                         <input type="email" id="txtRegClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
                         <label for="txtRegClientEmail" class="form-label fw-semibold">Email</label>
                         <div class="invalid-feedback" id="emailError" aria-live="polite">
@@ -65,7 +65,7 @@
                         </div>
                     </div>
 
-                    <div class="form-floating mb-3 text-start">
+                    <div class="form-floating mb-2 text-start">
                         <input type="password" id="txtRegClientPassword" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
                         <label for="txtRegClientPassword" class="form-label fw-semibold">Password</label>
                         <div class="invalid-feedback" id="passwordError" aria-live="polite">
@@ -73,7 +73,7 @@
                         </div>
                     </div>
 
-                    <div class="form-check form-switch text-start mb-3">
+                    <div class="form-check form-switch text-start mb-2">
                         <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
                         <label class="form-check-label" for="toggleClientPassword">Show password</label>
                     </div>
@@ -81,14 +81,106 @@
                     <button id="btnStep1Next" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
                 </div>
 
-                <!-- Step 2: Additional Info (to be populated) -->
+                <!-- Step 2: Personal Information -->
                 <div id="step2" class="registration-step" style="display: none;">
-                    <p class="text-muted text-center mb-4">Add your additional information fields here...</p>
                     
+                    <!-- Name Row: First, MI, Last -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-5">
+                            <div class="form-floating">
+                                <input type="text" id="txtFirstName" class="form-control form-control-sm" placeholder="John" required>
+                                <label for="txtFirstName" class="form-label">First Name</label>
+                                <div class="invalid-feedback" id="firstNameError">Required</div>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <div class="form-floating">
+                                <input type="text" id="txtMiddleInitial" class="form-control form-control-sm" placeholder="M" maxlength="1">
+                                <label for="txtMiddleInitial" class="form-label">MI</label>
+                            </div>
+                        </div>
+                        <div class="col-5">
+                            <div class="form-floating">
+                                <input type="text" id="txtLastName" class="form-control form-control-sm" placeholder="Doe" required>
+                                <label for="txtLastName" class="form-label">Last Name</label>
+                                <div class="invalid-feedback" id="lastNameError">Required</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Demographics Row: Sex and DOB -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <select id="selectSex" class="form-select form-select-sm" required>
+                                <option value="" disabled selected>Sex</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer-not-to-say">Prefer Not to Say</option>
+                            </select>
+                            <div class="invalid-feedback" id="sexError">Required</div>
+                        </div>
+                        <div class="col-6">
+                            <input type="date" id="txtDOB" class="form-control form-control-sm" placeholder="Date of Birth" required>
+                            <div class="invalid-feedback" id="dobError">Required</div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm" placeholder="(555) 123-4567">
+                            <label for="txtPhoneNumber" class="form-label">Phone Number (Optional)</label>
+                        </div>
+                    </div>
+
+                    <!-- No Address Checkbox -->
+                    <div class="form-check mb-3 text-start">
+                        <input class="form-check-input" type="checkbox" id="chkNoAddress">
+                        <label class="form-check-label ms-2" for="chkNoAddress">I don't have a permanent address</label>
+                    </div>
+
+                    <!-- Address Fields Section -->
+                    <div id="addressFields" style="display: block;">
+                        <!-- Street Address -->
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="text" id="txtStreetAddress" class="form-control form-control-sm" placeholder="123 Main St" required>
+                                <label for="txtStreetAddress" class="form-label">Street Address</label>
+                                <div class="invalid-feedback" id="streetError">Required</div>
+                            </div>
+                        </div>
+
+                        <!-- City, State, ZIP Row -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="text" id="txtCity" class="form-control form-control-sm" placeholder="Nashville" required>
+                                    <label for="txtCity" class="form-label">City</label>
+                                    <div class="invalid-feedback" id="cityError">Required</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-floating">
+                                    <input type="text" id="txtState" class="form-control form-control-sm" placeholder="TN" maxlength="2" required>
+                                    <label for="txtState" class="form-label">State</label>
+                                    <div class="invalid-feedback" id="stateError">Required</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-floating">
+                                    <input type="text" id="txtZip" class="form-control form-control-sm" placeholder="37201" maxlength="5" required>
+                                    <label for="txtZip" class="form-label">ZIP</label>
+                                    <div class="invalid-feedback" id="zipError">Required</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Navigation Buttons -->
-                    <div class="d-flex gap-2">
-                        <button id="btnStep2Back" type="button" class="btn btn-secondary rounded-2 flex-fill">Back</button>
-                        <button id="btnStep2Submit" type="button" style="background-color: #174593;" class="btn btn-primary rounded-2 flex-fill">Submit</button>
+                    <div class="d-flex gap-2 mt-2">
+                        <button id="btnStep2Back" type="button" class="btn btn-secondary btn-sm rounded-2 flex-fill">Back</button>
+                        <button id="btnStep2Submit" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                     </div>
                 </div>
 
@@ -97,8 +189,8 @@
     </div>
 
         <!-- Back Button & Contact Details -->
-        <div class="text-center">
-            <a href="../index.html" class="fw-semibold d-block mb-5 text-decoration-none" style="color: #174593;">Back To Login</a>
+        <div class="text-center mt-3" id="footerSection">
+            <a href="../index.html" class="fw-semibold d-block mb-3 text-decoration-none" style="color: #174593;">Back To Login</a>
             <p class="mb-1 fw-semibold">Contact Us</p>
             <p class="mb-1">info@duomobilemission.com</p>
             <p class="mb-0">(931) 284-4802</p>
@@ -107,8 +199,9 @@
         <!-- Life Church Logo -->
         <img src="../assets/images/lifeChurchLogo.webp"
              alt="Life Church Logo"
-             class="mb-3 mt-4"
-             style="width: 200px;">
+             class="mb-3 mt-3"
+             id="lifeLogo"
+             style="width: 180px;">
     </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
