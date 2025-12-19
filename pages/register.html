@@ -15,7 +15,7 @@
 
     <div class="container text-center login-container">
     <!-- Logo Section -->
-    <div class="logo-section mb-3">
+    <div class="logo-section mb-2">
       <img src="../assets/images/DUOPlusDropLogo.png"
            alt="DUO Logo"
            class="mb-1"
@@ -23,12 +23,40 @@
     </div>
 
     <!-- Subtitle -->
-    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
+    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-3">
       Create an account to start receiving <br>free care through DUO
     </h5>
-        <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
-            <div class="card-body p-4">
-                <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator mb-4 mt-4">
+        <div class="d-flex justify-content-center align-items-center gap-2">
+            <div class="step-circle active" id="stepCircle1">
+                <span>1</span>
+            </div>
+            <div class="step-line" id="stepLine1"></div>
+            <div class="step-circle" id="stepCircle2">
+                <span>2</span>
+            </div>            <div class="step-line" id="stepLine2"></div>
+            <div class="step-circle" id="stepCircle3">
+                <span>3</span>
+            </div>
+            <div class="step-line" id="stepLine3"></div>
+            <div class="step-circle" id="stepCircle4">
+                <span>4</span>
+            </div>
+            <div class="step-line" id="stepLine4"></div>
+            <div class="step-circle" id="stepCircle5">
+                <span>5</span>
+            </div>        </div>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
+        <div class="card-body p-4">
+            <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
+                
+                <!-- Step 1: Email & Password -->
+                <div id="step1" class="registration-step">
                     <div class="form-floating mb-3 text-start">
                         <input type="email" id="txtRegClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
                         <label for="txtRegClientEmail" class="form-label fw-semibold">Email</label>
@@ -50,12 +78,25 @@
                         <label class="form-check-label" for="toggleClientPassword">Show password</label>
                     </div>
 
-                    <!-- Main Register Button -->
-                    <button id="btnClientRegister" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 ">Next</button>
-                </form>
-            </div>
-        </div>
+                    <button id="btnStep1Next" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
+                </div>
 
+                <!-- Step 2: Additional Info (to be populated) -->
+                <div id="step2" class="registration-step" style="display: none;">
+                    <p class="text-muted text-center mb-4">Add your additional information fields here...</p>
+                    
+                    <!-- Navigation Buttons -->
+                    <div class="d-flex gap-2">
+                        <button id="btnStep2Back" type="button" class="btn btn-secondary rounded-2 flex-fill">Back</button>
+                        <button id="btnStep2Submit" type="button" style="background-color: #174593;" class="btn btn-primary rounded-2 flex-fill">Submit</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+        <!-- Back Button & Contact Details -->
         <div class="text-center">
             <a href="../index.html" class="fw-semibold d-block mb-5 text-decoration-none" style="color: #174593;">Back To Login</a>
             <p class="mb-1 fw-semibold">Contact Us</p>
@@ -63,6 +104,7 @@
             <p class="mb-0">(931) 284-4802</p>
         </div>
 
+        <!-- Life Church Logo -->
         <img src="../assets/images/lifeChurchLogo.webp"
              alt="Life Church Logo"
              class="mb-3 mt-4"
@@ -70,6 +112,7 @@
     </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/register.js"></script>
+    <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../js/register.js"></script>
 </body>
 </html>

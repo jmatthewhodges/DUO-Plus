@@ -317,3 +317,66 @@ body.page-qrcode {
     max-width: 600px;
   }
 }
+
+/* ==========================================================================
+   9. MULTI-STEP REGISTRATION STYLES
+   ========================================================================== */
+
+/* Progress indicator container */
+.progress-indicator {
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* Step circle indicators */
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.step-circle.active {
+  background-color: #174593;
+  color: white;
+}
+
+.step-circle.completed {
+  background-color: #28a745;
+  color: white;
+}
+
+/* Step connector line */
+.step-line {
+  height: 2px;
+  width: 30px;
+  background-color: #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.step-line.completed {
+  background-color: #28a745;
+}
+
+/* Registration step animation */
+.registration-step {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
