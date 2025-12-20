@@ -221,45 +221,73 @@ async function proceedToNextStep(email, password) {
 
 /**
  * Show specific registration step
- * @param {number} stepNumber - Step number to show (1 or 2)
+ * @param {number} stepNumber - Step number to show (1, 2, or 3)
  */
 function showStep(stepNumber) {
     const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
     const stepCircle1 = document.getElementById('stepCircle1');
     const stepCircle2 = document.getElementById('stepCircle2');
+    const stepCircle3 = document.getElementById('stepCircle3');
     const stepLine1 = document.getElementById('stepLine1');
+    const stepLine2 = document.getElementById('stepLine2');
     
     const footerSection = document.getElementById('footerSection');
     const lifeLogo = document.getElementById('lifeLogo');
     
+    // Hide all steps first
+    if (step1) step1.style.display = 'none';
+    if (step2) step2.style.display = 'none';
+    if (step3) step3.style.display = 'none';
+    
     if (stepNumber === 1) {
-        // Show step 1, hide step 2
-        step1.style.display = 'block';
-        step2.style.display = 'none';
+        // Show step 1, hide step 2 and 3
+        if (step1) step1.style.display = 'block';
         
         // Update progress indicator
         stepCircle1.classList.add('active');
         stepCircle1.classList.remove('completed');
-        stepCircle2.classList.remove('active');
+        stepCircle2.classList.remove('active', 'completed');
+        stepCircle3.classList.remove('active', 'completed');
         stepLine1.classList.remove('completed');
+        stepLine2.classList.remove('completed');
         
         // Show footer during step 1
         if (footerSection) footerSection.style.display = 'block';
         if (lifeLogo) lifeLogo.style.display = 'block';
         
     } else if (stepNumber === 2) {
-        // Hide step 1, show step 2
-        step1.style.display = 'none';
-        step2.style.display = 'block';
+        // Hide step 1 and 3, show step 2
+        if (step2) step2.style.display = 'block';
         
         // Update progress indicator
         stepCircle1.classList.remove('active');
         stepCircle1.classList.add('completed');
         stepCircle2.classList.add('active');
+        stepCircle2.classList.remove('completed');
+        stepCircle3.classList.remove('active', 'completed');
         stepLine1.classList.add('completed');
+        stepLine2.classList.remove('completed');
         
-        // Hide footer during step 2 to save space
+        // Hide footer during step 2
+        if (footerSection) footerSection.style.display = 'none';
+        if (lifeLogo) lifeLogo.style.display = 'none';
+        
+    } else if (stepNumber === 3) {
+        // Hide step 1 and 2, show step 3
+        if (step3) step3.style.display = 'block';
+        
+        // Update progress indicator
+        stepCircle1.classList.remove('active');
+        stepCircle1.classList.add('completed');
+        stepCircle2.classList.remove('active');
+        stepCircle2.classList.add('completed');
+        stepCircle3.classList.add('active');
+        stepLine1.classList.add('completed');
+        stepLine2.classList.add('completed');
+        
+        // Hide footer during step 3
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
     }
@@ -272,10 +300,57 @@ function showStep(stepNumber) {
 }
 
 /**
- * Go back to previous step
+ * Validate section 2 form fields
  */
-function goBackToStep1() {
-    showStep(1);
+function validateStep2Form() {
+    let isValid = true;
+    
+    const firstNameInput = document.getElementById('txtFirstName');
+    const lastNameInput = document.getElementById('txtLastName');
+    const sexSelect = document.getElementById('selectSex');
+    const dobInput = document.getElementById('txtDOB');
+    
+    // Validate First Name
+    if (!firstNameInput.value.trim()) {
+        firstNameInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        firstNameInput.classList.remove('is-invalid');
+        firstNameInput.classList.add('is-valid');
+    }
+    
+    // Validate Last Name
+    if (!lastNameInput.value.trim()) {
+        lastNameInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        lastNameInput.classList.remove('is-invalid');
+        lastNameInput.classList.add('is-valid');
+    }
+    
+    // Validate Sex
+    if (!sexSelect.value) {
+        sexSelect.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        sexSelect.classList.remove('is-invalid');
+        sexSelect.classList.add('is-valid');
+    }
+    
+    // Validate DOB
+    if (!dobInput.value) {
+        dobInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        dobInput.classList.remove('is-invalid');
+        dobInput.classList.add('is-valid');
+    }
+    
+    return isValid;
+}
+
+function goBackToStep2() {
+    showStep(2);
 }
 
 /**
@@ -315,7 +390,9 @@ function showError(message) {
 document.addEventListener('DOMContentLoaded', function() {
     const step1NextBtn = document.getElementById('btnStep1Next');
     const step2BackBtn = document.getElementById('btnStep2Back');
-    const step2SubmitBtn = document.getElementById('btnStep2Submit');
+    const step2NextBtn = document.getElementById('btnStep2Next');
+    const step3BackBtn = document.getElementById('btnStep3Back');
+    const step3SubmitBtn = document.getElementById('btnStep3Submit');
     const emailInput = document.getElementById('txtRegClientEmail');
     const passwordInput = document.getElementById('txtRegClientPassword');
     const passwordToggle = document.getElementById('toggleClientPassword');
@@ -345,6 +422,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Initialize Flatpickr for DOB field
+    const dobInput = document.getElementById('txtDOB');
+    if (dobInput) {
+        flatpickr(dobInput, {
+            mode: 'single',
+            dateFormat: 'm/d/Y',
+            maxDate: 'today',
+            yearRange: [1900, new Date().getFullYear()],
+            altInput: true,
+            altFormat: 'm/d/Y'
+        });
+    }
+    
     // Step 2: Back button handler
     if (step2BackBtn) {
         step2BackBtn.addEventListener('click', () => {
@@ -352,7 +442,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Step 2: Address checkbox toggle
+    // Step 2: Next button handler (proceed to step 3)
+    if (step2NextBtn) {
+        step2NextBtn.addEventListener('click', () => {
+            if (!validateStep2Form()) {
+                return;
+            }
+            showStep(3);
+        });
+    }
+    
+    // Step 3: Back button handler
+    if (step3BackBtn) {
+        step3BackBtn.addEventListener('click', () => {
+            goBackToStep2();
+        });
+    }
+    
+    // Step 3: Address checkbox toggle
     const chkNoAddress = document.getElementById('chkNoAddress');
     const addressFields = document.getElementById('addressFields');
     if (chkNoAddress && addressFields) {
@@ -372,11 +479,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Step 2: Submit button handler (placeholder for now)
-    if (step2SubmitBtn) {
-        step2SubmitBtn.addEventListener('click', () => {
-            // TODO: Add step 2 validation and final submission
-            console.log('Step 2 submit - to be implemented');
+    // Step 3: Submit button handler (placeholder for now)
+    if (step3SubmitBtn) {
+        step3SubmitBtn.addEventListener('click', () => {
+            // TODO: Add step 3 validation and final submission
+            console.log('Step 3 submit - to be implemented');
         });
     }
     

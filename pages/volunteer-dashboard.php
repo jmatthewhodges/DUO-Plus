@@ -24,7 +24,7 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
 
     <!-- Inline page styles moved to custom.css -->
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page" style="overflow: hidden;">
 
     <div class="container text-center dashboard-container">
         <!-- Logo Section -->
