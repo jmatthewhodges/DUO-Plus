@@ -455,6 +455,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const dobInput = document.getElementById('txtDOB');
     let dobPicker = null;
     if (dobInput && typeof AirDatepicker !== 'undefined') {
+        // Media query for mobile detection
+        const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
+        
         // English locale fallback (avoids default RU text if locale file not present)
         const englishLocale = {
             days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -474,6 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dateFormat: 'MM/dd/yyyy',
             maxDate: new Date(),
             keyboardNav: true,
+            isMobile: mobileMediaQuery.matches,
             selectedDates: dobInput.value ? [new Date(dobInput.value)] : [],
             onSelect({ formattedDate }) {
                 dobInput.value = formattedDate || '';
@@ -486,6 +490,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         dobPicker = new AirDatepicker(dobInput, opts);
         window.dobPicker = dobPicker;
+        
+        // Listen for screen size changes and update isMobile dynamically
+        mobileMediaQuery.addEventListener('change', (e) => {
+            if (dobPicker) {
+                dobPicker.update({ isMobile: e.matches });
+            }
+        });
     } else if (dobInput && typeof Datepicker !== 'undefined') {
         dobPicker = new Datepicker(dobInput, {
             autoClose: true,
@@ -543,6 +554,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             showStep(3);
+        });
+        
+        // Enter key support for step 2
+        const step2Inputs = ['txtFirstName', 'txtMiddleInitial', 'txtLastName', 'txtPhoneNumber'];
+        step2Inputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        step2NextBtn.click();
+                    }
+                });
+            }
         });
     }
     

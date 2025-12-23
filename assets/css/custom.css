@@ -235,6 +235,241 @@ body.page-qrcode {
    7. RESPONSIVE ADJUSTMENTS
    ========================================================================== */
 
+/* ========== EXTRA SMALL SCREENS (iPhone SE, Small phones) ========== */
+@media (max-width: 375px) {
+  body.d-flex {
+    padding: 20px 0 !important;
+  }
+
+  .login-container,
+  .dashboard-container {
+    max-width: 100% !important;
+    width: 95% !important;
+  }
+
+  .logo-section img {
+    width: 140px !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .subtitle-text {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1.3;
+  }
+
+  /* Compact progress indicator */
+  .progress-indicator {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .step-circle {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+  }
+
+  .step-line {
+    width: 20px !important;
+  }
+
+  /* Compact card */
+  .card {
+    margin-top: 0.5rem !important;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  /* Compact form elements */
+  .form-label {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .form-control,
+  .form-select,
+  .form-control-sm,
+  .form-select-sm {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    min-height: 36px !important;
+  }
+
+  .form-floating > .form-control,
+  .form-floating > .form-select {
+    padding-top: 1rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .form-floating > label {
+    padding: 1rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Compact spacing */
+  .mb-3 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mb-4 {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .mt-2 {
+    margin-top: 0.4rem !important;
+  }
+
+  .gap-2 {
+    gap: 0.5rem !important;
+  }
+
+  /* Compact buttons */
+  .btn {
+    padding: 0.45rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600;
+  }
+
+  .btn-sm {
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Adjust row gap for name inputs */
+  .row.g-2 {
+    --bs-gutter-x: 0.5rem !important;
+  }
+
+  /* Hide optional elements on tiny screens */
+  .form-check-label {
+    font-size: 0.75rem !important;
+  }
+
+  .invalid-feedback {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* ========== SMALL PHONES (375px - 425px) ========== */
+@media (min-width: 376px) and (max-width: 425px) {
+  .login-container,
+  .dashboard-container {
+    max-width: 100% !important;
+    width: 95% !important;
+  }
+
+  .logo-section img {
+    width: 150px !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .subtitle-text {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .card-body {
+    padding: 1.25rem !important;
+  }
+
+  .form-label {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .form-control,
+  .form-control-sm,
+  .form-select,
+  .form-select-sm {
+    padding: 0.5rem 0.7rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .form-floating > .form-control,
+  .form-floating > .form-select {
+    padding-top: 1rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .form-floating > label {
+    padding: 1rem 0.7rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .mb-3 {
+    margin-bottom: 0.6rem !important;
+  }
+
+  .btn {
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .row.g-2 {
+    --bs-gutter-x: 0.65rem !important;
+  }
+}
+
+/* ========== LARGER PHONES (426px - 575px) ========== */
+@media (min-width: 426px) and (max-width: 575px) {
+  .login-container,
+  .dashboard-container {
+    max-width: 95% !important;
+  }
+
+  .logo-section img {
+    width: 160px !important;
+  }
+
+  .subtitle-text {
+    font-size: 0.95rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .card-body {
+    padding: 1.5rem !important;
+  }
+
+  .form-label {
+    font-size: 0.85rem !important;
+  }
+
+  .form-control,
+  .form-control-sm,
+  .form-select,
+  .form-select-sm {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .form-floating > .form-control,
+  .form-floating > .form-select {
+    padding-top: 1rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .form-floating > label {
+    padding: 1rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .mb-3 {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .row.g-2 {
+    --bs-gutter-x: 0.75rem !important;
+  }
+}
+
 /* Mobile height-constrained screens */
 @media (max-height: 700px) {
   .logo-section img {
