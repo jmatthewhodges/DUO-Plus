@@ -306,9 +306,11 @@ function validateStep2Form() {
     let isValid = true;
     
     const firstNameInput = document.getElementById('txtFirstName');
+    const middleInitialInput = document.getElementById('txtMiddleInitial');
     const lastNameInput = document.getElementById('txtLastName');
     const sexSelect = document.getElementById('selectSex');
     const dobInput = document.getElementById('txtDOB');
+    const phoneInput = document.getElementById('txtPhoneNumber');
     
     // Validate First Name
     if (!firstNameInput.value.trim()) {
@@ -318,6 +320,10 @@ function validateStep2Form() {
         firstNameInput.classList.remove('is-invalid');
         firstNameInput.classList.add('is-valid');
     }
+    
+    // Middle Initial (optional, but add valid class for visual consistency)
+    middleInitialInput.classList.remove('is-invalid');
+    middleInitialInput.classList.add('is-valid');
     
     // Validate Last Name
     if (!lastNameInput.value.trim()) {
@@ -346,11 +352,34 @@ function validateStep2Form() {
         dobInput.classList.add('is-valid');
     }
     
+    // Phone Number (optional, but validate format if provided)
+    const phoneValue = phoneInput.value.trim();
+    if (phoneValue) {
+        // Validate phone number format (XXX) XXX-XXXX
+        const digitsOnly = phoneValue.replace(/\D/g, '');
+        if (digitsOnly.length !== 10) {
+            phoneInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            phoneInput.classList.remove('is-invalid');
+            phoneInput.classList.add('is-valid');
+        }
+    } else {
+        // Empty is valid since it's optional
+        phoneInput.classList.remove('is-invalid');
+        phoneInput.classList.add('is-valid');
+    }
+    
     return isValid;
 }
 
 function goBackToStep2() {
     showStep(2);
+}
+
+// Navigate back to step 1
+function goBackToStep1() {
+    showStep(1);
 }
 
 /**
@@ -422,16 +451,81 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize Flatpickr for DOB field
+    // Initialize Air Datepicker for DOB field (supports local v3 or fallback v2)
     const dobInput = document.getElementById('txtDOB');
-    if (dobInput) {
-        flatpickr(dobInput, {
-            mode: 'single',
-            dateFormat: 'm/d/Y',
-            maxDate: 'today',
-            yearRange: [1900, new Date().getFullYear()],
-            altInput: true,
-            altFormat: 'm/d/Y'
+    let dobPicker = null;
+    if (dobInput && typeof AirDatepicker !== 'undefined') {
+        // English locale fallback (avoids default RU text if locale file not present)
+        const englishLocale = {
+            days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+            daysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            daysMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            today: 'Today',
+            clear: 'Clear',
+            dateFormat: 'MM/dd/yyyy',
+            timeFormat: 'hh:mm aa',
+            firstDay: 0
+        };
+
+        const opts = {
+            autoClose: true,
+            dateFormat: 'MM/dd/yyyy',
+            maxDate: new Date(),
+            keyboardNav: true,
+            selectedDates: dobInput.value ? [new Date(dobInput.value)] : [],
+            onSelect({ formattedDate }) {
+                dobInput.value = formattedDate || '';
+            }
+        };
+        if (AirDatepicker.locales && AirDatepicker.locales.en) {
+            opts.locale = AirDatepicker.locales.en;
+        } else {
+            opts.locale = englishLocale;
+        }
+        dobPicker = new AirDatepicker(dobInput, opts);
+        window.dobPicker = dobPicker;
+    } else if (dobInput && typeof Datepicker !== 'undefined') {
+        dobPicker = new Datepicker(dobInput, {
+            autoClose: true,
+            dateFormat: 'MM/dd/yyyy',
+            maxDate: new Date(),
+            keyboardNav: true,
+            language: 'en',
+            selectedDates: dobInput.value ? [new Date(dobInput.value)] : [],
+            onSelect({ formattedDate }) {
+                dobInput.value = formattedDate || '';
+            }
+        });
+        window.dobPicker = dobPicker;
+    } else if (dobInput) {
+        console.warn('Air Datepicker not loaded.');
+    }
+    
+    // Phone number formatting
+    const phoneInput = document.getElementById('txtPhoneNumber');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            // Remove all non-digit characters
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Limit to 10 digits
+            value = value.substring(0, 10);
+            
+            // Format as (XXX) XXX-XXXX
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = '(' + value.substring(0, 3);
+                if (value.length >= 3) {
+                    formattedValue += ') ' + value.substring(3, 6);
+                }
+                if (value.length >= 6) {
+                    formattedValue += '-' + value.substring(6, 10);
+                }
+            }
+            
+            e.target.value = formattedValue;
         });
     }
     
@@ -491,63 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (passwordInput && passwordToggle) {
         passwordToggle.addEventListener('change', () => {
             passwordInput.type = passwordToggle.checked ? 'text' : 'password';
-        });
-    }
-    
-    // Real-time validation feedback
-    if (emailInput) {
-        emailInput.addEventListener('blur', () => {
-            if (emailInput.value.trim()) {
-                const emailError = validateEmail(emailInput.value.trim());
-                const errorDiv = document.getElementById('emailError');
-                if (!emailError) {
-                    emailInput.classList.remove('is-invalid');
-                    emailInput.classList.add('is-valid');
-                    emailInput.removeAttribute('aria-invalid');
-                } else {
-                    emailInput.classList.remove('is-valid');
-                    emailInput.classList.add('is-invalid');
-                    emailInput.setAttribute('aria-invalid', 'true');
-                    if (errorDiv) {
-                        errorDiv.textContent = emailError;
-                    }
-                }
-            }
-        });
-        
-        emailInput.addEventListener('input', () => {
-            if (emailInput.classList.contains('is-invalid') || emailInput.classList.contains('is-valid')) {
-                emailInput.classList.remove('is-invalid', 'is-valid');
-                emailInput.removeAttribute('aria-invalid');
-            }
-        });
-    }
-    
-    if (passwordInput) {
-        passwordInput.addEventListener('blur', () => {
-            if (passwordInput.value.trim()) {
-                const passwordError = validatePassword(passwordInput.value.trim());
-                const errorDiv = document.getElementById('passwordError');
-                if (!passwordError) {
-                    passwordInput.classList.remove('is-invalid');
-                    passwordInput.classList.add('is-valid');
-                    passwordInput.removeAttribute('aria-invalid');
-                } else {
-                    passwordInput.classList.remove('is-valid');
-                    passwordInput.classList.add('is-invalid');
-                    passwordInput.setAttribute('aria-invalid', 'true');
-                    if (errorDiv) {
-                        errorDiv.textContent = passwordError;
-                    }
-                }
-            }
-        });
-        
-        passwordInput.addEventListener('input', () => {
-            if (passwordInput.classList.contains('is-invalid') || passwordInput.classList.contains('is-valid')) {
-                passwordInput.classList.remove('is-invalid', 'is-valid');
-                passwordInput.removeAttribute('aria-invalid');
-            }
         });
     }
 });

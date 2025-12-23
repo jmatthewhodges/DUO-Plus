@@ -9,8 +9,8 @@
     <!-- Bootstrap + HopeUI CSS -->
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
-    <!-- Flatpickr Date Picker -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Air Datepicker (local) -->
+    <link rel="stylesheet" href="../assets/vendor/air-datepicker/air-datepicker.min.css">
     <style>
         body::-webkit-scrollbar {
             display: none;
@@ -63,12 +63,12 @@
 
     <!-- Registration Card -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
-        <div class="card-body p-3">
+        <div class="card-body p-4">
             <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
                 
                 <!-- Step 1: Email & Password -->
                 <div id="step1" class="registration-step">
-                    <div class="form-floating mb-2 text-start">
+                    <div class="form-floating mb-3 text-start">
                         <input type="email" id="txtRegClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
                         <label for="txtRegClientEmail" class="form-label fw-semibold">Email</label>
                         <div class="invalid-feedback" id="emailError" aria-live="polite">
@@ -76,7 +76,7 @@
                         </div>
                     </div>
 
-                    <div class="form-floating mb-2 text-start">
+                    <div class="form-floating mb-3 text-start">
                         <input type="password" id="txtRegClientPassword" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
                         <label for="txtRegClientPassword" class="form-label fw-semibold">Password</label>
                         <div class="invalid-feedback" id="passwordError" aria-live="polite">
@@ -84,12 +84,12 @@
                         </div>
                     </div>
 
-                    <div class="form-check form-switch text-start mb-2">
+                    <div class="form-check form-switch text-start mb-3">
                         <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
                         <label class="form-check-label" for="toggleClientPassword">Show password</label>
                     </div>
 
-                    <button id="btnStep1Next" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
+                    <button id="btnStep1Next" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2 ">Next</button>
                 </div>
 
                 <!-- Step 2: Personal Information -->
@@ -100,7 +100,7 @@
                         <div class="col-5">
                             <div class="form-floating">
                                 <input type="text" id="txtFirstName" class="form-control form-control-sm" placeholder="John" required>
-                                <label for="txtFirstName" class="form-label">First Name</label>
+                                <label for="txtFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
                             </div>
                         </div>
                         <div class="col-2">
@@ -112,7 +112,7 @@
                         <div class="col-5">
                             <div class="form-floating">
                                 <input type="text" id="txtLastName" class="form-control form-control-sm" placeholder="Doe" required>
-                                <label for="txtLastName" class="form-label">Last Name</label>
+                                <label for="txtLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
                             </div>
                         </div>
                     </div>
@@ -122,19 +122,19 @@
                         <div class="col-6">
                             <div class="form-floating">
                                 <select id="selectSex" class="form-select form-select-sm" required>
-                                    <option value="" disabled selected>Select sex</option>
+                                    <option value="" disabled selected hidden>Select...</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
                                     <option value="other">Other</option>
                                     <option value="prefer-not-to-say">Prefer Not to Say</option>
                                 </select>
-                                <label for="selectSex" class="form-label">Sex</label>
+                                <label for="selectSex" class="form-label">Sex <span class="text-danger">*</span></label>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-floating">
-                                <input type="date" id="txtDOB" class="form-control form-control-sm" placeholder="mm/dd/yyyy" required>
-                                <label for="txtDOB" class="form-label">Date of Birth</label>
+                                <input type="text" id="txtDOB" class="form-control form-control-sm" placeholder="mm/dd/yyyy" required>
+                                <label for="txtDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                             </div>
                         </div>
                     </div>
@@ -143,7 +143,7 @@
                     <div class="mb-3">
                         <div class="form-floating">
                             <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm" placeholder="(555) 123-4567">
-                            <label for="txtPhoneNumber" class="form-label">Phone Number (Optional)</label>
+                            <label for="txtPhoneNumber" class="form-label">Phone Number</label>
                         </div>
                     </div>
 
@@ -219,17 +219,11 @@
             <p class="mb-0">(931) 284-4802</p>
         </div>
 
-        <!-- Life Church Logo -->
-        <img src="../assets/images/lifeChurchLogo.webp"
-             alt="Life Church Logo"
-             class="mb-3 mt-4 d-block mx-auto"
-             id="lifeLogo"
-             style="width: 180px;">
     </div>
 
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../assets/vendor/air-datepicker/air-datepicker.min.js"></script>
     <script src="../js/register.js"></script>
 </body>
 </html>
