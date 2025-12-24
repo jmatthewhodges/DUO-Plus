@@ -80,56 +80,57 @@
                         <div class="row g-2 mb-3">
                             <div class="col-5">
                                 <div class="form-floating">
-                                    <input type="text" id="txtFirstName" class="form-control form-control-sm" placeholder="John" required>
+                                    <input type="text" id="txtFirstName" class="form-control form-control-sm" placeholder="John" pattern="[A-Za-z\s'-]+" required>
                                     <label for="txtFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-2">
                                 <div class="form-floating">
-                                    <input type="text" id="txtMiddleInitial" class="form-control form-control-sm" placeholder="M" maxlength="1">
+                                    <input type="text" id="txtMiddleInitial" class="form-control form-control-sm" placeholder="M" pattern="[A-Za-z]" maxlength="1">
                                     <label for="txtMiddleInitial" class="form-label">MI</label>
                                 </div>
                             </div>
                             <div class="col-5">
                                 <div class="form-floating">
-                                    <input type="text" id="txtLastName" class="form-control form-control-sm" placeholder="Doe" required>
+                                    <input type="text" id="txtLastName" class="form-control form-control-sm" placeholder="Doe" pattern="[A-Za-z\s'-]+" required>
                                     <label for="txtLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Sex & Date of Birth -->
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <div class="form-floating">
-                                    <select id="selectSex" class="form-select form-select-sm" required>
-                                        <option value="" disabled selected hidden>Select...</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                        <option value="prefer-not-to-say">Prefer Not to Say</option>
-                                    </select>
-                                    <label for="selectSex" class="form-label">Sex <span class="text-danger">*</span></label>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-floating">
-                                    <input type="text" id="txtDOB" class="form-control form-control-sm" placeholder="mm/dd/yyyy" required>
-                                    <label for="txtDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                </div>
+                        <!-- Sex Selection (Radio Button Group) -->
+                        <div class="mb-3 text-start">
+                            <label class="form-label d-block mb-2">Sex <span class="text-danger">*</span></label>
+                            <div class="btn-group w-100" role="group" aria-label="Sex selection">
+                                <input type="radio" class="btn-check" name="selectSex" id="sexMale" value="male" autocomplete="off">
+                                <label class="btn btn-outline-primary flex-fill" for="sexMale">Male</label>
+
+                                <input type="radio" class="btn-check" name="selectSex" id="sexFemale" value="female" autocomplete="off">
+                                <label class="btn btn-outline-primary flex-fill" for="sexFemale">Female</label>
+
+                                <input type="radio" class="btn-check" name="selectSex" id="sexOther" value="other" autocomplete="off">
+                                <label class="btn btn-outline-primary flex-fill" for="sexOther">Other</label>
                             </div>
                         </div>
 
-                        <!-- Phone Number -->
-                        <div class="mb-3">
-                            <div class="form-floating">
-                                <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm" placeholder="(555) 123-4567">
-                                <label for="txtPhoneNumber" class="form-label">Phone Number</label>
+                        <!-- Date of Birth & Phone Number -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="text" id="txtDOB" class="form-control form-control-sm" placeholder="mm/dd/yyyy" required readonly>
+                                    <label for="txtDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm" placeholder="(555) 123-4567">
+                                    <label for="txtPhoneNumber" class="form-label">Phone Number</label>
+                                </div>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep2Back" type="button" class="btn btn-secondary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep2Back" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
                             <button id="btnStep2Next" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                         </div>
                     </div>
@@ -234,7 +235,7 @@
                         </div>
 
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep3Back" type="button" class="btn btn-secondary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep3Back" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
                             <button id="btnStep3Submit" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                         </div>
                     </div>

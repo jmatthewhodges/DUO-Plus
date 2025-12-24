@@ -217,7 +217,6 @@ function validateStep2Form() {
     
     const firstNameInput = document.getElementById('txtFirstName');
     const lastNameInput = document.getElementById('txtLastName');
-    const sexSelect = document.getElementById('selectSex');
     const dobInput = document.getElementById('txtDOB');
     const phoneInput = document.getElementById('txtPhoneNumber');
 
@@ -244,13 +243,14 @@ function validateStep2Form() {
     middleInitialInput.classList.remove('is-invalid');
     middleInitialInput.classList.add('is-valid');
 
-    // Sex
-    if (!sexSelect.value) {
-        sexSelect.classList.add('is-invalid');
+    // --- Sex (Radio Button Group) ---
+    const selectedSex = document.querySelector('input[name="selectSex"]:checked');
+    const sexButtonGroup = document.querySelector('.btn-group');
+    if (!selectedSex) {
+        sexButtonGroup.classList.add('is-invalid');
         isValid = false;
     } else {
-        sexSelect.classList.remove('is-invalid');
-        sexSelect.classList.add('is-valid');
+        sexButtonGroup.classList.remove('is-invalid');
     }
 
     // Date of Birth
@@ -581,6 +581,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (value.length >= 6) formatted += '-' + value.substring(6, 10);
             }
             e.target.value = formatted;
+        });
+    }
+
+    // --- NAME FIELD VALIDATION (Letters only) ---
+    const firstNameInput = document.getElementById('txtFirstName');
+    const middleInitialInput = document.getElementById('txtMiddleInitial');
+    const lastNameInput = document.getElementById('txtLastName');
+
+    if (firstNameInput) {
+        firstNameInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z\s'-]/g, '');
+        });
+    }
+
+    if (middleInitialInput) {
+        middleInitialInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
+        });
+    }
+
+    if (lastNameInput) {
+        lastNameInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z\s'-]/g, '');
         });
     }
 
