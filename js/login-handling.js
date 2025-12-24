@@ -209,6 +209,17 @@ async function submitClientLogin(email, password) {
  */
 async function submitVolunteerLogin(email, password, errorDiv) {
     try {
+        // --- Show loading spinner immediately ---
+        const loginBtn = document.getElementById('btnVolLogin');
+        const loadingBtn = document.getElementById('btnVolLoading');
+        if (loginBtn && loadingBtn) {
+            loginBtn.style.display = 'none';
+            loadingBtn.style.display = 'block';
+        }
+
+        // --- Wait 4 seconds before proceeding with login ---
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
         const form = document.getElementById('volunteerLoginForm');
         const actionUrl = form.getAttribute('action');
         const hashedPassword = await hashPassword(password);
@@ -231,10 +242,23 @@ async function submitVolunteerLogin(email, password, errorDiv) {
         if (data.success) {
             handleLoginSuccess(data);
         } else {
+            const loginBtn = document.getElementById('btnVolLogin');
+            const loadingBtn = document.getElementById('btnVolLoading');
+            if (loginBtn && loadingBtn) {
+                loginBtn.style.display = 'block';
+                loadingBtn.style.display = 'none';
+            }
             showError(data.message || 'Login failed. Please check your credentials.', errorDiv);
         }
     } catch (error) {
         console.error('Login error:', error);
+        
+        const loginBtn = document.getElementById('btnVolLogin');
+        const loadingBtn = document.getElementById('btnVolLoading');
+        if (loginBtn && loadingBtn) {
+            loginBtn.style.display = 'block';
+            loadingBtn.style.display = 'none';
+        }
         
         const errorMessage = error.message.includes('invalid response')
             ? 'Server error. Please contact administrator if the problem persists.'
@@ -258,6 +282,17 @@ function handleLoginSuccess(data) {
         allowOutsideClick: false,
         allowEscapeKey: false
     }).then(() => {
+        // --- Reset button state and clear password in case user returns ---
+        const loginBtn = document.getElementById('btnVolLogin');
+        const loadingBtn = document.getElementById('btnVolLoading');
+        const volPasswordInput = document.getElementById('txtVolPassword');
+        if (loginBtn && loadingBtn) {
+            loginBtn.style.display = 'block';
+            loadingBtn.style.display = 'none';
+        }
+        if (volPasswordInput) {
+            volPasswordInput.value = '';
+        }
         window.location.href = data.redirect || '../pages/volunteer-dashboard.php';
     });
 }
