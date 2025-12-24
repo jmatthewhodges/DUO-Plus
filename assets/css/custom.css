@@ -666,11 +666,12 @@ body.page-qrcode {
 .dental-options {
   display: flex;
   gap: 0.5rem;
-  padding: 0;
+  padding: 0.5rem 0.75rem;
   margin: 0;
-  background-color: transparent;
-  border: none;
-  grid-column: 2;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  grid-column: 1 / -1;
+  /* Full width on all screens */
   justify-content: center;
   align-items: center;
 }

@@ -1113,29 +1113,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Close modal
-            const waiverModal = bootstrap.Modal.getInstance(document.getElementById('waiverModal'));
-            if (waiverModal) waiverModal.hide();
+            // Save original button content and add loading state
+            const originalContent = btnCompleteRegistration.innerHTML;
+            btnCompleteRegistration.disabled = true;
+            btnCompleteRegistration.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Processing...
+            `;
 
-            // Show success message
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Registration Complete! 🎉',
-                    text: 'Thank you for registering with DUO Mobile Mission.',
-                    icon: 'success',
-                    confirmButtonText: 'Continue',
-                    confirmButtonColor: '#174593'
-                }).then(() => {
-                    // Here you would typically submit the form or redirect
-                    console.log('Selected Services:', Array.from(selectedServices));
-                    if (selectedServices.has('dental')) {
-                        const dentalType = document.querySelector('input[name="dentalType"]:checked');
-                        console.log('Dental Type:', dentalType ? dentalType.value : 'none');
-                    }
-                });
-            } else {
-                alert('Registration Complete! Thank you for registering with DUO Mobile Mission.');
-            }
+            // Wait 2 seconds then show success
+            setTimeout(() => {
+                // Close modal
+                const waiverModal = bootstrap.Modal.getInstance(document.getElementById('waiverModal'));
+                if (waiverModal) waiverModal.hide();
+
+                // Reset button state
+                btnCompleteRegistration.disabled = false;
+                btnCompleteRegistration.innerHTML = originalContent;
+
+                // Show success message
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Registration Complete! 🎉',
+                        text: 'Thank you for registering with DUO Mobile Mission.',
+                        icon: 'success',
+                        confirmButtonText: 'Continue',
+                        confirmButtonColor: '#174593'
+                    }).then(() => {
+                        // Here you would typically submit the form or redirect
+                        console.log('Selected Services:', Array.from(selectedServices));
+                        if (selectedServices.has('dental')) {
+                            const dentalType = document.querySelector('input[name="dentalType"]:checked');
+                            console.log('Dental Type:', dentalType ? dentalType.value : 'none');
+                        }
+                    });
+                } else {
+                    alert('Registration Complete! Thank you for registering with DUO Mobile Mission.');
+                }
+            }, 2000);
         });
     }
 });
