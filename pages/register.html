@@ -53,6 +53,8 @@
 
                     <!-- STEP 1: Email & Password -->
                     <div id="step1" class="registration-step">
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Login Info
+                        </h6>
                         <div class="form-floating mb-3 text-start">
                             <input type="email" id="txtRegClientEmail" class="form-control"
                                 placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
@@ -81,6 +83,8 @@
 
                     <!-- STEP 2: Personal Information -->
                     <div id="step2" class="registration-step" style="display: none;">
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Personal Info
+                        </h6>
                         <!-- First, Middle, Last Name -->
                         <div class="row g-2 mb-3">
                             <div class="col-5">
@@ -155,6 +159,8 @@
 
                     <!-- STEP 3: Address Information -->
                     <div id="step3" class="registration-step" style="display: none;">
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Address Info
+                        </h6>
                         <div class="form-check mb-3 text-start">
                             <input class="form-check-input" type="checkbox" id="chkNoAddress">
                             <label class="form-check-label ms-2" for="chkNoAddress">I don't have a permanent
@@ -215,6 +221,58 @@
                             <button id="btnStep3Back" type="button" style="background-color: #174593;"
                                 class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
                             <button id="btnStep3Submit" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Emergency Contact -->
+                    <div id="step4" class="registration-step" style="display: none;">
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Emergency
+                            Contact</h6>
+                        <div class="form-check mb-3 text-start">
+                            <input class="form-check-input" type="checkbox" id="chkNoEmergencyContact">
+                            <label class="form-check-label ms-2" for="chkNoEmergencyContact">I don't have an emergency
+                                contact</label>
+                        </div>
+
+                        <div id="emergencyContactFields" style="display: block;">
+                            <!-- First Name & Last Name -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtEmergencyFirstName"
+                                            class="form-control form-control-sm" placeholder="John"
+                                            pattern="[A-Za-z\s'-]+" required>
+                                        <label for="txtEmergencyFirstName" class="form-label">First Name <span
+                                                class="text-danger">*</span></label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtEmergencyLastName"
+                                            class="form-control form-control-sm" placeholder="Doe"
+                                            pattern="[A-Za-z\s'-]+" required>
+                                        <label for="txtEmergencyLastName" class="form-label">Last Name <span
+                                                class="text-danger">*</span></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="tel" id="txtEmergencyPhone" class="form-control form-control-sm"
+                                        placeholder="(555) 123-4567">
+                                    <label for="txtEmergencyPhone" class="form-label">Phone <span
+                                            class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep4Back" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep4Next" type="button" style="background-color: #174593;"
                                 class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                         </div>
                     </div>

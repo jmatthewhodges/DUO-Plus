@@ -358,6 +358,59 @@ function validateStep3Form() {
 }
 
 // ============================================================================
+// STEP 4: EMERGENCY CONTACT VALIDATION
+// ============================================================================
+
+/**
+ * Validate Step 4 form fields (Emergency Contact)
+ * @returns {boolean} True if validation passes
+ */
+function validateStep4Form() {
+    // If user checked "I don't have an emergency contact", skip validation
+    const chkNoEmergencyContact = document.getElementById('chkNoEmergencyContact');
+    if (chkNoEmergencyContact && chkNoEmergencyContact.checked) {
+        return true;
+    }
+
+    let isValid = true;
+
+    const firstNameInput = document.getElementById('txtEmergencyFirstName');
+    const lastNameInput = document.getElementById('txtEmergencyLastName');
+    const phoneInput = document.getElementById('txtEmergencyPhone');
+
+    // First Name (required)
+    if (!firstNameInput.value.trim()) {
+        firstNameInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        firstNameInput.classList.remove('is-invalid');
+        firstNameInput.classList.add('is-valid');
+    }
+
+    // Last Name (required)
+    if (!lastNameInput.value.trim()) {
+        lastNameInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        lastNameInput.classList.remove('is-invalid');
+        lastNameInput.classList.add('is-valid');
+    }
+
+    // Phone Number (required, 10 digits)
+    const phoneValue = phoneInput.value.trim();
+    const digitsOnly = phoneValue.replace(/\D/g, '');
+    if (!phoneValue || digitsOnly.length !== 10) {
+        phoneInput.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        phoneInput.classList.remove('is-invalid');
+        phoneInput.classList.add('is-valid');
+    }
+
+    return isValid;
+}
+
+// ============================================================================
 // STEP NAVIGATION
 // ============================================================================
 
@@ -365,11 +418,16 @@ function showStep(stepNumber) {
     const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
     const stepCircle1 = document.getElementById('stepCircle1');
     const stepCircle2 = document.getElementById('stepCircle2');
     const stepCircle3 = document.getElementById('stepCircle3');
+    const stepCircle4 = document.getElementById('stepCircle4');
+    const stepCircle5 = document.getElementById('stepCircle5');
     const stepLine1 = document.getElementById('stepLine1');
     const stepLine2 = document.getElementById('stepLine2');
+    const stepLine3 = document.getElementById('stepLine3');
+    const stepLine4 = document.getElementById('stepLine4');
     const footerSection = document.getElementById('footerSection');
     const lifeLogo = document.getElementById('lifeLogo');
 
@@ -377,37 +435,59 @@ function showStep(stepNumber) {
     if (step1) step1.style.display = 'none';
     if (step2) step2.style.display = 'none';
     if (step3) step3.style.display = 'none';
+    if (step4) step4.style.display = 'none';
+
+    // Reset all circles and lines
+    [stepCircle1, stepCircle2, stepCircle3, stepCircle4, stepCircle5].forEach(c => {
+        if (c) c.classList.remove('active', 'completed');
+    });
+    [stepLine1, stepLine2, stepLine3, stepLine4].forEach(l => {
+        if (l) l.classList.remove('completed');
+    });
 
     if (stepNumber === 1) {
         if (step1) step1.style.display = 'block';
         stepCircle1.classList.add('active');
-        stepCircle1.classList.remove('completed');
-        stepCircle2.classList.remove('active', 'completed');
-        stepCircle3.classList.remove('active', 'completed');
-        stepLine1.classList.remove('completed');
-        stepLine2.classList.remove('completed');
         if (footerSection) footerSection.style.display = 'block';
         if (lifeLogo) lifeLogo.style.display = 'block';
     } else if (stepNumber === 2) {
         if (step2) step2.style.display = 'block';
-        stepCircle1.classList.remove('active');
         stepCircle1.classList.add('completed');
         stepCircle2.classList.add('active');
-        stepCircle2.classList.remove('completed');
-        stepCircle3.classList.remove('active', 'completed');
         stepLine1.classList.add('completed');
-        stepLine2.classList.remove('completed');
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
     } else if (stepNumber === 3) {
         if (step3) step3.style.display = 'block';
-        stepCircle1.classList.remove('active');
         stepCircle1.classList.add('completed');
-        stepCircle2.classList.remove('active');
         stepCircle2.classList.add('completed');
         stepCircle3.classList.add('active');
         stepLine1.classList.add('completed');
         stepLine2.classList.add('completed');
+        if (footerSection) footerSection.style.display = 'none';
+        if (lifeLogo) lifeLogo.style.display = 'none';
+    } else if (stepNumber === 4) {
+        if (step4) step4.style.display = 'block';
+        stepCircle1.classList.add('completed');
+        stepCircle2.classList.add('completed');
+        stepCircle3.classList.add('completed');
+        stepCircle4.classList.add('active');
+        stepLine1.classList.add('completed');
+        stepLine2.classList.add('completed');
+        stepLine3.classList.add('completed');
+        if (footerSection) footerSection.style.display = 'none';
+        if (lifeLogo) lifeLogo.style.display = 'none';
+    } else if (stepNumber === 5) {
+        // Step 5 will be added later
+        stepCircle1.classList.add('completed');
+        stepCircle2.classList.add('completed');
+        stepCircle3.classList.add('completed');
+        stepCircle4.classList.add('completed');
+        stepCircle5.classList.add('active');
+        stepLine1.classList.add('completed');
+        stepLine2.classList.add('completed');
+        stepLine3.classList.add('completed');
+        stepLine4.classList.add('completed');
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
     }
@@ -425,6 +505,10 @@ function goBackToStep1() {
 
 function goBackToStep2() {
     showStep(2);
+}
+
+function goBackToStep3() {
+    showStep(3);
 }
 
 function showError(message) {
@@ -492,6 +576,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const step2NextBtn = document.getElementById('btnStep2Next');
     const step3BackBtn = document.getElementById('btnStep3Back');
     const step3SubmitBtn = document.getElementById('btnStep3Submit');
+    const step4BackBtn = document.getElementById('btnStep4Back');
+    const step4NextBtn = document.getElementById('btnStep4Next');
     const emailInput = document.getElementById('txtRegClientEmail');
     const passwordInput = document.getElementById('txtRegClientPassword');
     const passwordToggle = document.getElementById('toggleClientPassword');
@@ -723,6 +809,73 @@ document.addEventListener('DOMContentLoaded', function () {
             if (input) {
                 input.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') step3SubmitBtn.click();
+                });
+            }
+        });
+    }
+
+    // --- STEP 4: EMERGENCY CONTACT ---
+    if (step4BackBtn) {
+        step4BackBtn.addEventListener('click', goBackToStep3);
+    }
+
+    // Toggle emergency contact fields visibility
+    const chkNoEmergencyContact = document.getElementById('chkNoEmergencyContact');
+    const emergencyContactFields = document.getElementById('emergencyContactFields');
+    if (chkNoEmergencyContact && emergencyContactFields) {
+        chkNoEmergencyContact.addEventListener('change', () => {
+            emergencyContactFields.style.display = chkNoEmergencyContact.checked ? 'none' : 'block';
+            const emergencyInputs = emergencyContactFields.querySelectorAll('input[required]');
+            emergencyInputs.forEach(input => {
+                if (chkNoEmergencyContact.checked) {
+                    input.removeAttribute('required');
+                } else {
+                    input.setAttribute('required', '');
+                }
+            });
+        });
+    }
+
+    // Emergency contact phone formatting
+    const emergencyPhoneInput = document.getElementById('txtEmergencyPhone');
+    if (emergencyPhoneInput) {
+        emergencyPhoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 10);
+            let formatted = '';
+            if (value.length > 0) {
+                formatted = '(' + value.substring(0, 3);
+                if (value.length >= 3) formatted += ') ' + value.substring(3, 6);
+                if (value.length >= 6) formatted += '-' + value.substring(6, 10);
+            }
+            e.target.value = formatted;
+        });
+    }
+
+    // Emergency contact name fields (letters only)
+    const emergencyFirstName = document.getElementById('txtEmergencyFirstName');
+    const emergencyLastName = document.getElementById('txtEmergencyLastName');
+    if (emergencyFirstName) {
+        emergencyFirstName.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z\s'-]/g, '');
+        });
+    }
+    if (emergencyLastName) {
+        emergencyLastName.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z\s'-]/g, '');
+        });
+    }
+
+    if (step4NextBtn) {
+        step4NextBtn.addEventListener('click', () => {
+            if (!validateStep4Form()) return;
+            showStep(5);
+        });
+
+        ['txtEmergencyFirstName', 'txtEmergencyLastName', 'txtEmergencyPhone'].forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') step4NextBtn.click();
                 });
             }
         });
