@@ -277,7 +277,121 @@
                         </div>
                     </div>
 
+                    <!-- STEP 5: Service Selection -->
+                    <div id="step5" class="registration-step" style="display: none;">
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Service
+                            Selection</h6>
+
+                        <p class="text-muted text-center mb-2" style="font-size: 0.85rem;">Select services you wish to
+                            receive</p>
+
+                        <!-- Service Selection Buttons -->
+                        <div class="service-selection mb-2">
+                            <!-- Medical -->
+                            <button type="button" class="service-btn" data-service="medical">
+                                <span class="service-icon">➕</span>
+                                <span class="service-name">Medical</span>
+                                <span class="service-check">✓</span>
+                            </button>
+
+                            <!-- Dental -->
+                            <button type="button" class="service-btn" data-service="dental">
+                                <span class="service-icon">🦷</span>
+                                <span class="service-name">Dental</span>
+                                <span class="service-check">✓</span>
+                            </button>
+
+                            <!-- Dental Sub-options (hidden by default) -->
+                            <div id="dentalOptions" class="dental-options" style="display: none;">
+                                <label class="dental-option">
+                                    <input type="radio" name="dentalType" value="hygiene">
+                                    <span>Hygiene</span>
+                                </label>
+                                <label class="dental-option">
+                                    <input type="radio" name="dentalType" value="extraction">
+                                    <span>Extraction</span>
+                                </label>
+                            </div>
+
+                            <!-- Optical -->
+                            <button type="button" class="service-btn" data-service="optical">
+                                <span class="service-icon">👁️</span>
+                                <span class="service-name">Optical</span>
+                                <span class="service-check">✓</span>
+                            </button>
+
+                            <!-- Haircut -->
+                            <button type="button" class="service-btn" data-service="haircut">
+                                <span class="service-icon">✂️</span>
+                                <span class="service-name">Haircut</span>
+                                <span class="service-check">✓</span>
+                            </button>
+                        </div>
+
+                        <div id="serviceError" class="text-danger text-center mb-2"
+                            style="display: none; font-size: 0.8rem;">
+                            Please select at least one service.
+                        </div>
+
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep5Back" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep5Submit" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Finish</button>
+                        </div>
+                    </div>
+
                 </form>
+            </div>
+        </div>
+
+        <!-- ====== WAIVER MODAL ====== -->
+        <div class="modal fade" id="waiverModal" tabindex="-1" aria-labelledby="waiverModalLabel" aria-hidden="true"
+            data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header py-2 border-0">
+                        <div class="text-center w-100">
+                            <h5 class="modal-title mb-1" style="color: #174593;">🎉 You're Almost Done!</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Just sign the waiver to complete your
+                                registration</p>
+                        </div>
+                    </div>
+                    <div class="modal-body py-2">
+                        <div class="waiver-content"
+                            style="max-height: 120px; overflow-y: auto; font-size: 0.75rem; background: #f8f9fa; padding: 0.6rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                            <p class="mb-1"><strong>By signing, I agree to:</strong></p>
+                            <ul style="padding-left: 1rem; margin-bottom: 0;">
+                                <li>Voluntarily participate in DUO services</li>
+                                <li>Provide accurate health information</li>
+                                <li>Release DUO from liability</li>
+                                <li>Consent to photo/media use</li>
+                                <li>Allow emergency treatment if needed</li>
+                            </ul>
+                        </div>
+
+                        <!-- Signature Pad in Modal -->
+                        <div class="signature-container">
+                            <label class="form-label mb-1"
+                                style="font-size: 0.8rem; color: #174593; font-weight: 600;">Your Signature <span
+                                    class="text-danger">*</span></label>
+                            <div class="signature-pad-wrapper" id="modalSignatureWrapper">
+                                <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+                                <button type="button" id="btnClearSignature" class="btn-clear-signature">Clear</button>
+                            </div>
+                            <div id="signatureError" class="text-danger text-center mt-1"
+                                style="display: none; font-size: 0.75rem;">
+                                Please sign above to continue
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 border-0 justify-content-center">
+                        <button type="button" id="btnCompleteRegistration" class="btn btn-primary w-100"
+                            style="background-color: #174593;">
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 

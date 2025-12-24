@@ -604,6 +604,220 @@ body.page-qrcode {
 }
 
 /* ============================================================================
+   SERVICE SELECTION (STEP 5)
+   ============================================================================ */
+
+.service-selection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.service-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.service-btn:hover {
+  border-color: #174593;
+  background-color: #f8f9ff;
+}
+
+.service-btn.selected {
+  border-color: #174593;
+  background-color: #e8f0ff;
+}
+
+.service-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  width: 40px;
+  text-align: center;
+}
+
+.service-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+}
+
+.service-check {
+  font-size: 1.25rem;
+  color: #174593;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.service-btn.selected .service-check {
+  opacity: 1;
+}
+
+/* Dental Sub-options */
+.dental-options {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  grid-column: 2;
+  justify-content: center;
+  align-items: center;
+}
+
+.dental-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  border: 2px solid #174593;
+  border-radius: 25px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #174593;
+}
+
+.dental-option:hover {
+  background-color: #e8f0ff;
+}
+
+.dental-option input[type="radio"] {
+  display: none;
+}
+
+.dental-option:has(input:checked) {
+  background-color: #174593;
+  color: white;
+}
+
+/* Signature Pad */
+.signature-container {
+  margin-top: 0.5rem;
+}
+
+.signature-pad-wrapper {
+  position: relative;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fafafa;
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.btn-clear-signature {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-signature:hover {
+  background-color: #f8f9fa;
+  border-color: #174593;
+  color: #174593;
+}
+
+.signature-pad-wrapper.has-signature {
+  border-color: #198754;
+}
+
+.signature-pad-wrapper.invalid {
+  border-color: #dc3545;
+}
+
+/* Step 5 button spacing for larger screens */
+#step5 .d-flex.gap-2.mt-2 {
+  margin-top: 1.5rem !important;
+}
+
+/* Waiver Sign Button */
+.waiver-sign-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.waiver-sign-btn:hover {
+  border-color: #174593;
+  background-color: #f8f9ff;
+}
+
+.waiver-sign-btn.signed {
+  border-color: #198754;
+  background-color: #e8f5e9;
+}
+
+.waiver-icon {
+  font-size: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.waiver-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.waiver-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.waiver-status {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.waiver-sign-btn.signed .waiver-status {
+  color: #198754;
+}
+
+.waiver-check {
+  font-size: 1.25rem;
+  color: #198754;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.waiver-sign-btn.signed .waiver-check {
+  opacity: 1;
+}
+
+/* ============================================================================
    RESPONSIVE DESIGN - MOBILE FIRST
    ============================================================================ */
 
@@ -720,6 +934,65 @@ body.page-qrcode {
     padding-right: 1rem !important;
     font-size: 0.9rem !important;
   }
+
+  /* Service buttons responsive */
+  .service-btn {
+    padding: 0.6rem 0.85rem;
+  }
+
+  .service-icon {
+    font-size: 1.25rem;
+    margin-right: 0.6rem;
+    width: 32px;
+  }
+
+  .service-name {
+    font-size: 0.875rem;
+  }
+
+  .service-selection {
+    grid-template-columns: 1fr;
+    /* Single column on small screens */
+    gap: 0.5rem;
+  }
+
+  .dental-options {
+    grid-column: 1;
+    /* Full width on small screens */
+    gap: 0.4rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    justify-content: stretch;
+  }
+
+  .dental-option {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 20px;
+  }
+
+  #step5 .d-flex.gap-2.mt-2 {
+    margin-top: 0.5rem !important;
+  }
+
+  .waiver-sign-btn {
+    padding: 0.6rem 0.85rem;
+  }
+
+  .waiver-icon {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
+
+  .waiver-title {
+    font-size: 0.85rem;
+  }
+
+  .waiver-status {
+    font-size: 0.7rem;
+  }
 }
 
 /* Small phones (376-425px) */
@@ -787,6 +1060,46 @@ body.page-qrcode {
     margin-bottom: 0.3rem !important;
     font-size: 0.85rem;
   }
+
+  /* Service selection responsive for 376-425px */
+  .service-selection {
+    grid-template-columns: 1fr;
+    /* Single column */
+    gap: 0.6rem;
+  }
+
+  .service-btn {
+    padding: 0.7rem 1rem;
+  }
+
+  .service-icon {
+    font-size: 1.35rem;
+    width: 35px;
+  }
+
+  .service-name {
+    font-size: 0.9rem;
+  }
+
+  .dental-options {
+    grid-column: 1;
+    /* Full width */
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .dental-option {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 20px;
+  }
+
+  #step5 .d-flex.gap-2.mt-2 {
+    margin-top: 0.75rem !important;
+  }
 }
 
 /* Larger phones (426-575px) */
@@ -808,6 +1121,106 @@ body.page-qrcode {
   .form-select:not(.form-floating .form-select) {
     padding: 0.5rem 0.75rem !important;
     font-size: 0.9rem !important;
+  }
+
+  /* Service selection responsive for 426-575px */
+  .service-selection {
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columns */
+    gap: 0.6rem;
+  }
+
+  .service-btn {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .service-icon {
+    font-size: 1.25rem;
+    margin-right: 0.6rem;
+    width: 32px;
+  }
+
+  .service-name {
+    font-size: 0.875rem;
+  }
+
+  .dental-options {
+    grid-column: 1 / -1;
+    /* Full width */
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  .dental-option {
+    flex: 0 1 auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  #step5 .d-flex.gap-2.mt-2 {
+    margin-top: 0.75rem !important;
+  }
+
+  .step-title {
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  #step5 p.text-muted {
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* Small tablets / Large phones (576-767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+  .card-body {
+    padding: 1.25rem !important;
+  }
+
+  .service-selection {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .service-btn {
+    padding: 0.75rem 1rem;
+  }
+
+  .service-icon {
+    font-size: 1.35rem;
+    margin-right: 0.75rem;
+    width: 36px;
+  }
+
+  .service-name {
+    font-size: 0.9rem;
+  }
+
+  .dental-options {
+    grid-column: 1 / -1;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  .dental-option {
+    flex: 0 1 auto;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  #step5 .d-flex.gap-2.mt-2 {
+    margin-top: 1rem !important;
+  }
+
+  .step-title {
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
   }
 }
 

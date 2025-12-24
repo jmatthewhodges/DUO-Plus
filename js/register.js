@@ -411,6 +411,138 @@ function validateStep4Form() {
 }
 
 // ============================================================================
+// STEP 5: SERVICE SELECTION & SIGNATURE VALIDATION
+// ============================================================================
+
+// Track selected services
+let selectedServices = new Set();
+let signatureCanvas = null;
+let signatureCtx = null;
+let isDrawing = false;
+let hasSignature = false;
+
+/**
+ * Initialize signature canvas
+ */
+function initSignatureCanvas() {
+    signatureCanvas = document.getElementById('signatureCanvas');
+    if (!signatureCanvas) return;
+
+    signatureCtx = signatureCanvas.getContext('2d');
+
+    // Set canvas size to match display size
+    const wrapper = signatureCanvas.parentElement;
+    const rect = wrapper.getBoundingClientRect();
+    signatureCanvas.width = rect.width - 4; // Account for border
+    signatureCanvas.height = 120;
+
+    // Set drawing style
+    signatureCtx.strokeStyle = '#000';
+    signatureCtx.lineWidth = 2;
+    signatureCtx.lineCap = 'round';
+    signatureCtx.lineJoin = 'round';
+
+    // Mouse events
+    signatureCanvas.addEventListener('mousedown', startDrawing);
+    signatureCanvas.addEventListener('mousemove', draw);
+    signatureCanvas.addEventListener('mouseup', stopDrawing);
+    signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+    // Touch events
+    signatureCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    signatureCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    signatureCanvas.addEventListener('touchend', stopDrawing);
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    const pos = getMousePos(e);
+    signatureCtx.beginPath();
+    signatureCtx.moveTo(pos.x, pos.y);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    const pos = getMousePos(e);
+    signatureCtx.lineTo(pos.x, pos.y);
+    signatureCtx.stroke();
+    hasSignature = true;
+    document.querySelector('.signature-pad-wrapper').classList.add('has-signature');
+    document.querySelector('.signature-pad-wrapper').classList.remove('invalid');
+    document.getElementById('signatureError').style.display = 'none';
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    startDrawing(mouseEvent);
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    draw(mouseEvent);
+}
+
+function getMousePos(e) {
+    const rect = signatureCanvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+function clearSignature() {
+    if (signatureCtx && signatureCanvas) {
+        signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        hasSignature = false;
+        document.querySelector('.signature-pad-wrapper').classList.remove('has-signature');
+    }
+}
+
+/**
+ * Validate Step 5 form fields (Service Selection & Signature)
+ * @returns {boolean} True if validation passes
+ */
+function validateStep5Form() {
+    let isValid = true;
+
+    // Check if at least one service is selected
+    if (selectedServices.size === 0) {
+        document.getElementById('serviceError').style.display = 'block';
+        isValid = false;
+    } else {
+        document.getElementById('serviceError').style.display = 'none';
+    }
+
+    // If dental is selected, check if dental type is selected
+    if (selectedServices.has('dental')) {
+        const dentalType = document.querySelector('input[name="dentalType"]:checked');
+        if (!dentalType) {
+            // Highlight dental options
+            document.getElementById('dentalOptions').style.border = '2px solid #dc3545';
+            isValid = false;
+        } else {
+            document.getElementById('dentalOptions').style.border = '1px solid #dee2e6';
+        }
+    }
+
+    return isValid;
+}
+
+// ============================================================================
 // STEP NAVIGATION
 // ============================================================================
 
@@ -419,6 +551,7 @@ function showStep(stepNumber) {
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
     const step4 = document.getElementById('step4');
+    const step5 = document.getElementById('step5');
     const stepCircle1 = document.getElementById('stepCircle1');
     const stepCircle2 = document.getElementById('stepCircle2');
     const stepCircle3 = document.getElementById('stepCircle3');
@@ -436,6 +569,7 @@ function showStep(stepNumber) {
     if (step2) step2.style.display = 'none';
     if (step3) step3.style.display = 'none';
     if (step4) step4.style.display = 'none';
+    if (step5) step5.style.display = 'none';
 
     // Reset all circles and lines
     [stepCircle1, stepCircle2, stepCircle3, stepCircle4, stepCircle5].forEach(c => {
@@ -478,7 +612,7 @@ function showStep(stepNumber) {
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
     } else if (stepNumber === 5) {
-        // Step 5 will be added later
+        if (step5) step5.style.display = 'block';
         stepCircle1.classList.add('completed');
         stepCircle2.classList.add('completed');
         stepCircle3.classList.add('completed');
@@ -509,6 +643,10 @@ function goBackToStep2() {
 
 function goBackToStep3() {
     showStep(3);
+}
+
+function goBackToStep4() {
+    showStep(4);
 }
 
 function showError(message) {
@@ -578,6 +716,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const step3SubmitBtn = document.getElementById('btnStep3Submit');
     const step4BackBtn = document.getElementById('btnStep4Back');
     const step4NextBtn = document.getElementById('btnStep4Next');
+    const step5BackBtn = document.getElementById('btnStep5Back');
+    const step5SubmitBtn = document.getElementById('btnStep5Submit');
     const emailInput = document.getElementById('txtRegClientEmail');
     const passwordInput = document.getElementById('txtRegClientPassword');
     const passwordToggle = document.getElementById('toggleClientPassword');
@@ -877,6 +1017,124 @@ document.addEventListener('DOMContentLoaded', function () {
                 input.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') step4NextBtn.click();
                 });
+            }
+        });
+    }
+
+    // --- STEP 5: SERVICE SELECTION & SIGNATURE ---
+    if (step5BackBtn) {
+        step5BackBtn.addEventListener('click', goBackToStep4);
+    }
+
+    // Service button toggle
+    const serviceButtons = document.querySelectorAll('.service-btn');
+    serviceButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const service = btn.dataset.service;
+
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+                selectedServices.delete(service);
+
+                // Hide dental options if dental is deselected
+                if (service === 'dental') {
+                    document.getElementById('dentalOptions').style.display = 'none';
+                    // Clear dental type selection
+                    const dentalRadios = document.querySelectorAll('input[name="dentalType"]');
+                    dentalRadios.forEach(r => r.checked = false);
+                }
+            } else {
+                btn.classList.add('selected');
+                selectedServices.add(service);
+
+                // Show dental options if dental is selected
+                if (service === 'dental') {
+                    document.getElementById('dentalOptions').style.display = 'flex';
+                }
+            }
+
+            // Hide service error if at least one selected
+            if (selectedServices.size > 0) {
+                document.getElementById('serviceError').style.display = 'none';
+            }
+        });
+    });
+
+    // Close dental options after selecting an option
+    const dentalRadios = document.querySelectorAll('input[name="dentalType"]');
+    dentalRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            // Hide dental options after selection
+            setTimeout(() => {
+                document.getElementById('dentalOptions').style.display = 'none';
+                // Update dental button to show which option was selected
+                const dentalBtn = document.querySelector('.service-btn[data-service="dental"] .service-name');
+                if (dentalBtn && radio.checked) {
+                    dentalBtn.textContent = `Dental (${radio.value === 'hygiene' ? 'Hygiene' : 'Extraction'})`;
+                }
+            }, 200);
+        });
+    });
+
+    // Clear signature button
+    const btnClearSignature = document.getElementById('btnClearSignature');
+    if (btnClearSignature) {
+        btnClearSignature.addEventListener('click', clearSignature);
+    }
+
+    // Initialize signature canvas when waiver modal is shown
+    const waiverModalEl = document.getElementById('waiverModal');
+    if (waiverModalEl) {
+        waiverModalEl.addEventListener('shown.bs.modal', () => {
+            initSignatureCanvas();
+        });
+    }
+
+    // Finish button - opens waiver modal after validating services
+    if (step5SubmitBtn) {
+        step5SubmitBtn.addEventListener('click', () => {
+            if (!validateStep5Form()) return;
+
+            // Show waiver modal
+            const waiverModal = new bootstrap.Modal(document.getElementById('waiverModal'));
+            waiverModal.show();
+        });
+    }
+
+    // Complete Registration button (in waiver modal)
+    const btnCompleteRegistration = document.getElementById('btnCompleteRegistration');
+    if (btnCompleteRegistration) {
+        btnCompleteRegistration.addEventListener('click', () => {
+            // Validate signature
+            if (!hasSignature) {
+                const wrapper = document.querySelector('.signature-pad-wrapper');
+                if (wrapper) wrapper.classList.add('invalid');
+                document.getElementById('signatureError').style.display = 'block';
+                return;
+            }
+
+            // Close modal
+            const waiverModal = bootstrap.Modal.getInstance(document.getElementById('waiverModal'));
+            if (waiverModal) waiverModal.hide();
+
+            // Show success message
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Registration Complete! 🎉',
+                    text: 'Thank you for registering with DUO Mobile Mission.',
+                    icon: 'success',
+                    confirmButtonText: 'Continue',
+                    confirmButtonColor: '#174593'
+                }).then(() => {
+                    // Here you would typically submit the form or redirect
+                    console.log('Selected Services:', Array.from(selectedServices));
+                    if (selectedServices.has('dental')) {
+                        const dentalType = document.querySelector('input[name="dentalType"]:checked');
+                        console.log('Dental Type:', dentalType ? dentalType.value : 'none');
+                    }
+                });
+            } else {
+                alert('Registration Complete! Thank you for registering with DUO Mobile Mission.');
             }
         });
     }
