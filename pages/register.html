@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,15 +17,13 @@
      REGISTRATION PAGE - Multi-step form with validation
      ============================================================================ -->
 
-<body class="d-flex align-items-start justify-content-center v-center-page" style="padding: 20px 0; overflow: hidden; height: 100vh;">
+<body class="d-flex align-items-start justify-content-center v-center-page"
+    style="padding: 20px 0; overflow: hidden; height: 100vh;">
     <div class="container text-center login-container">
 
         <!-- ====== LOGO SECTION ====== -->
         <div class="logo-section mb-3">
-            <img src="../assets/images/DUOPlusDropLogo.png"
-                 alt="DUO Logo"
-                 class="mb-3"
-                 style="width: 180px;">
+            <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 180px;">
         </div>
 
         <!-- ====== PAGE TITLE ====== -->
@@ -55,23 +54,29 @@
                     <!-- STEP 1: Email & Password -->
                     <div id="step1" class="registration-step">
                         <div class="form-floating mb-3 text-start">
-                            <input type="email" id="txtRegClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
+                            <input type="email" id="txtRegClientEmail" class="form-control"
+                                placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
                             <label for="txtRegClientEmail" class="form-label fw-semibold">Email</label>
-                            <div class="invalid-feedback" id="emailError" aria-live="polite">Please enter an email address.</div>
+                            <div class="invalid-feedback" id="emailError" aria-live="polite">Please enter an email
+                                address.</div>
                         </div>
 
                         <div class="form-floating mb-3 text-start">
-                            <input type="password" id="txtRegClientPassword" class="form-control" placeholder="ex: password123" required aria-describedby="passwordError">
+                            <input type="password" id="txtRegClientPassword" class="form-control"
+                                placeholder="ex: password123" required aria-describedby="passwordError">
                             <label for="txtRegClientPassword" class="form-label fw-semibold">Password</label>
-                            <div class="invalid-feedback" id="passwordError" aria-live="polite">Please enter a password.</div>
+                            <div class="invalid-feedback" id="passwordError" aria-live="polite">Please enter a password.
+                            </div>
                         </div>
 
                         <div class="form-check form-switch text-start mb-3">
-                            <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
+                            <input class="form-check-input" type="checkbox" id="toggleClientPassword"
+                                aria-label="Show password">
                             <label class="form-check-label" for="toggleClientPassword">Show password</label>
                         </div>
 
-                        <button id="btnStep1Next" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
+                        <button id="btnStep1Next" type="button" style="background-color: #174593;"
+                            class="btn btn-primary w-100 rounded-2">Next</button>
                     </div>
 
                     <!-- STEP 2: Personal Information -->
@@ -80,20 +85,25 @@
                         <div class="row g-2 mb-3">
                             <div class="col-5">
                                 <div class="form-floating">
-                                    <input type="text" id="txtFirstName" class="form-control form-control-sm" placeholder="John" pattern="[A-Za-z\s'-]+" required>
-                                    <label for="txtFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" id="txtFirstName" class="form-control form-control-sm"
+                                        placeholder="John" pattern="[A-Za-z\s'-]+" required>
+                                    <label for="txtFirstName" class="form-label">First Name <span
+                                            class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-2">
                                 <div class="form-floating">
-                                    <input type="text" id="txtMiddleInitial" class="form-control form-control-sm" placeholder="M" pattern="[A-Za-z]" maxlength="1">
+                                    <input type="text" id="txtMiddleInitial" class="form-control form-control-sm"
+                                        placeholder="M" pattern="[A-Za-z]" maxlength="1">
                                     <label for="txtMiddleInitial" class="form-label">MI</label>
                                 </div>
                             </div>
                             <div class="col-5">
                                 <div class="form-floating">
-                                    <input type="text" id="txtLastName" class="form-control form-control-sm" placeholder="Doe" pattern="[A-Za-z\s'-]+" required>
-                                    <label for="txtLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" id="txtLastName" class="form-control form-control-sm"
+                                        placeholder="Doe" pattern="[A-Za-z\s'-]+" required>
+                                    <label for="txtLastName" class="form-label">Last Name <span
+                                            class="text-danger">*</span></label>
                                 </div>
                             </div>
                         </div>
@@ -102,13 +112,16 @@
                         <div class="mb-3 text-start">
                             <label class="form-label d-block mb-2">Sex <span class="text-danger">*</span></label>
                             <div class="btn-group w-100" role="group" aria-label="Sex selection">
-                                <input type="radio" class="btn-check" name="selectSex" id="sexMale" value="male" autocomplete="off">
+                                <input type="radio" class="btn-check" name="selectSex" id="sexMale" value="male"
+                                    autocomplete="off">
                                 <label class="btn btn-outline-primary flex-fill" for="sexMale">Male</label>
 
-                                <input type="radio" class="btn-check" name="selectSex" id="sexFemale" value="female" autocomplete="off">
+                                <input type="radio" class="btn-check" name="selectSex" id="sexFemale" value="female"
+                                    autocomplete="off">
                                 <label class="btn btn-outline-primary flex-fill" for="sexFemale">Female</label>
 
-                                <input type="radio" class="btn-check" name="selectSex" id="sexOther" value="other" autocomplete="off">
+                                <input type="radio" class="btn-check" name="selectSex" id="sexOther" value="other"
+                                    autocomplete="off">
                                 <label class="btn btn-outline-primary flex-fill" for="sexOther">Other</label>
                             </div>
                         </div>
@@ -117,21 +130,26 @@
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="form-floating">
-                                    <input type="text" id="txtDOB" class="form-control form-control-sm" placeholder="mm/dd/yyyy" required readonly>
-                                    <label for="txtDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                    <input type="text" id="txtDOB" class="form-control form-control-sm"
+                                        placeholder="mm/dd/yyyy" required readonly>
+                                    <label for="txtDOB" class="form-label">Date of Birth <span
+                                            class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-floating">
-                                    <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm" placeholder="(555) 123-4567">
-                                    <label for="txtPhoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm"
+                                        placeholder="(555) 123-4567">
+                                    <label for="txtPhoneNumber" class="form-label">Phone</label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep2Back" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep2Next" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                            <button id="btnStep2Back" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep2Next" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                         </div>
                     </div>
 
@@ -139,22 +157,26 @@
                     <div id="step3" class="registration-step" style="display: none;">
                         <div class="form-check mb-3 text-start">
                             <input class="form-check-input" type="checkbox" id="chkNoAddress">
-                            <label class="form-check-label ms-2" for="chkNoAddress">I don't have a permanent address</label>
+                            <label class="form-check-label ms-2" for="chkNoAddress">I don't have a permanent
+                                address</label>
                         </div>
 
                         <div id="addressFields" style="display: block;">
                             <!-- Street Address 1 -->
                             <div class="mb-3">
                                 <div class="form-floating">
-                                    <input type="text" id="txtStreetAddress" class="form-control form-control-sm" placeholder="123 Main St" required>
-                                    <label for="txtStreetAddress" class="form-label">Street Address <span class="text-danger">*</span></label>
+                                    <input type="text" id="txtStreetAddress" class="form-control form-control-sm"
+                                        placeholder="123 Main St" required>
+                                    <label for="txtStreetAddress" class="form-label">Street Address <span
+                                            class="text-danger">*</span></label>
                                 </div>
                             </div>
 
                             <!-- Street Address 2 (Optional) -->
                             <div class="mb-3">
                                 <div class="form-floating">
-                                    <input type="text" id="txtStreetAddress2" class="form-control form-control-sm" placeholder="Apt, Suite, Unit, etc.">
+                                    <input type="text" id="txtStreetAddress2" class="form-control form-control-sm"
+                                        placeholder="Apt, Suite, Unit, etc.">
                                     <label for="txtStreetAddress2" class="form-label">Street Address 2</label>
                                 </div>
                             </div>
@@ -163,28 +185,37 @@
                             <div class="row g-2 mb-3">
                                 <div class="col-4">
                                     <div class="form-floating">
-                                        <input type="text" id="txtCity" class="form-control form-control-sm" placeholder="Nashville" required>
-                                        <label for="txtCity" class="form-label">City <span class="text-danger">*</span></label>
+                                        <input type="text" id="txtCity" class="form-control form-control-sm"
+                                            placeholder="Nashville" pattern="[A-Za-z\s]+" required>
+                                        <label for="txtCity" class="form-label">City <span
+                                                class="text-danger">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <button class="btn-state-select-wrapper" type="button" id="btnChooseState" data-bs-toggle="modal" data-bs-target="#stateModal">
-                                        <input type="text" id="txtState" class="form-control form-control-sm" placeholder="State" readonly required>
+                                    <button class="btn-state-select-wrapper" type="button" id="btnChooseState"
+                                        data-bs-toggle="modal" data-bs-target="#stateModal">
+                                        <input type="text" id="txtState" class="form-control form-control-sm"
+                                            placeholder="State" readonly required>
                                         <span class="state-label">State <span class="text-danger">*</span></span>
                                     </button>
                                 </div>
                                 <div class="col-4">
                                     <div class="form-floating">
-                                        <input type="text" id="txtZip" class="form-control form-control-sm" placeholder="37201" maxlength="5" required>
-                                        <label for="txtZip" class="form-label">ZIP <span class="text-danger">*</span></label>
+                                        <input type="text" id="txtZip" class="form-control form-control-sm"
+                                            placeholder="37201" pattern="[0-9]{5}" inputmode="numeric" maxlength="5"
+                                            required>
+                                        <label for="txtZip" class="form-label">ZIP <span
+                                                class="text-danger">*</span></label>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep3Back" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep3Submit" type="button" style="background-color: #174593;" class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                            <button id="btnStep3Back" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
+                            <button id="btnStep3Submit" type="button" style="background-color: #174593;"
+                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
                         </div>
                     </div>
 
@@ -260,7 +291,8 @@
 
         <!-- ====== FOOTER ====== -->
         <div class="text-center mt-4" id="footerSection">
-            <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">Back To Login</a>
+            <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">Back
+                To Login</a>
             <p class="mb-2 fw-semibold">Contact Us</p>
             <p class="mb-2">info@duomobilemission.com</p>
             <p class="mb-0">(931) 284-4802</p>
@@ -269,18 +301,27 @@
     </div>
 
     <!-- ====== TESTING NAVIGATION (Remove before production) ====== -->
-    <div style="position: fixed; bottom: 10px; right: 10px; display: flex; gap: 5px; flex-wrap: wrap; max-width: 200px; z-index: 9999;">
-        <button onclick="showStep(1)" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 1</button>
-        <button onclick="showStep(2)" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 2</button>
-        <button onclick="showStep(3)" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 3</button>
-        <button onclick="showStep(4)" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 4</button>
-        <button onclick="showStep(5)" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 5</button>
+    <div
+        style="position: fixed; bottom: 10px; right: 10px; display: flex; gap: 5px; flex-wrap: wrap; max-width: 200px; z-index: 9999;">
+        <button onclick="showStep(1)" class="btn btn-outline-secondary btn-sm"
+            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 1</button>
+        <button onclick="showStep(2)" class="btn btn-outline-secondary btn-sm"
+            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 2</button>
+        <button onclick="showStep(3)" class="btn btn-outline-secondary btn-sm"
+            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 3</button>
+        <button onclick="showStep(4)" class="btn btn-outline-secondary btn-sm"
+            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 4</button>
+        <button onclick="showStep(5)" class="btn btn-outline-secondary btn-sm"
+            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 5</button>
     </div>
 
     <!-- ====== SCRIPTS ====== -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/vendor/air-datepicker/air-datepicker.min.js"></script>
     <script src="../js/register.js"></script>
 </body>
+
 </html>

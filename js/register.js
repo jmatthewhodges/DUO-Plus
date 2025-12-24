@@ -51,7 +51,7 @@ function validateEmail(email) {
     if (email.length > 254) return 'Email address is too long (maximum 254 characters).';
 
     const emailRegex = /^[a-zA-Z0-9][a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]*[a-zA-Z0-9]@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    
+
     if (!emailRegex.test(email)) {
         if (!email.includes('@')) return 'Email must contain an @ symbol.';
         if (!email.includes('.')) return 'Email must contain a domain (e.g., gmail.com).';
@@ -60,7 +60,7 @@ function validateEmail(email) {
         if (email.endsWith('@')) return 'Email must include a domain after @.';
         if (email.includes('..')) return 'Email cannot contain consecutive dots.';
         if (email.includes(' ')) return 'Email cannot contain spaces.';
-        
+
         const parts = email.split('@');
         if (parts[1] && !parts[1].includes('.')) return 'Domain must include a period (e.g., gmail.com).';
         if (parts[1] && parts[1].endsWith('.')) return 'Domain cannot end with a period.';
@@ -86,7 +86,7 @@ function validatePassword(password) {
     }
 
     const commonPasswords = ['password', 'password1', 'password123', '12345678', 'qwerty', 'abc123',
-                             'letmein', 'welcome', 'monkey', '1234567890', 'password1234'];
+        'letmein', 'welcome', 'monkey', '1234567890', 'password1234'];
     if (commonPasswords.includes(password.toLowerCase())) {
         return 'This password is too common. Please choose a more unique password.';
     }
@@ -141,19 +141,19 @@ function showStep(stepNumber) {
     const stepCircle3 = document.getElementById('stepCircle3');
     const stepLine1 = document.getElementById('stepLine1');
     const stepLine2 = document.getElementById('stepLine2');
-    
+
     const footerSection = document.getElementById('footerSection');
     const lifeLogo = document.getElementById('lifeLogo');
-    
+
     // Hide all steps first
     if (step1) step1.style.display = 'none';
     if (step2) step2.style.display = 'none';
     if (step3) step3.style.display = 'none';
-    
+
     if (stepNumber === 1) {
         // Show step 1, hide step 2 and 3
         if (step1) step1.style.display = 'block';
-        
+
         // Update progress indicator
         stepCircle1.classList.add('active');
         stepCircle1.classList.remove('completed');
@@ -161,15 +161,15 @@ function showStep(stepNumber) {
         stepCircle3.classList.remove('active', 'completed');
         stepLine1.classList.remove('completed');
         stepLine2.classList.remove('completed');
-        
+
         // Show footer during step 1
         if (footerSection) footerSection.style.display = 'block';
         if (lifeLogo) lifeLogo.style.display = 'block';
-        
+
     } else if (stepNumber === 2) {
         // Hide step 1 and 3, show step 2
         if (step2) step2.style.display = 'block';
-        
+
         // Update progress indicator
         stepCircle1.classList.remove('active');
         stepCircle1.classList.add('completed');
@@ -178,15 +178,15 @@ function showStep(stepNumber) {
         stepCircle3.classList.remove('active', 'completed');
         stepLine1.classList.add('completed');
         stepLine2.classList.remove('completed');
-        
+
         // Hide footer during step 2
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
-        
+
     } else if (stepNumber === 3) {
         // Hide step 1 and 2, show step 3
         if (step3) step3.style.display = 'block';
-        
+
         // Update progress indicator
         stepCircle1.classList.remove('active');
         stepCircle1.classList.add('completed');
@@ -195,12 +195,12 @@ function showStep(stepNumber) {
         stepCircle3.classList.add('active');
         stepLine1.classList.add('completed');
         stepLine2.classList.add('completed');
-        
+
         // Hide footer during step 3
         if (footerSection) footerSection.style.display = 'none';
         if (lifeLogo) lifeLogo.style.display = 'none';
     }
-    
+
     // Scroll to top of card
     const card = document.querySelector('.card');
     if (card) {
@@ -214,7 +214,7 @@ function showStep(stepNumber) {
 
 function validateStep2Form() {
     let isValid = true;
-    
+
     const firstNameInput = document.getElementById('txtFirstName');
     const lastNameInput = document.getElementById('txtLastName');
     const dobInput = document.getElementById('txtDOB');
@@ -295,10 +295,11 @@ function validateStep3Form() {
     if (chkNoAddress && chkNoAddress.checked) {
         return true;
     }
-    
+
     let isValid = true;
-    
+
     const streetAddressInput = document.getElementById('txtStreetAddress');
+    const streetAddress2Input = document.getElementById('txtStreetAddress2');
     const cityInput = document.getElementById('txtCity');
     const stateInput = document.getElementById('txtState');
     const zipInput = document.getElementById('txtZip');
@@ -311,6 +312,10 @@ function validateStep3Form() {
         streetAddressInput.classList.remove('is-invalid');
         streetAddressInput.classList.add('is-valid');
     }
+
+    // Street Address 2 (optional - always valid)
+    streetAddress2Input.classList.remove('is-invalid');
+    streetAddress2Input.classList.add('is-valid');
 
     // City (required)
     if (!cityInput.value.trim()) {
@@ -457,12 +462,12 @@ function showError(message) {
         passwordInput.value = '';
         passwordInput.type = 'password';
     }
-    
+
     const passwordToggle = document.getElementById('toggleClientPassword');
     if (passwordToggle) {
         passwordToggle.checked = false;
     }
-    
+
     // Use SweetAlert if available
     if (typeof Swal !== 'undefined') {
         Swal.fire({
@@ -481,7 +486,7 @@ function showError(message) {
 // DOM INITIALIZATION & EVENT LISTENERS
 // ============================================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const step1NextBtn = document.getElementById('btnStep1Next');
     const step2BackBtn = document.getElementById('btnStep2Back');
     const step2NextBtn = document.getElementById('btnStep2Next');
@@ -514,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', () => {
             const stateCode = btn.getAttribute('data-state');
             const stateName = btn.textContent;
-            
+
             // Update input with state code
             if (stateInput) {
                 stateInput.value = stateName;
@@ -522,12 +527,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 stateInput.classList.remove('is-invalid');
                 stateInput.classList.add('is-valid');
             }
-            
+
             // Remove active class from all buttons
             stateButtons.forEach(b => b.classList.remove('active'));
             // Add active class to clicked button
             btn.classList.add('active');
-            
+
             // Close modal
             stateModal.hide();
         });
@@ -645,6 +650,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (lastNameInput) {
         lastNameInput.addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/[^A-Za-z\s'-]/g, '');
+        });
+    }
+
+    // --- CITY FIELD VALIDATION (Letters and spaces only) ---
+    const cityInput = document.getElementById('txtCity');
+    if (cityInput) {
+        cityInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+        });
+    }
+
+    // --- ZIP CODE FIELD VALIDATION (Numbers only, max 5 digits) ---
+    const zipInput = document.getElementById('txtZip');
+    if (zipInput) {
+        zipInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').substring(0, 5);
         });
     }
 
