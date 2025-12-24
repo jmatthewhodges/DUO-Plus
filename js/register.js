@@ -498,10 +498,51 @@ document.addEventListener('DOMContentLoaded', function() {
         sexSelectEl.classList.add('is-valid');
     });
 
-    const stateSelectEl = document.getElementById('txtState');
-    stateSelectEl?.addEventListener('change', () => {
-        stateSelectEl.classList.remove('is-invalid');
-        stateSelectEl.classList.add('is-valid');
+    // --- STATE SELECTION MODAL ---
+    const stateInput = document.getElementById('txtState');
+    const btnChooseState = document.getElementById('btnChooseState');
+    const stateModal = new bootstrap.Modal(document.getElementById('stateModal'), {});
+    const stateButtons = document.querySelectorAll('.state-btn');
+
+    if (btnChooseState) {
+        btnChooseState.addEventListener('click', () => {
+            stateModal.show();
+        });
+    }
+
+    stateButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const stateCode = btn.getAttribute('data-state');
+            const stateName = btn.textContent;
+            
+            // Update input with state code
+            if (stateInput) {
+                stateInput.value = stateName;
+                stateInput.dataset.value = stateCode;
+                stateInput.classList.remove('is-invalid');
+                stateInput.classList.add('is-valid');
+            }
+            
+            // Remove active class from all buttons
+            stateButtons.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            btn.classList.add('active');
+            
+            // Close modal
+            stateModal.hide();
+        });
+    });
+
+    // Highlight current selection when modal opens
+    const stateModalEl = document.getElementById('stateModal');
+    stateModalEl?.addEventListener('show.bs.modal', () => {
+        stateButtons.forEach(btn => {
+            if (stateInput.dataset.value === btn.getAttribute('data-state')) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     });
 
     // --- STEP 1: EMAIL & PASSWORD ---

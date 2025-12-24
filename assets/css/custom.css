@@ -458,223 +458,228 @@ body.page-qrcode {
   min-height: 40px;
 }
 
+/* --- State Selection Input & Modal --- */
+.btn-state-select-wrapper {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+
+.btn-state-select-wrapper:focus {
+  outline: none;
+}
+
+.btn-state-select-wrapper #txtState {
+  cursor: pointer;
+  height: calc(3.5rem + 2px);
+  padding: 1.625rem 0.75rem 0.625rem !important;
+  font-size: 1rem !important;
+}
+
+.btn-state-select-wrapper #txtState::placeholder {
+  color: transparent;
+}
+
+.state-label {
+  position: absolute;
+  top: 0;
+  left: 0.75rem;
+  height: 100%;
+  padding: 1rem 0;
+  pointer-events: none;
+  transform-origin: 0 0;
+  transition: opacity .1s ease-in-out, transform .1s ease-in-out;
+  color: rgb(139,146,167);
+  font-size: 1rem;
+  font-weight: 400;
+  border: 1px solid transparent;
+}
+
+.btn-state-select-wrapper #txtState:not(:placeholder-shown) ~ .state-label {
+  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+/* Validation styling for state input */
+.btn-state-select-wrapper #txtState.is-valid,
+.btn-state-select-wrapper #txtState.is-invalid {
+  background-position: right 0.75rem center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  background-repeat: no-repeat;
+  padding-right: 2.5rem !important;
+}
+
+.btn-state-select-wrapper #txtState.is-valid {
+  border-color: #198754 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+}
+
+.btn-state-select-wrapper #txtState.is-invalid {
+  border-color: #dc3545 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+}
+
+/* .btn-state-select-wrapper:hover #txtState:not(.is-valid):not(.is-invalid) {
+  border-color: #174593 !important;
+  background-color: #f8f9fa;
+}
+
+.btn-state-select-wrapper:focus-within #txtState:not(.is-valid):not(.is-invalid) {
+  border-color: #174593 !important;
+  box-shadow: 0 0 0 0.2rem rgba(23, 69, 147, 0.25) !important;
+} */
+
+.state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.state-grid::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.state-btn {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 0.375rem;
+  background-color: white;
+  color: #333;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.state-btn:hover {
+  background-color: #e7f0f7;
+  border-color: #174593;
+  color: #174593;
+}
+
+.state-btn.active {
+  background-color: #174593;
+  color: white;
+  border-color: #174593;
+}
+
 /* ============================================================================
    RESPONSIVE DESIGN - MOBILE FIRST
    ============================================================================ */
 
 /* Extra small screens (≤375px - iPhone SE) */
 @media (max-width: 375px) {
-  body.d-flex {
-    padding: 20px 0 !important;
+  .state-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .login-container, .dashboard-container {
     max-width: 100% !important;
-    width: 95% !important;
-  }
-
-  .logo-section img {
-    width: 140px !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .subtitle-text {
-    font-size: 0.85rem !important;
-    margin-bottom: 0.5rem !important;
-    line-height: 1.3;
-  }
-
-  .progress-indicator {
-    max-width: 100% !important;
-    margin: 0 auto !important;
-  }
-
-  .step-circle {
-    width: 24px !important;
-    height: 24px !important;
-    font-size: 11px !important;
-  }
-
-  .step-line {
-    width: 20px !important;
-  }
-
-  .card {
-    margin-top: 0.5rem !important;
+    width: 90% !important;
   }
 
   .card-body {
     padding: 1rem !important;
   }
 
-  .form-label {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.15rem !important;
-  }
-
-  .form-control, .form-select, .form-control-sm, .form-select-sm {
+  .form-control:not(.form-floating .form-control), 
+  .form-select:not(.form-floating .form-select) {
     padding: 0.5rem 0.6rem !important;
     font-size: 0.8rem !important;
-    min-height: 36px !important;
-  }
-
-  .form-floating > .form-control,
-  .form-floating > .form-select {
-    padding-top: 1rem !important;
-    padding-bottom: 0.25rem !important;
-  }
-
-  .form-floating > label {
-    padding: 1rem 0.75rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  .mb-3 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  .mt-2 {
-    margin-top: 0.4rem !important;
-  }
-
-  .gap-2 {
-    gap: 0.5rem !important;
-  }
-
-  .btn {
-    padding: 0.45rem 0.75rem !important;
-    font-size: 0.8rem !important;
-    font-weight: 600;
-  }
-
-  .btn-sm {
-    padding: 0.35rem 0.5rem !important;
-    font-size: 0.75rem !important;
-  }
-
-  .row.g-2 {
-    --bs-gutter-x: 0.5rem !important;
-  }
-
-  .form-check-label {
-    font-size: 0.75rem !important;
-  }
-
-  .invalid-feedback {
-    font-size: 0.7rem !important;
   }
 }
 
-/* Small phones (376px - 425px) */
+/* Small phones (376-425px) */
 @media (min-width: 376px) and (max-width: 425px) {
+  .state-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .login-container, .dashboard-container {
     max-width: 100% !important;
     width: 95% !important;
-  }
-
-  .logo-section img {
-    width: 150px !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .subtitle-text {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.75rem !important;
   }
 
   .card-body {
     padding: 1.25rem !important;
   }
 
-  .form-label {
-    font-size: 0.8rem !important;
-    margin-bottom: 0.2rem !important;
-  }
-
-  .form-control, .form-control-sm, .form-select, .form-select-sm {
+  .form-control:not(.form-floating .form-control), 
+  .form-select:not(.form-floating .form-select) {
     padding: 0.5rem 0.7rem !important;
     font-size: 0.85rem !important;
   }
-
-  .form-floating > .form-control,
-  .form-floating > .form-select {
-    padding-top: 1rem !important;
-    padding-bottom: 0.25rem !important;
-  }
-
-  .form-floating > label {
-    padding: 1rem 0.7rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  .mb-3 {
-    margin-bottom: 0.6rem !important;
-  }
-
-  .btn {
-    padding: 0.5rem 0.8rem !important;
-    font-size: 0.85rem !important;
-  }
-
-  .row.g-2 {
-    --bs-gutter-x: 0.65rem !important;
-  }
 }
 
-/* Larger phones (426px - 575px) */
+/* Larger phones (426-575px) */
 @media (min-width: 426px) and (max-width: 575px) {
+  .state-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .login-container, .dashboard-container {
     max-width: 95% !important;
-  }
-
-  .logo-section img {
-    width: 160px !important;
-  }
-
-  .subtitle-text {
-    font-size: 0.95rem !important;
-    margin-bottom: 1rem !important;
   }
 
   .card-body {
     padding: 1.5rem !important;
   }
 
-  .form-label {
-    font-size: 0.85rem !important;
-  }
-
-  .form-control, .form-control-sm, .form-select, .form-select-sm {
+  .form-control:not(.form-floating .form-control), 
+  .form-select:not(.form-floating .form-select) {
     padding: 0.5rem 0.75rem !important;
     font-size: 0.9rem !important;
   }
+}
 
-  .form-floating > .form-control,
-  .form-floating > .form-select {
-    padding-top: 1rem !important;
-    padding-bottom: 0.25rem !important;
+/* Medium screens (768px+) */
+@media (min-width: 768px) {
+  .state-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
-  .form-floating > label {
-    padding: 1rem 0.75rem !important;
-    font-size: 0.85rem !important;
+  .login-container, .dashboard-container {
+    max-width: 100% !important;
+    width: 95% !important;
   }
 
-  .mb-3 {
-    margin-bottom: 0.75rem !important;
+  .card-body {
+    padding: 1.75rem !important;
   }
 
-  .btn {
-    padding: 0.5rem 1rem !important;
-    font-size: 0.9rem !important;
+  .form-control:not(.form-floating .form-control), 
+  .form-select:not(.form-floating .form-select) {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
   }
 
-  .row.g-2 {
-    --bs-gutter-x: 0.75rem !important;
+  .main-card {
+    max-width: 550px;
+    padding: 35px;
+  }
+}
+
+/* Desktop (1200px+) */
+@media (min-width: 1200px) {
+  .login-container, .dashboard-container {
+    max-width: 520px !important;
+  }
+
+  .card-body {
+    padding: 2rem !important;
+  }
+
+  .main-card {
+    max-width: 600px;
   }
 }
 
@@ -685,72 +690,7 @@ body.page-qrcode {
     margin-bottom: 0.5rem !important;
   }
 
-  .subtitle-text, .welcome-text {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-
   .card-body {
-    padding: 1.5rem !important;
-  }
-
-  .form-label {
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .form-control {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-  }
-
-  .mb-3 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 1rem !important;
-  }
-
-  body.page-qrcode {
-    padding: 10px;
-  }
-
-  .main-card {
-    padding: 15px;
-  }
-
-  .logo {
-    width: 140px !important;
-    margin-bottom: 10px !important;
-  }
-
-  .main-card h5 {
-    font-size: 1rem !important;
-  }
-
-  .scan-btn, .back-btn {
-    padding: 10px !important;
-    font-size: 16px !important;
-    margin-top: 10px !important;
-  }
-}
-
-/* Tablets */
-@media (min-width: 768px) {
-  .main-card {
-    max-width: 550px;
-    padding: 35px;
-  }
-
-  .logo {
-    width: 250px !important;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1200px) {
-  .main-card {
-    max-width: 600px;
+    padding: 1rem !important;
   }
 }
