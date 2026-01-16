@@ -1,37 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+<!--
+================================================================================
+DUO+ CLIENT REGISTRATION PAGE
+================================================================================
+
+Multi-step registration form with validation and waiver signature.
+
+STEPS:
+  1. Login Info      - Email & Password
+  2. Personal Info   - Name, Sex, DOB, Phone
+  3. Address Info    - Street, City, State, ZIP
+  4. Emergency       - Emergency contact details
+  5. Services        - Medical, Dental, Optical, Haircut + Waiver
+
+DEPENDENCIES:
+  - Bootstrap 5 (via HopeUI)
+  - HopeUI Theme
+  - Air Datepicker
+  - SweetAlert2
+  - QRCode.js
+
+SCRIPTS:
+  - ../js/register.js
+
+@author DUO+ Development Team
+@version 2.0.0
+================================================================================
+-->
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUO+ | Register</title>
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
-    <!-- Bootstrap + HopeUI -->
+
+    <!-- Stylesheets -->
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
-    <!-- Air Datepicker -->
-    <link rel="stylesheet" href="../assets/vendor/air-datepicker/air-datepicker.min.css">
+    <link href="../assets/vendor/air-datepicker/air-datepicker.min.css" rel="stylesheet">
 </head>
-
-<!-- ============================================================================
-     REGISTRATION PAGE - Multi-step form with validation
-     ============================================================================ -->
 
 <body class="d-flex align-items-start justify-content-center v-center-page"
     style="padding: 20px 0; overflow: hidden; height: 100vh;">
+
     <div class="container text-center login-container">
 
-        <!-- ====== LOGO SECTION ====== -->
+        <!-- ================================================================
+             HEADER: Logo & Title
+        ================================================================= -->
         <div class="logo-section mb-3">
             <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 180px;">
         </div>
 
-        <!-- ====== PAGE TITLE ====== -->
         <h5 class="subtitle-text fw-medium mb-4" style="color: #174593;">
             Create an account to start receiving <br>free care through DUO
         </h5>
 
-        <!-- ====== PROGRESS INDICATOR ====== -->
+        <!-- ================================================================
+             PROGRESS INDICATOR (5 Steps)
+        ================================================================= -->
         <div class="progress-indicator mb-4 mt-4">
             <div class="d-flex justify-content-center align-items-center gap-2">
                 <div class="step-circle active" id="stepCircle1"><span>1</span></div>
@@ -46,53 +74,69 @@
             </div>
         </div>
 
-        <!-- ====== REGISTRATION CARD ====== -->
+        <!-- ================================================================
+             REGISTRATION FORM CARD
+        ================================================================= -->
         <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
             <div class="card-body p-4">
                 <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
 
-                    <!-- STEP 1: Email & Password -->
+                    <!-- ========================================
+                         STEP 1: Login Info (Email & Password)
+                    ========================================= -->
                     <div id="step1" class="registration-step">
-                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Login Info
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">
+                            Login Info
                         </h6>
+
+                        <!-- Email -->
                         <div class="form-floating mb-3 text-start">
                             <input type="email" id="txtRegClientEmail" class="form-control"
                                 placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
                             <label for="txtRegClientEmail" class="form-label fw-semibold">Email</label>
-                            <div class="invalid-feedback" id="emailError" aria-live="polite">Please enter an email
-                                address.</div>
+                            <div class="invalid-feedback" id="emailError" aria-live="polite">
+                                Please enter an email address.
+                            </div>
                         </div>
 
+                        <!-- Password -->
                         <div class="form-floating mb-3 text-start">
                             <input type="password" id="txtRegClientPassword" class="form-control"
                                 placeholder="ex: password123" required aria-describedby="passwordError">
                             <label for="txtRegClientPassword" class="form-label fw-semibold">Password</label>
-                            <div class="invalid-feedback" id="passwordError" aria-live="polite">Please enter a password.
+                            <div class="invalid-feedback" id="passwordError" aria-live="polite">
+                                Please enter a password.
                             </div>
                         </div>
 
+                        <!-- Show Password Toggle -->
                         <div class="form-check form-switch text-start mb-3">
                             <input class="form-check-input" type="checkbox" id="toggleClientPassword"
                                 aria-label="Show password">
                             <label class="form-check-label" for="toggleClientPassword">Show password</label>
                         </div>
 
-                        <button id="btnStep1Next" type="button" style="background-color: #174593;"
-                            class="btn btn-primary w-100 rounded-2">Next</button>
+                        <button id="btnStep1Next" type="button" class="btn btn-primary w-100 rounded-2"
+                            style="background-color: #174593;">Next</button>
                     </div>
 
-                    <!-- STEP 2: Personal Information -->
+                    <!-- ========================================
+                         STEP 2: Personal Information
+                    ========================================= -->
                     <div id="step2" class="registration-step" style="display: none;">
-                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Personal Info
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">
+                            Personal Info
                         </h6>
-                        <!-- First, Middle, Last Name -->
+
+                        <!-- Name Fields: First, Middle Initial, Last -->
                         <div class="row g-2 mb-3">
                             <div class="col-5">
                                 <div class="form-floating">
                                     <input type="text" id="txtFirstName" class="form-control form-control-sm"
                                         placeholder="John" pattern="[A-Za-z '\u002D]+" required>
-                                    <label for="txtFirstName" class="form-label">First Name <span
-                                            class="text-danger">*</span></label>
+                                    <label for="txtFirstName" class="form-label">
+                                        First Name <span class="text-danger">*</span>
+                                    </label>
                                 </div>
                             </div>
                             <div class="col-2">
@@ -106,8 +150,9 @@
                                 <div class="form-floating">
                                     <input type="text" id="txtLastName" class="form-control form-control-sm"
                                         placeholder="Doe" pattern="[A-Za-z '\u002D]+" required>
-                                    <label for="txtLastName" class="form-label">Last Name <span
-                                            class="text-danger">*</span></label>
+                                    <label for="txtLastName" class="form-label">
+                                        Last Name <span class="text-danger">*</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -130,14 +175,15 @@
                             </div>
                         </div>
 
-                        <!-- Date of Birth & Phone Number -->
+                        <!-- Date of Birth & Phone -->
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="form-floating">
                                     <input type="text" id="txtDOB" class="form-control form-control-sm"
                                         placeholder="mm/dd/yyyy" required readonly>
-                                    <label for="txtDOB" class="form-label">Date of Birth <span
-                                            class="text-danger">*</span></label>
+                                    <label for="txtDOB" class="form-label">
+                                        Date of Birth <span class="text-danger">*</span>
+                                    </label>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -149,32 +195,41 @@
                             </div>
                         </div>
 
+                        <!-- Navigation Buttons -->
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep2Back" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep2Next" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                            <button id="btnStep2Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Back</button>
+                            <button id="btnStep2Next" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next</button>
                         </div>
                     </div>
 
-                    <!-- STEP 3: Address Information -->
+                    <!-- ========================================
+                         STEP 3: Address Information
+                    ========================================= -->
                     <div id="step3" class="registration-step" style="display: none;">
-                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Address Info
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">
+                            Address Info
                         </h6>
+
+                        <!-- No Address Checkbox -->
                         <div class="form-check mb-3 text-start">
                             <input class="form-check-input" type="checkbox" id="chkNoAddress">
-                            <label class="form-check-label ms-2" for="chkNoAddress">I don't have a permanent
-                                address</label>
+                            <label class="form-check-label ms-2" for="chkNoAddress">
+                                I don't have a permanent address
+                            </label>
                         </div>
 
+                        <!-- Address Fields (toggled by checkbox) -->
                         <div id="addressFields" style="display: block;">
                             <!-- Street Address 1 -->
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="text" id="txtStreetAddress" class="form-control form-control-sm"
                                         placeholder="123 Main St" required>
-                                    <label for="txtStreetAddress" class="form-label">Street Address <span
-                                            class="text-danger">*</span></label>
+                                    <label for="txtStreetAddress" class="form-label">
+                                        Street Address <span class="text-danger">*</span>
+                                    </label>
                                 </div>
                             </div>
 
@@ -193,8 +248,9 @@
                                     <div class="form-floating">
                                         <input type="text" id="txtCity" class="form-control form-control-sm"
                                             placeholder="Nashville" pattern="[A-Za-z\s]+" required>
-                                        <label for="txtCity" class="form-label">City <span
-                                                class="text-danger">*</span></label>
+                                        <label for="txtCity" class="form-label">
+                                            City <span class="text-danger">*</span>
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-4">
@@ -210,31 +266,40 @@
                                         <input type="text" id="txtZip" class="form-control form-control-sm"
                                             placeholder="37201" pattern="[0-9]{5}" inputmode="numeric" maxlength="5"
                                             required>
-                                        <label for="txtZip" class="form-label">ZIP <span
-                                                class="text-danger">*</span></label>
+                                        <label for="txtZip" class="form-label">
+                                            ZIP <span class="text-danger">*</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Navigation Buttons -->
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep3Back" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep3Submit" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                            <button id="btnStep3Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Back</button>
+                            <button id="btnStep3Submit" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next</button>
                         </div>
                     </div>
 
-                    <!-- STEP 4: Emergency Contact -->
+                    <!-- ========================================
+                         STEP 4: Emergency Contact
+                    ========================================= -->
                     <div id="step4" class="registration-step" style="display: none;">
-                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Emergency
-                            Contact</h6>
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">
+                            Emergency Contact
+                        </h6>
+
+                        <!-- No Emergency Contact Checkbox -->
                         <div class="form-check mb-3 text-start">
                             <input class="form-check-input" type="checkbox" id="chkNoEmergencyContact">
-                            <label class="form-check-label ms-2" for="chkNoEmergencyContact">I don't have an emergency
-                                contact</label>
+                            <label class="form-check-label ms-2" for="chkNoEmergencyContact">
+                                I don't have an emergency contact
+                            </label>
                         </div>
 
+                        <!-- Emergency Contact Fields (toggled by checkbox) -->
                         <div id="emergencyContactFields" style="display: block;">
                             <!-- First Name & Last Name -->
                             <div class="row g-2 mb-3">
@@ -243,8 +308,9 @@
                                         <input type="text" id="txtEmergencyFirstName"
                                             class="form-control form-control-sm" placeholder="John"
                                             pattern="[A-Za-z '\u002D]+" required>
-                                        <label for="txtEmergencyFirstName" class="form-label">First Name <span
-                                                class="text-danger">*</span></label>
+                                        <label for="txtEmergencyFirstName" class="form-label">
+                                            First Name <span class="text-danger">*</span>
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -252,8 +318,9 @@
                                         <input type="text" id="txtEmergencyLastName"
                                             class="form-control form-control-sm" placeholder="Doe"
                                             pattern="[A-Za-z '\u002D]+" required>
-                                        <label for="txtEmergencyLastName" class="form-label">Last Name <span
-                                                class="text-danger">*</span></label>
+                                        <label for="txtEmergencyLastName" class="form-label">
+                                            Last Name <span class="text-danger">*</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -263,27 +330,33 @@
                                 <div class="form-floating">
                                     <input type="tel" id="txtEmergencyPhone" class="form-control form-control-sm"
                                         placeholder="(555) 123-4567">
-                                    <label for="txtEmergencyPhone" class="form-label">Phone <span
-                                            class="text-danger">*</span></label>
+                                    <label for="txtEmergencyPhone" class="form-label">
+                                        Phone <span class="text-danger">*</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Navigation Buttons -->
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep4Back" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep4Next" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Next</button>
+                            <button id="btnStep4Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Back</button>
+                            <button id="btnStep4Next" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next</button>
                         </div>
                     </div>
 
-                    <!-- STEP 5: Service Selection -->
+                    <!-- ========================================
+                         STEP 5: Service Selection
+                    ========================================= -->
                     <div id="step5" class="registration-step" style="display: none;">
-                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">Service
-                            Selection</h6>
+                        <h6 class="step-title text-center mb-3" style="color: #174593; font-weight: 600;">
+                            Service Selection
+                        </h6>
 
-                        <p class="text-muted text-center mb-2" style="font-size: 0.85rem;">Select services you wish to
-                            receive</p>
+                        <p class="text-muted text-center mb-2" style="font-size: 0.85rem;">
+                            Select services you wish to receive
+                        </p>
 
                         <!-- Service Selection Buttons -->
                         <div class="service-selection mb-2">
@@ -301,7 +374,7 @@
                                 <span class="service-check">✓</span>
                             </button>
 
-                            <!-- Dental Sub-options (hidden by default) -->
+                            <!-- Dental Sub-options (shown when Dental selected) -->
                             <div id="dentalOptions" class="dental-options" style="display: none;">
                                 <label class="dental-option">
                                     <input type="radio" name="dentalType" value="hygiene">
@@ -328,16 +401,18 @@
                             </button>
                         </div>
 
+                        <!-- Service Error Message -->
                         <div id="serviceError" class="text-danger text-center mb-2"
                             style="display: none; font-size: 0.8rem;">
                             Please select at least one service.
                         </div>
 
+                        <!-- Navigation Buttons -->
                         <div class="d-flex gap-2 mt-2">
-                            <button id="btnStep5Back" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Back</button>
-                            <button id="btnStep5Submit" type="button" style="background-color: #174593;"
-                                class="btn btn-primary btn-sm rounded-2 flex-fill">Finish</button>
+                            <button id="btnStep5Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Back</button>
+                            <button id="btnStep5Submit" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Finish</button>
                         </div>
                     </div>
 
@@ -345,19 +420,26 @@
             </div>
         </div>
 
-        <!-- ====== WAIVER MODAL ====== -->
+        <!-- ================================================================
+             MODAL: Waiver & Signature
+        ================================================================= -->
         <div class="modal fade" id="waiverModal" tabindex="-1" aria-labelledby="waiverModalLabel" aria-hidden="true"
             data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
+                    <!-- Header -->
                     <div class="modal-header py-2 border-0">
                         <div class="text-center w-100">
                             <h5 class="modal-title mb-1" style="color: #174593;">🎉 You're Almost Done!</h5>
-                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Just sign the waiver to complete your
-                                registration</p>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                                Just sign the waiver to complete your registration
+                            </p>
                         </div>
                     </div>
+
+                    <!-- Body -->
                     <div class="modal-body py-2">
+                        <!-- Waiver Content -->
                         <div class="waiver-content"
                             style="max-height: 120px; overflow-y: auto; font-size: 0.75rem; background: #f8f9fa; padding: 0.6rem; border-radius: 8px; margin-bottom: 0.75rem;">
                             <p class="mb-1"><strong>By signing, I agree to:</strong></p>
@@ -370,14 +452,16 @@
                             </ul>
                         </div>
 
-                        <!-- Signature Pad in Modal -->
+                        <!-- Signature Pad -->
                         <div class="signature-container">
-                            <label class="form-label mb-1"
-                                style="font-size: 0.8rem; color: #174593; font-weight: 600;">Your Signature <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label mb-1" style="font-size: 0.8rem; color: #174593; font-weight: 600;">
+                                Your Signature <span class="text-danger">*</span>
+                            </label>
                             <div class="signature-pad-wrapper" id="modalSignatureWrapper">
                                 <canvas id="signatureCanvas" class="signature-canvas"></canvas>
-                                <button type="button" id="btnClearSignature" class="btn-clear-signature">Clear</button>
+                                <button type="button" id="btnClearSignature" class="btn-clear-signature">
+                                    Clear
+                                </button>
                             </div>
                             <div id="signatureError" class="text-danger text-center mt-1"
                                 style="display: none; font-size: 0.75rem;">
@@ -385,6 +469,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Footer -->
                     <div class="modal-footer py-2 border-0 justify-content-center">
                         <button type="button" id="btnCompleteRegistration" class="btn btn-primary w-100"
                             style="background-color: #174593;">
@@ -395,7 +481,9 @@
             </div>
         </div>
 
-        <!-- ====== STATE SELECTION MODAL ====== -->
+        <!-- ================================================================
+             MODAL: State Selection
+        ================================================================= -->
         <div class="modal fade" id="stateModal" tabindex="-1" aria-labelledby="stateModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -461,12 +549,15 @@
             </div>
         </div>
 
-        <!-- ====== QR CODE SUCCESS MODAL ====== -->
+        <!-- ================================================================
+             MODAL: Registration Success (QR Code)
+        ================================================================= -->
         <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true"
             data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
                     <div class="modal-body text-center p-4">
+                        <!-- Success Header -->
                         <div class="success-header mb-3">
                             <div class="success-checkmark mb-2">
                                 <span style="font-size: 3rem;">🎉</span>
@@ -489,7 +580,7 @@
                         <div class="selected-services mb-3">
                             <p class="text-muted mb-2" style="font-size: 0.85rem;">Services Selected:</p>
                             <div id="serviceIconsDisplay" class="d-flex justify-content-center gap-3 flex-wrap">
-                                <!-- Service icons will be inserted here -->
+                                <!-- Service icons inserted by JS -->
                             </div>
                         </div>
 
@@ -509,10 +600,13 @@
             </div>
         </div>
 
-        <!-- ====== FOOTER ====== -->
+        <!-- ================================================================
+             FOOTER: Contact Info & Navigation
+        ================================================================= -->
         <div class="text-center mt-4" id="footerSection">
-            <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">Back
-                To Login</a>
+            <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">
+                Back To Login
+            </a>
             <p class="mb-2 fw-semibold">Contact Us</p>
             <p class="mb-2">info@duomobilemission.com</p>
             <p class="mb-0">(931) 284-4802</p>
@@ -520,22 +614,9 @@
 
     </div>
 
-    <!-- ====== TESTING NAVIGATION (Remove before production) ====== -->
-    <div
-        style="position: fixed; bottom: 10px; right: 10px; display: flex; gap: 5px; flex-wrap: wrap; max-width: 200px; z-index: 9999;">
-        <button onclick="showStep(1)" class="btn btn-outline-secondary btn-sm"
-            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 1</button>
-        <button onclick="showStep(2)" class="btn btn-outline-secondary btn-sm"
-            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 2</button>
-        <button onclick="showStep(3)" class="btn btn-outline-secondary btn-sm"
-            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 3</button>
-        <button onclick="showStep(4)" class="btn btn-outline-secondary btn-sm"
-            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 4</button>
-        <button onclick="showStep(5)" class="btn btn-outline-secondary btn-sm"
-            style="font-size: 0.7rem; padding: 0.3rem 0.5rem;">Step 5</button>
-    </div>
-
-    <!-- ====== SCRIPTS ====== -->
+    <!-- ====================================================================
+         SCRIPTS
+    ===================================================================== -->
     <script src="../assets/js/core/libs.min.js"></script>
     <script src="../assets/js/core/external.min.js"></script>
     <script src="../assets/js/hope-ui.js"></script>
@@ -543,6 +624,7 @@
     <script src="../assets/vendor/air-datepicker/air-datepicker.min.js"></script>
     <script src="../assets/vendor/qrcodejs/qrcode.min.js"></script>
     <script src="../js/register.js"></script>
+
 </body>
 
 </html>
