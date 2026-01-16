@@ -182,9 +182,8 @@ function showStep(stepNumber) {
         4: document.getElementById('stepLine4')
     };
 
-    // Get footer elements
+    // Get footer element
     const footerSection = document.getElementById('footerSection');
-    const lifeLogo = document.getElementById('lifeLogo');
 
     // Hide all steps
     Object.values(steps).forEach(step => {
@@ -217,9 +216,9 @@ function showStep(stepNumber) {
     }
 
     // Show footer only on step 1
-    const showFooter = stepNumber === 1;
-    if (footerSection) footerSection.style.display = showFooter ? 'block' : 'none';
-    if (lifeLogo) lifeLogo.style.display = showFooter ? 'block' : 'none';
+    if (footerSection) {
+        footerSection.style.display = stepNumber === 1 ? 'block' : 'none';
+    }
 
     // Scroll to top of card
     const card = document.querySelector('.card');
@@ -1387,9 +1386,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sex Selection Change Listener
     // -------------------------------------------------------------------------
 
-    const sexSelectEl = document.getElementById('selectSex');
-    sexSelectEl?.addEventListener('change', () => {
-        sexSelectEl.classList.remove('is-invalid');
-        sexSelectEl.classList.add('is-valid');
+    const sexRadioButtons = document.querySelectorAll('input[name="selectSex"]');
+    sexRadioButtons.forEach(radio => {
+        radio.addEventListener('change', () => {
+            // Remove invalid state from the btn-group container
+            const btnGroup = document.querySelector('.btn-group[aria-label="Sex selection"]');
+            if (btnGroup) {
+                btnGroup.classList.remove('is-invalid');
+            }
+        });
     });
 });

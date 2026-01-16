@@ -42,23 +42,23 @@ function validateLoginForm(emailInput, passwordInput) {
  * @returns {Function} Event handler function
  */
 function createSubmitHandler(submitFunction, emailInputId, passwordInputId, errorDiv = null) {
-    return function(e) {
+    return function (e) {
         e.preventDefault();
-        
+
         if (errorDiv) {
             errorDiv.style.display = 'none';
         }
-        
+
         const emailInput = document.getElementById(emailInputId);
         const passwordInput = document.getElementById(passwordInputId);
-        
+
         if (!validateLoginForm(emailInput, passwordInput)) {
             return;
         }
-        
+
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-        
+
         submitFunction(email, password, errorDiv).catch(error => {
             console.error('Login submission error:', error);
             const errorMessage = 'An error occurred during login. Please try again.';
@@ -70,13 +70,13 @@ function createSubmitHandler(submitFunction, emailInputId, passwordInputId, erro
 /**
  * Initialize login form handlers when DOM is loaded
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // ------------ Client Login Form Handling ------------
     const clientLoginBtn = document.getElementById('btnClientLogin');
     const clientEmailInput = document.getElementById('txtClientEmail');
     const clientPasswordInput = document.getElementById('txtClientPassword');
     const clientPasswordToggle = document.getElementById('toggleClientPassword');
-    
+
     if (clientLoginBtn && clientEmailInput && clientPasswordInput) {
         // Direct click handler for client login button
         clientLoginBtn.addEventListener('click', () => {
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const password = clientPasswordInput.value.trim();
             submitClientLogin(email, password);
         });
-        
+
         // Enter key support
         clientEmailInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const volPasswordInput = document.getElementById('txtVolPassword');
     const volPasswordToggle = document.getElementById('toggleVolPassword');
     const errorDiv = document.getElementById('errorMessage');
-    
+
     if (volLoginBtn && volEmailInput && volPasswordInput) {
         const volSubmitHandler = createSubmitHandler(submitVolunteerLogin, 'txtVolEmail', 'txtVolPassword', errorDiv);
         volLoginBtn.addEventListener('click', volSubmitHandler);
@@ -150,7 +150,7 @@ async function hashPassword(password) {
  */
 async function processLoginResponse(response) {
     const responseText = await response.text();
-    
+
     try {
         return JSON.parse(responseText);
     } catch (jsonError) {
@@ -169,22 +169,22 @@ async function submitClientLogin(email, password) {
         const form = document.getElementById('clientLoginForm');
         const actionUrl = form.getAttribute('action');
         const hashedPassword = await hashPassword(password);
-        
+
         const formData = new FormData();
         formData.append('email', email);
         formData.append('password_hash', hashedPassword);
-        
+
         const response = await fetch(actionUrl, {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await processLoginResponse(response);
-        
+
         if (!response.ok) {
             throw new Error(data.message || 'Network response was not ok');
         }
-        
+
         if (data.success) {
             handleLoginSuccess(data);
         } else {
@@ -192,11 +192,11 @@ async function submitClientLogin(email, password) {
         }
     } catch (error) {
         console.error('Login error:', error);
-        
+
         const errorMessage = error.message.includes('invalid response')
             ? 'Server error. Please contact administrator if the problem persists.'
             : error.message || 'An error occurred during login. Please try again.';
-        
+
         showError(errorMessage);
     }
 }
@@ -209,7 +209,7 @@ async function submitClientLogin(email, password) {
  */
 async function submitVolunteerLogin(email, password, errorDiv) {
     try {
-        // --- Show loading spinner immediately ---
+        // Show loading spinner
         const loginBtn = document.getElementById('btnVolLogin');
         const loadingBtn = document.getElementById('btnVolLoading');
         if (loginBtn && loadingBtn) {
@@ -217,28 +217,25 @@ async function submitVolunteerLogin(email, password, errorDiv) {
             loadingBtn.style.display = 'block';
         }
 
-        // --- Wait 4 seconds before proceeding with login ---
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
         const form = document.getElementById('volunteerLoginForm');
         const actionUrl = form.getAttribute('action');
         const hashedPassword = await hashPassword(password);
-        
+
         const formData = new FormData();
         formData.append('email', email);
         formData.append('password_hash', hashedPassword);
-        
+
         const response = await fetch(actionUrl, {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await processLoginResponse(response);
-        
+
         if (!response.ok) {
             throw new Error(data.message || 'Network response was not ok');
         }
-        
+
         if (data.success) {
             handleLoginSuccess(data);
         } else {
@@ -252,18 +249,18 @@ async function submitVolunteerLogin(email, password, errorDiv) {
         }
     } catch (error) {
         console.error('Login error:', error);
-        
+
         const loginBtn = document.getElementById('btnVolLogin');
         const loadingBtn = document.getElementById('btnVolLoading');
         if (loginBtn && loadingBtn) {
             loginBtn.style.display = 'block';
             loadingBtn.style.display = 'none';
         }
-        
+
         const errorMessage = error.message.includes('invalid response')
             ? 'Server error. Please contact administrator if the problem persists.'
             : error.message || 'An error occurred during login. Please try again.';
-        
+
         showError(errorMessage, errorDiv);
     }
 }
@@ -307,21 +304,21 @@ function showError(message, errorDiv) {
     const clearInputs = () => {
         const volPasswordInput = document.getElementById('txtVolPassword');
         const clientPasswordInput = document.getElementById('txtClientPassword');
-        
+
         if (volPasswordInput) volPasswordInput.value = '';
         if (clientPasswordInput) clientPasswordInput.value = '';
-        
+
         // Reset password toggle switches
         const volPasswordToggle = document.getElementById('toggleVolPassword');
         const clientPasswordToggle = document.getElementById('toggleClientPassword');
         if (volPasswordToggle) volPasswordToggle.checked = false;
         if (clientPasswordToggle) clientPasswordToggle.checked = false;
-        
+
         // Reset password fields to type="password"
         if (volPasswordInput) volPasswordInput.type = 'password';
         if (clientPasswordInput) clientPasswordInput.type = 'password';
     };
-    
+
     // Use SweetAlert for volunteer login errors
     if (typeof Swal !== 'undefined') {
         Swal.fire({
