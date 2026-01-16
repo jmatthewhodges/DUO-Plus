@@ -3,6 +3,90 @@
  */
 
 // ============================================================================
+// QR CODE SUCCESS MODAL
+// ============================================================================
+
+/**
+ * Service icons mapping
+ */
+const serviceIcons = {
+    medical: { icon: '➕', label: 'Medical' },
+    dental: { icon: '🦷', label: 'Dental' },
+    optical: { icon: '👁️', label: 'Optical' },
+    haircut: { icon: '✂️', label: 'Haircut' }
+};
+
+/**
+ * Show success modal with QR code after registration
+ * @param {string} clientId - The client's unique ID from the database
+ * @param {object} registrationData - The registration data containing services and name
+ */
+function showSuccessModal(clientId, registrationData) {
+    // Clear any existing QR code
+    const qrContainer = document.getElementById('qrCodeDisplay');
+    qrContainer.innerHTML = '';
+
+    // Generate QR code with client ID
+    if (typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, {
+            text: clientId,
+            width: 180,
+            height: 180,
+            colorDark: '#174593',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } else {
+        console.error('QRCode library not loaded');
+        qrContainer.innerHTML = '<p class="text-muted">QR Code: ' + clientId + '</p>';
+    }
+
+    // Display client name
+    const clientName = `${registrationData.first_name} ${registrationData.last_name}`;
+    document.getElementById('clientNameDisplay').textContent = clientName;
+
+    // Display selected services with icons
+    const serviceIconsContainer = document.getElementById('serviceIconsDisplay');
+    serviceIconsContainer.innerHTML = '';
+
+    registrationData.services.forEach(service => {
+        if (serviceIcons[service]) {
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'service-icon-item text-center';
+            iconDiv.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 4px;">${serviceIcons[service].icon}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">${serviceIcons[service].label}</small>
+            `;
+            serviceIconsContainer.appendChild(iconDiv);
+        }
+    });
+
+    // Show the modal
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    successModal.show();
+
+    // Setup Save QR button
+    const btnSaveQR = document.getElementById('btnSaveQR');
+    btnSaveQR.onclick = () => {
+        const canvas = qrContainer.querySelector('canvas');
+        if (canvas) {
+            const link = document.createElement('a');
+            link.download = `DUO-QRCode-${registrationData.first_name}-${registrationData.last_name}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    };
+
+    // Setup Done button
+    const btnDone = document.getElementById('btnDone');
+    btnDone.onclick = () => {
+        successModal.hide();
+        // Redirect to login page
+        window.location.href = '../index.html';
+    };
+}
+
+// ============================================================================
 // STEP 1: EMAIL & PASSWORD VALIDATION
 // ============================================================================
 
@@ -1186,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new Error(result.message || 'Registration failed');
                 }
 
-                // Close modal
+                // Close waiver modal
                 const waiverModal = bootstrap.Modal.getInstance(document.getElementById('waiverModal'));
                 if (waiverModal) waiverModal.hide();
 
@@ -1197,22 +1281,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Clear stored session data
                 sessionStorage.removeItem('registrationData');
 
-                // Show success message
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Registration Complete! 🎉',
-                        text: 'Thank you for registering with DUO Mobile Mission.',
-                        icon: 'success',
-                        confirmButtonText: 'Continue',
-                        confirmButtonColor: '#174593'
-                    }).then(() => {
-                        // Redirect to login page
-                        window.location.href = '../index.html';
-                    });
-                } else {
-                    alert('Registration Complete! Thank you for registering with DUO Mobile Mission.');
-                    window.location.href = '../index.html';
-                }
+                // Show QR Code Success Modal
+                showSuccessModal(result.client_id, registrationData);
 
             } catch (error) {
                 console.error('Registration error:', error);

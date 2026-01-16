@@ -461,6 +461,54 @@
             </div>
         </div>
 
+        <!-- ====== QR CODE SUCCESS MODAL ====== -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true"
+            data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+                    <div class="modal-body text-center p-4">
+                        <div class="success-header mb-3">
+                            <div class="success-checkmark mb-2">
+                                <span style="font-size: 3rem;">🎉</span>
+                            </div>
+                            <h4 class="mb-1" style="color: #174593; font-weight: 700;">Registration Complete!</h4>
+                            <p class="text-muted mb-0" style="font-size: 0.9rem;">Show this QR code at check-in</p>
+                        </div>
+
+                        <!-- QR Code Container -->
+                        <div class="qr-code-container mb-3"
+                            style="background: #f8f9fa; padding: 20px; border-radius: 12px; display: inline-block;">
+                            <div id="qrCodeDisplay" style="width: 180px; height: 180px; margin: 0 auto;"></div>
+                        </div>
+
+                        <!-- Client Name -->
+                        <p id="clientNameDisplay" class="fw-semibold mb-3" style="color: #174593; font-size: 1.1rem;">
+                        </p>
+
+                        <!-- Selected Services -->
+                        <div class="selected-services mb-3">
+                            <p class="text-muted mb-2" style="font-size: 0.85rem;">Services Selected:</p>
+                            <div id="serviceIconsDisplay" class="d-flex justify-content-center gap-3 flex-wrap">
+                                <!-- Service icons will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="button" id="btnSaveQR" class="btn btn-outline-primary"
+                                style="border-color: #174593; color: #174593;">
+                                📥 Save QR Code
+                            </button>
+                            <button type="button" id="btnDone" class="btn btn-primary"
+                                style="background-color: #174593;">
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ====== FOOTER ====== -->
         <div class="text-center mt-4" id="footerSection">
             <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">Back
@@ -493,6 +541,7 @@
     <script src="../assets/js/hope-ui.js"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/vendor/air-datepicker/air-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="../js/register.js"></script>
 </body>
 
