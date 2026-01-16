@@ -1104,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Complete Registration button (in waiver modal)
     const btnCompleteRegistration = document.getElementById('btnCompleteRegistration');
     if (btnCompleteRegistration) {
-        btnCompleteRegistration.addEventListener('click', () => {
+        btnCompleteRegistration.addEventListener('click', async () => {
             // Validate signature
             if (!hasSignature) {
                 const wrapper = document.querySelector('.signature-pad-wrapper');
@@ -1121,8 +1121,71 @@ document.addEventListener('DOMContentLoaded', function () {
                 Processing...
             `;
 
-            // Wait 2 seconds then show success
-            setTimeout(() => {
+            try {
+                // Get stored registration data from Step 1 (email and password hash)
+                const storedData = JSON.parse(sessionStorage.getItem('registrationData') || '{}');
+
+                // Get signature as base64 image
+                const signatureData = signatureCanvas ? signatureCanvas.toDataURL('image/png') : null;
+
+                // Get dental type if dental service is selected
+                let dentalType = null;
+                if (selectedServices.has('dental')) {
+                    const dentalRadio = document.querySelector('input[name="dentalType"]:checked');
+                    dentalType = dentalRadio ? dentalRadio.value : null;
+                }
+
+                // Collect all registration data
+                const registrationData = {
+                    // Step 1: Login Info
+                    email: storedData.email || '',
+                    password_hash: storedData.password_hash || '',
+
+                    // Step 2: Personal Info
+                    first_name: document.getElementById('txtFirstName')?.value.trim() || '',
+                    middle_initial: document.getElementById('txtMiddleInitial')?.value.trim() || '',
+                    last_name: document.getElementById('txtLastName')?.value.trim() || '',
+                    sex: document.querySelector('input[name="selectSex"]:checked')?.value || '',
+                    dob: document.getElementById('txtDOB')?.value.trim() || '',
+                    phone: document.getElementById('txtPhoneNumber')?.value.trim() || '',
+
+                    // Step 3: Address Info
+                    no_address: document.getElementById('chkNoAddress')?.checked || false,
+                    street_address: document.getElementById('txtStreetAddress')?.value.trim() || '',
+                    street_address2: document.getElementById('txtStreetAddress2')?.value.trim() || '',
+                    city: document.getElementById('txtCity')?.value.trim() || '',
+                    state: document.getElementById('txtState')?.dataset.value || '',
+                    zip: document.getElementById('txtZip')?.value.trim() || '',
+
+                    // Step 4: Emergency Contact
+                    no_emergency_contact: document.getElementById('chkNoEmergencyContact')?.checked || false,
+                    emergency_first_name: document.getElementById('txtEmergencyFirstName')?.value.trim() || '',
+                    emergency_last_name: document.getElementById('txtEmergencyLastName')?.value.trim() || '',
+                    emergency_phone: document.getElementById('txtEmergencyPhone')?.value.trim() || '',
+
+                    // Step 5: Services
+                    services: Array.from(selectedServices),
+                    dental_type: dentalType,
+
+                    // Waiver Signature
+                    signature: signatureData
+                };
+
+                // Send registration data to API
+                const response = await fetch('../api/register.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Registration failed');
+                }
+
                 // Close modal
                 const waiverModal = bootstrap.Modal.getInstance(document.getElementById('waiverModal'));
                 if (waiverModal) waiverModal.hide();
@@ -1130,6 +1193,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Reset button state
                 btnCompleteRegistration.disabled = false;
                 btnCompleteRegistration.innerHTML = originalContent;
+
+                // Clear stored session data
+                sessionStorage.removeItem('registrationData');
 
                 // Show success message
                 if (typeof Swal !== 'undefined') {
@@ -1140,17 +1206,34 @@ document.addEventListener('DOMContentLoaded', function () {
                         confirmButtonText: 'Continue',
                         confirmButtonColor: '#174593'
                     }).then(() => {
-                        // Here you would typically submit the form or redirect
-                        console.log('Selected Services:', Array.from(selectedServices));
-                        if (selectedServices.has('dental')) {
-                            const dentalType = document.querySelector('input[name="dentalType"]:checked');
-                            console.log('Dental Type:', dentalType ? dentalType.value : 'none');
-                        }
+                        // Redirect to login page
+                        window.location.href = '../index.html';
                     });
                 } else {
                     alert('Registration Complete! Thank you for registering with DUO Mobile Mission.');
+                    window.location.href = '../index.html';
                 }
-            }, 2000);
+
+            } catch (error) {
+                console.error('Registration error:', error);
+
+                // Reset button state
+                btnCompleteRegistration.disabled = false;
+                btnCompleteRegistration.innerHTML = originalContent;
+
+                // Show error message
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Registration Failed',
+                        text: error.message || 'An error occurred during registration. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'Try Again',
+                        confirmButtonColor: '#174593'
+                    });
+                } else {
+                    alert('Registration failed: ' + (error.message || 'Please try again.'));
+                }
+            }
         });
     }
 });
