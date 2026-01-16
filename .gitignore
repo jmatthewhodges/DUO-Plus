@@ -20,9 +20,6 @@ Thumbs.db
 # ⚙️ PHP / BACKEND FILES
 # ==========================
 
-# Composer dependencies (if ever added)
-vendor/
-
 # Environment & credentials
 .env
 .env.local
@@ -88,12 +85,3 @@ www/
 *.tar.gz
 *.7z
 *.rar
-
-# ==========================
-# ✅ KEEP THESE
-# ==========================
-
-# Keep example env for reference
-!.env.example
-# Keep primary SQL schema
-!database/duo_system.sql
