@@ -1,9 +1,31 @@
 /**
- * DUO+ Custom Styles - Responsive multi-step registration form
+ * ============================================================================
+ * DUO+ CUSTOM STYLES
+ * ============================================================================
+ * 
+ * Custom styles for the DUO+ registration and volunteer management system.
+ * Built on top of HopeUI/Bootstrap framework.
+ * 
+ * TABLE OF CONTENTS:
+ *   1. Base Styles & Variables
+ *   2. Layout Containers
+ *   3. Card & Form Elements
+ *   4. Buttons
+ *   5. Form Controls (Password Toggle, Radio Groups)
+ *   6. State Selection Modal
+ *   7. Progress Indicator (Multi-Step)
+ *   8. Service Selection (Step 5)
+ *   9. Signature Pad & Waiver
+ *  10. QR Code Scanner Page
+ *  11. Responsive Design (Mobile → Desktop)
+ * 
+ * @author DUO+ Development Team
+ * @version 2.0.0
  */
 
+
 /* ============================================================================
-   BASE STYLES
+   1. BASE STYLES
    ============================================================================ */
 
 body {
@@ -15,6 +37,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+body.v-center-page {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 :focus {
@@ -29,8 +58,36 @@ hr {
   opacity: 0.25;
 }
 
+
 /* ============================================================================
-   CARD & FORM ELEMENTS
+   2. LAYOUT CONTAINERS
+   ============================================================================ */
+
+.login-container,
+.dashboard-container {
+  max-width: 400px;
+  width: 90%;
+}
+
+@media (min-width: 768px) {
+
+  .login-container,
+  .dashboard-container {
+    max-width: 480px;
+  }
+}
+
+@media (min-width: 1200px) {
+
+  .login-container,
+  .dashboard-container {
+    max-width: 520px;
+  }
+}
+
+
+/* ============================================================================
+   3. CARD & FORM ELEMENTS
    ============================================================================ */
 
 .card,
@@ -70,41 +127,9 @@ hr {
   border-color: #dc3545 !important;
 }
 
-/* ============================================================================
-   LAYOUT CONTAINERS
-   ============================================================================ */
-
-body.v-center-page {
-  position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 100vh;
-}
-
-.login-container,
-.dashboard-container {
-  max-width: 400px;
-  width: 90%;
-}
-
-@media (min-width: 768px) {
-
-  .login-container,
-  .dashboard-container {
-    max-width: 480px;
-  }
-}
-
-@media (min-width: 1200px) {
-
-  .login-container,
-  .dashboard-container {
-    max-width: 520px;
-  }
-}
 
 /* ============================================================================
-   BUTTONS
+   4. BUTTONS
    ============================================================================ */
 
 .btn-primary {
@@ -124,7 +149,7 @@ body.v-center-page {
   box-shadow: 0 2px 10px rgba(23, 69, 147, 0.3) !important;
 }
 
-/* Volunteer mode toggle button */
+/* Volunteer mode toggle button (fixed position) */
 .btn-volunteer {
   position: fixed !important;
   top: 20px !important;
@@ -146,10 +171,12 @@ body.v-center-page {
   box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
 }
 
+
 /* ============================================================================
-   FORM CONTROLS
+   5. FORM CONTROLS
    ============================================================================ */
 
+/* Password toggle icon */
 .password-toggle {
   position: relative;
 }
@@ -169,7 +196,7 @@ body.v-center-page {
   color: #174593;
 }
 
-/* --- Radio Button Groups (Sex Selection - HopeUI/Bootstrap) --- */
+/* Radio Button Groups (Sex Selection) */
 .btn-group {
   display: flex;
   gap: 0;
@@ -202,8 +229,404 @@ body.v-center-page {
   border-radius: 0.375rem;
 }
 
+/* Dropdown height limit */
+.ss-main .ss-content {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+
 /* ============================================================================
-   QR CODE PAGE
+   6. STATE SELECTION MODAL
+   ============================================================================ */
+
+.btn-state-select-wrapper {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+
+.btn-state-select-wrapper:focus {
+  outline: none;
+}
+
+.btn-state-select-wrapper #txtState {
+  cursor: pointer;
+  height: calc(3.5rem + 2px);
+  padding: 1.625rem 0.75rem 0.625rem !important;
+  font-size: 1rem !important;
+}
+
+.btn-state-select-wrapper #txtState::placeholder {
+  color: transparent;
+}
+
+.state-label {
+  position: absolute;
+  top: 0;
+  left: 0.75rem;
+  height: 100%;
+  padding: 1rem 0;
+  pointer-events: none;
+  transform-origin: 0 0;
+  transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+  color: rgb(139, 146, 167);
+  font-size: 1rem;
+  font-weight: 400;
+  border: 1px solid transparent;
+}
+
+.btn-state-select-wrapper #txtState:not(:placeholder-shown)~.state-label {
+  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+/* State input validation styling */
+.btn-state-select-wrapper #txtState.is-valid,
+.btn-state-select-wrapper #txtState.is-invalid {
+  background-position: right 0.75rem center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  background-repeat: no-repeat;
+  padding-right: 2.5rem !important;
+}
+
+.btn-state-select-wrapper #txtState.is-valid {
+  border-color: #198754 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+}
+
+.btn-state-select-wrapper #txtState.is-invalid {
+  border-color: #dc3545 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+}
+
+/* State grid in modal */
+.state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.state-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.state-btn {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 0.375rem;
+  background-color: white;
+  color: #333;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.state-btn:hover {
+  background-color: #e7f0f7;
+  border-color: #174593;
+  color: #174593;
+}
+
+.state-btn.active {
+  background-color: #174593;
+  color: white;
+  border-color: #174593;
+}
+
+
+/* ============================================================================
+   7. PROGRESS INDICATOR (MULTI-STEP)
+   ============================================================================ */
+
+.progress-indicator {
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.step-circle.active {
+  background-color: #174593;
+  color: white;
+}
+
+.step-circle.completed {
+  background-color: #28a745;
+  color: white;
+}
+
+.step-line {
+  height: 2px;
+  width: 30px;
+  background-color: #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.step-line.completed {
+  background-color: #28a745;
+}
+
+.registration-step {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+/* ============================================================================
+   8. SERVICE SELECTION (STEP 5)
+   ============================================================================ */
+
+.service-selection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.service-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.service-btn:hover {
+  border-color: #174593;
+  background-color: #f8f9ff;
+}
+
+.service-btn.selected {
+  border-color: #174593;
+  background-color: #e8f0ff;
+}
+
+.service-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  width: 40px;
+  text-align: center;
+}
+
+.service-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+}
+
+.service-check {
+  font-size: 1.25rem;
+  color: #174593;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.service-btn.selected .service-check {
+  opacity: 1;
+}
+
+/* Dental Sub-options */
+.dental-options {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  grid-column: 1 / -1;
+  justify-content: center;
+  align-items: center;
+}
+
+.dental-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  border: 2px solid #174593;
+  border-radius: 25px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #174593;
+}
+
+.dental-option:hover {
+  background-color: #e8f0ff;
+}
+
+.dental-option input[type="radio"] {
+  display: none;
+}
+
+.dental-option:has(input:checked) {
+  background-color: #174593;
+  color: white;
+}
+
+/* Step 5 button spacing */
+#step5 .d-flex.gap-2.mt-2 {
+  margin-top: 1.5rem !important;
+}
+
+
+/* ============================================================================
+   9. SIGNATURE PAD & WAIVER
+   ============================================================================ */
+
+.signature-container {
+  margin-top: 0.5rem;
+}
+
+.signature-pad-wrapper {
+  position: relative;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fafafa;
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.btn-clear-signature {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-signature:hover {
+  background-color: #f8f9fa;
+  border-color: #174593;
+  color: #174593;
+}
+
+.signature-pad-wrapper.has-signature {
+  border-color: #198754;
+}
+
+.signature-pad-wrapper.invalid {
+  border-color: #dc3545;
+}
+
+/* Waiver Sign Button */
+.waiver-sign-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.waiver-sign-btn:hover {
+  border-color: #174593;
+  background-color: #f8f9ff;
+}
+
+.waiver-sign-btn.signed {
+  border-color: #198754;
+  background-color: #e8f5e9;
+}
+
+.waiver-icon {
+  font-size: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.waiver-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.waiver-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.waiver-status {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.waiver-sign-btn.signed .waiver-status {
+  color: #198754;
+}
+
+.waiver-check {
+  font-size: 1.25rem;
+  color: #198754;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.waiver-sign-btn.signed .waiver-check {
+  opacity: 1;
+}
+
+
+/* ============================================================================
+   10. QR CODE SCANNER PAGE
    ============================================================================ */
 
 body.page-qrcode {
@@ -288,541 +711,14 @@ body.page-qrcode {
   min-height: 40px;
 }
 
-/* ============================================================================
-   PROGRESS INDICATOR (MULTI-STEP)
-   ============================================================================ */
-
-.progress-indicator {
-  max-width: 350px;
-  margin: 0 auto;
-}
-
-.step-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #6c757d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
-  transition: all 0.3s ease;
-}
-
-.step-circle.active {
-  background-color: #174593;
-  color: white;
-}
-
-.step-circle.completed {
-  background-color: #28a745;
-  color: white;
-}
-
-.step-line {
-  height: 2px;
-  width: 30px;
-  background-color: #e9ecef;
-  transition: all 0.3s ease;
-}
-
-.step-line.completed {
-  background-color: #28a745;
-}
-
-.registration-step {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Volunteer floating button (top-right on client login) */
-.btn-volunteer {
-  position: fixed !important;
-  top: 20px !important;
-  right: 20px !important;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-  color: #174593;
-  border: 1.5px solid #174593;
-  background-color: rgba(255, 255, 255, 0.95);
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  z-index: 9999 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-volunteer:hover {
-  background-color: #174593;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
-}
-
-/* ==========================================================================
-   5. FORM ELEMENTS
-   ========================================================================== */
-
-/* Password toggle icon */
-.password-toggle {
-  position: relative;
-}
-
-.password-toggle-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #6c757d;
-  font-size: 1.1rem;
-  user-select: none;
-}
-
-.password-toggle-icon:hover {
-  color: #174593;
-}
-
-/* Limit dropdown height to avoid layout overflow on no-scroll body */
-.ss-main .ss-content {
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-/* ==========================================================================
-   6. QR CODE PAGE
-   ========================================================================== */
-
-body.page-qrcode {
-  background: linear-gradient(to bottom, #7fb1d6, #cfe7f5);
-  min-height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  padding: 20px;
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.main-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 25px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  max-width: 480px;
-  margin: auto;
-}
-
-.logo {
-  width: 210px;
-  display: block;
-  margin: 0 auto 20px auto;
-}
-
-.scan-btn,
-.back-btn {
-  background-color: #1f5fdd;
-  color: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 18px;
-  margin-top: 20px;
-  width: 100%;
-  border: none;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  font-weight: 600;
-  text-align: center;
-  display: block;
-}
-
-.scan-btn:hover,
-.back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(31, 95, 221, 0.4);
-  cursor: pointer;
-}
-
-.scan-btn:active,
-.back-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(31, 95, 221, 0.3);
-}
-
-#scanMessage {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f5fdd;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 12px;
-  font-weight: 600;
-  display: none;
-  z-index: 10001;
-}
-
-#qrResult {
-  margin-top: 15px;
-  background: #f5f7ff;
-  border-radius: 12px;
-  padding: 12px;
-  font-weight: 600;
-  color: #1f5fdd;
-  min-height: 40px;
-}
-
-/* --- State Selection Input & Modal --- */
-.btn-state-select-wrapper {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-  position: relative;
-}
-
-.btn-state-select-wrapper:focus {
-  outline: none;
-}
-
-.btn-state-select-wrapper #txtState {
-  cursor: pointer;
-  height: calc(3.5rem + 2px);
-  padding: 1.625rem 0.75rem 0.625rem !important;
-  font-size: 1rem !important;
-}
-
-.btn-state-select-wrapper #txtState::placeholder {
-  color: transparent;
-}
-
-.state-label {
-  position: absolute;
-  top: 0;
-  left: 0.75rem;
-  height: 100%;
-  padding: 1rem 0;
-  pointer-events: none;
-  transform-origin: 0 0;
-  transition: opacity .1s ease-in-out, transform .1s ease-in-out;
-  color: rgb(139, 146, 167);
-  font-size: 1rem;
-  font-weight: 400;
-  border: 1px solid transparent;
-}
-
-.btn-state-select-wrapper #txtState:not(:placeholder-shown)~.state-label {
-  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-}
-
-/* Validation styling for state input */
-.btn-state-select-wrapper #txtState.is-valid,
-.btn-state-select-wrapper #txtState.is-invalid {
-  background-position: right 0.75rem center;
-  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-  background-repeat: no-repeat;
-  padding-right: 2.5rem !important;
-}
-
-.btn-state-select-wrapper #txtState.is-valid {
-  border-color: #198754 !important;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-}
-
-.btn-state-select-wrapper #txtState.is-invalid {
-  border-color: #dc3545 !important;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-}
-
-/* .btn-state-select-wrapper:hover #txtState:not(.is-valid):not(.is-invalid) {
-  border-color: #174593 !important;
-  background-color: #f8f9fa;
-}
-
-.btn-state-select-wrapper:focus-within #txtState:not(.is-valid):not(.is-invalid) {
-  border-color: #174593 !important;
-  box-shadow: 0 0 0 0.2rem rgba(23, 69, 147, 0.25) !important;
-} */
-
-.state-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 0.5rem;
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE/Edge */
-}
-
-.state-grid::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, Opera */
-}
-
-.state-btn {
-  padding: 0.75rem;
-  border: 2px solid #dee2e6;
-  border-radius: 0.375rem;
-  background-color: white;
-  color: #333;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.state-btn:hover {
-  background-color: #e7f0f7;
-  border-color: #174593;
-  color: #174593;
-}
-
-.state-btn.active {
-  background-color: #174593;
-  color: white;
-  border-color: #174593;
-}
 
 /* ============================================================================
-   SERVICE SELECTION (STEP 5)
+   11. RESPONSIVE DESIGN
    ============================================================================ */
 
-.service-selection {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.service-btn {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 1rem 1.25rem;
-  border: 2px solid #dee2e6;
-  border-radius: 12px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  position: relative;
-}
-
-.service-btn:hover {
-  border-color: #174593;
-  background-color: #f8f9ff;
-}
-
-.service-btn.selected {
-  border-color: #174593;
-  background-color: #e8f0ff;
-}
-
-.service-icon {
-  font-size: 1.5rem;
-  margin-right: 1rem;
-  width: 40px;
-  text-align: center;
-}
-
-.service-name {
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #333;
-  text-align: left;
-}
-
-.service-check {
-  font-size: 1.25rem;
-  color: #174593;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.service-btn.selected .service-check {
-  opacity: 1;
-}
-
-/* Dental Sub-options */
-.dental-options {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  margin: 0;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  grid-column: 1 / -1;
-  /* Full width on all screens */
-  justify-content: center;
-  align-items: center;
-}
-
-.dental-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1rem;
-  border: 2px solid #174593;
-  border-radius: 25px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #174593;
-}
-
-.dental-option:hover {
-  background-color: #e8f0ff;
-}
-
-.dental-option input[type="radio"] {
-  display: none;
-}
-
-.dental-option:has(input:checked) {
-  background-color: #174593;
-  color: white;
-}
-
-/* Signature Pad */
-.signature-container {
-  margin-top: 0.5rem;
-}
-
-.signature-pad-wrapper {
-  position: relative;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #fafafa;
-}
-
-.signature-canvas {
-  width: 100%;
-  height: 120px;
-  display: block;
-  cursor: crosshair;
-  touch-action: none;
-}
-
-.btn-clear-signature {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-clear-signature:hover {
-  background-color: #f8f9fa;
-  border-color: #174593;
-  color: #174593;
-}
-
-.signature-pad-wrapper.has-signature {
-  border-color: #198754;
-}
-
-.signature-pad-wrapper.invalid {
-  border-color: #dc3545;
-}
-
-/* Step 5 button spacing for larger screens */
-#step5 .d-flex.gap-2.mt-2 {
-  margin-top: 1.5rem !important;
-}
-
-/* Waiver Sign Button */
-.waiver-sign-btn {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #dee2e6;
-  border-radius: 12px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.waiver-sign-btn:hover {
-  border-color: #174593;
-  background-color: #f8f9ff;
-}
-
-.waiver-sign-btn.signed {
-  border-color: #198754;
-  background-color: #e8f5e9;
-}
-
-.waiver-icon {
-  font-size: 1.25rem;
-  margin-right: 0.75rem;
-}
-
-.waiver-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.waiver-title {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.waiver-status {
-  font-size: 0.75rem;
-  color: #6c757d;
-}
-
-.waiver-sign-btn.signed .waiver-status {
-  color: #198754;
-}
-
-.waiver-check {
-  font-size: 1.25rem;
-  color: #198754;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.waiver-sign-btn.signed .waiver-check {
-  opacity: 1;
-}
-
-/* ============================================================================
-   RESPONSIVE DESIGN - MOBILE FIRST
-   ============================================================================ */
-
-/* Extra small screens (≤375px - iPhone SE) */
+/* --------------------------------------
+   Extra Small Screens (≤375px) - iPhone SE
+   -------------------------------------- */
 @media (max-width: 375px) {
   .subtitle-text {
     font-size: 0.9rem !important;
@@ -936,7 +832,12 @@ body.page-qrcode {
     font-size: 0.9rem !important;
   }
 
-  /* Service buttons responsive */
+  /* Service buttons */
+  .service-selection {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
   .service-btn {
     padding: 0.6rem 0.85rem;
   }
@@ -951,20 +852,10 @@ body.page-qrcode {
     font-size: 0.875rem;
   }
 
-  .service-selection {
-    grid-template-columns: 1fr;
-    /* Single column on small screens */
-    gap: 0.5rem;
-  }
-
   .dental-options {
     grid-column: 1;
-    /* Full width on small screens */
     gap: 0.4rem;
     padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    justify-content: stretch;
   }
 
   .dental-option {
@@ -996,7 +887,9 @@ body.page-qrcode {
   }
 }
 
-/* Small phones (376-425px) */
+/* --------------------------------------
+   Small Phones (376px - 425px)
+   -------------------------------------- */
 @media (min-width: 376px) and (max-width: 425px) {
   .subtitle-text {
     font-size: 0.95rem !important;
@@ -1062,10 +955,8 @@ body.page-qrcode {
     font-size: 0.85rem;
   }
 
-  /* Service selection responsive for 376-425px */
   .service-selection {
     grid-template-columns: 1fr;
-    /* Single column */
     gap: 0.6rem;
   }
 
@@ -1084,11 +975,8 @@ body.page-qrcode {
 
   .dental-options {
     grid-column: 1;
-    /* Full width */
     gap: 0.5rem;
     padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
   }
 
   .dental-option {
@@ -1103,7 +991,9 @@ body.page-qrcode {
   }
 }
 
-/* Larger phones (426-575px) */
+/* --------------------------------------
+   Larger Phones (426px - 575px)
+   -------------------------------------- */
 @media (min-width: 426px) and (max-width: 575px) {
   .state-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1124,10 +1014,8 @@ body.page-qrcode {
     font-size: 0.9rem !important;
   }
 
-  /* Service selection responsive for 426-575px */
   .service-selection {
     grid-template-columns: repeat(2, 1fr);
-    /* 2 columns */
     gap: 0.6rem;
   }
 
@@ -1147,11 +1035,8 @@ body.page-qrcode {
 
   .dental-options {
     grid-column: 1 / -1;
-    /* Full width */
     gap: 0.5rem;
     padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
     justify-content: center;
   }
 
@@ -1175,7 +1060,9 @@ body.page-qrcode {
   }
 }
 
-/* Small tablets / Large phones (576-767px) */
+/* --------------------------------------
+   Small Tablets (576px - 767px)
+   -------------------------------------- */
 @media (min-width: 576px) and (max-width: 767px) {
   .card-body {
     padding: 1.25rem !important;
@@ -1204,8 +1091,6 @@ body.page-qrcode {
     grid-column: 1 / -1;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
     justify-content: center;
   }
 
@@ -1225,7 +1110,9 @@ body.page-qrcode {
   }
 }
 
-/* Medium screens (768px+) */
+/* --------------------------------------
+   Medium Screens (768px+)
+   -------------------------------------- */
 @media (min-width: 768px) {
   .state-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -1253,7 +1140,9 @@ body.page-qrcode {
   }
 }
 
-/* Desktop (1200px+) */
+/* --------------------------------------
+   Desktop (1200px+)
+   -------------------------------------- */
 @media (min-width: 1200px) {
 
   .login-container,
@@ -1270,7 +1159,9 @@ body.page-qrcode {
   }
 }
 
-/* Height-constrained screens */
+/* --------------------------------------
+   Height-Constrained Screens
+   -------------------------------------- */
 @media (max-height: 700px) {
   .logo-section img {
     width: 130px !important;
@@ -1347,7 +1238,9 @@ body.page-qrcode {
   }
 }
 
-/* Very short screens (≤600px height) */
+/* --------------------------------------
+   Very Short Screens (≤600px height)
+   -------------------------------------- */
 @media (max-height: 600px) {
   .logo-section img {
     width: 110px !important;
