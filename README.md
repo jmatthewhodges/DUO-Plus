@@ -12,8 +12,7 @@ This repository contains the early development files for the **DUO Plus**.  The 
 
 ---
 
-### Note
-- This setup is **temporary** and will evolve as the rebuild progresses.  
+### Note: This setup is **temporary** and will evolve as the rebuild progresses.  
 
 ---
 
