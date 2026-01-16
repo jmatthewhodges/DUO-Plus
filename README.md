@@ -6,25 +6,15 @@ This repository contains the early development files for the **DUO Plus**.  The 
 ---
 
 ### Tech Stack
-- **Frontend:** Plain HTML, JavaScript, Bootstrap (HopeUI Theme)  
+- **Frontend:** HTML, JavaScript, Bootstrap (HopeUI)  
 - **Backend:** PHP  
 - **Database:** Local MySQL  
-- **Documentation:** OneNote  
 
 ---
 
-### Current Structure
-- /assets → CSS, JS, images, and HopeUI theme files
-- /api → PHP backend endpoints
-- /pages → Frontend HTML pages (role-based dashboards)
-- /db → MySQL schema export
-
----
-
-### Notes
+### Note
 - This setup is **temporary** and will evolve as the rebuild progresses.  
-- Documentation, sprint notes, and process diagrams are managed in OneNote.  
 
 ---
 
-**DUO Plus — 2025**
+**DUO Plus — 2026**
