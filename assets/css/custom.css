@@ -138,10 +138,12 @@ hr {
   overflow: hidden;
 }
 
-.btn-primary:hover {
-  background-color: #0f3468 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(23, 69, 147, 0.4) !important;
+@media (hover: hover) {
+  .btn-primary:hover {
+    background-color: #0f3468 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(23, 69, 147, 0.4) !important;
+  }
 }
 
 .btn-primary:active {
@@ -164,11 +166,13 @@ hr {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-volunteer:hover {
-  background-color: #174593;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+@media (hover: hover) {
+  .btn-volunteer:hover {
+    background-color: #174593;
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+  }
 }
 
 
@@ -192,8 +196,10 @@ hr {
   user-select: none;
 }
 
-.password-toggle-icon:hover {
-  color: #174593;
+@media (hover: hover) {
+  .password-toggle-icon:hover {
+    color: #174593;
+  }
 }
 
 /* Radio Button Groups (Sex Selection) */
@@ -212,10 +218,12 @@ hr {
   transition: all 0.2s ease-in-out;
 }
 
-.btn-group .btn:hover {
-  background-color: #174593;
-  color: white;
-  border-color: #174593;
+@media (hover: hover) {
+  .btn-group .btn:hover {
+    background-color: #174593;
+    color: white;
+    border-color: #174593;
+  }
 }
 
 .btn-check:checked+.btn.btn-outline-primary {
@@ -490,9 +498,11 @@ hr {
   position: relative;
 }
 
-.service-btn:hover {
-  border-color: #174593;
-  background-color: #f8f9ff;
+@media (hover: hover) {
+  .service-btn:hover {
+    border-color: #174593;
+    background-color: #f8f9ff;
+  }
 }
 
 .service-btn.selected {
@@ -554,8 +564,10 @@ hr {
   color: #174593;
 }
 
-.dental-option:hover {
-  background-color: #e8f0ff;
+@media (hover: hover) {
+  .dental-option:hover {
+    background-color: #e8f0ff;
+  }
 }
 
 .dental-option input[type="radio"] {
@@ -610,10 +622,12 @@ hr {
   transition: all 0.2s ease;
 }
 
-.btn-clear-signature:hover {
-  background-color: #f8f9fa;
-  border-color: #174593;
-  color: #174593;
+@media (hover: hover) {
+  .btn-clear-signature:hover {
+    background-color: #f8f9fa;
+    border-color: #174593;
+    color: #174593;
+  }
 }
 
 .signature-pad-wrapper.has-signature {
@@ -637,9 +651,11 @@ hr {
   transition: all 0.2s ease-in-out;
 }
 
-.waiver-sign-btn:hover {
-  border-color: #174593;
-  background-color: #f8f9ff;
+@media (hover: hover) {
+  .waiver-sign-btn:hover {
+    border-color: #174593;
+    background-color: #f8f9ff;
+  }
 }
 
 .waiver-sign-btn.signed {
@@ -736,10 +752,12 @@ body.page-qrcode {
   cursor: pointer;
 }
 
-.scan-btn:hover,
-.back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(31, 95, 221, 0.4);
+@media (hover: hover) {
+  .scan-btn:hover,
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 95, 221, 0.4);
+  }
 }
 
 .scan-btn:active,
