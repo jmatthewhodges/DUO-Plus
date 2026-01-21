@@ -875,7 +875,7 @@ function collectRegistrationData() {
         street_address: document.getElementById('txtStreetAddress')?.value.trim() || '',
         street_address2: document.getElementById('txtStreetAddress2')?.value.trim() || '',
         city: document.getElementById('txtCity')?.value.trim() || '',
-        state: document.getElementById('txtState')?.dataset.value || '',
+        state: document.getElementById('txtState')?.value || '',
         zip: document.getElementById('txtZip')?.value.trim() || '',
 
         // Step 4: Emergency Contact
@@ -986,10 +986,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordToggle = document.getElementById('toggleClientPassword');
 
     // -------------------------------------------------------------------------
-    // State Selection Modal
+    // State Selection Dropdown
     // -------------------------------------------------------------------------
 
     const stateInput = document.getElementById('txtState');
+    const stateDropdownBtn = document.getElementById('btnStateDropdown');
+    const stateDropdownItems = document.querySelectorAll('.state-dropdown-menu .dropdown-item');
+    
+    // Add click listeners for the state dropdown items
+    stateDropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const stateCode = item.getAttribute('data-value');
+            const stateName = item.textContent;
+            
+            if (stateInput) {
+                stateInput.value = stateCode;
+            }
+            
+            if (stateDropdownBtn) {
+                // Update button text to show selected state
+                stateDropdownBtn.textContent = stateName;
+                
+                // Update button styling to show valid selection
+                stateDropdownBtn.classList.remove('is-invalid');
+                stateDropdownBtn.classList.add('is-valid');
+            }
+            
+            // Mark selected item as active
+            stateDropdownItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+
+    // -------------------------------------------------------------------------
+    // State Selection Modal (COMMENTED OUT - Using dropdown instead)
+    // -------------------------------------------------------------------------
+    /*
     const btnChooseState = document.getElementById('btnChooseState');
     const stateModal = new bootstrap.Modal(document.getElementById('stateModal'), {});
     const stateButtons = document.querySelectorAll('.state-btn');
@@ -1027,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+    */
 
     // -------------------------------------------------------------------------
     // Step 1: Email & Password

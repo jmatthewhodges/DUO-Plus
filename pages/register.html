@@ -254,12 +254,65 @@ SCRIPTS:
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <button class="btn-state-select-wrapper" type="button" id="btnChooseState"
-                                        data-bs-toggle="modal" data-bs-target="#stateModal">
-                                        <input type="text" id="txtState" class="form-control form-control-sm"
-                                            placeholder="State" readonly required>
-                                        <span class="state-label">State <span class="text-danger">*</span></span>
-                                    </button>
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-outline-primary dropdown-toggle state-dropdown-btn" type="button" 
+                                            id="btnStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            State <span class="text-danger">*</span>
+                                        </button>
+                                        <input type="hidden" id="txtState" name="state" required>
+                                        <ul class="dropdown-menu state-dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-value="AL">Alabama</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AK">Alaska</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AZ">Arizona</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AR">Arkansas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CA">California</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CO">Colorado</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CT">Connecticut</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="DE">Delaware</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="FL">Florida</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="GA">Georgia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="HI">Hawaii</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ID">Idaho</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IL">Illinois</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IN">Indiana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IA">Iowa</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="KS">Kansas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="KY">Kentucky</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="LA">Louisiana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ME">Maine</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MD">Maryland</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MA">Massachusetts</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MI">Michigan</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MN">Minnesota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MS">Mississippi</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MO">Missouri</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MT">Montana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NE">Nebraska</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NV">Nevada</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NH">New Hampshire</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NJ">New Jersey</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NM">New Mexico</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NY">New York</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NC">North Carolina</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ND">North Dakota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OH">Ohio</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OK">Oklahoma</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OR">Oregon</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="PA">Pennsylvania</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="RI">Rhode Island</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="SC">South Carolina</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="SD">South Dakota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="TN">Tennessee</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="TX">Texas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="UT">Utah</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="VT">Vermont</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="VA">Virginia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WA">Washington</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WV">West Virginia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WI">Wisconsin</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WY">Wyoming</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="form-floating">
@@ -482,8 +535,9 @@ SCRIPTS:
         </div>
 
         <!-- ================================================================
-             MODAL: State Selection
+             MODAL: State Selection (COMMENTED OUT - Using dropdown instead)
         ================================================================= -->
+        <!--
         <div class="modal fade" id="stateModal" tabindex="-1" aria-labelledby="stateModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -548,6 +602,7 @@ SCRIPTS:
                 </div>
             </div>
         </div>
+        -->
 
         <!-- ================================================================
              MODAL: Registration Success (QR Code)
