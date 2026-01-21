@@ -195,7 +195,6 @@ try {
     // -------------------------------------------------------------------------
     
     $clientID       = generateUUID();
-    $loginID        = generateUUID();
     $addressID      = generateUUID();
     $phoneID        = generateUUID();
     $contactID      = generateUUID();
@@ -229,10 +228,10 @@ try {
     // -------------------------------------------------------------------------
     
     $stmt = $pdo->prepare("
-        INSERT INTO tblClientLogin (Login_ID, ClientID, Email, Password)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO tblClientLogin (ClientID, Email, Password)
+        VALUES (?, ?, ?)
     ");
-    $stmt->execute([$loginID, $clientID, $email, $passwordHash]);
+    $stmt->execute([$clientID, $email, $passwordHash]);
 
     // -------------------------------------------------------------------------
     // 3. Insert Address (if provided)
