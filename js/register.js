@@ -15,7 +15,7 @@
  * DEPENDENCIES:
  *   - Bootstrap 5 (modals, form styling)
  *   - SweetAlert2 (error/success alerts)
- *   - AirDatepicker (date of birth picker)
+ *   - Flatpickr (date of birth picker)
  *   - QRCode.js (QR code generation)
  * 
  * @author DUO+ Development Team
@@ -1241,54 +1241,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // -------------------------------------------------------------------------
-    // Date Picker (Air Datepicker)
+    // Date Picker (Flatpickr)
     // -------------------------------------------------------------------------
 
     const dobInput = document.getElementById('txtDOB');
-    if (dobInput && typeof AirDatepicker !== 'undefined') {
-        const mobileMediaQuery = window.matchMedia('(max-width: 767px)');
-
-        const englishLocale = {
-            days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-            daysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            daysMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-            months: ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'],
-            monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            today: 'Today',
-            clear: 'Clear',
-            dateFormat: 'MM/dd/yyyy',
-            timeFormat: 'hh:mm aa',
-            firstDay: 0,
-        };
-
+    if (dobInput && typeof flatpickr !== 'undefined') {
         // Calculate date 18 years ago for minimum age requirement
         const eighteenYearsAgo = new Date();
         eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
 
-        const opts = {
-            autoClose: true,
+        const dobPicker = flatpickr(dobInput, {
+            dateFormat: 'm/d/Y',
             maxDate: eighteenYearsAgo,
-            dateFormat: 'MM/dd/yyyy',
-            keyboardNav: true,
-            isMobile: mobileMediaQuery.matches,
-            position: mobileMediaQuery.matches ? undefined : 'top center',
-            selectedDates: dobInput.value ? [new Date(dobInput.value)] : [],
-            onSelect({ formattedDate }) {
-                dobInput.value = formattedDate || '';
+            disableMobile: false,
+            enableTime: false,
+            allowInput: true,
+            onClose: function(selectedDates, dateStr) {
+                dobInput.value = dateStr || '';
             }
-        };
-
-        opts.locale = AirDatepicker.locales?.en || englishLocale;
-
-        const dobPicker = new AirDatepicker(dobInput, opts);
-        window.dobPicker = dobPicker;
-
-        // Update mobile mode on resize
-        mobileMediaQuery.addEventListener('change', (e) => {
-            if (dobPicker) dobPicker.update({ isMobile: e.matches });
         });
+        window.dobPicker = dobPicker;
     }
 
     // -------------------------------------------------------------------------
