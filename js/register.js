@@ -1108,15 +1108,20 @@ document.addEventListener('DOMContentLoaded', function () {
             clear: 'Clear',
             dateFormat: 'MM/dd/yyyy',
             timeFormat: 'hh:mm aa',
-            firstDay: 0
+            firstDay: 0,
         };
+
+        // Calculate date 18 years ago for minimum age requirement
+        const eighteenYearsAgo = new Date();
+        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
 
         const opts = {
             autoClose: true,
+            maxDate: eighteenYearsAgo,
             dateFormat: 'MM/dd/yyyy',
-            maxDate: new Date(),
             keyboardNav: true,
             isMobile: mobileMediaQuery.matches,
+            position: mobileMediaQuery.matches ? undefined : 'top center',
             selectedDates: dobInput.value ? [new Date(dobInput.value)] : [],
             onSelect({ formattedDate }) {
                 dobInput.value = formattedDate || '';
