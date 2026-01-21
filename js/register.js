@@ -146,10 +146,38 @@ function formatPhoneNumber(value) {
     return formatted;
 }
 
+/**
+ * Announce message to screen readers via live region
+ * 
+ * @param {string} message - Message to announce
+ * @param {boolean} urgent - If true, uses assertive (interrupts), otherwise polite
+ */
+function announceToScreenReader(message, urgent = false) {
+    const announcer = document.getElementById('srAnnouncer');
+    if (announcer) {
+        announcer.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
+        // Clear first to ensure re-announcement of same message
+        announcer.textContent = '';
+        // Use setTimeout to ensure screen reader picks up the change
+        setTimeout(() => {
+            announcer.textContent = message;
+        }, 100);
+    }
+}
+
 
 // ============================================================================
 // STEP NAVIGATION
 // ============================================================================
+
+/** Step names for accessibility announcements */
+const STEP_NAMES = {
+    1: 'Login Info',
+    2: 'Personal Info',
+    3: 'Address Info',
+    4: 'Emergency Contact',
+    5: 'Service Selection'
+};
 
 /**
  * Show specific registration step and update progress indicator
@@ -190,9 +218,12 @@ function showStep(stepNumber) {
         if (step) step.style.display = 'none';
     });
 
-    // Reset all progress indicators
+    // Reset all progress indicators and aria-current
     Object.values(circles).forEach(circle => {
-        if (circle) circle.classList.remove('active', 'completed');
+        if (circle) {
+            circle.classList.remove('active', 'completed');
+            circle.removeAttribute('aria-current');
+        }
     });
     Object.values(lines).forEach(line => {
         if (line) line.classList.remove('completed');
@@ -211,7 +242,10 @@ function showStep(stepNumber) {
             if (lines[i]) lines[i].classList.add('completed');
         } else if (i === stepNumber) {
             // Current step is active
-            if (circles[i]) circles[i].classList.add('active');
+            if (circles[i]) {
+                circles[i].classList.add('active');
+                circles[i].setAttribute('aria-current', 'step');
+            }
         }
     }
 
@@ -220,11 +254,25 @@ function showStep(stepNumber) {
         footerSection.style.display = stepNumber === 1 ? 'block' : 'none';
     }
 
-    // Scroll to top of card
+    // Announce step change to screen readers
+    announceToScreenReader(`Step ${stepNumber} of 5: ${STEP_NAMES[stepNumber]}`);
+
+    // Scroll to top of card and move focus to the step heading
     const card = document.querySelector('.card');
     if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    
+    // Focus the first focusable element in the new step
+    setTimeout(() => {
+        const currentStep = steps[stepNumber];
+        if (currentStep) {
+            const firstFocusable = currentStep.querySelector('input:not([type="hidden"]):not([disabled]), button:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        }
+    }, 300);
 }
 
 /**
@@ -325,6 +373,7 @@ function validatePassword(password) {
  */
 function validateRegisterForm(emailInput, passwordInput) {
     let isValid = true;
+    const errors = [];
 
     // Reset validation states
     [emailInput, passwordInput].forEach(input => {
@@ -342,6 +391,7 @@ function validateRegisterForm(emailInput, passwordInput) {
         emailInput.setAttribute('aria-invalid', 'true');
         const errorDiv = document.getElementById('emailError');
         if (errorDiv) errorDiv.textContent = emailError;
+        errors.push(emailError);
         isValid = false;
     } else {
         emailInput.classList.add('is-valid');
@@ -354,9 +404,21 @@ function validateRegisterForm(emailInput, passwordInput) {
         passwordInput.setAttribute('aria-invalid', 'true');
         const errorDiv = document.getElementById('passwordError');
         if (errorDiv) errorDiv.textContent = passwordError;
+        errors.push(passwordError);
         isValid = false;
     } else {
         passwordInput.classList.add('is-valid');
+    }
+
+    // Announce errors to screen reader
+    if (errors.length > 0) {
+        announceToScreenReader(`Validation error: ${errors[0]}`, true);
+        // Focus first invalid field
+        if (emailError) {
+            emailInput.focus();
+        } else if (passwordError) {
+            passwordInput.focus();
+        }
     }
 
     return isValid;
@@ -397,6 +459,8 @@ async function proceedToNextStep(email, password) {
  */
 function validateStep2Form() {
     let isValid = true;
+    const errors = [];
+    let firstInvalidField = null;
 
     const firstNameInput = document.getElementById('txtFirstName');
     const lastNameInput = document.getElementById('txtLastName');
@@ -407,18 +471,26 @@ function validateStep2Form() {
     // First Name (required)
     if (!firstNameInput.value.trim()) {
         firstNameInput.classList.add('is-invalid');
+        firstNameInput.setAttribute('aria-invalid', 'true');
+        errors.push('First name is required');
+        if (!firstInvalidField) firstInvalidField = firstNameInput;
         isValid = false;
     } else {
         firstNameInput.classList.remove('is-invalid');
+        firstNameInput.removeAttribute('aria-invalid');
         firstNameInput.classList.add('is-valid');
     }
 
     // Last Name (required)
     if (!lastNameInput.value.trim()) {
         lastNameInput.classList.add('is-invalid');
+        lastNameInput.setAttribute('aria-invalid', 'true');
+        errors.push('Last name is required');
+        if (!firstInvalidField) firstInvalidField = lastNameInput;
         isValid = false;
     } else {
         lastNameInput.classList.remove('is-invalid');
+        lastNameInput.removeAttribute('aria-invalid');
         lastNameInput.classList.add('is-valid');
     }
 
@@ -428,9 +500,11 @@ function validateStep2Form() {
 
     // Sex (required - radio button group)
     const selectedSex = document.querySelector('input[name="selectSex"]:checked');
-    const sexButtonGroup = document.querySelector('.btn-group');
+    const sexButtonGroup = document.querySelector('.btn-group[role="radiogroup"]');
     if (!selectedSex) {
         sexButtonGroup.classList.add('is-invalid');
+        errors.push('Please select your sex');
+        if (!firstInvalidField) firstInvalidField = document.getElementById('sexMale');
         isValid = false;
     } else {
         sexButtonGroup.classList.remove('is-invalid');
@@ -439,9 +513,13 @@ function validateStep2Form() {
     // Date of Birth (required)
     if (!dobInput.value) {
         dobInput.classList.add('is-invalid');
+        dobInput.setAttribute('aria-invalid', 'true');
+        errors.push('Date of birth is required');
+        if (!firstInvalidField) firstInvalidField = dobInput;
         isValid = false;
     } else {
         dobInput.classList.remove('is-invalid');
+        dobInput.removeAttribute('aria-invalid');
         dobInput.classList.add('is-valid');
     }
 
@@ -451,14 +529,24 @@ function validateStep2Form() {
         const digitsOnly = phoneValue.replace(/\D/g, '');
         if (digitsOnly.length !== 10) {
             phoneInput.classList.add('is-invalid');
+            phoneInput.setAttribute('aria-invalid', 'true');
+            errors.push('Phone number must be 10 digits');
+            if (!firstInvalidField) firstInvalidField = phoneInput;
             isValid = false;
         } else {
             phoneInput.classList.remove('is-invalid');
+            phoneInput.removeAttribute('aria-invalid');
             phoneInput.classList.add('is-valid');
         }
     } else {
         phoneInput.classList.remove('is-invalid');
         phoneInput.classList.add('is-valid');
+    }
+
+    // Announce errors and focus first invalid field
+    if (errors.length > 0) {
+        announceToScreenReader(`Validation error: ${errors[0]}`, true);
+        if (firstInvalidField) firstInvalidField.focus();
     }
 
     return isValid;
@@ -482,19 +570,26 @@ function validateStep3Form() {
     }
 
     let isValid = true;
+    const errors = [];
+    let firstInvalidField = null;
 
     const streetAddressInput = document.getElementById('txtStreetAddress');
     const streetAddress2Input = document.getElementById('txtStreetAddress2');
     const cityInput = document.getElementById('txtCity');
     const stateInput = document.getElementById('txtState');
+    const stateDropdownBtn = document.getElementById('btnStateDropdown');
     const zipInput = document.getElementById('txtZip');
 
     // Street Address (required)
     if (!streetAddressInput.value.trim()) {
         streetAddressInput.classList.add('is-invalid');
+        streetAddressInput.setAttribute('aria-invalid', 'true');
+        errors.push('Street address is required');
+        if (!firstInvalidField) firstInvalidField = streetAddressInput;
         isValid = false;
     } else {
         streetAddressInput.classList.remove('is-invalid');
+        streetAddressInput.removeAttribute('aria-invalid');
         streetAddressInput.classList.add('is-valid');
     }
 
@@ -505,38 +600,59 @@ function validateStep3Form() {
     // City (required)
     if (!cityInput.value.trim()) {
         cityInput.classList.add('is-invalid');
+        cityInput.setAttribute('aria-invalid', 'true');
+        errors.push('City is required');
+        if (!firstInvalidField) firstInvalidField = cityInput;
         isValid = false;
     } else {
         cityInput.classList.remove('is-invalid');
+        cityInput.removeAttribute('aria-invalid');
         cityInput.classList.add('is-valid');
     }
 
     // State (required)
     if (!stateInput.value) {
         stateInput.classList.add('is-invalid');
-        const stateError = document.getElementById('stateError');
-        if (stateError) stateError.textContent = 'State is required.';
+        if (stateDropdownBtn) {
+            stateDropdownBtn.classList.add('is-invalid');
+            stateDropdownBtn.setAttribute('aria-invalid', 'true');
+        }
+        errors.push('State is required');
+        if (!firstInvalidField) firstInvalidField = stateDropdownBtn;
         isValid = false;
     } else {
         stateInput.classList.remove('is-invalid');
-        stateInput.classList.add('is-valid');
+        if (stateDropdownBtn) {
+            stateDropdownBtn.classList.remove('is-invalid');
+            stateDropdownBtn.removeAttribute('aria-invalid');
+            stateDropdownBtn.classList.add('is-valid');
+        }
     }
 
     // ZIP Code (required, 5 digits)
     const zipValue = zipInput.value.trim();
     if (!zipValue) {
         zipInput.classList.add('is-invalid');
-        const zipError = document.getElementById('zipError');
-        if (zipError) zipError.textContent = 'ZIP code is required.';
+        zipInput.setAttribute('aria-invalid', 'true');
+        errors.push('ZIP code is required');
+        if (!firstInvalidField) firstInvalidField = zipInput;
         isValid = false;
     } else if (!/^\d{5}$/.test(zipValue)) {
         zipInput.classList.add('is-invalid');
-        const zipError = document.getElementById('zipError');
-        if (zipError) zipError.textContent = 'Enter a valid 5-digit ZIP.';
+        zipInput.setAttribute('aria-invalid', 'true');
+        errors.push('ZIP code must be 5 digits');
+        if (!firstInvalidField) firstInvalidField = zipInput;
         isValid = false;
     } else {
         zipInput.classList.remove('is-invalid');
+        zipInput.removeAttribute('aria-invalid');
         zipInput.classList.add('is-valid');
+    }
+
+    // Announce errors and focus first invalid field
+    if (errors.length > 0) {
+        announceToScreenReader(`Validation error: ${errors[0]}`, true);
+        if (firstInvalidField) firstInvalidField.focus();
     }
 
     return isValid;
@@ -560,6 +676,8 @@ function validateStep4Form() {
     }
 
     let isValid = true;
+    const errors = [];
+    let firstInvalidField = null;
 
     const firstNameInput = document.getElementById('txtEmergencyFirstName');
     const lastNameInput = document.getElementById('txtEmergencyLastName');
@@ -568,18 +686,26 @@ function validateStep4Form() {
     // First Name (required)
     if (!firstNameInput.value.trim()) {
         firstNameInput.classList.add('is-invalid');
+        firstNameInput.setAttribute('aria-invalid', 'true');
+        errors.push('Emergency contact first name is required');
+        if (!firstInvalidField) firstInvalidField = firstNameInput;
         isValid = false;
     } else {
         firstNameInput.classList.remove('is-invalid');
+        firstNameInput.removeAttribute('aria-invalid');
         firstNameInput.classList.add('is-valid');
     }
 
     // Last Name (required)
     if (!lastNameInput.value.trim()) {
         lastNameInput.classList.add('is-invalid');
+        lastNameInput.setAttribute('aria-invalid', 'true');
+        errors.push('Emergency contact last name is required');
+        if (!firstInvalidField) firstInvalidField = lastNameInput;
         isValid = false;
     } else {
         lastNameInput.classList.remove('is-invalid');
+        lastNameInput.removeAttribute('aria-invalid');
         lastNameInput.classList.add('is-valid');
     }
 
@@ -588,10 +714,20 @@ function validateStep4Form() {
     const digitsOnly = phoneValue.replace(/\D/g, '');
     if (!phoneValue || digitsOnly.length !== 10) {
         phoneInput.classList.add('is-invalid');
+        phoneInput.setAttribute('aria-invalid', 'true');
+        errors.push('Emergency contact phone number is required (10 digits)');
+        if (!firstInvalidField) firstInvalidField = phoneInput;
         isValid = false;
     } else {
         phoneInput.classList.remove('is-invalid');
+        phoneInput.removeAttribute('aria-invalid');
         phoneInput.classList.add('is-valid');
+    }
+
+    // Announce errors and focus first invalid field
+    if (errors.length > 0) {
+        announceToScreenReader(`Validation error: ${errors[0]}`, true);
+        if (firstInvalidField) firstInvalidField.focus();
     }
 
     return isValid;
@@ -609,10 +745,12 @@ function validateStep4Form() {
  */
 function validateStep5Form() {
     let isValid = true;
+    const errors = [];
 
     // At least one service must be selected
     if (selectedServices.size === 0) {
         document.getElementById('serviceError').style.display = 'block';
+        errors.push('Please select at least one service');
         isValid = false;
     } else {
         document.getElementById('serviceError').style.display = 'none';
@@ -621,11 +759,25 @@ function validateStep5Form() {
     // If dental is selected, dental type must be chosen
     if (selectedServices.has('dental')) {
         const dentalType = document.querySelector('input[name="dentalType"]:checked');
+        const dentalOptions = document.getElementById('dentalOptions');
         if (!dentalType) {
-            document.getElementById('dentalOptions').style.border = '2px solid #dc3545';
+            dentalOptions.style.border = '2px solid #dc3545';
+            dentalOptions.setAttribute('aria-invalid', 'true');
+            errors.push('Please select hygiene or extraction for dental service');
             isValid = false;
         } else {
-            document.getElementById('dentalOptions').style.border = '1px solid #dee2e6';
+            dentalOptions.style.border = '1px solid #dee2e6';
+            dentalOptions.removeAttribute('aria-invalid');
+        }
+    }
+
+    // Announce errors
+    if (errors.length > 0) {
+        announceToScreenReader(`Validation error: ${errors[0]}`, true);
+        // Focus first service button if no services selected
+        if (selectedServices.size === 0) {
+            const firstServiceBtn = document.querySelector('.service-btn');
+            if (firstServiceBtn) firstServiceBtn.focus();
         }
     }
 
@@ -1335,30 +1487,44 @@ document.addEventListener('DOMContentLoaded', function () {
         step5BackBtn.addEventListener('click', goBackToStep4);
     }
 
-    // Service button toggle
+    // Service button toggle with accessibility
     const serviceButtons = document.querySelectorAll('.service-btn');
     serviceButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const service = btn.dataset.service;
+            const serviceName = btn.querySelector('.service-name')?.textContent || service;
 
             if (btn.classList.contains('selected')) {
                 // Deselect service
                 btn.classList.remove('selected');
+                btn.setAttribute('aria-pressed', 'false');
                 selectedServices.delete(service);
+                
+                // Announce to screen reader
+                announceToScreenReader(`${serviceName} deselected`);
 
                 // Hide dental options if dental is deselected
                 if (service === 'dental') {
-                    document.getElementById('dentalOptions').style.display = 'none';
+                    const dentalOptions = document.getElementById('dentalOptions');
+                    dentalOptions.style.display = 'none';
+                    btn.setAttribute('aria-expanded', 'false');
                     document.querySelectorAll('input[name="dentalType"]').forEach(r => r.checked = false);
                 }
             } else {
                 // Select service
                 btn.classList.add('selected');
+                btn.setAttribute('aria-pressed', 'true');
                 selectedServices.add(service);
+                
+                // Announce to screen reader
+                announceToScreenReader(`${serviceName} selected`);
 
                 // Show dental options if dental is selected
                 if (service === 'dental') {
-                    document.getElementById('dentalOptions').style.display = 'flex';
+                    const dentalOptions = document.getElementById('dentalOptions');
+                    dentalOptions.style.display = 'flex';
+                    btn.setAttribute('aria-expanded', 'true');
+                    announceToScreenReader('Please choose hygiene or extraction');
                 }
             }
 
@@ -1367,20 +1533,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('serviceError').style.display = 'none';
             }
         });
+        
+        // Add keyboard support (Enter and Space should work by default for buttons)
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                btn.click();
+            }
+        });
     });
 
     // Dental type selection
     const dentalRadios = document.querySelectorAll('input[name="dentalType"]');
     dentalRadios.forEach(radio => {
         radio.addEventListener('change', () => {
+            const selectedType = radio.value === 'hygiene' ? 'Hygiene' : 'Extraction';
             setTimeout(() => {
                 document.getElementById('dentalOptions').style.display = 'none';
+                
+                // Update dental button aria-expanded
+                const dentalBtn = document.querySelector('.service-btn[data-service="dental"]');
+                if (dentalBtn) {
+                    dentalBtn.setAttribute('aria-expanded', 'false');
+                }
 
                 // Update dental button label
-                const dentalBtn = document.querySelector('.service-btn[data-service="dental"] .service-name');
-                if (dentalBtn && radio.checked) {
-                    dentalBtn.textContent = `Dental (${radio.value === 'hygiene' ? 'Hygiene' : 'Extraction'})`;
+                const dentalBtnName = document.querySelector('.service-btn[data-service="dental"] .service-name');
+                if (dentalBtnName && radio.checked) {
+                    dentalBtnName.textContent = `Dental (${selectedType})`;
                 }
+                
+                // Announce selection
+                announceToScreenReader(`${selectedType} selected for dental service`);
             }, 200);
         });
     });

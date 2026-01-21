@@ -46,8 +46,51 @@ body.v-center-page {
   min-height: 100vh;
 }
 
-:focus {
+/* ============================================================================
+   ACCESSIBILITY: Focus Styles
+   WCAG 2.4.7 - Focus Visible: Provide visible focus indicators for keyboard users
+   ============================================================================ */
+
+/* Default focus outline for interactive elements */
+:focus-visible {
+  outline: 2px solid #174593;
+  outline-offset: 2px;
+}
+
+/* For browsers that don't support :focus-visible, maintain focus */
+:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Enhanced focus for form controls */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.btn:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25);
+  outline: 2px solid #174593;
+  outline-offset: 1px;
+}
+
+/* Skip link styling */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #174593;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0 0 8px 8px;
+  z-index: 9999;
+  text-decoration: none;
+  font-weight: 600;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  color: #fff;
 }
 
 hr {
