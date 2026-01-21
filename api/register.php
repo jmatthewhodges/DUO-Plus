@@ -174,15 +174,15 @@ try {
     }
 
     // -------------------------------------------------------------------------
-    // Check for Duplicate Email
+    // Check for Duplicate Email (DISABLED - allowing duplicate emails)
     // -------------------------------------------------------------------------
     
-    $checkStmt = $pdo->prepare("SELECT Login_ID FROM tblClientLogin WHERE Email = ?");
-    $checkStmt->execute([$data['email']]);
-    
-    if ($checkStmt->fetch()) {
-        throw new Exception('An account with this email address already exists');
-    }
+    // $checkStmt = $pdo->prepare("SELECT Login_ID FROM tblClientLogin WHERE Email = ?");
+    // $checkStmt->execute([$data['email']]);
+    // 
+    // if ($checkStmt->fetch()) {
+    //     throw new Exception('An account with this email address already exists');
+    // }
 
     // -------------------------------------------------------------------------
     // Begin Database Transaction
