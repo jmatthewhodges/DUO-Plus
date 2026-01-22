@@ -13,7 +13,7 @@
  *   - password_hash   (required) SHA-256 hashed password from frontend
  *   - first_name      (required) Client's first name
  *   - last_name       (required) Client's last name
- *   - sex             (required) Client's sex (male/female/other)
+ *   - sex             (required) Client's sex (male/female/intersex)
  *   - dob             (required) Date of birth (MM/DD/YYYY format)
  *   - middle_initial  (optional) Middle initial
  *   - phone           (optional) Phone number
@@ -28,7 +28,6 @@
  *   - emergency_last_name  (optional) Emergency contact last name
  *   - emergency_phone      (optional) Emergency contact phone
  *   - services        (optional) Array of services: medical, dental, optical, haircut
- *   - dental_type     (optional) Dental type: hygiene or extraction
  *   - signature       (optional) Base64-encoded signature image
  * 
  * RESPONSE (JSON):
@@ -45,7 +44,7 @@
  *   - tblClientRegistrations
  * 
  * @author DUO+ Development Team
- * @version 2.0.0
+ * @version 1.0.0
  */
 
 declare(strict_types=1);

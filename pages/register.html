@@ -15,9 +15,7 @@ STEPS:
   5. Services        - Medical, Dental, Optical, Haircut + Waiver
 
 DEPENDENCIES:
-  - Bootstrap 5 (via HopeUI)
-  - HopeUI Theme
-  - Air Datepicker
+  - Bootstrap 5 (HopeUI Theme)
   - SweetAlert2
   - QRCode.js
 
@@ -25,7 +23,7 @@ SCRIPTS:
   - ../js/register.js
 
 @author DUO+ Development Team
-@version 2.0.0
+@version 1.0.0
 ================================================================================
 -->
 
@@ -39,8 +37,6 @@ SCRIPTS:
     <!-- Stylesheets -->
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
-    <link href="../assets/vendor/flatpickr/flatpickr.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/vendor/flatpickr/material_blue.css">
 </head>
 
 <body class="d-flex align-items-start justify-content-center v-center-page"
@@ -211,9 +207,9 @@ SCRIPTS:
                                     autocomplete="off">
                                 <label class="btn btn-outline-primary flex-fill" for="sexFemale">Female</label>
 
-                                <input type="radio" class="btn-check" name="selectSex" id="sexOther" value="other"
+                                <input type="radio" class="btn-check" name="selectSex" id="sexIntersex" value="Intersex"
                                     autocomplete="off">
-                                <label class="btn btn-outline-primary flex-fill" for="sexOther">Other</label>
+                                <label class="btn btn-outline-primary flex-fill" for="sexIntersex">Intersex</label>
                             </div>
                         </fieldset>
 
@@ -221,14 +217,14 @@ SCRIPTS:
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="form-floating">
-                                    <input type="text" id="txtDOB" class="form-control form-control-sm"
-                                        placeholder="mm/dd/yyyy" required readonly
+                                    <input type="date" id="txtDOB" class="form-control form-control-sm"
+                                        placeholder="mm/dd/yyyy" required
                                         aria-describedby="dobHelp dobError"
                                         autocomplete="bday">
                                     <label for="txtDOB" class="form-label">
                                         Date of Birth <span class="text-danger" aria-hidden="true">*</span>
                                     </label>
-                                    <small id="dobHelp" class="visually-hidden">Select your date of birth using the date picker. You must be 18 or older.</small>
+                                    <small id="dobHelp" class="visually-hidden">Enter your date of birth.</small>
                                     <div class="invalid-feedback" id="dobError" role="alert">Required</div>
                                 </div>
                             </div>
@@ -503,19 +499,6 @@ SCRIPTS:
                                 <span class="service-check" aria-hidden="true">✓</span>
                             </button>
 
-                            <!-- Dental Sub-options (shown when Dental selected) -->
-                            <fieldset id="dentalOptions" class="dental-options" style="display: none;">
-                                <legend class="visually-hidden">Select dental service type</legend>
-                                <label class="dental-option">
-                                    <input type="radio" name="dentalType" value="hygiene">
-                                    <span>Hygiene</span>
-                                </label>
-                                <label class="dental-option">
-                                    <input type="radio" name="dentalType" value="extraction">
-                                    <span>Extraction</span>
-                                </label>
-                            </fieldset>
-
                             <!-- Optical -->
                             <button type="button" class="service-btn" data-service="optical"
                                 aria-pressed="false" aria-label="Optical service">
@@ -544,7 +527,7 @@ SCRIPTS:
                             <button id="btnStep5Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
                                 style="background-color: #174593;"><span class="visually-hidden">Go back to </span>Back<span class="visually-hidden"> emergency contact</span></button>
                             <button id="btnStep5Submit" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
-                                style="background-color: #174593;">Finish<span class="visually-hidden"> and sign waiver</span></button>
+                                style="background-color: #174593;">Next<span class="visually-hidden"> and sign waiver</span></button>
                         </div>
                     </fieldset>
 
@@ -623,76 +606,6 @@ SCRIPTS:
                 </div>
             </div>
         </div>
-
-        <!-- ================================================================
-             MODAL: State Selection (COMMENTED OUT - Using dropdown instead)
-        ================================================================= -->
-        <!--
-        <div class="modal fade" id="stateModal" tabindex="-1" aria-labelledby="stateModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="stateModalLabel">Select Your State</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="state-grid">
-                            <button type="button" class="state-btn" data-state="AL">Alabama</button>
-                            <button type="button" class="state-btn" data-state="AK">Alaska</button>
-                            <button type="button" class="state-btn" data-state="AZ">Arizona</button>
-                            <button type="button" class="state-btn" data-state="AR">Arkansas</button>
-                            <button type="button" class="state-btn" data-state="CA">California</button>
-                            <button type="button" class="state-btn" data-state="CO">Colorado</button>
-                            <button type="button" class="state-btn" data-state="CT">Connecticut</button>
-                            <button type="button" class="state-btn" data-state="DE">Delaware</button>
-                            <button type="button" class="state-btn" data-state="FL">Florida</button>
-                            <button type="button" class="state-btn" data-state="GA">Georgia</button>
-                            <button type="button" class="state-btn" data-state="HI">Hawaii</button>
-                            <button type="button" class="state-btn" data-state="ID">Idaho</button>
-                            <button type="button" class="state-btn" data-state="IL">Illinois</button>
-                            <button type="button" class="state-btn" data-state="IN">Indiana</button>
-                            <button type="button" class="state-btn" data-state="IA">Iowa</button>
-                            <button type="button" class="state-btn" data-state="KS">Kansas</button>
-                            <button type="button" class="state-btn" data-state="KY">Kentucky</button>
-                            <button type="button" class="state-btn" data-state="LA">Louisiana</button>
-                            <button type="button" class="state-btn" data-state="ME">Maine</button>
-                            <button type="button" class="state-btn" data-state="MD">Maryland</button>
-                            <button type="button" class="state-btn" data-state="MA">Massachusetts</button>
-                            <button type="button" class="state-btn" data-state="MI">Michigan</button>
-                            <button type="button" class="state-btn" data-state="MN">Minnesota</button>
-                            <button type="button" class="state-btn" data-state="MS">Mississippi</button>
-                            <button type="button" class="state-btn" data-state="MO">Missouri</button>
-                            <button type="button" class="state-btn" data-state="MT">Montana</button>
-                            <button type="button" class="state-btn" data-state="NE">Nebraska</button>
-                            <button type="button" class="state-btn" data-state="NV">Nevada</button>
-                            <button type="button" class="state-btn" data-state="NH">New Hampshire</button>
-                            <button type="button" class="state-btn" data-state="NJ">New Jersey</button>
-                            <button type="button" class="state-btn" data-state="NM">New Mexico</button>
-                            <button type="button" class="state-btn" data-state="NY">New York</button>
-                            <button type="button" class="state-btn" data-state="NC">North Carolina</button>
-                            <button type="button" class="state-btn" data-state="ND">North Dakota</button>
-                            <button type="button" class="state-btn" data-state="OH">Ohio</button>
-                            <button type="button" class="state-btn" data-state="OK">Oklahoma</button>
-                            <button type="button" class="state-btn" data-state="OR">Oregon</button>
-                            <button type="button" class="state-btn" data-state="PA">Pennsylvania</button>
-                            <button type="button" class="state-btn" data-state="RI">Rhode Island</button>
-                            <button type="button" class="state-btn" data-state="SC">South Carolina</button>
-                            <button type="button" class="state-btn" data-state="SD">South Dakota</button>
-                            <button type="button" class="state-btn" data-state="TN">Tennessee</button>
-                            <button type="button" class="state-btn" data-state="TX">Texas</button>
-                            <button type="button" class="state-btn" data-state="UT">Utah</button>
-                            <button type="button" class="state-btn" data-state="VT">Vermont</button>
-                            <button type="button" class="state-btn" data-state="VA">Virginia</button>
-                            <button type="button" class="state-btn" data-state="WA">Washington</button>
-                            <button type="button" class="state-btn" data-state="WV">West Virginia</button>
-                            <button type="button" class="state-btn" data-state="WI">Wisconsin</button>
-                            <button type="button" class="state-btn" data-state="WY">Wyoming</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        -->
 
         <!-- ================================================================
              MODAL: Registration Success (QR Code)

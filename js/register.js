@@ -15,11 +15,10 @@
  * DEPENDENCIES:
  *   - Bootstrap 5 (modals, form styling)
  *   - SweetAlert2 (error/success alerts)
- *   - Flatpickr (date of birth picker)
  *   - QRCode.js (QR code generation)
  * 
  * @author DUO+ Development Team
- * @version 2.0.0
+ * @version 1.0.0
  */
 
 'use strict';
@@ -756,21 +755,6 @@ function validateStep5Form() {
         document.getElementById('serviceError').style.display = 'none';
     }
 
-    // If dental is selected, dental type must be chosen
-    if (selectedServices.has('dental')) {
-        const dentalType = document.querySelector('input[name="dentalType"]:checked');
-        const dentalOptions = document.getElementById('dentalOptions');
-        if (!dentalType) {
-            dentalOptions.style.border = '2px solid #dc3545';
-            dentalOptions.setAttribute('aria-invalid', 'true');
-            errors.push('Please select hygiene or extraction for dental service');
-            isValid = false;
-        } else {
-            dentalOptions.style.border = '1px solid #dee2e6';
-            dentalOptions.removeAttribute('aria-invalid');
-        }
-    }
-
     // Announce errors
     if (errors.length > 0) {
         announceToScreenReader(`Validation error: ${errors[0]}`, true);
@@ -1000,13 +984,6 @@ function collectRegistrationData() {
     // Get stored data from Step 1
     const storedData = JSON.parse(sessionStorage.getItem('registrationData') || '{}');
 
-    // Get dental type if dental service is selected
-    let dentalType = null;
-    if (selectedServices.has('dental')) {
-        const dentalRadio = document.querySelector('input[name="dentalType"]:checked');
-        dentalType = dentalRadio ? dentalRadio.value : null;
-    }
-
     // Get signature as base64 image
     const signatureData = signatureCanvas ? signatureCanvas.toDataURL('image/png') : null;
 
@@ -1039,7 +1016,6 @@ function collectRegistrationData() {
 
         // Step 5: Services
         services: Array.from(selectedServices),
-        dental_type: dentalType,
 
         // Waiver Signature
         signature: signatureData
@@ -1238,29 +1214,6 @@ document.addEventListener('DOMContentLoaded', function () {
         passwordToggle.addEventListener('change', () => {
             passwordInput.type = passwordToggle.checked ? 'text' : 'password';
         });
-    }
-
-    // -------------------------------------------------------------------------
-    // Date Picker (Flatpickr)
-    // -------------------------------------------------------------------------
-
-    const dobInput = document.getElementById('txtDOB');
-    if (dobInput && typeof flatpickr !== 'undefined') {
-        // Calculate date 18 years ago for minimum age requirement
-        const eighteenYearsAgo = new Date();
-        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
-
-        const dobPicker = flatpickr(dobInput, {
-            dateFormat: 'm/d/Y',
-            maxDate: eighteenYearsAgo,
-            disableMobile: false,
-            enableTime: false,
-            allowInput: true,
-            onClose: function(selectedDates, dateStr) {
-                dobInput.value = dateStr || '';
-            }
-        });
-        window.dobPicker = dobPicker;
     }
 
     // -------------------------------------------------------------------------
@@ -1475,13 +1428,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Announce to screen reader
                 announceToScreenReader(`${serviceName} deselected`);
 
-                // Hide dental options if dental is deselected
-                if (service === 'dental') {
-                    const dentalOptions = document.getElementById('dentalOptions');
-                    dentalOptions.style.display = 'none';
-                    btn.setAttribute('aria-expanded', 'false');
-                    document.querySelectorAll('input[name="dentalType"]').forEach(r => r.checked = false);
-                }
             } else {
                 // Select service
                 btn.classList.add('selected');
@@ -1490,14 +1436,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Announce to screen reader
                 announceToScreenReader(`${serviceName} selected`);
-
-                // Show dental options if dental is selected
-                if (service === 'dental') {
-                    const dentalOptions = document.getElementById('dentalOptions');
-                    dentalOptions.style.display = 'flex';
-                    btn.setAttribute('aria-expanded', 'true');
-                    announceToScreenReader('Please choose hygiene or extraction');
-                }
             }
 
             // Hide error if at least one service selected
@@ -1512,32 +1450,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.preventDefault();
                 btn.click();
             }
-        });
-    });
-
-    // Dental type selection
-    const dentalRadios = document.querySelectorAll('input[name="dentalType"]');
-    dentalRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            const selectedType = radio.value === 'hygiene' ? 'Hygiene' : 'Extraction';
-            setTimeout(() => {
-                document.getElementById('dentalOptions').style.display = 'none';
-                
-                // Update dental button aria-expanded
-                const dentalBtn = document.querySelector('.service-btn[data-service="dental"]');
-                if (dentalBtn) {
-                    dentalBtn.setAttribute('aria-expanded', 'false');
-                }
-
-                // Update dental button label
-                const dentalBtnName = document.querySelector('.service-btn[data-service="dental"] .service-name');
-                if (dentalBtnName && radio.checked) {
-                    dentalBtnName.textContent = `Dental (${selectedType})`;
-                }
-                
-                // Announce selection
-                announceToScreenReader(`${selectedType} selected for dental service`);
-            }, 200);
         });
     });
 
