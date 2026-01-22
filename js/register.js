@@ -53,6 +53,41 @@ const COMMON_PASSWORDS = [
     'letmein', 'welcome', 'monkey', '1234567890', 'password1234'
 ];
 
+// ============================================================================
+// TEST NAVIGATION
+// ============================================================================
+
+function goToStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('.registration-step').forEach(step => {
+        step.style.display = 'none';
+    });
+    
+    // Show target step
+    document.getElementById('step' + stepNumber).style.display = 'block';
+    
+    // Update progress circles
+    for (let i = 1; i <= 5; i++) {
+        const circle = document.getElementById('stepCircle' + i);
+        const line = document.getElementById('stepLine' + (i - 1));
+        
+        circle.classList.remove('active', 'completed');
+        if (i < stepNumber) {
+            circle.classList.add('completed');
+        } else if (i === stepNumber) {
+            circle.classList.add('active');
+        }
+        
+        // Update connecting lines
+        if (line) {
+            line.classList.toggle('completed', i < stepNumber);
+        }
+    }
+    
+    // Update aria-current for accessibility
+    document.querySelectorAll('.step-circle').forEach(c => c.removeAttribute('aria-current'));
+    document.getElementById('stepCircle' + stepNumber).setAttribute('aria-current', 'step');
+}
 
 // ============================================================================
 // GLOBAL STATE
