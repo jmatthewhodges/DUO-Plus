@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUO+ | Register</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Bootstrap + HopeUI CSS -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-4">
+                <!-- Logo Section -->
+                <div class="text-center mt-n5">
+                    <img src="../assets/images/DUOPlusDropLogo.png"
+                        alt="DUO Logo"
+                        class="mb-3"
+                        style="width: 200px;">
+                </div>
+
+                <!-- Subtitle -->
+                <div class="text-center">
+                    <h5 class="subtitle-text fw-medium mb-3" style="color: #174593;">
+                        Begin the registration process
+                    </h5>
+                </div>
+
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-3 p-md-4 p-lg-4">
+                        <h5 class="card-title text-center">Login Information</h5>
+                        <form id="clientRegisterForm" novalidate method="POST" action="../api/client-login.php">  <!-- novalidate removes the default alert and replacces it with ours -->
+                            <div class="mb-3 text-start">
+                                <label for="clientRegisterEmail" class="form-label fw-semibold">Email</label>
+                                <input type="email" id="clientRegisterEmail" class="form-control" required aria-describedby="emailError">
+                                <div class="invalid-feedback" id="emailError" aria-live="polite">
+                                    Please enter a valid email address.
+                                </div>
+                            </div>
+
+                            <div class="mb-3 text-start">
+                                <label for="clientLoginPass" class="form-label fw-semibold">Password</label>
+                                <input type="password" id="clientLoginPass" class="form-control" required aria-describedby="passwordError">
+                                <div class="invalid-feedback" id="passwordError" aria-live="polite">
+                                    Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch text-start mb-3">
+                                <input class="form-check-input" type="checkbox" id="toggleClientRegisterPass" aria-label="Show password">
+                                <label class="form-check-label" for="toggleClientRegisterPass">Show password</label>
+                            </div>
+
+                            <!-- Main Login Button -->
+                            <button id="btnRegisterNext1" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
+                        
+                            <!-- Progress Bar -->
+                            <div class="progress mt-3">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/register.js"></script>
+</body>
+</html>

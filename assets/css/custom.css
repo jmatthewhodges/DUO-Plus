@@ -36,14 +36,14 @@ hr {
    ========================================================================== */
 
 /* Prevent clipping of floating labels and focus shadows */
-.card,
+/* .card,
 .card-body {
   overflow: visible !important;
 }
 
 .card-body {
   padding: 1.75rem !important;
-}
+} */
 
 /* ==========================================================================
    3. LAYOUT CONTAINERS
@@ -118,30 +118,6 @@ body.v-center-page {
   color: #fff;
   text-decoration: none;
   box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
-}
-
-/* ==========================================================================
-   5. FORM ELEMENTS
-   ========================================================================== */
-
-/* Password toggle icon */
-.password-toggle {
-  position: relative;
-}
-
-.password-toggle-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #6c757d;
-  font-size: 1.1rem;
-  user-select: none;
-}
-
-.password-toggle-icon:hover {
-  color: #174593;
 }
 
 /* ==========================================================================
@@ -228,92 +204,4 @@ body.page-qrcode {
   font-weight: 600;
   color: #1f5fdd;
   min-height: 40px;
-}
-
-/* ==========================================================================
-   7. RESPONSIVE ADJUSTMENTS
-   ========================================================================== */
-
-/* Mobile height-constrained screens */
-@media (max-height: 700px) {
-  .logo-section img {
-    width: 120px !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .subtitle-text,
-  .welcome-text {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .card-body {
-    padding: 1.5rem !important;
-  }
-
-  .form-label {
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .form-control {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-  }
-
-  .mb-3 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 1rem !important;
-  }
-
-  .register-section {
-    margin-top: 0.5rem;
-  }
-
-  /* QR page adjustments */
-  body.page-qrcode {
-    padding: 10px;
-  }
-
-  .main-card {
-    padding: 15px;
-  }
-
-  .logo {
-    width: 140px !important;
-    margin-bottom: 10px !important;
-  }
-
-  .main-card h5 {
-    font-size: 1rem !important;
-  }
-
-  .scan-btn,
-  .back-btn {
-    padding: 10px !important;
-    font-size: 16px !important;
-    margin-top: 10px !important;
-  }
-}
-
-/* Tablet screens */
-@media (min-width: 768px) {
-  .main-card {
-    max-width: 550px;
-    padding: 35px;
-  }
-
-  .logo {
-    width: 250px !important;
-  }
-}
-
-/* Desktop screens */
-@media (min-width: 1200px) {
-  .main-card {
-    max-width: 600px;
-  }
 }
