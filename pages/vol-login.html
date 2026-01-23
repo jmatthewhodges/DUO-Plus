@@ -9,11 +9,9 @@
   <!-- Bootstrap + HopeUI CSS -->
   <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
   <link href="../assets/css/custom.css" rel="stylesheet">
-
-  <!-- Inline page styles moved to custom.css -->
 </head>
 
-<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page" style="overflow: hidden;">
 
   <div class="container text-center login-container">
 
@@ -87,6 +85,12 @@
           <!-- Login Button -->
           <button id="btnVolLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">
             Login
+          </button>
+
+          <!-- Loading Spinner Button (hidden initially) -->
+          <button id="btnVolLoading" type="button" class="btn btn-primary w-100 rounded-2" disabled style="display: none; background-color: #174593;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Loading...
           </button>
 
         </form>

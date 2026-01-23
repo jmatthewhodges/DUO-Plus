@@ -20,7 +20,7 @@ $userName = $_SESSION['user_name'] ?? 'Volunteer';
     <link href="../assets/css/custom.css" rel="stylesheet">
 </head>
 
-<body class="page-qrcode">
+<body class="page-qrcode" style="overflow: hidden;">
     <!-- Main Dashboard Card -->
     <div class="main-card text-center">
         <!-- Logo -->

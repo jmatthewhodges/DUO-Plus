@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+================================================================================
+DUO+ CLIENT REGISTRATION PAGE
+================================================================================
+
+Multi-step registration form with validation and waiver signature.
+
+STEPS:
+  1. Login Info      - Email & Password
+  2. Personal Info   - Name, Sex, DOB, Phone
+  3. Address Info    - Street, City, State, ZIP
+  4. Emergency       - Emergency contact details
+  5. Services        - Medical, Dental, Optical, Haircut + Waiver
+
+DEPENDENCIES:
+  - Bootstrap 5 (HopeUI Theme)
+  - SweetAlert2
+  - QRCode.js
+
+SCRIPTS:
+  - ../js/register.js
+
+@author DUO+ Development Team
+@version 1.0.0
+================================================================================
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#72B2D4">
+    <title>DUO+ | Register</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Stylesheets -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+</head>
+
+<body class="d-flex align-items-start justify-content-center v-center-page"
+    style="padding: 20px 0; overflow-x: hidden; overflow-y: auto; min-height: 100vh;">
+
+    <!-- Skip Link for Keyboard Users -->
+    <a href="#clientRegisterForm" class="visually-hidden-focusable skip-link">Skip to registration form</a>
+
+    <!-- Live Region for Screen Reader Announcements -->
+    <div id="srAnnouncer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="container text-center login-container" role="main">
+
+        <!-- ================================================================
+             HEADER: Logo & Title
+        ================================================================= -->
+        <header class="logo-section mb-3">
+            <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Plus - Mobile Mission" class="mb-3" style="width: 180px;">
+            <h1 class="visually-hidden">DUO+ Client Registration</h1>
+        </header>
+
+        <p class="subtitle-text fw-medium mb-4" style="color: #174593; font-size: 1.1rem;" role="doc-subtitle">
+            Create an account to start receiving <br>free care through DUO
+        </p>
+
+        <!-- ================================================================
+             PROGRESS INDICATOR (5 Steps)
+        ================================================================= -->
+        <nav class="progress-indicator mb-4 mt-4" aria-label="Registration progress">
+            <ol class="d-flex justify-content-center align-items-center gap-2 list-unstyled mb-0" role="list">
+                <li class="step-circle active" id="stepCircle1" aria-current="step">
+                    <span aria-hidden="true">1</span>
+                    <span class="visually-hidden">Step 1: Login Info (current)</span>
+                </li>
+                <li class="step-line" id="stepLine1" aria-hidden="true"></li>
+                <li class="step-circle" id="stepCircle2">
+                    <span aria-hidden="true">2</span>
+                    <span class="visually-hidden">Step 2: Personal Info</span>
+                </li>
+                <li class="step-line" id="stepLine2" aria-hidden="true"></li>
+                <li class="step-circle" id="stepCircle3">
+                    <span aria-hidden="true">3</span>
+                    <span class="visually-hidden">Step 3: Address Info</span>
+                </li>
+                <li class="step-line" id="stepLine3" aria-hidden="true"></li>
+                <li class="step-circle" id="stepCircle4">
+                    <span aria-hidden="true">4</span>
+                    <span class="visually-hidden">Step 4: Emergency Contact</span>
+                </li>
+                <li class="step-line" id="stepLine4" aria-hidden="true"></li>
+                <li class="step-circle" id="stepCircle5">
+                    <span aria-hidden="true">5</span>
+                    <span class="visually-hidden">Step 5: Services</span>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- ================================================================
+             REGISTRATION FORM CARD
+        ================================================================= -->
+        <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
+            <div class="card-body p-4">
+                <form id="clientRegisterForm" novalidate method="POST" action="../api/register.php">
+
+                    <!-- ========================================
+                         STEP 1: Login Info (Email & Password)
+                    ========================================= -->
+                    <fieldset id="step1" class="registration-step">
+                        <legend class="step-title text-center mb-3" style="color: #174593; font-weight: 600; font-size: 1rem; border: none; padding: 0; margin-bottom: 1rem;">
+                            Step 1 of 5: Login Info
+                        </legend>
+
+                        <!-- Email -->
+                        <div class="form-floating mb-3 text-start">
+                            <input type="email" id="txtRegClientEmail" class="form-control"
+                                placeholder="ex: johndoe@gmail.com" required 
+                                aria-describedby="emailHelp emailError"
+                                autocomplete="email">
+                            <label for="txtRegClientEmail" class="form-label fw-semibold">Email <span class="text-danger" aria-hidden="true">*</span></label>
+                            <small id="emailHelp" class="visually-hidden">Enter your email address for login</small>
+                            <div class="invalid-feedback" id="emailError" role="alert">
+                                Please enter an email address.
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-floating mb-3 text-start">
+                            <input type="password" id="txtRegClientPassword" class="form-control"
+                                placeholder="ex: password123" required 
+                                aria-describedby="passwordHelp passwordError"
+                                autocomplete="new-password"
+                                minlength="8">
+                            <label for="txtRegClientPassword" class="form-label fw-semibold">Password <span class="text-danger" aria-hidden="true">*</span></label>
+                            <small id="passwordHelp" class="visually-hidden">Create a password at least 8 characters long</small>
+                            <div class="invalid-feedback" id="passwordError" role="alert">
+                                Please enter a password.
+                            </div>
+                        </div>
+
+                        <!-- Show Password Toggle -->
+                        <div class="form-check form-switch text-start mb-3">
+                            <input class="form-check-input" type="checkbox" id="toggleClientPassword"
+                                aria-controls="txtRegClientPassword">
+                            <label class="form-check-label" for="toggleClientPassword">Show password</label>
+                        </div>
+
+                        <button id="btnStep1Next" type="button" class="btn btn-primary w-100 rounded-2"
+                            style="background-color: #174593;">Next<span class="visually-hidden">: go to personal info</span></button>
+                    </fieldset>
+
+                    <!-- ========================================
+                         STEP 2: Personal Information
+                    ========================================= -->
+                    <fieldset id="step2" class="registration-step" style="display: none;">
+                        <legend class="step-title text-center mb-3" style="color: #174593; font-weight: 600; font-size: 1rem; border: none; padding: 0; margin-bottom: 1rem;">
+                            Step 2 of 5: Personal Info
+                        </legend>
+
+                        <!-- Name Fields: First, Middle Initial, Last -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-5">
+                                <div class="form-floating">
+                                    <input type="text" id="txtFirstName" class="form-control form-control-sm"
+                                        placeholder="John" pattern="[A-Za-z '\u002D]+" required
+                                        autocomplete="given-name"
+                                        aria-describedby="firstNameError">
+                                    <label for="txtFirstName" class="form-label">
+                                        First Name <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="invalid-feedback" id="firstNameError" role="alert">Required</div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="form-floating">
+                                    <input type="text" id="txtMiddleInitial" class="form-control form-control-sm"
+                                        placeholder="M" pattern="[A-Za-z]" maxlength="1"
+                                        autocomplete="additional-name"
+                                        aria-label="Middle Initial (optional)">
+                                    <label for="txtMiddleInitial" class="form-label">MI</label>
+                                </div>
+                            </div>
+                            <div class="col-5">
+                                <div class="form-floating">
+                                    <input type="text" id="txtLastName" class="form-control form-control-sm"
+                                        placeholder="Doe" pattern="[A-Za-z '\u002D]+" required
+                                        autocomplete="family-name"
+                                        aria-describedby="lastNameError">
+                                    <label for="txtLastName" class="form-label">
+                                        Last Name <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="invalid-feedback" id="lastNameError" role="alert">Required</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sex Selection (Radio Button Group) -->
+                        <fieldset class="mb-3 text-start">
+                            <legend class="form-label d-block mb-2" style="font-size: inherit; border: none; padding: 0; margin-bottom: 0.5rem;">
+                                Sex <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(required)</span>
+                            </legend>
+                            <div class="btn-group w-100" role="radiogroup" aria-label="Select your sex">
+                                <input type="radio" class="btn-check" name="selectSex" id="sexMale" value="male"
+                                    autocomplete="off" required>
+                                <label class="btn btn-outline-primary flex-fill" for="sexMale">Male</label>
+
+                                <input type="radio" class="btn-check" name="selectSex" id="sexFemale" value="female"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-primary flex-fill" for="sexFemale">Female</label>
+
+                                <input type="radio" class="btn-check" name="selectSex" id="sexIntersex" value="Intersex"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-primary flex-fill" for="sexIntersex">Intersex</label>
+                            </div>
+                        </fieldset>
+
+                        <!-- Date of Birth & Phone -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="date" id="txtDOB" class="form-control form-control-sm"
+                                        placeholder="mm/dd/yyyy" required
+                                        aria-describedby="dobHelp dobError"
+                                        autocomplete="bday">
+                                    <label for="txtDOB" class="form-label">
+                                        Date of Birth <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <small id="dobHelp" class="visually-hidden">Enter your date of birth.</small>
+                                    <div class="invalid-feedback" id="dobError" role="alert">Required</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="tel" id="txtPhoneNumber" class="form-control form-control-sm"
+                                        placeholder="(555) 123-4567"
+                                        autocomplete="tel"
+                                        aria-label="Phone number (optional)">
+                                    <label for="txtPhoneNumber" class="form-label">Phone</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep2Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;"><span class="visually-hidden">Go back to </span>Back<span class="visually-hidden"> login info</span></button>
+                            <button id="btnStep2Next" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next<span class="visually-hidden">: go to address info</span></button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ========================================
+                         STEP 3: Address Information
+                    ========================================= -->
+                    <fieldset id="step3" class="registration-step" style="display: none;">
+                        <legend class="step-title text-center mb-3" style="color: #174593; font-weight: 600; font-size: 1rem; border: none; padding: 0; margin-bottom: 1rem;">
+                            Step 3 of 5: Address Info
+                        </legend>
+
+                        <!-- No Address Checkbox -->
+                        <div class="form-check mb-3 text-start">
+                            <input class="form-check-input" type="checkbox" id="chkNoAddress"
+                                aria-describedby="noAddressHelp">
+                            <label class="form-check-label ms-2" for="chkNoAddress">
+                                I don't have a permanent address
+                            </label>
+                            <small id="noAddressHelp" class="visually-hidden">Check this box if you don't have a permanent address. Address fields will be hidden.</small>
+                        </div>
+
+                        <!-- Address Fields (toggled by checkbox) -->
+                        <div id="addressFields" style="display: block;" role="group" aria-labelledby="addressFieldsLabel">
+                            <span id="addressFieldsLabel" class="visually-hidden">Address information fields</span>
+                            <!-- Street Address 1 -->
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" id="txtStreetAddress" class="form-control form-control-sm"
+                                        placeholder="123 Main St" required
+                                        autocomplete="address-line1"
+                                        aria-describedby="streetError">
+                                    <label for="txtStreetAddress" class="form-label">
+                                        Street Address <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="invalid-feedback" id="streetError" role="alert">Required</div>
+                                </div>
+                            </div>
+
+                            <!-- Street Address 2 (Optional) -->
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" id="txtStreetAddress2" class="form-control form-control-sm"
+                                        placeholder="Apt, Suite, Unit, etc."
+                                        autocomplete="address-line2"
+                                        aria-label="Street Address Line 2 (optional)">
+                                    <label for="txtStreetAddress2" class="form-label">Street Address 2</label>
+                                </div>
+                            </div>
+
+                            <!-- City, State, ZIP -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtCity" class="form-control form-control-sm"
+                                            placeholder="Nashville" pattern="[A-Za-z\s]+" required
+                                            autocomplete="address-level2"
+                                            aria-describedby="cityError">
+                                        <label for="txtCity" class="form-label">
+                                            City <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="invalid-feedback" id="cityError" role="alert">Required</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-outline-primary dropdown-toggle state-dropdown-btn" type="button" 
+                                            id="btnStateDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                            aria-haspopup="listbox"
+                                            aria-label="Select state (required)">
+                                            State <span class="text-danger" aria-hidden="true">*</span>
+                                        </button>
+                                        <input type="hidden" id="txtState" name="state" required aria-hidden="true">
+                                        <ul class="dropdown-menu state-dropdown-menu" role="listbox" aria-label="Select a state">
+                                            <li><a class="dropdown-item" href="#" data-value="AL" role="option">Alabama</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AK" role="option">Alaska</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AZ" role="option">Arizona</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="AR" role="option">Arkansas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CA" role="option">California</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CO" role="option">Colorado</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="CT" role="option">Connecticut</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="DE" role="option">Delaware</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="FL" role="option">Florida</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="GA" role="option">Georgia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="HI" role="option">Hawaii</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ID" role="option">Idaho</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IL" role="option">Illinois</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IN" role="option">Indiana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="IA" role="option">Iowa</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="KS" role="option">Kansas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="KY" role="option">Kentucky</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="LA" role="option">Louisiana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ME" role="option">Maine</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MD" role="option">Maryland</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MA" role="option">Massachusetts</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MI" role="option">Michigan</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MN" role="option">Minnesota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MS" role="option">Mississippi</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MO" role="option">Missouri</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="MT" role="option">Montana</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NE" role="option">Nebraska</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NV" role="option">Nevada</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NH" role="option">New Hampshire</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NJ" role="option">New Jersey</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NM" role="option">New Mexico</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NY" role="option">New York</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="NC" role="option">North Carolina</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="ND" role="option">North Dakota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OH" role="option">Ohio</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OK" role="option">Oklahoma</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="OR" role="option">Oregon</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="PA" role="option">Pennsylvania</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="RI" role="option">Rhode Island</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="SC" role="option">South Carolina</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="SD" role="option">South Dakota</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="TN" role="option">Tennessee</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="TX" role="option">Texas</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="UT" role="option">Utah</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="VT" role="option">Vermont</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="VA" role="option">Virginia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WA" role="option">Washington</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WV" role="option">West Virginia</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WI" role="option">Wisconsin</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="WY" role="option">Wyoming</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtZip" class="form-control form-control-sm"
+                                            placeholder="37201" pattern="[0-9]{5}" inputmode="numeric" maxlength="5"
+                                            required
+                                            autocomplete="postal-code"
+                                            aria-describedby="zipError zipHelp">
+                                        <label for="txtZip" class="form-label">
+                                            ZIP <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <small id="zipHelp" class="visually-hidden">Enter 5-digit ZIP code</small>
+                                        <div class="invalid-feedback" id="zipError" role="alert">Enter 5 digits</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep3Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;"><span class="visually-hidden">Go back to </span>Back<span class="visually-hidden"> personal info</span></button>
+                            <button id="btnStep3Submit" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next<span class="visually-hidden">: go to emergency contact</span></button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ========================================
+                         STEP 4: Emergency Contact
+                    ========================================= -->
+                    <fieldset id="step4" class="registration-step" style="display: none;">
+                        <legend class="step-title text-center mb-3" style="color: #174593; font-weight: 600; font-size: 1rem; border: none; padding: 0; margin-bottom: 1rem;">
+                            Step 4 of 5: Emergency Contact
+                        </legend>
+
+                        <!-- No Emergency Contact Checkbox -->
+                        <div class="form-check mb-3 text-start">
+                            <input class="form-check-input" type="checkbox" id="chkNoEmergencyContact"
+                                aria-describedby="noEmergencyHelp">
+                            <label class="form-check-label ms-2" for="chkNoEmergencyContact">
+                                I don't have an emergency contact
+                            </label>
+                            <small id="noEmergencyHelp" class="visually-hidden">Check this box if you don't have an emergency contact. Contact fields will be hidden.</small>
+                        </div>
+
+                        <!-- Emergency Contact Fields (toggled by checkbox) -->
+                        <div id="emergencyContactFields" style="display: block;" role="group" aria-labelledby="emergencyFieldsLabel">
+                            <span id="emergencyFieldsLabel" class="visually-hidden">Emergency contact information fields</span>
+                            <!-- First Name & Last Name -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtEmergencyFirstName"
+                                            class="form-control form-control-sm" placeholder="John"
+                                            pattern="[A-Za-z '\u002D]+" required
+                                            aria-describedby="emergencyFirstError">
+                                        <label for="txtEmergencyFirstName" class="form-label">
+                                            First Name <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="invalid-feedback" id="emergencyFirstError" role="alert">Required</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="txtEmergencyLastName"
+                                            class="form-control form-control-sm" placeholder="Doe"
+                                            pattern="[A-Za-z '\u002D]+" required
+                                            aria-describedby="emergencyLastError">
+                                        <label for="txtEmergencyLastName" class="form-label">
+                                            Last Name <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="invalid-feedback" id="emergencyLastError" role="alert">Required</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="tel" id="txtEmergencyPhone" class="form-control form-control-sm"
+                                        placeholder="(555) 123-4567"
+                                        aria-describedby="emergencyPhoneError">
+                                    <label for="txtEmergencyPhone" class="form-label">
+                                        Phone <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="invalid-feedback" id="emergencyPhoneError" role="alert">Required</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep4Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;"><span class="visually-hidden">Go back to </span>Back<span class="visually-hidden"> address info</span></button>
+                            <button id="btnStep4Next" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next<span class="visually-hidden">: go to service selection</span></button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ========================================
+                         STEP 5: Service Selection
+                    ========================================= -->
+                    <fieldset id="step5" class="registration-step" style="display: none;">
+                        <legend class="step-title text-center mb-3" style="color: #174593; font-weight: 600; font-size: 1rem; border: none; padding: 0; margin-bottom: 1rem;">
+                            Step 5 of 5: Service Selection
+                        </legend>
+
+                        <p class="text-muted text-center mb-2" style="font-size: 0.85rem;" id="serviceInstructions">
+                            Select services you wish to receive (at least one required)
+                        </p>
+
+                        <!-- Service Selection Buttons -->
+                        <div class="service-selection mb-2" role="group" aria-labelledby="serviceInstructions" aria-describedby="serviceError">
+                            <!-- Medical -->
+                            <button type="button" class="service-btn" data-service="medical"
+                                aria-pressed="false" aria-label="Medical service">
+                                <span class="service-icon" aria-hidden="true">➕</span>
+                                <span class="service-name">Medical</span>
+                                <span class="service-check" aria-hidden="true">✓</span>
+                            </button>
+
+                            <!-- Dental -->
+                            <button type="button" class="service-btn" data-service="dental"
+                                aria-pressed="false" aria-label="Dental service" aria-expanded="false" aria-controls="dentalOptions">
+                                <span class="service-icon" aria-hidden="true">🦷</span>
+                                <span class="service-name">Dental</span>
+                                <span class="service-check" aria-hidden="true">✓</span>
+                            </button>
+
+                            <!-- Optical -->
+                            <button type="button" class="service-btn" data-service="optical"
+                                aria-pressed="false" aria-label="Optical service">
+                                <span class="service-icon" aria-hidden="true">👁️</span>
+                                <span class="service-name">Optical</span>
+                                <span class="service-check" aria-hidden="true">✓</span>
+                            </button>
+
+                            <!-- Haircut -->
+                            <button type="button" class="service-btn" data-service="haircut"
+                                aria-pressed="false" aria-label="Haircut service">
+                                <span class="service-icon" aria-hidden="true">✂️</span>
+                                <span class="service-name">Haircut</span>
+                                <span class="service-check" aria-hidden="true">✓</span>
+                            </button>
+                        </div>
+
+                        <!-- Service Error Message -->
+                        <div id="serviceError" class="text-danger text-center mb-2" role="alert" aria-live="assertive"
+                            style="display: none; font-size: 0.8rem;">
+                            Please select at least one service.
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="btnStep5Back" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;"><span class="visually-hidden">Go back to </span>Back<span class="visually-hidden"> emergency contact</span></button>
+                            <button id="btnStep5Submit" type="button" class="btn btn-primary btn-sm rounded-2 flex-fill"
+                                style="background-color: #174593;">Next<span class="visually-hidden"> and sign waiver</span></button>
+                        </div>
+                    </fieldset>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             MODAL: Waiver & Signature
+        ================================================================= -->
+        <div class="modal fade" id="waiverModal" tabindex="-1" aria-labelledby="waiverModalLabel" 
+            aria-describedby="waiverDescription" aria-modal="true" role="dialog"
+            data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <!-- Header -->
+                    <div class="modal-header py-2 border-0">
+                        <div class="text-center w-100">
+                            <h2 class="modal-title mb-1 h5" id="waiverModalLabel" style="color: #174593;">
+                                <span aria-hidden="true">🎉</span> You're Almost Done!
+                            </h2>
+                            <p class="text-muted mb-0" id="waiverDescription" style="font-size: 0.8rem;">
+                                Just sign the waiver to complete your registration
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body py-2">
+                        <!-- Waiver Content -->
+                        <div class="waiver-content" tabindex="0" role="document"
+                            aria-label="Waiver agreement terms - scroll to read all"
+                            style="max-height: 120px; overflow-y: auto; font-size: 0.75rem; background: #f8f9fa; padding: 0.6rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                            <p class="mb-1"><strong>By signing, I agree to:</strong></p>
+                            <ul style="padding-left: 1rem; margin-bottom: 0;">
+                                <li>Voluntarily participate in DUO services</li>
+                                <li>Provide accurate health information</li>
+                                <li>Release DUO from liability</li>
+                                <li>Consent to photo/media use</li>
+                                <li>Allow emergency treatment if needed</li>
+                            </ul>
+                        </div>
+
+                        <!-- Signature Pad -->
+                        <div class="signature-container">
+                            <label class="form-label mb-1" id="signatureLabel" for="signatureCanvas"
+                                style="font-size: 0.8rem; color: #174593; font-weight: 600;">
+                                Your Signature <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(required)</span>
+                            </label>
+                            <div class="signature-pad-wrapper" id="modalSignatureWrapper">
+                                <canvas id="signatureCanvas" class="signature-canvas" 
+                                    role="img" aria-labelledby="signatureLabel"
+                                    aria-describedby="signatureHelp signatureError"
+                                    tabindex="0"></canvas>
+                                <button type="button" id="btnClearSignature" class="btn-clear-signature"
+                                    aria-label="Clear signature">
+                                    Clear
+                                </button>
+                            </div>
+                            <small id="signatureHelp" class="visually-hidden">Draw your signature using mouse or touch</small>
+                            <div id="signatureError" class="text-danger text-center mt-1" role="alert" aria-live="assertive"
+                                style="display: none; font-size: 0.75rem;">
+                                Please sign above to continue
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer py-2 border-0 justify-content-center">
+                        <button type="button" id="btnCompleteRegistration" class="btn btn-primary w-100"
+                            style="background-color: #174593;">
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             MODAL: Registration Success (QR Code)
+        ================================================================= -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" 
+            aria-describedby="successDescription" aria-modal="true" role="dialog"
+            data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+                    <div class="modal-body text-center p-4">
+                        <!-- Success Header -->
+                        <div class="success-header mb-3">
+                            <div class="success-checkmark mb-2" aria-hidden="true">
+                                <span style="font-size: 3rem;">🎉</span>
+                            </div>
+                            <h2 class="mb-1 h4" id="successModalLabel" style="color: #174593; font-weight: 700;">Registration Complete!</h2>
+                            <p class="text-muted mb-0" id="successDescription" style="font-size: 0.9rem;">Show this QR code at check-in</p>
+                        </div>
+
+                        <!-- QR Code Container -->
+                        <div class="qr-code-container mb-3"
+                            style="background: #f8f9fa; padding: 20px; border-radius: 12px; display: inline-block;">
+                            <div id="qrCodeDisplay" style="width: 180px; height: 180px; margin: 0 auto;" 
+                                role="img" aria-label="Your unique QR code for check-in"></div>
+                        </div>
+
+                        <!-- Client Name -->
+                        <p id="clientNameDisplay" class="fw-semibold mb-3" style="color: #174593; font-size: 1.1rem;" aria-live="polite">
+                        </p>
+
+                        <!-- Selected Services -->
+                        <div class="selected-services mb-3">
+                            <p class="text-muted mb-2" style="font-size: 0.85rem;" id="selectedServicesLabel">Services Selected:</p>
+                            <div id="serviceIconsDisplay" class="d-flex justify-content-center gap-3 flex-wrap" 
+                                role="list" aria-labelledby="selectedServicesLabel">
+                                <!-- Service icons inserted by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="button" id="btnSaveQR" class="btn btn-outline-primary"
+                                style="border-color: #174593; color: #174593;">
+                                <span aria-hidden="true">📥</span> Save QR Code
+                            </button>
+                            <button type="button" id="btnDone" class="btn btn-primary"
+                                style="background-color: #174593;">
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             FOOTER: Contact Info & Navigation
+        ================================================================= -->
+        <footer class="text-center mt-4" id="footerSection" aria-label="Page footer">
+            <a href="../index.html" class="fw-semibold d-block mb-4 text-decoration-none" style="color: #174593;">
+                Back To Login
+            </a>
+            <address class="not-italic">
+                <p class="mb-2 fw-semibold">Contact Us</p>
+                <p class="mb-2">
+                    <a href="mailto:info@duomobilemission.com" style="color: inherit;">info@duomobilemission.com</a>
+                </p>
+                <p class="mb-0">
+                    <a href="tel:+19312844802" style="color: inherit;">(931) 284-4802</a>
+                </p>
+            </address>
+        </footer>
+
+        <!-- ================================================================
+             TESTING: Step Navigation
+        ================================================================= -->
+        <div class="mt-4 p-3 border rounded bg-light">
+            <p class="text-muted small mb-2">Testing</p>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep(1)">Step 1</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep(2)">Step 2</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep(3)">Step 3</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep(4)">Step 4</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep(5)">Step 5</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         SCRIPTS
+    ===================================================================== -->
+    <script src="../assets/js/core/libs.min.js"></script>
+    <script src="../assets/js/core/external.min.js"></script>
+    <script src="../assets/js/hope-ui.js"></script>
+    <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../assets/vendor/flatpickr/flatpickr.js"></script>
+    <script src="../assets/vendor/qrcodejs/qrcode.min.js"></script>
+    <script src="../js/register.js"></script>
+
+</body>
+
+</html>
