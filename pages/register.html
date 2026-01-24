@@ -16,7 +16,7 @@
         <div class="row justify-content-center">
             <div class="col-12 col-sm-10 col-md-8 col-lg-4">
                 <!-- Logo Section -->
-                <div class="text-center mt-n5">
+                <div class="text-center">
                     <img src="../assets/images/DUOPlusDropLogo.png"
                         alt="DUO Logo"
                         class="mb-3"
@@ -24,16 +24,17 @@
                 </div>
 
                 <!-- Subtitle -->
-                <div class="text-center">
+                <div id="divStepOneSubtitle" class="text-center">
                     <h5 class="subtitle-text fw-medium mb-3" style="color: #174593;">
                         Begin the registration process
                     </h5>
                 </div>
 
                 <div class="card shadow-lg border-0 rounded-4">
-                    <div class="card-body p-3 p-md-4 p-lg-4">
+                    <!-- Step 1 Logic -->
+                    <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
                         <h5 class="card-title text-center">Login Information</h5>
-                        <form id="clientRegisterForm" novalidate method="POST" action="../api/client-login.php">  <!-- novalidate removes the default alert and replacces it with ours -->
+                        <form id="clientRegisterFormStep1" novalidate method="POST" action="../api/client-login.php">  <!-- novalidate removes the default alert and replacces it with ours -->
                             <div class="mb-3 text-start">
                                 <label for="clientRegisterEmail" class="form-label fw-semibold">Email</label>
                                 <input type="email" id="clientRegisterEmail" class="form-control" required aria-describedby="emailError">
@@ -43,8 +44,8 @@
                             </div>
 
                             <div class="mb-3 text-start">
-                                <label for="clientLoginPass" class="form-label fw-semibold">Password</label>
-                                <input type="password" id="clientLoginPass" class="form-control" required aria-describedby="passwordError">
+                                <label for="clientRegisterPass" class="form-label fw-semibold">Password</label>
+                                <input type="password" id="clientRegisterPass" class="form-control" required aria-describedby="passwordError">
                                 <div class="invalid-feedback" id="passwordError" aria-live="polite">
                                     Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.
                                 </div>
@@ -55,16 +56,82 @@
                                 <label class="form-check-label" for="toggleClientRegisterPass">Show password</label>
                             </div>
 
-                            <!-- Main Login Button -->
-                            <button id="btnRegisterNext1" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Next</button>
-                        
-                            <!-- Progress Bar -->
-                            <div class="progress mt-3">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                            <!-- Back/Next buttons -->
+                            <button id="btnRegisterNext1" type="button" class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
+                            <button id="btnRegisterBack1" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
+                        </form>
+                    </div>
+                    <!-- Step 2 Logic -->
+                    <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
+                        <h5 class="card-title text-center mb-3">Personal Information</h5>
+                        <form id="clientRegisterFormStep2" novalidate method="POST" action="../api/client-login.php">  
+                            <div class="mb-3 text-start">
+                                <!-- First name -->
+                                <label for="clientFirstName" class="form-label fw-semibold">First Name</label>
+                                <input type="text" id="clientFirstName" class="form-control" required aria-describedby="firstNameError">
+                                <div class="invalid-feedback" id="firstNameError" aria-live="polite">
+                                    Please enter your first name.
+                                </div>
                             </div>
+
+                            <!-- Middle initial -->
+                            <div class="mb-3 text-start">
+                                <label for="clientMiddleInitial" class="form-label fw-semibold">Middle Initial</label>
+                                <input type="text" id="clientMiddleInitial" class="form-control" maxlength="1">
+                            </div>
+
+                            <!-- Last name -->
+                            <div class="mb-3 text-start">
+                                <label for="clientLastName" class="form-label fw-semibold">Last Name</label>
+                                <input type="text" id="clientLastName" class="form-control" required aria-describedby="lastNameError">
+                                <div class="invalid-feedback" id="lastNameError" aria-live="polite">
+                                    Please enter your last name.
+                                </div>
+                            </div>
+
+                            <!-- Sex -->
+                            <div class="mb-3 text-start">
+                                <label class="form-label fw-semibold d-block">Sex</label>
+                                <div class="btn-group" role="group" aria-label="Select your sex.">
+                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male" required>
+                                    <label class="btn btn-outline-primary" for="btnSexMale">Male</label>
+
+                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexFemale" value="female">
+                                    <label class="btn btn-outline-primary" for="btnSexFemale">Female</label>
+
+                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexIntersex" value="intersex">
+                                    <label class="btn btn-outline-primary" for="btnSexIntersex">Intersex</label>
+                                </div>
+                                <div class="invalid-feedback d-block" id="sexError" style="display: none !important;">
+                                    Please select your sex.
+                                </div>
+                            </div>
+
+                            <!-- DOB -->
+                            <div class="mb-3 text-start">
+                                <label for="clientDOB" class="form-label fw-semibold">Date of Birth</label>
+                                <input type="datetime-local" id="clientDOB" class="form-control" required aria-describedby="dobError">
+                                <div class="invalid-feedback" id="dobError" aria-live="polite">
+                                    Please enter your date of birth.
+                                </div>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="mb-3 text-start">
+                                <label for="clientPhone" class="form-label fw-semibold">Phone</label>
+                                <input type="tel" id="clientPhone" class="form-control" aria-describedby="phoneError">
+                                <div class="invalid-feedback" id="phoneError" aria-live="polite">
+                                    Phone is invalid format.
+                                </div>
+                            </div>
+
+                            <!-- Back/Next buttons-->
+                            <button id="btnRegisterNext2" type="button" class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
+                            <button id="btnRegisterBack2" type="button" class="btn btn-primary w-100 rounded-2">Go Back</button>
                         </form>
                     </div>
                 </div>
+                <button id="skipStep1" class="btn btn-primary">Step 2</button>
             </div>
         </div>
     </div>
