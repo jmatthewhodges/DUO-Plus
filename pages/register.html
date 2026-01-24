@@ -2,74 +2,48 @@
 <html lang="en">
 
 <head>
-    <!-- ====================================================================
-         META & PAGE CONFIGURATION
-         ==================================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUO+ | Register</title>
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
 
-    <!-- ====================================================================
-         STYLESHEETS
-         ==================================================================== -->
-    <!-- Bootstrap + HopeUI Framework -->
+    <!-- Styles -->
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
-    <!-- Custom Application Styles -->
     <link href="../assets/css/custom.css" rel="stylesheet">
 </head>
 
 <body>
-    <!-- ====================================================================
-         MAIN CONTAINER
-         ==================================================================== -->
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-sm-10 col-md-8 col-lg-6">
-
-                <!-- ================================================================
-                     HEADER SECTION
-                     - Logo branding
-                     - Progress subtitle
-                     - Progress bar indicator
-                     ================================================================ -->
 
                 <!-- Logo -->
                 <div class="text-center">
                     <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 200px;">
                 </div>
 
-                <!-- Registration Progress Subtitle -->
+                <!-- Subtitle -->
                 <div id="divStepOneSubtitle" class="text-center">
                     <h5 class="subtitle-text fw-medium mb-3" style="color: #174593;">
                         Progress through registration
                     </h5>
                 </div>
 
-                <!-- Progress Bar 
-                     - Persists across all steps
-                     - Updated via JavaScript (20% per step, 99% at final step) -->
+                <!-- Progress Bar -->
                 <div class="progress mb-3">
                     <div class="progress-bar bg-success" id="progressBarTop" role="progressbar" style="width: 20%;"
                         aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
                 </div>
 
-                <!-- ================================================================
-                     REGISTRATION FORM CARD
-                     Contains all 5 registration steps (only one visible at a time)
-                     ================================================================ -->
+                <!-- Registration Card -->
                 <div class="card shadow-lg border-0 rounded-4">
 
-                    <!-- ============================================================
-                         STEP 1: LOGIN INFORMATION
-                         - Email address input
-                         - Password input with visibility toggle
-                         ============================================================ -->
+                    <!-- STEP 1: Login Info -->
                     <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
                         <h5 class="card-title text-center">Login Information</h5>
                         <form id="clientRegisterFormStep1" novalidate>
 
-                            <!-- Email Field -->
+                            <!-- Email -->
                             <div class="mb-3 text-start">
                                 <label for="clientRegisterEmail" class="form-label fw-semibold">Email</label>
                                 <input type="email" id="clientRegisterEmail" class="form-control" required
@@ -79,7 +53,7 @@
                                 </div>
                             </div>
 
-                            <!-- Password Field -->
+                            <!-- Password -->
                             <div class="mb-3 text-start">
                                 <label for="clientRegisterPass" class="form-label fw-semibold">Password</label>
                                 <input type="password" id="clientRegisterPass" class="form-control" required
@@ -97,7 +71,7 @@
                                 <label class="form-check-label" for="toggleClientRegisterPass">Show password</label>
                             </div>
 
-                            <!-- Navigation Buttons -->
+                            <!-- Buttons -->
                             <button id="btnRegisterNext1" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack1" type="button" class="btn btn-primary w-100 rounded-2">Back to
@@ -106,18 +80,12 @@
                     </div>
 
 
-                    <!-- ============================================================
-                         STEP 2: PERSONAL INFORMATION
-                         - Name fields (first, middle initial, last)
-                         - Sex selection (radio button group)
-                         - Date of birth
-                         - Phone number (optional)
-                         ============================================================ -->
+                    <!-- STEP 2: Personal Info -->
                     <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 class="card-title text-center mb-3">Personal Information</h5>
                         <form id="clientRegisterFormStep2" novalidate>
 
-                            <!-- First Name (Required) -->
+                            <!-- First Name -->
                             <div class="mb-3 text-start">
                                 <label for="clientFirstName" class="form-label fw-semibold">First Name</label>
                                 <input type="text" id="clientFirstName" class="form-control" required
@@ -127,13 +95,13 @@
                                 </div>
                             </div>
 
-                            <!-- Middle Initial (Optional, max 1 character) -->
+                            <!-- Middle Initial (optional) -->
                             <div class="mb-3 text-start">
                                 <label for="clientMiddleInitial" class="form-label fw-semibold">Middle Initial</label>
                                 <input type="text" id="clientMiddleInitial" class="form-control" maxlength="1">
                             </div>
 
-                            <!-- Last Name (Required) -->
+                            <!-- Last Name -->
                             <div class="mb-3 text-start">
                                 <label for="clientLastName" class="form-label fw-semibold">Last Name</label>
                                 <input type="text" id="clientLastName" class="form-control" required
@@ -143,30 +111,28 @@
                                 </div>
                             </div>
 
-                            <!-- Sex Selection (Required) - Radio Button Group -->
+                            <!-- Sex -->
                             <div class="mb-3 text-start">
                                 <label class="form-label fw-semibold d-block">Sex</label>
                                 <div class="btn-group" role="group" aria-label="Select your sex.">
-                                    <!-- Male Option -->
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
                                     <label class="btn btn-outline-primary" for="btnSexMale">Male</label>
-                                    <!-- Female Option -->
+
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexFemale"
                                         value="female">
                                     <label class="btn btn-outline-primary" for="btnSexFemale">Female</label>
-                                    <!-- Intersex Option -->
+
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexIntersex"
                                         value="intersex">
                                     <label class="btn btn-outline-primary" for="btnSexIntersex">Intersex</label>
                                 </div>
-                                <!-- Validation Error (shown via JavaScript) -->
                                 <div class="invalid-feedback d-block" id="sexError" style="display: none !important;">
                                     Please select your sex.
                                 </div>
                             </div>
 
-                            <!-- Date of Birth (Required) -->
+                            <!-- Date of Birth -->
                             <div class="mb-3 text-start">
                                 <label for="clientDOB" class="form-label fw-semibold">Date of Birth</label>
                                 <input type="date" id="clientDOB" class="form-control" required
@@ -176,7 +142,7 @@
                                 </div>
                             </div>
 
-                            <!-- Phone Number (Optional, auto-formatted as (123) 456-7890) -->
+                            <!-- Phone (optional) -->
                             <div class="mb-3 text-start">
                                 <label for="clientPhone" class="form-label fw-semibold">Phone</label>
                                 <input type="tel" id="clientPhone" class="form-control" aria-describedby="phoneError">
@@ -185,7 +151,7 @@
                                 </div>
                             </div>
 
-                            <!-- Navigation Buttons -->
+                            <!-- Buttons -->
                             <button id="btnRegisterNext2" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack2" type="button" class="btn btn-primary w-100 rounded-2">Go
@@ -194,18 +160,12 @@
                     </div>
 
 
-                    <!-- ============================================================
-                         STEP 3: ADDRESS INFORMATION
-                         - "No permanent address" checkbox (hides all fields if checked)
-                         - Street address line 1 & 2
-                         - City, State, ZIP code
-                         ============================================================ -->
+                    <!-- STEP 3: Address Info -->
                     <div id="divStepThree" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 class="card-title text-center mb-3">Address Information</h5>
                         <form id="clientRegisterFormStep3" novalidate>
 
-                            <!-- No Address Checkbox 
-                                 When checked, all address fields are hidden and not required -->
+                            <!-- No Address Checkbox -->
                             <div class="mb-3 text-start form-check">
                                 <input class="form-check-input" type="checkbox" value="" id="noAddress">
                                 <label class="form-check-label" for="noAddress">
@@ -213,7 +173,7 @@
                                 </label>
                             </div>
 
-                            <!-- Street Address Line 1 (Required) -->
+                            <!-- Street Address 1 -->
                             <div class="mb-3 text-start">
                                 <label for="clientAddress1" class="form-label fw-semibold">Street Address 1</label>
                                 <input type="text" id="clientAddress1" class="form-control" required
@@ -223,13 +183,13 @@
                                 </div>
                             </div>
 
-                            <!-- Street Address Line 2 (Optional - apt, suite, unit, etc.) -->
+                            <!-- Street Address 2 (optional) -->
                             <div class="mb-3 text-start">
                                 <label for="clientAddress2" class="form-label fw-semibold">Street Address 2</label>
                                 <input type="text" id="clientAddress2" class="form-control">
                             </div>
 
-                            <!-- City (Required) -->
+                            <!-- City -->
                             <div class="mb-3 text-start">
                                 <label for="clientCity" class="form-label fw-semibold">City</label>
                                 <input type="text" id="clientCity" class="form-control" required
@@ -239,12 +199,11 @@
                                 </div>
                             </div>
 
-                            <!-- State Dropdown (Required) - All 50 US States -->
+                            <!-- State -->
                             <div class="mb-3 text-start">
                                 <label for="selectState" class="form-label fw-semibold">State</label>
                                 <select class="form-select" id="selectState" required aria-describedby="stateError">
                                     <option selected disabled value="">Choose...</option>
-                                    <!-- A-M States -->
                                     <option value="AL">Alabama</option>
                                     <option value="AK">Alaska</option>
                                     <option value="AZ">Arizona</option>
@@ -271,7 +230,6 @@
                                     <option value="MS">Mississippi</option>
                                     <option value="MO">Missouri</option>
                                     <option value="MT">Montana</option>
-                                    <!-- N-W States -->
                                     <option value="NE">Nebraska</option>
                                     <option value="NV">Nevada</option>
                                     <option value="NH">New Hampshire</option>
@@ -295,13 +253,14 @@
                                     <option value="WA">Washington</option>
                                     <option value="WV">West Virginia</option>
                                     <option value="WI">Wisconsin</option>
+                                    <option value="WY">Wyoming</option>
                                 </select>
                                 <div class="invalid-feedback" id="stateError" aria-live="polite">
                                     Please select a state.
                                 </div>
                             </div>
 
-                            <!-- ZIP Code (Required, 5 digits only) -->
+                            <!-- Zip Code -->
                             <div class="mb-3 text-start">
                                 <label for="clientZipCode" class="form-label fw-semibold">Zip Code</label>
                                 <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
@@ -311,7 +270,7 @@
                                 </div>
                             </div>
 
-                            <!-- Navigation Buttons -->
+                            <!-- Buttons -->
                             <button id="btnRegisterNext3" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack3" type="button" class="btn btn-primary w-100 rounded-2">Go
@@ -320,18 +279,12 @@
                     </div>
 
 
-                    <!-- ============================================================
-                         STEP 4: EMERGENCY CONTACT
-                         - "No emergency contact" checkbox (hides all fields if checked)
-                         - Contact name (first, last)
-                         - Contact phone number
-                         ============================================================ -->
+                    <!-- STEP 4: Emergency Contact -->
                     <div id="divStepFour" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 class="card-title text-center mb-3">Emergency Contact</h5>
                         <form id="clientRegisterFormStep4" novalidate>
 
-                            <!-- No Emergency Contact Checkbox
-                                 When checked, all contact fields are hidden and not required -->
+                            <!-- No Emergency Contact Checkbox -->
                             <div class="mb-3 text-start form-check">
                                 <input class="form-check-input" type="checkbox" value="" id="noEmergencyContact">
                                 <label class="form-check-label" for="noEmergencyContact">
@@ -339,7 +292,7 @@
                                 </label>
                             </div>
 
-                            <!-- Contact First Name (Required) -->
+                            <!-- Contact First Name -->
                             <div class="mb-3 text-start">
                                 <label for="emergencyContactFirstName" class="form-label fw-semibold">Contact First
                                     Name</label>
@@ -350,7 +303,7 @@
                                 </div>
                             </div>
 
-                            <!-- Contact Last Name (Required) -->
+                            <!-- Contact Last Name -->
                             <div class="mb-3 text-start">
                                 <label for="emergencyContactLastName" class="form-label fw-semibold">Contact Last
                                     Name</label>
@@ -361,7 +314,7 @@
                                 </div>
                             </div>
 
-                            <!-- Contact Phone (Required, auto-formatted as (123) 456-7890) -->
+                            <!-- Contact Phone -->
                             <div class="mb-3 text-start">
                                 <label for="emergencyContactPhone" class="form-label fw-semibold">Contact Phone</label>
                                 <input type="tel" id="emergencyContactPhone" class="form-control" required
@@ -371,7 +324,7 @@
                                 </div>
                             </div>
 
-                            <!-- Navigation Buttons -->
+                            <!-- Buttons -->
                             <button id="btnRegisterNext4" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack4" type="button" class="btn btn-primary w-100 rounded-2">Go
@@ -380,41 +333,31 @@
                     </div>
 
 
-                    <!-- ============================================================
-                         STEP 5: SERVICE SELECTION
-                         - Checkbox grid for available services
-                         - At least one service must be selected
-                         ============================================================ -->
+                    <!-- STEP 5: Service Selection -->
                     <div id="divStepFive" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 class="card-title text-center mb-3">Service Selection</h5>
                         <form id="clientRegisterFormStep5" novalidate>
 
-                            <!-- Services Grid (2 columns) -->
+                            <!-- Services Grid -->
                             <div class="row mb-3">
-                                <!-- Left Column -->
                                 <div class="col-6">
-                                    <!-- Medical Service -->
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceMedical" value="medical">
                                         <label class="form-check-label" for="btnServiceMedical">🏥 Medical</label>
                                     </div>
-                                    <!-- Optical Service -->
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceOptical" value="optical">
                                         <label class="form-check-label" for="btnServiceOptical">👁️ Optical</label>
                                     </div>
                                 </div>
-                                <!-- Right Column -->
                                 <div class="col-6">
-                                    <!-- Dental Service -->
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceDental" value="dental">
                                         <label class="form-check-label" for="btnServiceDental">🦷 Dental</label>
                                     </div>
-                                    <!-- Haircut Service -->
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceHaircut" value="haircut">
@@ -423,12 +366,11 @@
                                 </div>
                             </div>
 
-                            <!-- Validation Error (shown via JavaScript) -->
                             <div class="text-danger text-center mb-3" id="serviceError" style="display: none;">
                                 Please select at least one service.
                             </div>
 
-                            <!-- Navigation Buttons -->
+                            <!-- Buttons -->
                             <button id="btnRegisterNext5" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack5" type="button" class="btn btn-primary w-100 rounded-2">Go
@@ -437,14 +379,8 @@
                     </div>
 
                 </div>
-                <!-- END: Registration Form Card -->
 
-
-                <!-- ================================================================
-                     DEBUG: STEP NAVIGATION BUTTONS
-                     For development/testing only - allows jumping to any step
-                     TODO: Remove or hide in production
-                     ================================================================ -->
+                <!-- Debug buttons - remove in production -->
                 <button id="skipStep1" class="btn btn-primary">Step 1</button>
                 <button id="skipStep2" class="btn btn-primary">Step 2</button>
                 <button id="skipStep3" class="btn btn-primary">Step 3</button>
@@ -454,28 +390,20 @@
             </div>
         </div>
     </div>
-    <!-- END: Main Container -->
 
 
-    <!-- ====================================================================
-         WAIVER AGREEMENT MODAL
-         Displayed after Step 5 completion.
-         User must agree to waiver before final form submission.
-         ==================================================================== -->
+    <!-- Waiver Modal -->
     <div class="modal fade" id="registrationCompleteModal" tabindex="-1"
         aria-labelledby="registrationCompleteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
-                <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title" id="waiverLabel">Waiver Agreement Required</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <!-- Modal Body -->
                 <div class="modal-body text-start">
-                    <!-- Waiver Text Content -->
                     <div class="collapse show" id="collapseExample">
                         <div class="card card-body">
                             DUO is not entitled to anything that happens to you. You accept full responsiblity at this
@@ -483,7 +411,6 @@
                         </div>
                     </div>
 
-                    <!-- Agreement Checkbox -->
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" value="" id="waiverAgree">
                         <label class="form-check-label" for="waiverAgree">
@@ -491,13 +418,11 @@
                         </label>
                     </div>
 
-                    <!-- Validation Error (shown via JavaScript) -->
                     <div class="text-danger mt-2" id="waiverError" style="display: none;">
                         You must agree to the waiver to continue.
                     </div>
                 </div>
 
-                <!-- Modal Footer -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="btnWaiverSubmit">Submit</button>
                 </div>
@@ -505,19 +430,12 @@
             </div>
         </div>
     </div>
-    <!-- END: Waiver Agreement Modal -->
 
 
-    <!-- ====================================================================
-         JAVASCRIPT DEPENDENCIES
-         ==================================================================== -->
-    <!-- Core Libraries (jQuery, Bootstrap, etc.) -->
+    <!-- Scripts -->
     <script src="../assets/js/core/libs.min.js"></script>
-    <!-- HopeUI Framework Scripts -->
     <script src="../assets/js/hope-ui.js"></script>
-    <!-- SweetAlert2 for Notifications -->
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
-    <!-- Registration Form Logic -->
     <script src="../js/register.js"></script>
 
 </body>
