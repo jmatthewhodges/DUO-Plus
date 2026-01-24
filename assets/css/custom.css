@@ -49,6 +49,7 @@ body.v-center-page {
 }
 
 @media (min-width: 768px) {
+
   .login-container,
   .dashboard-container {
     max-width: 500px;
@@ -56,6 +57,7 @@ body.v-center-page {
 }
 
 @media (min-width: 1200px) {
+
   .login-container,
   .dashboard-container {
     max-width: 550px;
@@ -80,46 +82,20 @@ body.v-center-page {
   box-shadow: 0 6px 20px #1b3d6c !important;
 }
 
-/* .btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(23, 69, 147, 0.3) !important;
-} */
-
-/* Volunteer floating button (top-right on client login) */
-.btn-volunteer {
-  position: fixed !important;
-  top: 20px !important;
-  right: 20px !important;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-  color: #174593;
-  border: 1.5px solid #174593;
-  background-color: rgba(255, 255, 255, 0.95);
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  z-index: 9999 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-volunteer:hover {
-  background-color: #174593;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
-}
-
 /* Fade transition for step switching */
 .step-hidden {
-    opacity: 0;
-    max-height: 0;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden;
-    display: none; /* Completely removes from layout */
+  opacity: 0;
+  max-height: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  display: none;
+  /* Completely removes from layout */
 }
 
 .step-visible {
-    opacity: 1;
-    max-height: 800px;
-    display: block;
-    transition: opacity 0.5s ease, max-height 0.5s ease;
+  opacity: 1;
+  max-height: 800px;
+  display: block;
+  transition: opacity 0.5s ease, max-height 0.5s ease;
 }

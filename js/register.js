@@ -244,9 +244,14 @@ document.getElementById('clientRegisterFormStep1').addEventListener('keydown', f
 // "Next" button click handler
 document.getElementById('btnRegisterNext1').addEventListener('click', stepOneSubmit);
 
+// "Back" button click handler
+document.getElementById('btnRegisterBack1').addEventListener('click', function () {
+    window.location.href = '../index.html';
+});
+
 // Toggle password visibility checkbox
 document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
-    const passwordInput = document.getElementById('clientLoginPass');
+    const passwordInput = document.getElementById('clientRegisterPass');
     passwordInput.type = this.checked ? 'text' : 'password';
 });
 
@@ -459,6 +464,14 @@ document.getElementById('btnRegisterBack3').addEventListener('click', function (
     transitionToStep(stepThree, stepTwo, 2);
 });
 
+// Submit form on Enter key press
+document.getElementById('clientRegisterFormStep3').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnRegisterNext3').click();
+    }
+});
+
 
 /* ==========================================================================
    7. STEP 4: EMERGENCY CONTACT
@@ -560,6 +573,14 @@ document.getElementById('btnRegisterBack4').addEventListener('click', function (
     transitionToStep(stepFour, stepThree, 3);
 });
 
+// Submit form on Enter key press
+document.getElementById('clientRegisterFormStep4').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnRegisterNext4').click();
+    }
+});
+
 
 /* ==========================================================================
    8. STEP 5: SERVICE SELECTION
@@ -594,7 +615,6 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
     const stepFive = document.getElementById('divStepFive');
     transitionToStep(stepFive, stepFour, 4);
 });
-
 
 /* ==========================================================================
    9. INPUT MASKS
@@ -708,6 +728,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
 
         // Step 3: Address information
+        noAddress: document.getElementById('noAddress').checked,  // true if user has no address
         address1: document.getElementById('clientAddress1').value,
         address2: document.getElementById('clientAddress2').value,
         city: document.getElementById('clientCity').value,
@@ -715,6 +736,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         zipCode: document.getElementById('clientZipCode').value,
 
         // Step 4: Emergency contact
+        noEmergencyContact: document.getElementById('noEmergencyContact').checked,  // true if no contact
         emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
         emergencyLastName: document.getElementById('emergencyContactLastName').value,
         emergencyPhone: document.getElementById('emergencyContactPhone').value,
@@ -750,7 +772,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                     text: 'Your account has been created successfully.',
                     confirmButtonColor: '#174593'
                 }).then(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = '../index.html';
                 });
             } else {
                 // API returned an error
