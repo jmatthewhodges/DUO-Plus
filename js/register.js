@@ -477,6 +477,10 @@ document.getElementById('btnRegisterNext5').addEventListener('click', function()
     const selectedServices = Array.from(services).map(s => s.value);
     console.log('Selected services:', selectedServices);
     console.log('Registration complete!');
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('registrationCompleteModal'));
+    modal.show();
 });
 
 // Step 5 back button
@@ -585,6 +589,103 @@ document.getElementById('emergencyContactPhone').addEventListener('input', funct
     }
     
     e.target.value = value;
+});
+
+/* ==========================================================================
+   WAIVER MODAL & FORM SUBMISSION
+   ========================================================================== */
+
+document.getElementById('btnWaiverSubmit').addEventListener('click', function() {
+    const waiverCheckbox = document.getElementById('waiverAgree');
+    const waiverError = document.getElementById('waiverError');
+    
+    // Validate waiver agreement
+    if (!waiverCheckbox.checked) {
+        waiverError.style.display = 'block';
+        return;
+    }
+    
+    waiverError.style.display = 'none';
+    
+    // Collect all form data
+    const formData = {
+        // Step 1: Login Information
+        email: document.getElementById('clientRegisterEmail').value,
+        password: document.getElementById('clientRegisterPass').value,
+        
+        // Step 2: Personal Information
+        firstName: document.getElementById('clientFirstName').value,
+        middleInitial: document.getElementById('clientMiddleInitial').value,
+        lastName: document.getElementById('clientLastName').value,
+        dob: document.getElementById('clientDOB').value,
+        phone: document.getElementById('clientPhone').value,
+        sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
+        
+        // Step 3: Address Information
+        address1: document.getElementById('clientAddress1').value,
+        address2: document.getElementById('clientAddress2').value,
+        city: document.getElementById('clientCity').value,
+        state: document.getElementById('selectState').value,
+        zipCode: document.getElementById('clientZipCode').value,
+        
+        // Step 4: Emergency Contact
+        emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
+        emergencyLastName: document.getElementById('emergencyContactLastName').value,
+        emergencyPhone: document.getElementById('emergencyContactPhone').value,
+        
+        // Step 5: Services
+        services: Array.from(document.querySelectorAll('input[name="clientServices"]:checked')).map(s => s.value),
+    };
+    
+    // Send to PHP
+    fetch('../api/register.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
+        modal.hide();
+        
+        if (data.success) {
+            // Success alert
+            Swal.fire({
+                icon: 'success',
+                title: 'Registration Complete!',
+                text: 'Your account has been created successfully.',
+                confirmButtonColor: '#174593'
+            }).then(() => {
+                // Redirect to login page
+                window.location.href = 'index.html';
+            });
+        } else {
+            // Error alert
+            Swal.fire({
+                icon: 'error',
+                title: 'Registration Failed',
+                text: data.message || 'An error occurred. Please try again.',
+                confirmButtonColor: '#174593'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
+        modal.hide();
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Unable to connect to the server. Please try again later.',
+            confirmButtonColor: '#174593'
+        });
+    });
 });
 
 /* ==========================================================================
