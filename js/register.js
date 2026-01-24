@@ -1,143 +1,229 @@
-/* ==========================================================================
-   STEP TRANSITIONS
-   ========================================================================== */
+/**
+ * ============================================================================
+ * REGISTRATION FORM HANDLER
+ * ============================================================================
+ * 
+ * Multi-step registration form controller for DUO Mission client registration.
+ * Handles form validation, step transitions, input masking, and form submission.
+ * 
+ * TABLE OF CONTENTS:
+ * ------------------
+ * 1. CONFIGURATION & CONSTANTS
+ * 2. UTILITY FUNCTIONS
+ *    - Step Transition Helper
+ *    - Validation Helper
+ *    - Phone Formatting Helper
+ * 3. PROGRESS BAR
+ * 4. STEP 1: LOGIN INFORMATION
+ * 5. STEP 2: PERSONAL INFORMATION
+ * 6. STEP 3: ADDRESS INFORMATION
+ * 7. STEP 4: EMERGENCY CONTACT
+ * 8. STEP 5: SERVICE SELECTION
+ * 9. INPUT MASKS
+ *    - Name Fields
+ *    - Phone Fields
+ *    - Address Fields
+ * 10. WAIVER MODAL & FORM SUBMISSION
+ * 11. TESTING / DEBUG UTILITIES
+ * 
+ * @author DUO Mission Team
+ * @version 1.0.0
+ */
 
-// Step 1 -> step 2 transition
-function goToStepTwo()
-{
-    const stepOne = document.getElementById('divStepOne');
-    const stepTwo = document.getElementById('divStepTwo');
-    
-    // Fade out step one first
-    stepOne.style.opacity = '0';
-    
-    setTimeout(() => {
-        // Hide step one completely
-        stepOne.classList.remove('step-visible');
-        stepOne.classList.add('step-hidden');
-        
-        // Show step two
-        stepTwo.classList.remove('step-hidden');
-        stepTwo.classList.add('step-visible');
-        stepTwo.style.opacity = '1';
-        updateProgressBar(2);
-    }, 500);
-}
-
-// Step 2 -> Step 3 transition
-function goToStepThree() {
-    const stepTwo = document.getElementById('divStepTwo');
-    const stepThree = document.getElementById('divStepThree');
-    
-    stepTwo.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepTwo.classList.remove('step-visible');
-        stepTwo.classList.add('step-hidden');
-        
-        stepThree.classList.remove('step-hidden');
-        stepThree.classList.add('step-visible');
-        stepTwo.style.opacity = '1';
-        updateProgressBar(3);
-    }, 500);
-}
-
-// Step 3 -> Step 4 transition
-function goToStepFour() {
-    const stepThree = document.getElementById('divStepThree');
-    const stepFour = document.getElementById('divStepFour');
-    
-    stepThree.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepThree.classList.remove('step-visible');
-        stepThree.classList.add('step-hidden');
-        
-        stepFour.classList.remove('step-hidden');
-        stepFour.classList.add('step-visible');
-        stepFour.style.opacity = '1';
-        updateProgressBar(4);
-    }, 500);
-}
-
-// Step 4 -> Step 5 transition
-function goToStepFive() {
-    const stepFour = document.getElementById('divStepFour');
-    const stepFive = document.getElementById('divStepFive');
-    
-    stepFour.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepFour.classList.remove('step-visible');
-        stepFour.classList.add('step-hidden');
-        
-        stepFive.classList.remove('step-hidden');
-        stepFive.classList.add('step-visible');
-        stepFive.style.opacity = '1';
-        updateProgressBar(5);
-    }, 500);
-}
 
 /* ==========================================================================
-   PROGRESS BAR
+   1. CONFIGURATION & CONSTANTS
    ========================================================================== */
 
+/**
+ * Animation duration for step transitions (in milliseconds)
+ * @constant {number}
+ */
+const TRANSITION_DURATION = 500;
+
+/**
+ * Regular expression patterns used for form validation
+ * @constant {Object}
+ */
+const VALIDATION_PATTERNS = {
+    // Standard email format: john@example.com
+    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+
+    // Password: min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit
+    password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/,
+
+    // Phone: at least 10 digits (allows spaces, dashes, parentheses)
+    phone: /^[\d\s\-\(\)]{10,}$/,
+
+    // Formatted phone: (123) 456-7890
+    phoneFormatted: /^\(\d{3}\) \d{3}-\d{4}$/,
+
+    // ZIP code: exactly 5 digits
+    zipCode: /^[0-9]{5}$/
+};
+
+/**
+ * Character filter patterns used for input masks
+ * @constant {Object}
+ */
+const INPUT_FILTERS = {
+    // Letters, hyphens, and apostrophes only (for names like O'Brien, Mary-Jane)
+    name: /[^a-zA-Z'-]/g,
+
+    // Single uppercase letter only (for middle initial)
+    initial: /[^a-zA-Z]/g,
+
+    // Letters, spaces, hyphens, apostrophes (for cities like Winston-Salem, O'Fallon)
+    city: /[^a-zA-Z\s\-']/g,
+
+    // Letters, numbers, spaces, and common address chars (#, ., -)
+    address: /[^a-zA-Z0-9\s\.\-#]/g,
+
+    // Numbers only
+    numbers: /[^0-9]/g,
+
+    // Non-digit characters (for phone stripping)
+    nonDigit: /\D/g
+};
+
+
+/* ==========================================================================
+   2. UTILITY FUNCTIONS
+   ========================================================================== */
+
+/**
+ * Transitions between registration form steps with fade animation.
+ * Hides the current step and reveals the target step.
+ * 
+ * @param {HTMLElement} fromStep - The step element to hide
+ * @param {HTMLElement} toStep - The step element to show
+ * @param {number} targetStepNumber - The step number (1-5) for progress bar update
+ */
+function transitionToStep(fromStep, toStep, targetStepNumber) {
+    // Fade out current step
+    fromStep.style.opacity = '0';
+
+    setTimeout(() => {
+        // Hide the current step completely
+        fromStep.classList.remove('step-visible');
+        fromStep.classList.add('step-hidden');
+
+        // Reveal the target step
+        toStep.classList.remove('step-hidden');
+        toStep.classList.add('step-visible');
+        toStep.style.opacity = '1';
+
+        // Update progress indicator
+        updateProgressBar(targetStepNumber);
+    }, TRANSITION_DURATION);
+}
+
+/**
+ * Sets the validation state of a form field.
+ * Adds/removes Bootstrap validation classes.
+ * 
+ * @param {HTMLElement} field - The input element to validate
+ * @param {boolean} isValid - Whether the field is valid
+ */
+function setFieldValidation(field, isValid) {
+    if (isValid) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+    } else {
+        field.classList.remove('is-valid');
+        field.classList.add('is-invalid');
+    }
+}
+
+/**
+ * Formats a numeric string as a US phone number: (123) 456-7890
+ * 
+ * @param {string} value - Raw input value (may contain non-digits)
+ * @returns {string} Formatted phone number string
+ */
+function formatPhoneNumber(value) {
+    // Strip all non-digit characters
+    let digits = value.replace(INPUT_FILTERS.nonDigit, '');
+
+    // Limit to 10 digits maximum
+    if (digits.length > 10) {
+        digits = digits.substring(0, 10);
+    }
+
+    // Build formatted string based on digit count
+    if (digits.length === 0) {
+        return '';
+    } else if (digits.length <= 3) {
+        return '(' + digits;
+    } else if (digits.length <= 6) {
+        return '(' + digits.substring(0, 3) + ') ' + digits.substring(3);
+    } else {
+        return '(' + digits.substring(0, 3) + ') ' + digits.substring(3, 6) + '-' + digits.substring(6);
+    }
+}
+
+
+/* ==========================================================================
+   3. PROGRESS BAR
+   ========================================================================== */
+
+/**
+ * Updates the progress bar to reflect the current step.
+ * Each step represents 20% progress (5 steps total).
+ * Final step shows 99% to indicate completion pending.
+ * 
+ * @param {number} step - Current step number (1-5)
+ */
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
-    const percentage = step * 20;
 
-    if (step == 5) {
-        progressBar.style.width = 99 + '%';
-        progressBar.textContent = 99 + '%';
-        progressBar.setAttribute('aria-valuenow', 99);
-        return;
-    }
-    
+    // Calculate percentage (20% per step, cap at 99% for final step)
+    const percentage = (step === 5) ? 99 : step * 20;
+
+    // Update progress bar width, text, and ARIA attributes
     progressBar.style.width = percentage + '%';
     progressBar.textContent = percentage + '%';
     progressBar.setAttribute('aria-valuenow', percentage);
 }
 
+
 /* ==========================================================================
-   STEP 1: LOGIN INFORMATION
+   4. STEP 1: LOGIN INFORMATION
    ========================================================================== */
 
-// Step 1 validation
-function stepOneSubmit() 
-{
-    const strEmailInput = document.getElementById("clientRegisterEmail")
-    const strPassInput = document.getElementById("clientRegisterPass")
-    let isValid = false
+/**
+ * Navigates from Step 1 to Step 2.
+ * Called after successful Step 1 validation.
+ */
+function goToStepTwo() {
+    const stepOne = document.getElementById('divStepOne');
+    const stepTwo = document.getElementById('divStepTwo');
+    transitionToStep(stepOne, stepTwo, 2);
+}
 
-    const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
-    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/
+/**
+ * Validates Step 1 form fields (email and password).
+ * Proceeds to Step 2 if all validations pass.
+ */
+function stepOneSubmit() {
+    const emailInput = document.getElementById('clientRegisterEmail');
+    const passInput = document.getElementById('clientRegisterPass');
+    let isValid = true;
 
-    // Email validation (john@example.com)
-    if (!emailRegex.test(strEmailInput.value))
-    {
-        strEmailInput.classList.add('is-invalid');
-        strEmailInput.classList.remove('is-valid');
-        isValid = false
-    } 
-    else 
-    {
-        strEmailInput.classList.add('is-valid');
-        strEmailInput.classList.remove('is-invalid');
-        isValid = true
+    // Validate email format
+    if (!VALIDATION_PATTERNS.email.test(emailInput.value)) {
+        setFieldValidation(emailInput, false);
+        isValid = false;
+    } else {
+        setFieldValidation(emailInput, true);
     }
 
-    // Password validation (Password123)
-    if (!passwordRegex.test(strPassInput.value))
-    {
-        strPassInput.classList.add('is-invalid');
-        strPassInput.classList.remove('is-valid');
-        isValid = false
-    }
-    else
-    {
-        strPassInput.classList.remove('is-invalid');
-        strPassInput.classList.add('is-valid');
-        isValid = true
+    // Validate password strength
+    if (!VALIDATION_PATTERNS.password.test(passInput.value)) {
+        setFieldValidation(passInput, false);
+        isValid = false;
+    } else {
+        setFieldValidation(passInput, true);
     }
 
     if (isValid) {
@@ -145,32 +231,45 @@ function stepOneSubmit()
     }
 }
 
-// Step 1 submit form on enter
-document.getElementById('clientRegisterFormStep1').addEventListener('keydown', function(e)
-{
-    if (e.key === 'Enter') 
-    {
+// --- Step 1 Event Listeners ---
+
+// Submit form on Enter key press
+document.getElementById('clientRegisterFormStep1').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
         e.preventDefault();
         document.getElementById('btnRegisterNext1').click();
     }
-})
+});
 
-// Step 1 "Next" button
+// "Next" button click handler
 document.getElementById('btnRegisterNext1').addEventListener('click', stepOneSubmit);
 
-// Toggle password visibility
-document.getElementById('toggleClientRegisterPass').addEventListener('change', function() 
-{
+// Toggle password visibility checkbox
+document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
     const passwordInput = document.getElementById('clientLoginPass');
     passwordInput.type = this.checked ? 'text' : 'password';
-})
+});
 
 
 /* ==========================================================================
-   STEP 2: PERSONAL INFORMATION
+   5. STEP 2: PERSONAL INFORMATION
    ========================================================================== */
 
-// Step 2 validation
+/**
+ * Navigates from Step 2 to Step 3.
+ * Called after successful Step 2 validation.
+ */
+function goToStepThree() {
+    const stepTwo = document.getElementById('divStepTwo');
+    const stepThree = document.getElementById('divStepThree');
+    transitionToStep(stepTwo, stepThree, 3);
+}
+
+/**
+ * Validates Step 2 form fields (personal information).
+ * Required fields: first name, last name, DOB, sex.
+ * Optional field: phone (validated if provided).
+ */
 function stepTwoSubmit() {
     const firstName = document.getElementById('clientFirstName');
     const lastName = document.getElementById('clientLastName');
@@ -181,55 +280,45 @@ function stepTwoSubmit() {
 
     let isValid = true;
 
-    // First name validation (required)
+    // Validate first name (required)
     if (!firstName.value.trim()) {
-        firstName.classList.add('is-invalid');
-        firstName.classList.remove('is-valid');
+        setFieldValidation(firstName, false);
         isValid = false;
     } else {
-        firstName.classList.remove('is-invalid');
-        firstName.classList.add('is-valid');
+        setFieldValidation(firstName, true);
     }
 
-    // Last name validation (required)
+    // Validate last name (required)
     if (!lastName.value.trim()) {
-        lastName.classList.add('is-invalid');
-        lastName.classList.remove('is-valid');
+        setFieldValidation(lastName, false);
         isValid = false;
     } else {
-        lastName.classList.remove('is-invalid');
-        lastName.classList.add('is-valid');
+        setFieldValidation(lastName, true);
     }
 
-    // DOB validation (required)
+    // Validate date of birth (required)
     if (!dob.value) {
-        dob.classList.add('is-invalid');
-        dob.classList.remove('is-valid');
+        setFieldValidation(dob, false);
         isValid = false;
     } else {
-        dob.classList.remove('is-invalid');
-        dob.classList.add('is-valid');
+        setFieldValidation(dob, true);
     }
 
-    // Sex selection validation (required)
+    // Validate sex selection (required)
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
+    sexError.style.display = sexSelected ? 'none' : 'block';
     if (!sexSelected) {
-        sexError.style.display = 'block';
         isValid = false;
-    } else {
-        sexError.style.display = 'none';
     }
 
-    // Phone validation (required, basic format check)
-    const phoneRegex = /^[\d\s\-\(\)]{10,}$/; // At least 10 digits
+    // Validate phone format (optional, but must be valid if provided)
     if (phone.value.length > 0) {
-        if (!phoneRegex.test(phone.value.replace(/\s/g, ''))) {
-            phone.classList.add('is-invalid');
-            phone.classList.remove('is-valid');
+        const strippedPhone = phone.value.replace(/\s/g, '');
+        if (!VALIDATION_PATTERNS.phone.test(strippedPhone)) {
+            setFieldValidation(phone, false);
             isValid = false;
         } else {
-            phone.classList.remove('is-invalid');
-            phone.classList.add('is-valid');
+            setFieldValidation(phone, true);
         }
     }
 
@@ -238,41 +327,46 @@ function stepTwoSubmit() {
     }
 }
 
-// Step 2 submit form on enter
-document.getElementById('clientRegisterFormStep2').addEventListener('keydown', function(e) {
+// --- Step 2 Event Listeners ---
+
+// Submit form on Enter key press
+document.getElementById('clientRegisterFormStep2').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         document.getElementById('btnRegisterNext2').click();
     }
 });
 
-// Step 2 "Next" button
+// "Next" button click handler
 document.getElementById('btnRegisterNext2').addEventListener('click', stepTwoSubmit);
 
-// Step 2 "Back" button
-document.getElementById('btnRegisterBack2').addEventListener('click', function() {
+// "Back" button - return to Step 1
+document.getElementById('btnRegisterBack2').addEventListener('click', function () {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
-    
-    stepTwo.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepTwo.classList.remove('step-visible');
-        stepTwo.classList.add('step-hidden');
-        
-        stepOne.classList.remove('step-hidden');
-        stepOne.classList.add('step-visible');
-        stepOne.style.opacity = '1';
-        updateProgressBar(1);
-    }, 500);
+    transitionToStep(stepTwo, stepOne, 1);
 });
 
+
 /* ==========================================================================
-   STEP 3: ADDRESS INFORMATION
+   6. STEP 3: ADDRESS INFORMATION
    ========================================================================== */
 
-// Toggle address fields when "no address" checkbox is checked
+/**
+ * Navigates from Step 3 to Step 4.
+ * Called after successful Step 3 validation or when "no address" is checked.
+ */
+function goToStepFour() {
+    const stepThree = document.getElementById('divStepThree');
+    const stepFour = document.getElementById('divStepFour');
+    transitionToStep(stepThree, stepFour, 4);
+}
+
+// --- "No Address" Checkbox Toggle ---
+
 const noAddressCheckbox = document.getElementById('noAddress');
+
+// List of address-related form fields
 const addressFields = [
     document.getElementById('clientAddress1'),
     document.getElementById('clientAddress2'),
@@ -281,15 +375,21 @@ const addressFields = [
     document.getElementById('clientZipCode')
 ];
 
-noAddressCheckbox.addEventListener('change', function() {
+/**
+ * Toggles visibility and required state of address fields
+ * when "I don't have an address" checkbox is changed.
+ */
+noAddressCheckbox.addEventListener('change', function () {
     addressFields.forEach(field => {
         const container = field.closest('.mb-3');
+
         if (this.checked) {
+            // Hide field and remove required attribute
             container.style.display = 'none';
             field.removeAttribute('required');
         } else {
+            // Show field and restore required (except Address 2 which is optional)
             container.style.display = 'block';
-            // Restore required except for Address 2
             if (field.id !== 'clientAddress2') {
                 field.setAttribute('required', '');
             }
@@ -297,12 +397,13 @@ noAddressCheckbox.addEventListener('change', function() {
     });
 });
 
-// Step 3 validation
-document.getElementById('btnRegisterNext3').addEventListener('click', function() {
-    const form = document.getElementById('clientRegisterFormStep3');
+// --- Step 3 Validation and Navigation ---
+
+// "Next" button - validate and proceed to Step 4
+document.getElementById('btnRegisterNext3').addEventListener('click', function () {
     const noAddress = document.getElementById('noAddress').checked;
-    
-    // If no address is checked, skip validation and proceed
+
+    // Skip validation if user has no address
     if (noAddress) {
         goToStepFour();
         return;
@@ -310,7 +411,7 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function()
 
     let isValid = true;
 
-    // Validate Address 1
+    // Validate Address Line 1 (required)
     const address1 = document.getElementById('clientAddress1');
     if (!address1.value.trim()) {
         address1.classList.add('is-invalid');
@@ -319,7 +420,7 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function()
         address1.classList.remove('is-invalid');
     }
 
-    // Validate City
+    // Validate City (required)
     const city = document.getElementById('clientCity');
     if (!city.value.trim()) {
         city.classList.add('is-invalid');
@@ -328,7 +429,7 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function()
         city.classList.remove('is-invalid');
     }
 
-    // Validate State
+    // Validate State selection (required)
     const state = document.getElementById('selectState');
     if (!state.value) {
         state.classList.add('is-invalid');
@@ -337,9 +438,9 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function()
         state.classList.remove('is-invalid');
     }
 
-    // Validate Zip Code (must be exactly 5 digits)
+    // Validate ZIP Code (must be exactly 5 digits)
     const zipCode = document.getElementById('clientZipCode');
-    if (!zipCode.value.match(/^[0-9]{5}$/)) {
+    if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
         zipCode.classList.add('is-invalid');
         isValid = false;
     } else {
@@ -351,55 +452,67 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function()
     }
 });
 
-// Step 3 back button
-document.getElementById('btnRegisterBack3').addEventListener('click', function() {
+// "Back" button - return to Step 2
+document.getElementById('btnRegisterBack3').addEventListener('click', function () {
     const stepTwo = document.getElementById('divStepTwo');
     const stepThree = document.getElementById('divStepThree');
-    
-    stepThree.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepThree.classList.remove('step-visible');
-        stepThree.classList.add('step-hidden');
-        
-        stepTwo.classList.remove('step-hidden');
-        stepTwo.classList.add('step-visible');
-        stepTwo.style.opacity = '1';
-        updateProgressBar(2);
-    }, 500);
+    transitionToStep(stepThree, stepTwo, 2);
 });
 
+
 /* ==========================================================================
-   STEP 4: EMERGENCY CONTACT
+   7. STEP 4: EMERGENCY CONTACT
    ========================================================================== */
 
-// Toggle emergency contact fields when "no emergency contact" checkbox is checked
+/**
+ * Navigates from Step 4 to Step 5.
+ * Called after successful Step 4 validation or when "no emergency contact" is checked.
+ */
+function goToStepFive() {
+    const stepFour = document.getElementById('divStepFour');
+    const stepFive = document.getElementById('divStepFive');
+    transitionToStep(stepFour, stepFive, 5);
+}
+
+// --- "No Emergency Contact" Checkbox Toggle ---
+
 const noEmergencyContactCheckbox = document.getElementById('noEmergencyContact');
+
+// List of emergency contact form fields
 const emergencyContactFields = [
     document.getElementById('emergencyContactFirstName'),
     document.getElementById('emergencyContactLastName'),
     document.getElementById('emergencyContactPhone')
 ];
 
-noEmergencyContactCheckbox.addEventListener('change', function() {
+/**
+ * Toggles visibility and required state of emergency contact fields
+ * when "I don't have an emergency contact" checkbox is changed.
+ */
+noEmergencyContactCheckbox.addEventListener('change', function () {
     emergencyContactFields.forEach(field => {
         const container = field.closest('.mb-3');
+
         if (this.checked) {
+            // Hide field, remove required, and clear any validation errors
             container.style.display = 'none';
             field.removeAttribute('required');
             field.classList.remove('is-invalid');
         } else {
+            // Show field and restore required attribute
             container.style.display = 'block';
             field.setAttribute('required', '');
         }
     });
 });
 
-// Step 4 validation
-document.getElementById('btnRegisterNext4').addEventListener('click', function() {
+// --- Step 4 Validation and Navigation ---
+
+// "Next" button - validate and proceed to Step 5
+document.getElementById('btnRegisterNext4').addEventListener('click', function () {
     const noEmergencyContact = document.getElementById('noEmergencyContact').checked;
-    
-    // If no emergency contact is checked, skip validation and proceed
+
+    // Skip validation if user has no emergency contact
     if (noEmergencyContact) {
         goToStepFive();
         return;
@@ -407,7 +520,7 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function()
 
     let isValid = true;
 
-    // Validate First Name
+    // Validate First Name (required)
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
         firstName.classList.add('is-invalid');
@@ -416,7 +529,7 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function()
         firstName.classList.remove('is-invalid');
     }
 
-    // Validate Last Name
+    // Validate Last Name (required)
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
         lastName.classList.add('is-invalid');
@@ -427,7 +540,7 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function()
 
     // Validate Phone (must be formatted as (123) 456-7890)
     const phone = document.getElementById('emergencyContactPhone');
-    if (!phone.value.match(/^\(\d{3}\) \d{3}-\d{4}$/)) {
+    if (!phone.value.match(VALIDATION_PATTERNS.phoneFormatted)) {
         phone.classList.add('is-invalid');
         isValid = false;
     } else {
@@ -440,204 +553,180 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function()
     }
 });
 
-// Step 4 back button
-document.getElementById('btnRegisterBack4').addEventListener('click', function() {
+// "Back" button - return to Step 3
+document.getElementById('btnRegisterBack4').addEventListener('click', function () {
     const stepThree = document.getElementById('divStepThree');
     const stepFour = document.getElementById('divStepFour');
-    
-    stepFour.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepFour.classList.remove('step-visible');
-        stepFour.classList.add('step-hidden');
-        
-        stepThree.classList.remove('step-hidden');
-        stepThree.classList.add('step-visible');
-        stepThree.style.opacity = '1';
-        updateProgressBar(3);
-    }, 500);
+    transitionToStep(stepFour, stepThree, 3);
 });
 
+
 /* ==========================================================================
-   STEP 5: SERVICE SELECTION
+   8. STEP 5: SERVICE SELECTION
    ========================================================================== */
 
-// Step 5 validation
-document.getElementById('btnRegisterNext5').addEventListener('click', function() {
+// "Next" button - validate service selection and show waiver modal
+document.getElementById('btnRegisterNext5').addEventListener('click', function () {
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
     const serviceError = document.getElementById('serviceError');
-    
+
+    // At least one service must be selected
     if (services.length === 0) {
         serviceError.style.display = 'block';
         return;
     }
-    
+
     serviceError.style.display = 'none';
-    
+
+    // Log selected services for debugging
     const selectedServices = Array.from(services).map(s => s.value);
     console.log('Selected services:', selectedServices);
     console.log('Registration complete!');
-    
-    // Show the modal
+
+    // Show the waiver/confirmation modal
     const modal = new bootstrap.Modal(document.getElementById('registrationCompleteModal'));
     modal.show();
 });
 
-// Step 5 back button
-document.getElementById('btnRegisterBack5').addEventListener('click', function() {
+// "Back" button - return to Step 4
+document.getElementById('btnRegisterBack5').addEventListener('click', function () {
     const stepFour = document.getElementById('divStepFour');
     const stepFive = document.getElementById('divStepFive');
-    
-    stepFive.style.opacity = '0';
-    
-    setTimeout(() => {
-        stepFive.classList.remove('step-visible');
-        stepFive.classList.add('step-hidden');
-        
-        stepFour.classList.remove('step-hidden');
-        stepFour.classList.add('step-visible');
-        stepFour.style.opacity = '1';
-        updateProgressBar(4);
-    }, 500);
+    transitionToStep(stepFive, stepFour, 4);
 });
+
 
 /* ==========================================================================
-   INPUT MASKS
+   9. INPUT MASKS
    ========================================================================== */
 
-// First name input mask (letters, hyphens, apostrophes only)
-document.getElementById('clientFirstName').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/[^a-zA-Z'-]/g, '');
+/*
+ * Input masks restrict user input to valid characters only.
+ * They provide immediate feedback and prevent invalid data entry.
+ */
+
+// --- 9.1 Name Fields ---
+
+// First name: letters, hyphens, apostrophes only (e.g., Mary-Jane, O'Brien)
+document.getElementById('clientFirstName').addEventListener('input', function (e) {
+    e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
 });
 
-// Middle initial input mask (single letter only)
-document.getElementById('clientMiddleInitial').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').substring(0, 1).toUpperCase();
+// Middle initial: single uppercase letter only
+document.getElementById('clientMiddleInitial').addEventListener('input', function (e) {
+    e.target.value = e.target.value
+        .replace(INPUT_FILTERS.initial, '')
+        .substring(0, 1)
+        .toUpperCase();
 });
 
-// Last name input mask (letters, hyphens, apostrophes only)
-document.getElementById('clientLastName').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/[^a-zA-Z'-]/g, '');
+// Last name: letters, hyphens, apostrophes only
+document.getElementById('clientLastName').addEventListener('input', function (e) {
+    e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
 });
 
-// Phone input mask (formats as (123) 456-7890)
-document.getElementById('clientPhone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
-    
-    if (value.length > 10) {
-        value = value.substring(0, 10); // Limit to 10 digits
-    }
-    
-    if (value.length > 0) {
-        if (value.length <= 3) {
-            value = '(' + value;
-        } else if (value.length <= 6) {
-            value = '(' + value.substring(0, 3) + ') ' + value.substring(3);
-        } else {
-            value = '(' + value.substring(0, 3) + ') ' + value.substring(3, 6) + '-' + value.substring(6);
-        }
-    }
-    
-    e.target.value = value;
+// --- 9.2 Phone Fields ---
+
+// Client phone: auto-formats as (123) 456-7890
+document.getElementById('clientPhone').addEventListener('input', function (e) {
+    e.target.value = formatPhoneNumber(e.target.value);
 });
 
-// Restrict zip code input to numbers only
-document.getElementById('clientZipCode').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '');
+// Emergency contact phone: auto-formats as (123) 456-7890
+document.getElementById('emergencyContactPhone').addEventListener('input', function (e) {
+    e.target.value = formatPhoneNumber(e.target.value);
 });
 
-// Restrict city to letters, spaces, hyphens, and apostrophes only (e.g., O'Fallon, Winston-Salem)
-document.getElementById('clientCity').addEventListener('input', function() {
-    this.value = this.value.replace(/[^a-zA-Z\s\-']/g, '');
+// --- 9.3 Address Fields ---
+
+// ZIP code: numbers only (5 digits enforced by maxlength attribute)
+document.getElementById('clientZipCode').addEventListener('input', function () {
+    this.value = this.value.replace(INPUT_FILTERS.numbers, '');
 });
 
-// Restrict street address to letters, numbers, spaces, and common address characters (#, ., -)
-document.getElementById('clientAddress1').addEventListener('input', function() {
-    this.value = this.value.replace(/[^a-zA-Z0-9\s\.\-#]/g, '');
+// City: letters, spaces, hyphens, apostrophes (e.g., Winston-Salem, O'Fallon)
+document.getElementById('clientCity').addEventListener('input', function () {
+    this.value = this.value.replace(INPUT_FILTERS.city, '');
 });
 
-document.getElementById('clientAddress2').addEventListener('input', function() {
-    this.value = this.value.replace(/[^a-zA-Z0-9\s\.\-#]/g, '');
+// Address Line 1: letters, numbers, spaces, and common address chars (#, ., -)
+document.getElementById('clientAddress1').addEventListener('input', function () {
+    this.value = this.value.replace(INPUT_FILTERS.address, '');
 });
 
-// Emergency contact first name input mask (letters, hyphens, apostrophes only)
-document.getElementById('emergencyContactFirstName').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/[^a-zA-Z'-]/g, '');
+// Address Line 2: same restrictions as Address Line 1
+document.getElementById('clientAddress2').addEventListener('input', function () {
+    this.value = this.value.replace(INPUT_FILTERS.address, '');
 });
 
-// Emergency contact last name input mask (letters, hyphens, apostrophes only)
-document.getElementById('emergencyContactLastName').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/[^a-zA-Z'-]/g, '');
+// --- 9.4 Emergency Contact Name Fields ---
+
+// Emergency contact first name: letters, hyphens, apostrophes only
+document.getElementById('emergencyContactFirstName').addEventListener('input', function (e) {
+    e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
 });
 
-// Emergency contact phone input mask (formats as (123) 456-7890)
-document.getElementById('emergencyContactPhone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    
-    if (value.length > 10) {
-        value = value.substring(0, 10);
-    }
-    
-    if (value.length > 0) {
-        if (value.length <= 3) {
-            value = '(' + value;
-        } else if (value.length <= 6) {
-            value = '(' + value.substring(0, 3) + ') ' + value.substring(3);
-        } else {
-            value = '(' + value.substring(0, 3) + ') ' + value.substring(3, 6) + '-' + value.substring(6);
-        }
-    }
-    
-    e.target.value = value;
+// Emergency contact last name: letters, hyphens, apostrophes only
+document.getElementById('emergencyContactLastName').addEventListener('input', function (e) {
+    e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
 });
+
 
 /* ==========================================================================
-   WAIVER MODAL & FORM SUBMISSION
+   10. WAIVER MODAL & FORM SUBMISSION
    ========================================================================== */
 
-document.getElementById('btnWaiverSubmit').addEventListener('click', function() {
+/**
+ * Handles final form submission when user agrees to waiver.
+ * Collects all form data and sends to the registration API.
+ */
+document.getElementById('btnWaiverSubmit').addEventListener('click', function () {
     const waiverCheckbox = document.getElementById('waiverAgree');
     const waiverError = document.getElementById('waiverError');
-    
-    // Validate waiver agreement
+
+    // Validate waiver agreement checkbox
     if (!waiverCheckbox.checked) {
         waiverError.style.display = 'block';
         return;
     }
-    
+
     waiverError.style.display = 'none';
-    
-    // Collect all form data
+
+    // --- Collect All Form Data ---
+
     const formData = {
-        // Step 1: Login Information
+        // Step 1: Login credentials
         email: document.getElementById('clientRegisterEmail').value,
         password: document.getElementById('clientRegisterPass').value,
-        
-        // Step 2: Personal Information
+
+        // Step 2: Personal information
         firstName: document.getElementById('clientFirstName').value,
         middleInitial: document.getElementById('clientMiddleInitial').value,
         lastName: document.getElementById('clientLastName').value,
         dob: document.getElementById('clientDOB').value,
         phone: document.getElementById('clientPhone').value,
         sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
-        
-        // Step 3: Address Information
+
+        // Step 3: Address information
         address1: document.getElementById('clientAddress1').value,
         address2: document.getElementById('clientAddress2').value,
         city: document.getElementById('clientCity').value,
         state: document.getElementById('selectState').value,
         zipCode: document.getElementById('clientZipCode').value,
-        
-        // Step 4: Emergency Contact
+
+        // Step 4: Emergency contact
         emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
         emergencyLastName: document.getElementById('emergencyContactLastName').value,
         emergencyPhone: document.getElementById('emergencyContactPhone').value,
-        
-        // Step 5: Services
-        services: Array.from(document.querySelectorAll('input[name="clientServices"]:checked')).map(s => s.value),
+
+        // Step 5: Selected services
+        services: Array.from(
+            document.querySelectorAll('input[name="clientServices"]:checked')
+        ).map(s => s.value),
     };
-    
-    // Send to PHP
+
+    // --- Submit to Registration API ---
+
     fetch('../api/register.php', {
         method: 'POST',
         headers: {
@@ -645,55 +734,73 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function() 
         },
         body: JSON.stringify(formData)
     })
-    .then(response => response.json())
-    .then(data => {
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
-        modal.hide();
-        
-        if (data.success) {
-            // Success alert
-            Swal.fire({
-                icon: 'success',
-                title: 'Registration Complete!',
-                text: 'Your account has been created successfully.',
-                confirmButtonColor: '#174593'
-            }).then(() => {
-                // Redirect to login page
-                window.location.href = 'index.html';
-            });
-        } else {
-            // Error alert
+        .then(response => response.json())
+        .then(data => {
+            // Close the waiver modal
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById('registrationCompleteModal')
+            );
+            modal.hide();
+
+            if (data.success) {
+                // Success: Show confirmation and redirect to login
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registration Complete!',
+                    text: 'Your account has been created successfully.',
+                    confirmButtonColor: '#174593'
+                }).then(() => {
+                    window.location.href = 'index.html';
+                });
+            } else {
+                // API returned an error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registration Failed',
+                    text: data.message || 'An error occurred. Please try again.',
+                    confirmButtonColor: '#174593'
+                });
+            }
+        })
+        .catch(error => {
+            // Network or server error
+            console.error('Error:', error);
+
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById('registrationCompleteModal')
+            );
+            modal.hide();
+
             Swal.fire({
                 icon: 'error',
-                title: 'Registration Failed',
-                text: data.message || 'An error occurred. Please try again.',
+                title: 'Connection Error',
+                text: 'Unable to connect to the server. Please try again later.',
                 confirmButtonColor: '#174593'
             });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
-        modal.hide();
-        
-        Swal.fire({
-            icon: 'error',
-            title: 'Connection Error',
-            text: 'Unable to connect to the server. Please try again later.',
-            confirmButtonColor: '#174593'
         });
-    });
 });
 
+
 /* ==========================================================================
-   TESTING / DEBUG
+   11. TESTING / DEBUG UTILITIES
    ========================================================================== */
 
-// Direct step navigation for testing (skips validation and transitions)
+/*
+ * Debug utilities for development and testing.
+ * These functions allow direct navigation to any step without validation.
+ * 
+ * IMPORTANT: Remove or disable these in production!
+ */
+
+/**
+ * Jumps directly to a specific step without validation or animation.
+ * Useful for testing individual step functionality.
+ * 
+ * @param {number} stepNumber - The step to show (1-5)
+ */
 function showStepOnly(stepNumber) {
+    // Get all step containers
     const allSteps = [
         document.getElementById('divStepOne'),
         document.getElementById('divStepTwo'),
@@ -701,23 +808,29 @@ function showStepOnly(stepNumber) {
         document.getElementById('divStepFour'),
         document.getElementById('divStepFive')
     ];
-    
+
+    // Show only the target step, hide all others
     allSteps.forEach((step, index) => {
         if (step) {
             if (index === stepNumber - 1) {
+                // Show this step
                 step.classList.remove('step-hidden');
                 step.classList.add('step-visible');
                 step.style.opacity = '1';
             } else {
+                // Hide this step
                 step.classList.remove('step-visible');
                 step.classList.add('step-hidden');
                 step.style.opacity = '0';
             }
         }
     });
-    
+
+    // Update progress bar to match
     updateProgressBar(stepNumber);
 }
+
+// --- Debug Navigation Button Handlers ---
 
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
