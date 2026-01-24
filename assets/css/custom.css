@@ -121,5 +121,5 @@ body.v-center-page {
     opacity: 1;
     max-height: 800px;
     display: block;
-    transition: opacity 0.8s ease, max-height 0.8s ease;
+    transition: opacity 0.5s ease, max-height 0.5s ease;
 }
