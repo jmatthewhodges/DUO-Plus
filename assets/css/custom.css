@@ -32,20 +32,6 @@ hr {
 }
 
 /* ==========================================================================
-   2. CARD & FORM FLOATING LABEL FIXES
-   ========================================================================== */
-
-/* Prevent clipping of floating labels and focus shadows */
-.card,
-.card-body {
-  overflow: visible !important;
-}
-
-.card-body {
-  padding: 1.75rem !important;
-}
-
-/* ==========================================================================
    3. LAYOUT CONTAINERS
    ========================================================================== */
 
@@ -63,6 +49,7 @@ body.v-center-page {
 }
 
 @media (min-width: 768px) {
+
   .login-container,
   .dashboard-container {
     max-width: 500px;
@@ -70,6 +57,7 @@ body.v-center-page {
 }
 
 @media (min-width: 1200px) {
+
   .login-container,
   .dashboard-container {
     max-width: 550px;
@@ -85,235 +73,29 @@ body.v-center-page {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  background-color: #0f3468 !important;
 }
 
 .btn-primary:hover {
-  background-color: #0f3468 !important;
+  background-color: #1b3d6c !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(23, 69, 147, 0.4) !important;
+  box-shadow: 0 6px 20px #1b3d6c !important;
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(23, 69, 147, 0.3) !important;
-}
-
-/* Volunteer floating button (top-right on client login) */
-.btn-volunteer {
-  position: fixed !important;
-  top: 20px !important;
-  right: 20px !important;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-  color: #174593;
-  border: 1.5px solid #174593;
-  background-color: rgba(255, 255, 255, 0.95);
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  z-index: 9999 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-volunteer:hover {
-  background-color: #174593;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
-}
-
-/* ==========================================================================
-   5. FORM ELEMENTS
-   ========================================================================== */
-
-/* Password toggle icon */
-.password-toggle {
-  position: relative;
-}
-
-.password-toggle-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #6c757d;
-  font-size: 1.1rem;
-  user-select: none;
-}
-
-.password-toggle-icon:hover {
-  color: #174593;
-}
-
-/* ==========================================================================
-   6. QR CODE PAGE
-   ========================================================================== */
-
-body.page-qrcode {
-  background: linear-gradient(to bottom, #7fb1d6, #cfe7f5);
-  min-height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  padding: 20px;
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.main-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 25px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  max-width: 480px;
-  margin: auto;
-}
-
-.logo {
-  width: 210px;
-  display: block;
-  margin: 0 auto 20px auto;
-}
-
-.scan-btn,
-.back-btn {
-  background-color: #1f5fdd;
-  color: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 18px;
-  margin-top: 20px;
-  width: 100%;
-  border: none;
-  transition: all 0.3s ease;
-  position: relative;
+/* Fade transition for step switching */
+.step-hidden {
+  opacity: 0;
+  max-height: 0;
+  padding: 0 !important;
+  margin: 0 !important;
   overflow: hidden;
-  font-weight: 600;
-  text-align: center;
-  display: block;
-}
-
-.scan-btn:hover,
-.back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(31, 95, 221, 0.4);
-  cursor: pointer;
-}
-
-.scan-btn:active,
-.back-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(31, 95, 221, 0.3);
-}
-
-#scanMessage {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f5fdd;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 12px;
-  font-weight: 600;
   display: none;
-  z-index: 10001;
+  /* Completely removes from layout */
 }
 
-#qrResult {
-  margin-top: 15px;
-  background: #f5f7ff;
-  border-radius: 12px;
-  padding: 12px;
-  font-weight: 600;
-  color: #1f5fdd;
-  min-height: 40px;
-}
-
-/* ==========================================================================
-   7. RESPONSIVE ADJUSTMENTS
-   ========================================================================== */
-
-/* Mobile height-constrained screens */
-@media (max-height: 700px) {
-  .logo-section img {
-    width: 120px !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .subtitle-text,
-  .welcome-text {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .card-body {
-    padding: 1.5rem !important;
-  }
-
-  .form-label {
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .form-control {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-  }
-
-  .mb-3 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 1rem !important;
-  }
-
-  .register-section {
-    margin-top: 0.5rem;
-  }
-
-  /* QR page adjustments */
-  body.page-qrcode {
-    padding: 10px;
-  }
-
-  .main-card {
-    padding: 15px;
-  }
-
-  .logo {
-    width: 140px !important;
-    margin-bottom: 10px !important;
-  }
-
-  .main-card h5 {
-    font-size: 1rem !important;
-  }
-
-  .scan-btn,
-  .back-btn {
-    padding: 10px !important;
-    font-size: 16px !important;
-    margin-top: 10px !important;
-  }
-}
-
-/* Tablet screens */
-@media (min-width: 768px) {
-  .main-card {
-    max-width: 550px;
-    padding: 35px;
-  }
-
-  .logo {
-    width: 250px !important;
-  }
-}
-
-/* Desktop screens */
-@media (min-width: 1200px) {
-  .main-card {
-    max-width: 600px;
-  }
+.step-visible {
+  opacity: 1;
+  max-height: 800px;
+  display: block;
+  transition: opacity 0.5s ease, max-height 0.5s ease;
 }
