@@ -74,6 +74,12 @@ function formatPhoneNumber(value) {
     }
 }
 
+// DOB 18+
+const dobInput = document.getElementById('clientDOB');
+const today = new Date();
+const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+dobInput.max = minAgeDate.toISOString().split('T')[0];
+
 
 // ============================================================================
 // PROGRESS BAR
@@ -81,8 +87,15 @@ function formatPhoneNumber(value) {
 
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
-    const percentage = (step === 5) ? 99 : step * 20;
-
+    let percentage = 1;
+    switch (step) {
+        case 1: percentage = 0; break;
+        case 2: percentage = 25; break;
+        case 3: percentage = 50; break;
+        case 4: percentage = 75; break;
+        case 5: percentage = 99; break;
+        default: percentage = 0;
+    }
     progressBar.style.width = percentage + '%';
     progressBar.textContent = percentage + '%';
     progressBar.setAttribute('aria-valuenow', percentage);
@@ -96,6 +109,7 @@ function updateProgressBar(step) {
 function goToStepTwo() {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
+    document.getElementById('sexError').style.display = 'none';
     transitionToStep(stepOne, stepTwo, 2);
 }
 
@@ -185,9 +199,11 @@ function stepTwoSubmit() {
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
-    sexError.style.display = sexSelected ? 'none' : 'block';
     if (!sexSelected) {
+        sexError.style.display = 'block';
         isValid = false;
+    } else {
+        sexError.style.display = 'none'; // Always hide if valid
     }
 
     // Phone is optional but validate format if provided
