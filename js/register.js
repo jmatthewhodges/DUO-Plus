@@ -191,11 +191,25 @@ function stepTwoSubmit() {
         setFieldValidation(lastName, true);
     }
 
+    // --- DOB 18+ validation ---
     if (!dob.value) {
         setFieldValidation(dob, false);
         isValid = false;
     } else {
-        setFieldValidation(dob, true);
+        // Check if DOB is at least 18 years ago
+        const enteredDate = new Date(dob.value);
+        const today = new Date();
+        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        if (enteredDate > minAgeDate) {
+            setFieldValidation(dob, false);
+            isValid = false;
+            // Optionally show a message:
+            dob.setCustomValidity('You must be at least 18 years old.');
+            dob.reportValidity();
+        } else {
+            setFieldValidation(dob, true);
+            dob.setCustomValidity('');
+        }
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);

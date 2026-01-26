@@ -1,0 +1,24 @@
+{
+  "name": "duo-plus",
+  "version": "1.0.0",
+  "description": "This repository contains the early development files for the **DUO Plus**.  The goal is to rebuild DUO Mission’s existing system from scratch using a modern, role-based structure that supports client registration, check-in, and service tracking.",
+  "main": "index.js",
+  "scripts": {
+    "serve": "php -S localhost:8000",
+    "start": "browser-sync start --proxy 'localhost:8000' --files '**/*.php, **/*.css, **/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmatthewhodges/DUO-Plus.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jmatthewhodges/DUO-Plus/issues"
+  },
+  "homepage": "https://github.com/jmatthewhodges/DUO-Plus#readme",
+  "devDependencies": {
+    "browser-sync": "^3.0.4"
+  }
+}
