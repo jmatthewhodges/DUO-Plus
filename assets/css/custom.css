@@ -102,10 +102,9 @@ body.v-center-page {
   font-size: x-large;
 }
 
-/* Input text color (including autofill and focus) */
-input.form-control,
-input.form-control:focus,
-input.form-control:-webkit-autofill {
+/* Custom input text color (does not affect placeholders) */
+/* .input-black,
+.input-black:focus,
+.input-black:-webkit-autofill {
     color: black !important;
-    -webkit-text-fill-color: black !important; /* For Chrome autofill */
-}
+} */
