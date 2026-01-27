@@ -30,19 +30,19 @@
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-4">
         <form id="clientLoginForm" novalidate>
-          <div class="form-floating mb-3 text-start">
+          <div class="mb-3 text-start">
+            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <input type="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
               aria-describedby="emailError">
-            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <div class="invalid-feedback" id="emailError" aria-live="polite">
               Please enter an email address.
             </div>
           </div>
 
-          <div class="form-floating mb-3 text-start">
+          <div class="mb-3 text-start">
+            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
             <input type="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
               aria-describedby="passwordError">
-            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
               Please enter a password.
             </div>
