@@ -14,6 +14,7 @@
 
 <body>
     <div class="container">
+        
         <div class="row justify-content-center">
             <!-- Screen size adjustments: mobile screens (col-10), tablets/smaller laptop screens (col-10), 
             desktops/bigger screens (col-6) -->
@@ -24,6 +25,20 @@
                     <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 200px;">
                 </div>
 
+                <!-- QR Code Card -->
+                <div id="divQRCode" class="d-none d-flex justify-content-center">
+                    <div class="card shadow-lg border-0 rounded-4 p-3 px-4 text-center">
+                        <h2 class="mb-2" id="qrCardTitle"></h5>
+                        <canvas id="qr"></canvas>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardMedicalIcon">🏥</h3>
+                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardDentalIcon">🦷</h3>
+                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardOpticalIcon">👁️</h3>
+                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardHaircutIcon">✂️</h3>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Subtitle -->
                 <div id="divStepOneSubtitle" class="text-center">
                     <h5 class="subtitle-text fw-medium mb-3" style="color: #174593;">
@@ -32,13 +47,17 @@
                 </div>
 
                 <!-- Progress Bar -->
-                <div class="progress mb-3">
+                <div id="wholeProgressBar" class="progress mb-3">
                     <div class="progress-bar progress-bar-striped bg-success" id="progressBarTop" role="progressbar" style="width: 0%;"
                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>
 
                 <!-- Registration Card -->
                 <div class="card shadow-lg border-0 rounded-4">
+
+                    <!-- <div id="divQRCode" class="card-body p-3 p-md-4 p-lg-4" style="display: none;">
+                        <canvas class="text-center" id="qr"></canvas>
+                    </div> -->
 
                     <!-- STEP 1: Login Info -->
                     <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
@@ -430,15 +449,14 @@
 
             </div>
         </div>
-    </div>
-
+    </div >
 
     <!-- Scripts -->
     <script src="../assets/js/core/libs.min.js"></script>
     <script src="../assets/js/hope-ui.js"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../assets/js/qrious.min.js"></script>
     <script src="../js/register.js"></script>
-
 </body>
 
 </html>
