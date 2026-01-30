@@ -19,8 +19,22 @@ $dbPass = $_ENV['DB_PASS'];
 
 // Using mysqli (catch error if db connection failed)
 try {
-    $mysqli = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
     echo "\nDATABASE CONNECTION ESTABLISHED!";
 } catch (\Throwable $th) {
     echo "\nDATABASE CONNECTION FAILED: " . $th->getMessage();
 } 
+
+/*
+For all API endpoints:
+
+// Grab database connection from file
+require_once __DIR__ . '/db.php';
+
+// Always set content type (not always the same)
+header('Content-Type: application/json');
+
+// Declare mysqli to use connection
+$mysqli = $GLOBALS['mysqli'];
+
+*/
