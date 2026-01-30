@@ -29,10 +29,10 @@
     <!-- Login Box -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-4">
-        <form id="clientLoginForm" novalidate>
+        <form id="clientLoginForm" method="POST" action="login.php" novalidate>
           <div class="mb-3 text-start">
             <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
+            <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
               aria-describedby="emailError">
             <div class="invalid-feedback" id="emailError" aria-live="polite">
               Please enter an email address.
@@ -41,7 +41,7 @@
 
           <div class="mb-3 text-start">
             <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
+            <input type="password" name="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
               aria-describedby="passwordError">
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
               Please enter a password.
@@ -54,7 +54,7 @@
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" style="background-color: #174593;"
+          <button id="btnClientLogin" type="submit" style="background-color: #174593;"
             class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
@@ -79,6 +79,8 @@
 
   <!-- JS Dependencies -->
   <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
+  <script src="js/login.js"></script>
+
 </body>
 
 </html>
