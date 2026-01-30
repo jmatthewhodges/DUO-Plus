@@ -4,10 +4,10 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 // phpdotenv library
-require_once DIR . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 // Point to .env in root folder
-$dotenv = Dotenv\Dotenv::createImmutable(DIR . '/../');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 // Load it -> use safeLoad() to ignore exception for no .env found
 $dotenv->safeLoad();
 
