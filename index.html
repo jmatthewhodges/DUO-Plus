@@ -54,8 +54,7 @@
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" style="background-color: #174593;"
-            class="btn btn-primary w-100 rounded-2 ">Login</button>
+          <button id="btnClientLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Login</button>
         </form>
       </div>
     </div>
@@ -87,7 +86,8 @@
             Please review and confirm your pre-filled login information.
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" id="btnWaiverSubmit">Submit</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="btnPrefillContinue" onclick="location.href='pages/register.html'">Continue</button>
           </div>
         </div>
       </div>
@@ -95,6 +95,8 @@
   </div>
 
   <!-- JS Dependencies -->
+  <script src="assets/js/core/libs.min.js"></script>
+  <script src="assets/js/hope-ui.js"></script>
   <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
   <script src="js/login.js"></script>
   <script src="js/loginPreFill.js"></script>
