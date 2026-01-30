@@ -19,7 +19,7 @@ $dbPass = $_ENV['DB_PASS'];
 
 // Using mysqli (catch error if db connection failed)
 try {
-    $mysqli = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
     echo "\nDATABASE CONNECTION ESTABLISHED!";
 } catch (\Throwable $th) {
     echo "\nDATABASE CONNECTION FAILED: " . $th->getMessage();
