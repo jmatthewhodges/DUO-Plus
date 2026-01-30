@@ -29,7 +29,7 @@
     <!-- Login Box -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-4">
-        <form id="clientLoginForm" method="POST" action="login.php" novalidate>
+        <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
@@ -54,7 +54,7 @@
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="submit" style="background-color: #174593;"
+          <button id="btnClientLogin" type="button" style="background-color: #174593;"
             class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
