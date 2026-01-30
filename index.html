@@ -75,12 +75,28 @@
         <img src="assets/images/lifeChurchLogo.webp" alt="Life Church Logo" class="mb-3" style="width: 200px;">
       </div>
     </div>
+
+    <div class="modal fade" id="prefillPopup" aria-labelledby="prefillPopupLabel" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="prefillPopupLabel">Prefill Information Confirmation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-start">
+            Please review and confirm your pre-filled login information.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnWaiverSubmit">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- JS Dependencies -->
   <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
   <script src="js/login.js"></script>
-
+  <script src="js/loginPreFill.js"></script>
 </body>
-
 </html>
