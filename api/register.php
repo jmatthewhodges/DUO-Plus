@@ -106,10 +106,10 @@ if ($result) {
     http_response_code(201); // Created
     $msg = json_encode(['success' => true, 'message' => 'New client created.']);
     echo $msg;
-    error_log($msg); // This will write to the PHP error log
+    error_log($msg); 
 } else {
     http_response_code(400); // Bad Request
     $msg = json_encode(['success' => false, 'message' => 'Insert failed']);
     echo $msg;
-    error_log($msg); // This will write to the PHP error log
+    error_log($msg); 
 }
