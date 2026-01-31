@@ -220,15 +220,17 @@ function stepTwoSubmit() {
         sexError.style.display = 'none'; // Always hide if valid
     }
 
-    // Phone is optional but validate format if provided
+    // Phone is optional but must be full and formatted if provided
     if (phone.value.length > 0) {
-        const strippedPhone = phone.value.replace(/\s/g, '');
-        if (!VALIDATION_PATTERNS.phone.test(strippedPhone)) {
+        // Require exactly (999) 999-9999 format
+        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
             setFieldValidation(phone, false);
             isValid = false;
         } else {
             setFieldValidation(phone, true);
         }
+    } else {
+        setFieldValidation(phone, true); // Optional, so valid if empty
     }
 
     if (isValid) {
@@ -413,11 +415,17 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
     }
 
     const phone = document.getElementById('emergencyContactPhone');
-    if (!phone.value.match(VALIDATION_PATTERNS.phoneFormatted)) {
-        phone.classList.add('is-invalid');
-        isValid = false;
+    // Phone is optional but must be full and formatted if provided
+    if (phone.value.length > 0) {
+        // Require exactly (999) 999-9999 format
+        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
+            setFieldValidation(phone, false);
+            isValid = false;
+        } else {
+            setFieldValidation(phone, true);
+        }
     } else {
-        phone.classList.remove('is-invalid');
+        setFieldValidation(phone, true); // Optional, so valid if empty
     }
 
     if (isValid) {
@@ -524,11 +532,20 @@ document.getElementById('emergencyContactLastName').addEventListener('input', fu
 // ============================================================================
 
 document.getElementById('btnWaiverSubmit').addEventListener('click', function () {
+    const btn = this;
+    const originalContent = btn.innerHTML;
+
+    // Disable button and show spinner
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+
     const waiverCheckbox = document.getElementById('waiverAgree');
     const waiverError = document.getElementById('waiverError');
 
     if (!waiverCheckbox.checked) {
         waiverError.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
         return;
     }
 
@@ -545,7 +562,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         middleInitial: document.getElementById('clientMiddleInitial').value,
         lastName: document.getElementById('clientLastName').value,
         dob: document.getElementById('clientDOB').value,
-        phone: document.getElementById('clientPhone').value,
+        // Remove phone input mask before sending
+        phone: document.getElementById('clientPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
         sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
 
         // Step 3
@@ -560,7 +578,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         noEmergencyContact: document.getElementById('noEmergencyContact').checked,
         emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
         emergencyLastName: document.getElementById('emergencyContactLastName').value,
-        emergencyPhone: document.getElementById('emergencyContactPhone').value,
+        // Remove phone input mask before sending
+        emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
 
         // Step 5
         services: Array.from(
@@ -584,7 +603,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                     icon: 'success',
                     title: 'Registration Complete!',
                     text: 'Your account has been created successfully.',
-                    confirmButtonColor: '#174593'
+                    confirmButtonColor: '#174593',
                 }).then(() => {
                     window.location.href = '../index.html';
                 });
@@ -609,6 +628,11 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                 text: 'Unable to connect to the server. Please try again later.',
                 confirmButtonColor: '#174593'
             });
+        })
+        .finally(() => {
+            // Re-enable button and restore content
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
         });
 });
 

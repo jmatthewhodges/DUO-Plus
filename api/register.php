@@ -11,16 +11,18 @@ if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
+// Set active status?
+$status = "Active";
 // Generate a unique clientID
 $clientID = bin2hex(random_bytes(8));
 $firstName = $_POST['firstName'] ?? null;
-$middleInitial = $_POST['middleInitial'] ?? null;
+$middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? $_POST['middleInitial'] : null;
 $lastName = $_POST['lastName'] ?? null;
 // Get current date
 $dateCreated = date('Y-m-d');
 $dob = $_POST['dob'] ?? null;
 $sex = $_POST['sex'] ?? null;
-$phone = $_POST['phone'] ?? null;
+$phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
 // Prepare client info
 $clientCreation = $mysqli->prepare("INSERT INTO tblclients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -31,7 +33,7 @@ $clientCreation->execute();
 
 $email = $_POST['email'] ?? null;
 // Hash the password using bcrypt
-$password = password_hash($_POST['password'], PASSWORD_BCRYPT) ?? null;
+$password = isset($_POST['password']) ? password_hash($_POST['password'], PASSWORD_BCRYPT) : null;
 
 // Prepare client login info
 $loginInsertion = $mysqli->prepare("INSERT INTO tblclientlogin(ClientID, Email, Password) VALUES (?, ?, ?)");
@@ -49,22 +51,17 @@ if ($noAddress == false) {
     $city = $_POST['city'];
     $state = $_POST['state'];
     $zipCode = $_POST['zipCode'];
-} else {
-    $address1 = null;
-    $address2 = null;
-    $city = null;
-    $state = null;
-    $zipCode = null;
+
+    // Prepare client address
+    $addressInsertion = $mysqli->prepare("INSERT INTO tblclientaddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+    // Bind the variables to the placeholders
+    // "s" means string, "d" means double (float or number)
+    $addressInsertion->bind_param("sssssss", $address1, $address2, $city, $state, $zipCode, $status, $clientID);
+
+    // Execute the statement
+    $addressInsertion->execute();
 }
-
-$status = "Active";
-
-// Prepare client address
-$addressInsertion = $mysqli->prepare("INSERT INTO tblclientaddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
-
-// Bind the variables to the placeholders
-// "s" means string, "d" means double (float or number)
-$addressInsertion->bind_param("sssssss", $address1, $address2, $city, $state, $zipCode, $status, $clientID);
 
 $noEmergencyContact = $_POST['noEmergencyContact'] ?? true;
 
@@ -73,23 +70,19 @@ if (!$noEmergencyContact) {
     $emergencyFirstName = $_POST['emergencyFirstName'];
     $emergencyLastName = $_POST['emergencyLastName'];
     $emergencyPhone = $_POST['emergencyPhone'];
-} else {
-    $emergencyFirstName = null;
-    $emergencyLastName = null;
-    $emergencyPhone = null;
+
+    // String together first & last name
+    $emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;
+
+    // Prepare client emergency contact
+    $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblclientemergencycontacts(ClientID, Name, Phone, Status) VALUES (?, ?, ?, ?)");
+
+    // Bind the variables to the placeholders
+    $emergencyContactInsertion->bind_param("ssss", $clientID, $emergencyFullName, $emergencyPhone, $status);
+
+    // Execute the statement
+    $emergencyContactInsertion->execute();
 }
-
-// String together first & last name
-$emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;
-
-// Prepare client emergency contact
-$emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblclientemergencycontacts(ClientID, Name, Phone, Status) VALUES (?, ?, ?, ?)");
-
-// Bind the variables to the placeholders
-$emergencyContactInsertion->bind_param("ssss", $clientID, $emergencyFullName, $emergencyPhone, $status);
-
-// Execute the statement
-$emergencyContactInsertion->execute();
 
 // Get current date + time
 $currentDateTime = date('Y-m-d H:i:s');
@@ -98,7 +91,7 @@ $services = $_POST['services'] ?? [];
 $hasMedical = in_array('medical', $services);
 $hasOptical = in_array('optical', $services);
 $hasDental  = in_array('dental', $services);
-$hasHair    = in_array('hair', $services);
+$hasHair    = in_array('haircut', $services);
 
 // Prepare client services
 $servicesInsertion = $mysqli->prepare("INSERT INTO tblclientregistrations(ClientID, DateTime, Medical, Optical, Dental, Hair) VALUES (?, ?, ?, ?, ?, ?)");
@@ -106,7 +99,7 @@ $servicesInsertion = $mysqli->prepare("INSERT INTO tblclientregistrations(Client
 // Bind the variables to the placeholders
 $servicesInsertion->bind_param("ssssss", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
 
-// Execute the statement
+// Execute the statement (currently, end result displayed is just from last insertion which is services)
 $result = $servicesInsertion->execute();
 
 if ($result) {
