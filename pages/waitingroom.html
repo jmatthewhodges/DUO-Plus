@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#72B2D4">
+    <title>DUO+ | Waiting Room</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+</head>
+    <body class="d-flex align-items-center justify-content-center py-5">
+
+        <div class="container" style="max-width: 600px;">
+            
+            <!-- Logo -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 180px;">
+                </div>
+            </div>
+
+            <!-- Queue Title -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                    <h5 class="text-white mb-0 fw-bold">Queue</h5>
+                    <span class="status-dot"></span>
+                </div>
+                
+                <div class="card-body position-relative p-4">
+                    <div class="custom-scroll-indicator" style="height: 60%; top: 20%;"></div>
+
+                    <!-- Now Serving -->
+                    <div class="mb-4 border-bottom pb-3">
+                        <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Now Serving</h6>
+                        <div class="d-flex justify-content-between align-items-center pe-4">
+                            <div class="queue-name text-primary" style="font-size: 1.5rem;">Edward D. Poe</div>
+                            <div class="service-icon-box">
+                                <i class="bi bi-shield-shaded" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coming Up -->
+                    <div>
+                        <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Coming Up</h6>
+                        <div class="d-flex justify-content-between align-items-center pe-4">
+                            <div class="queue-name text-primary opacity-75"style="font-size: 1.5rem;">Todd F. Howard</div>
+                            <div class="service-icon-box">
+                                <i class="bi bi-plus-lg"style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wait Room List -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                    <h5 class="text-white mb-0 fw-bold">Wait List</h5>
+                    <h5 class="text-white mb-0 fw-bold">24</h5>
+                </div>
+                
+                <div class="card-body p-0 position-relative">
+                    <div class="custom-scroll-indicator" style="height: 50%; top: 25%;"></div>
+
+                    <!-- Persons In Wait Room Table -->
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead>
+                                <tr class="border-bottom">
+                                    <th scope="col" class="ps-4">Name</th>
+                                    <th scope="col">DOB</th>
+                                    <th scope="col">Services</th>
+                                    <th scope="col" class="text-end pe-5"></th> 
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-bottom">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">John A. Doe</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium">11/01/1978</td>
+                                    <td>
+                                        <div class="d-flex gap-2 text-dark h5 mb-0">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <i class="bi bi-shield-shaded"></i>
+                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-scissors"></i>
+                                        </div>
+                                    </td>
+                                    <td class="text-end pe-5">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">Jane D. Rett</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium">08/23/1989</td>
+                                    <td>
+                                        <div class="d-flex gap-2 text-dark h5 mb-0">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <i class="bi bi-shield-shaded"></i>
+                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-scissors"></i>
+                                        </div>
+                                    </td>
+                                    <td class="text-end pe-5">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </body>
+</html>
