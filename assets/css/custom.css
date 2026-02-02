@@ -108,3 +108,8 @@ body.v-center-page {
 .input-black:-webkit-autofill {
     color: black !important;
 } */
+
+.qr-icon-border {
+    border: 3px solid #174593;
+    border-radius: 3px;
+}

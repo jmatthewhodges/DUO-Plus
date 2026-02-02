@@ -643,8 +643,89 @@ function showStepOnly(stepNumber) {
     updateProgressBar(stepNumber);
 }
 
+const tempClientID = "9df12a-3lha05-f44zp1"
+const tempServices = ["medical", "dental", "optical", "haircut"]
+
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
 document.getElementById('skipStep4').addEventListener('click', () => showStepOnly(4));
-document.getElementById('skipStep5').addEventListener('click', () => showStepOnly(5));
+document.getElementById('skipStep5').addEventListener('click', () => showQR(tempClientID, "Bobby", "Jones", tempServices));
+
+
+// QR Code Logic
+function hideLoginStuff() {
+    // Hide login step container
+    const loginStep1 = document.getElementById('divStepOne');
+    if (loginStep1) loginStep1.style.display = 'none';
+
+    const loginStep2 = document.getElementById('divStepTwo');
+    if (loginStep2) loginStep2.style.display = 'none';
+
+    const loginStep3 = document.getElementById('divStepThree');
+    if (loginStep3) loginStep3.style.display = 'none';
+
+    const loginStep4 = document.getElementById('divStepFour');
+    if (loginStep4) loginStep4.style.display = 'none';
+
+    const loginStep5 = document.getElementById('divStepFive');
+    if (loginStep5) loginStep5.style.display = 'none';
+
+    // Hide skip step button if present
+    const skipStep1 = document.getElementById('skipStep1');
+    if (skipStep1) skipStep1.style.display = 'none';
+
+    // Hide skip step button if present
+    const skipStep2 = document.getElementById('skipStep2');
+    if (skipStep2) skipStep2.style.display = 'none';
+
+    // Hide skip step button if present
+    const skipStep3 = document.getElementById('skipStep3');
+    if (skipStep3) skipStep3.style.display = 'none';
+
+    // Hide skip step button if present
+    const skipStep4 = document.getElementById('skipStep4');
+    if (skipStep4) skipStep4.style.display = 'none';
+
+    // Hide other stuff
+    const substitle = document.getElementById('divStepOneSubtitle');
+    if (substitle) substitle.style.display = 'none';
+
+    const wholeProgressBar = document.getElementById('wholeProgressBar');
+    if (wholeProgressBar) wholeProgressBar.style.display = 'none';
+}
+
+function showQR(clientID, firstName, lastName, services, language) {
+    hideLoginStuff()
+
+    var qr = new QRious({
+        element: document.getElementById('qr'),
+        value: clientID,
+        size: 200,
+    })
+
+    if (Array.isArray(services)) {
+        if (services.includes("medical")) {
+            document.getElementById('qrCardMedicalIcon').style.display = "block"
+        }
+        if (services.includes("dental")) {
+            document.getElementById('qrCardDentalIcon').style.display = "block"
+        }
+        if (services.includes("optical")) {
+            document.getElementById('qrCardOpticalIcon').style.display = "block"
+        }
+        if (services.includes("haircut")) {
+            document.getElementById('qrCardHaircutIcon').style.display = "block"
+        }
+    }
+
+    // Set the QR card title to the user's name
+    const qrTitle = document.getElementById('qrCardTitle');
+    if (qrTitle) {
+        qrTitle.textContent = `${firstName} ${lastName}`;
+    }
+
+    const qrCode = document.getElementById('divQRCode');
+    qrCode.style.display = 'flex';
+    document.getElementById('divQRCode').classList.remove('d-none');
+}
