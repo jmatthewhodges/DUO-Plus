@@ -112,6 +112,11 @@ function goToStepOne() {
 }
 
 //step 0 event listeners
+//to do: put "back to login" button here, add code form the language switch to enable functionality
+document.getElementById('btnRegisterBack0').addEventListener('click', function () {
+    window.location.href = '../index.html';
+});
+
 
 
 // ============================================================================
@@ -160,7 +165,9 @@ document.getElementById('clientRegisterFormStep1').addEventListener('keydown', f
 document.getElementById('btnRegisterNext1').addEventListener('click', stepOneSubmit);
 
 document.getElementById('btnRegisterBack1').addEventListener('click', function () {
-    window.location.href = '../index.html';
+    const stepOne = document.getElementById('divStepZero');
+    const stepTwo = document.getElementById('divStepOne');
+    transitionToStep(stepOne, stepZero, 0);
 });
 
 document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
