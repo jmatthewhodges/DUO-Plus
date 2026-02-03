@@ -63,9 +63,12 @@
                         <h5 class="card-title text-center">Select your preferred language.</h5>
                         <h5 class="card-title text-center">Escoja el lenguaje que usted prefiere.</h5>
                         <!-- Buttons -->
-                        <button id="btnRegisterEnglish" type="button"class="btn btn-primary w-100 rounded-2 mb-1" data-language="en">English</button>
-                        <button id="btnRegisterSpanish" type="button" class="btn btn-primary w-100 rounded-2" data-language="es">Español</button>
-                        <button id="btnRegisterBack0" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
+                         
+                         <select id="language-selector">
+                            <button id="btnRegisterEnglish" type="button"class="btn btn-primary w-100 rounded-2 mb-1" data-language="en">English</button>
+                            <button id="btnRegisterSpanish" type="button" class="btn btn-primary w-100 rounded-2" data-language="es">Español</button>
+                        </select>
+                            <button id="btnRegisterBack0" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
                         <!-- to do: give JS logic to all 3 buttons-->
                     </div>
 
@@ -143,7 +146,7 @@
 
                             <!-- Sex -->
                             <div class="mb-3 text-start">
-                                <label class="form-label fw-semibold d-block">Sex</label>
+                                <label class="form-label fw-semibold d-block" id="sexLabel">Sex</label>
                                 <div class="btn-group" role="group" aria-label="Select your sex.">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
