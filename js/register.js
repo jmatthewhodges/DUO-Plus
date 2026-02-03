@@ -650,7 +650,7 @@ document.getElementById('skipStep1').addEventListener('click', () => showStepOnl
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
 document.getElementById('skipStep4').addEventListener('click', () => showStepOnly(4));
-document.getElementById('skipStep5').addEventListener('click', () => showQR(tempClientID, "Bobby", "Jones", tempServices));
+document.getElementById('skipStep5').addEventListener('click', () => showQR(tempClientID, "Bobby A.", "Jones", tempServices));
 
 
 // QR Code Logic
