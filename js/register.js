@@ -101,6 +101,18 @@ function updateProgressBar(step) {
     progressBar.setAttribute('aria-valuenow', percentage);
 }
 
+// ============================================================================
+// STEP 0: LANGUAGE SELECT
+// ============================================================================
+
+function goToStepOne() {
+    const stepZero = document.getElementById('divStepZero');
+    const stepOne = document.getElementById('divStepOne');
+    transitionToStep(stepZero, stepOne, 1);
+}
+
+//step 0 event listeners
+
 
 // ============================================================================
 // STEP 1: LOGIN INFO
