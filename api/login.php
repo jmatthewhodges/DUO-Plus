@@ -22,12 +22,35 @@ $loginGrab->execute();
 $loginGrab->bind_result($clientID, $hashedPassword);
 
 if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
+    // Close the previous query
+    $loginGrab->close();
     // Login successful
-    http_response_code(200); 
-    $msg = json_encode(['success' => true, 'message' => 'Successful login.']);
+    http_response_code(200);
+    
+    // Single query to get all client data
+    $registrationData = $mysqli->prepare("
+        SELECT 
+            c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone,
+            a.Street1, a.Street2, a.City, a.State, a.ZIP,
+            e.Name AS EmergencyName, e.Phone AS EmergencyPhone,
+            r.DateTime AS RegistrationDate, r.Medical, r.Optical, r.Dental, r.Hair
+        FROM tblclients c
+        LEFT JOIN tblclientaddress a ON c.ClientID = a.ClientID
+        LEFT JOIN tblclientemergencycontacts e ON c.ClientID = e.ClientID
+        LEFT JOIN tblclientregistrations r ON c.ClientID = r.ClientID
+        WHERE c.ClientID = ?
+    ");
+    $registrationData->bind_param("s", $clientID);
+    $registrationData->execute();
+    $result = $registrationData->get_result();
+    $userData = $result->fetch_assoc();
+    
+    $msg = json_encode(['success' => true, 'message' => 'Successful login.', 'data' => $userData]);
     echo $msg;
-    error_log($msg); 
+    error_log($msg);
 } else {
+    // Close the previous query
+    $loginGrab->close();
     // Login failed
     http_response_code(401);
     $msg = json_encode(['success' => false, 'message' => 'Failed login.']);
