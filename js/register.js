@@ -112,7 +112,6 @@ function goToStepOne() {
 }
 
 //step 0 event listeners
-//to do: put "back to login" button here, add code form the language switch to enable functionality
 document.getElementById('btnRegisterBack0').addEventListener('click', function () {
     window.location.href = '../index.html';
 });
@@ -325,12 +324,105 @@ document.addEventListener('DOMContentLoaded', function () {
             btnWaiverSubmit: 'Submit',
         }
     };
-
+    //language listener
     languageSelector.addEventListener('change', function () {
         const selectedLanguage = languageSelector.value;
         const translation = translations[selectedLanguage];
-
+        //login info
+        //TO-DO: busywork lol, jsut rename these apropriately
         document.getElementById('title').textContent = translation.title;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        //personal info
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        //address info
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        //emergency
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        //service
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+
+        //wavier
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
+        document.getElementById('description').textContent = translation.description;
         document.getElementById('description').textContent = translation.description;
     });
 });
