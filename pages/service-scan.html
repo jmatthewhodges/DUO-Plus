@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#72B2D4">
+    <title>DUO+ | Service Scan In</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center py-5">
+
+        <div class="container" style="max-width: 600px;">
+            
+            <!-- Logo -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 180px;">
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                    <h5 class="text-white mb-0 fw-bold">Medical</h5>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-12 col-sm-6">
+                            <div class="mb-3">
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Waitlist</h6>
+                                <div class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
+                                    <i class="bi bi-people h4 mb-0 text-dark"></i>
+                                    <span class="h3 fw-bold mb-0">23</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">In Progress</h6>
+                                <div class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
+                                    <i class="bi bi-person-dash h4 mb-0 text-dark"></i>
+                                    <span class="h3 fw-bold mb-0">4</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Completed</h6>
+                                <div class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
+                                    <i class="bi bi-person-check h4 mb-0 text-dark"></i>
+                                    <span class="h3 fw-bold mb-0">15</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <div class="bg-white rounded-5 border shadow-sm h-100 p-4 d-flex flex-column justify-content-center text-center text-sm-start">
+                                <span class="fw-bold text-dark mb-1">Avg. Service Time</span>
+                                <h2 class="text-primary fw-bold mb-4">20 minutes</h2>
+
+                                <span class="fw-bold text-dark mb-1">Past Avg. Service Time</span>
+                                <h2 class="text-primary fw-bold mb-0">34 minutes</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan QR Button -->
+            <button id="btnScan" type="button" style="color:white;"class="btn bg-primary w-100 rounded-4 mb-4 p-3">Scan QR</button>
+
+            <!-- Waitroom Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                    <h5 class="text-white mb-0 fw-bold">Medical - Waitlist</h5>
+                    <input type="text" class="form-control form-control-sm w-50" placeholder="Search">
+                </div>
+                
+                <div class="card-body p-0 position-relative">
+                    <div class="custom-scroll-indicator" style="height: 50%; top: 25%;"></div>
+
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead>
+                                <tr class="border-bottom">
+                                    <th scope="col" class="ps-3 ps-md-4">Name</th>
+                                    
+                                    <th scope="col" class="d-none d-md-table-cell">DOB</th>
+                                    
+                                    <th scope="col" class="d-none d-md-table-cell">Services</th>
+                                    
+                                    <th scope="col" class="text-end pe-3 pe-md-5"></th> 
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-bottom">
+                                    <td class="ps-3 ps-md-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark" style="line-height: 1.2;">John A. Doe</span>
+                                                <span class="text-muted small d-md-none" style="font-size: 0.75rem;">DOB: 11/01/1978</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">11/01/1978</td>
+                                    
+                                    <td class="d-none d-md-table-cell">
+                                        <div class="d-flex gap-2 text-dark h5 mb-0">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <i class="bi bi-shield-shaded"></i>
+                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-scissors"></i>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-end pe-3 pe-md-5">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="ps-3 ps-md-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark" style="line-height: 1.2;">Jane D. Rett</span>
+                                                <span class="text-muted small d-md-none" style="font-size: 0.75rem;">DOB: 08/23/1989</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">08/23/1989</td>
+                                    
+                                    <td class="d-none d-md-table-cell">
+                                        <div class="d-flex gap-2 text-dark h5 mb-0">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <i class="bi bi-shield-shaded"></i>
+                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-scissors"></i>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-end pe-3 pe-md-5">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </body>
+</html>
