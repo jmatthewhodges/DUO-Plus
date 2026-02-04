@@ -117,212 +117,212 @@ document.getElementById('btnRegisterBack0').addEventListener('click', function (
     window.location.href = '../index.html';
 });
 
-/*document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     const languageSelector = document.getElementById('language-selector');
 
     const translations = {
         //english translation
         en: {
             //login info
-            divStepOne: Login Information
+            divStepOne: 'Login Information',
 
-            clientRegisterEmail: Email
-            emailError: Please enter a valid email address.
+            clientRegisterEmail: 'Email',
+            emailError: 'Please enter a valid email address.',
 
-            clientRegisterPass: Password
-            passwordError: Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.
+            clientRegisterPass: 'Password',
+            passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
 
-            toggleClientRegisterPass: Show password
+            toggleClientRegisterPass: 'Show password',
 
-            btnRegisterNext1: Next
-            btnRegisterBack1: Go back
+            btnRegisterNext1: 'Next',
+            btnRegisterBack1: 'Go back',
 
             //personal info
-            divStepTwo: Personal Information
+            divStepTwo: 'Personal Information',
 
-            clientFirstName: First Name
-            firstNameError: Please enter your first name.
+            clientFirstName: 'First Name',
+            firstNameError: 'Please enter your first name.',
 
-            clientMiddleInitial: Middle Initial
+            clientMiddleInitial: 'Middle Initial',
 
-            clientLastName: Last Name
-            lastNameError: Please enter your last name.
+            clientLastName: 'Last Name',
+            lastNameError: 'Please enter your last name.',
 
-            sexLabel: Sex
-            btnSexMale: Male
-            btnSexFemale: Female
-            btnSexIntersex: Intersex
-            sexError: Please select your sex.
+            sexLabel: 'Sex',
+            btnSexMale: 'Male',
+            btnSexFemale: 'Female',
+            btnSexIntersex: 'Intersex',
+            sexError: 'Please select your sex.',
 
-            clientDOB: Date of Birth
-            dobError: Please enter your date of birth.
+            clientDOB: 'Date of Birth',
+            dobError: 'Please enter your date of birth.',
 
-            clientPhone: Phone
-            phoneError: Phone is invalid format.
-            btnRegisterNext2: Next
-            btnRegisterBack2: Go back
+            clientPhone: 'Phone',
+            phoneError: 'Phone is invalid format.',
+            btnRegisterNext2: 'Next',
+            btnRegisterBack2: 'Go back',
 
             //address info
-            divStepThree: Address Information
+            divStepThree: 'Address Information',
 
-            noAddress: No current address
-            clientAddress1: Street Address 1
-            clientAddress2: Street Address 2
-            address1Error: Please enter an address.
+            noAddress: 'No current address',
+            clientAddress1: 'Street Address 1',
+            clientAddress2: 'Street Address 2',
+            address1Error: 'Please enter an address.',
 
-            clientCity: City
-            cityError: Please enter a city.
+            clientCity: 'City',
+            cityError: 'Please enter a city.',
 
-            selectState: State
-            stateError: Please select a state.
+            selectState: 'State',
+            stateError: 'Please select a state.',
 
-            clientZipCode: Zip Code
-            zipCode: Please enter a 5-digit zip code.
+            clientZipCode: 'Zip Code',
+            zipCode: 'Please enter a 5-digit zip code.',
 
-            btnRegisterNext3: Next
-            btnRegisterBack3: Go back
+            btnRegisterNext3: 'Next',
+            btnRegisterBack3: 'Go back',
 
 
             //emergency contact
-            divStepFour: Emergency Contact
+            divStepFour: 'Emergency Contact',
 
-            noEmergencyContact: no Emergency Contact
+            noEmergencyContact: 'no Emergency Contact',
 
-            emergencyContactFirstName: Contact First Name
-            contactFirstName: Please enter a first name for your contact.
+            emergencyContactFirstName: 'Contact First Name',
+            contactFirstName: 'Please enter a first name for your contact.',
 
-            emergencyContactLastName: Contact Last Name
-            contactLastName: Please enter a last name for your contact.
+            emergencyContactLastName: 'Contact Last Name',
+            contactLastName: 'Please enter a last name for your contact.',
 
-            emergencyContactPhone: Contact Phone
-            contactPhone: Please enter a phone for your contact.
+            emergencyContactPhone: 'Contact Phone',
+            contactPhone: 'Please enter a phone for your contact.',
             
-            btnRegisterNext4: Next
-            btnRegisterBack4: Go back
+            btnRegisterNext4: 'Next',
+            btnRegisterBack4: 'Go back',
 
 
             //service select
-            divStepFive: Service Selection
+            divStepFive: 'Service Selection',
 
-            btnServiceMedical: Medical
-            btnServiceDental: Dental
-            btnServiceOptical: Optical
-            btnServiceHaircut: Haircut
+            btnServiceMedical: 'Medical',
+            btnServiceDental: 'Dental',
+            btnServiceOptical: 'Optical',
+            btnServiceHaircut: 'Haircut',
 
-            serviceError: Please select at least one service.
+            serviceError: 'Please select at least one service.',
 
-            btnRegisterNext5: Next
-            btnRegisterNext5: Go back
+            btnRegisterNext5: 'Next',
+            btnRegisterNext5: 'Go back',
 
 
             //wavier confrim
-            waiverLabel: Waiver Agreement Required
-            collapseExample: DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.
-            waiverAgree: I have read and agree.
-            waiverError: You must agree to the waiver to continue.
-            btnWaiverSubmit: Submit
+            waiverLabel: 'Waiver Agreement Required',
+            collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
+            waiverAgree: 'I have read and agree.',
+            waiverError: 'You must agree to the waiver to continue.',
+            btnWaiverSubmit: 'Submit',
         },
-        
+
         //spanish translation
         es: {
             //login info
-            divStepOne: Login Information
+            divStepOne: 'Login Information',
 
-            clientRegisterEmail: Email
-            emailError: Please enter a valid email address.
+            clientRegisterEmail: 'Email',
+            emailError: 'Please enter a valid email address.',
 
-            clientRegisterPass: Password
-            passwordError: Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.
+            clientRegisterPass: 'Password',
+            passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
 
-            toggleClientRegisterPass: Show password
+            toggleClientRegisterPass: 'Show password',
 
-            btnRegisterNext1: Next
-            btnRegisterBack1: Go back
+            btnRegisterNext1: 'Next',
+            btnRegisterBack1: 'Go back',
 
             //personal info
-            divStepTwo: Personal Information
+            divStepTwo: 'Personal Information',
 
-            clientFirstName: First Name
-            firstNameError: Please enter your first name.
+            clientFirstName: 'First Name',
+            firstNameError: 'Please enter your first name.',
 
-            clientMiddleInitial: Middle Initial
+            clientMiddleInitial: 'Middle Initial',
 
-            clientLastName: Last Name
-            lastNameError: Please enter your last name.
+            clientLastName: 'Last Name',
+            lastNameError: 'Please enter your last name.',
 
-            sexLabel: Sex
-            btnSexMale: Male
-            btnSexFemale: Female
-            btnSexIntersex: Intersex
-            sexError: Please select your sex.
+            sexLabel: 'Sex',
+            btnSexMale: 'Male',
+            btnSexFemale: 'Female',
+            btnSexIntersex: 'Intersex',
+            sexError: 'Please select your sex.',
 
-            clientDOB: Date of Birth
-            dobError: Please enter your date of birth.
+            clientDOB: 'Date of Birth',
+            dobError: 'Please enter your date of birth.',
 
-            clientPhone: Phone
-            phoneError: Phone is invalid format.
-            btnRegisterNext2: Next
-            btnRegisterBack2: Go back
+            clientPhone: 'Phone',
+            phoneError: 'Phone is invalid format.',
+            btnRegisterNext2: 'Next',
+            btnRegisterBack2: 'Go back',
 
             //address info
-            divStepThree: Address Information
+            divStepThree: 'Address Information',
 
-            noAddress: No current address
-            clientAddress1: Street Address 1
-            clientAddress2: Street Address 2
-            address1Error: Please enter an address.
+            noAddress: 'No current address',
+            clientAddress1: 'Street Address 1',
+            clientAddress2: 'Street Address 2',
+            address1Error: 'Please enter an address.',
 
-            clientCity: City
-            cityError: Please enter a city.
+            clientCity: 'City',
+            cityError: 'Please enter a city.',
 
-            selectState: State
-            stateError: Please select a state.
+            selectState: 'State',
+            stateError: 'Please select a state.',
 
-            clientZipCode: Zip Code
-            zipCode: Please enter a 5-digit zip code.
+            clientZipCode: 'Zip Code',
+            zipCode: 'Please enter a 5-digit zip code.',
 
-            btnRegisterNext3: Next
-            btnRegisterBack3: Go back
+            btnRegisterNext3: 'Next',
+            btnRegisterBack3: 'Go back',
 
 
             //emergency contact
-            divStepFour: Emergency Contact
+            divStepFour: 'Emergency Contact',
 
-            noEmergencyContact: no Emergency Contact
+            noEmergencyContact: 'no Emergency Contact',
 
-            emergencyContactFirstName: Contact First Name
-            contactFirstName: Please enter a first name for your contact.
+            emergencyContactFirstName: 'Contact First Name',
+            contactFirstName: 'Please enter a first name for your contact.',
 
-            emergencyContactLastName: Contact Last Name
-            contactLastName: Please enter a last name for your contact.
+            emergencyContactLastName: 'Contact Last Name',
+            contactLastName: 'Please enter a last name for your contact.',
 
-            emergencyContactPhone: Contact Phone
-            contactPhone: Please enter a phone for your contact.
+            emergencyContactPhone: 'Contact Phone',
+            contactPhone: 'Please enter a phone for your contact.',
             
-            btnRegisterNext4: Next
-            btnRegisterBack4: Go back
+            btnRegisterNext4: 'Next',
+            btnRegisterBack4: 'Go back',
 
 
             //service select
-            divStepFive: Service Selection
+            divStepFive: 'Service Selection',
 
-            btnServiceMedical: Medical
-            btnServiceDental: Dental
-            btnServiceOptical: Optical
-            btnServiceHaircut: Haircut
+            btnServiceMedical: 'Medical',
+            btnServiceDental: 'Dental',
+            btnServiceOptical: 'Optical',
+            btnServiceHaircut: 'Haircut',
 
-            serviceError: Please select at least one service.
+            serviceError: 'Please select at least one service.',
 
-            btnRegisterNext5: Next
-            btnRegisterNext5: Go back
+            btnRegisterNext5: 'Next',
+            btnRegisterNext5: 'Go back',
 
 
             //wavier confrim
-            waiverLabel: Waiver Agreement Required
-            collapseExample: DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.
-            waiverAgree: I have read and agree.
-            waiverError: You must agree to the waiver to continue.
-            btnWaiverSubmit: Submit
+            waiverLabel: 'Waiver Agreement Required',
+            collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
+            waiverAgree: 'I have read and agree.',
+            waiverError: 'You must agree to the waiver to continue.',
+            btnWaiverSubmit: 'Submit',
         }
     };
 
@@ -333,7 +333,7 @@ document.getElementById('btnRegisterBack0').addEventListener('click', function (
         document.getElementById('title').textContent = translation.title;
         document.getElementById('description').textContent = translation.description;
     });
-});*/
+});
 
 
 
