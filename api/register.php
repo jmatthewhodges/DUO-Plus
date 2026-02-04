@@ -87,17 +87,17 @@ if (!$noEmergencyContact) {
 // Get current date + time
 $currentDateTime = date('Y-m-d H:i:s');
 $services = $_POST['services'] ?? [];
-// Check services array
-$hasMedical = in_array('medical', $services);
-$hasOptical = in_array('optical', $services);
-$hasDental  = in_array('dental', $services);
-$hasHair    = in_array('haircut', $services);
+// Check services array - cast to int for database
+$hasMedical = in_array('medical', $services) ? 1 : 0;
+$hasOptical = in_array('optical', $services) ? 1 : 0;
+$hasDental  = in_array('dental', $services) ? 1 : 0;
+$hasHair    = in_array('haircut', $services) ? 1 : 0;
 
 // Prepare client services
 $servicesInsertion = $mysqli->prepare("INSERT INTO tblclientregistrations(ClientID, DateTime, Medical, Optical, Dental, Hair) VALUES (?, ?, ?, ?, ?, ?)");
 
-// Bind the variables to the placeholders
-$servicesInsertion->bind_param("ssssss", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
+// Bind the variables to the placeholders - use "i" for integers
+$servicesInsertion->bind_param("ssiiii", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
 
 // Execute the statement (currently, end result displayed is just from last insertion which is services)
 $result = $servicesInsertion->execute();
