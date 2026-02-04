@@ -330,100 +330,100 @@ document.addEventListener('DOMContentLoaded', function () {
         const translation = translations[selectedLanguage];
         //login info
         //TO-DO: busywork lol, jsut rename these apropriately
-        document.getElementById('title').textContent = translation.title;
+        document.getElementById('divStepOne').textContent = translation.divStepOne;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientRegisterEmail').textContent = translation.clientRegisterEmail;
+        document.getElementById('emailError').textContent = translation.emailError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientRegisterPass').textContent = translation.clientRegisterPass;
+        document.getElementById('passwordError').textContent = translation.passwordError;
 
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('toggleClientRegisterPass').textContent = translation.toggleClientRegisterPass;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('btnRegisterNext1').textContent = translation.btnRegisterNext1;
+        document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
 
         //personal info
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('divStepTwo').textContent = translation.divStepTwo;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientFirstName').textContent = translation.clientFirstName;
+        document.getElementById('firstNameError').textContent = translation.firstNameError;
 
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientMiddleInitial').textContent = translation.clientMiddleInitial;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientLastName').textContent = translation.clientLastName;
+        document.getElementById('lastNameError').textContent = translation.lastNameError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('sexLabel').textContent = translation.sexLabel;
+        document.getElementById('btnSexMale').textContent = translation.btnSexMale;
+        document.getElementById('btnSexFemale').textContent = translation.btnSexFemale;
+        document.getElementById('btnSexIntersex').textContent = translation.btnSexIntersex;
+        document.getElementById('sexError').textContent = translation.sexError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientDOB').textContent = translation.clientDOB;
+        document.getElementById('dobError').textContent = translation.dobError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientPhone').textContent = translation.clientPhone;
+        document.getElementById('phoneError').textContent = translation.phoneError;
+        document.getElementById('btnRegisterNext2').textContent = translation.btnRegisterNext2;
+        document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
 
         //address info
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('divStepThree').textContent = translation.divStepThree;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('noAddress').textContent = translation.noAddress;
+        document.getElementById('clientAddress1').textContent = translation.clientAddress1;
+        document.getElementById('clientAddress1').textContent = translation.clientAddress2;
+        document.getElementById('address1Error').textContent = translation.address1Error;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientCity').textContent = translation.clientCity;
+        document.getElementById('cityError').textContent = translation.cityError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('selectState').textContent = translation.selectState;
+        document.getElementById('stateError').textContent = translation.stateError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('clientZipCode').textContent = translation.clientZipCode;
+        document.getElementById('zipCode').textContent = translation.zipCode;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('btnRegisterNext3').textContent = translation.btnRegisterNext3;
+        document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
 
         //emergency
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('divStepFour').textContent = translation.divStepFour;
 
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('noEmergencyContact').textContent = translation.noEmergencyContact;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('emergencyContactFirstName').textContent = translation.emergencyContactFirstName;
+        document.getElementById('contactFirstName').textContent = translation.contactFirstName;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('emergencyContactLastName').textContent = translation.emergencyContactLastName;
+        document.getElementById('contactLastName').textContent = translation.contactLastName;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('emergencyContactPhone').textContent = translation.emergencyContactPhone;
+        document.getElementById('contactPhone').textContent = translation.contactPhone;
+
+        document.getElementById('btnRegisterNext4').textContent = translation.btnRegisterNext4;
+        document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
 
         //service
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('divStepFive').textContent = translation.divStepFive;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('btnServiceMedical').textContent = translation.btnServiceMedical;
+        document.getElementById('btnServiceDental').textContent = translation.btnServiceDental;
+        document.getElementById('btnServiceOptical').textContent = translation.btnServiceOptical;
+        document.getElementById('btnServiceHaircut').textContent = translation.btnServiceHaircut;
 
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('serviceError').textContent = translation.serviceError;
 
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
+        document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
 
         //wavier
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
-        document.getElementById('description').textContent = translation.description;
+        document.getElementById('waiverLabel').textContent = translation.waiverLabel;
+        document.getElementById('collapseExample').textContent = translation.collapseExample;
+        document.getElementById('waiverAgree').textContent = translation.waiverAgree;
+        document.getElementById('waiverError').textContent = translation.waiverError;
+        document.getElementById('btnWaiverSubmit').textContent = translation.btnWaiverSubmit;
     });
 });
 
