@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
         //english translation
         en: {
             //login info
-            divStepOne: 'Login Information',
+            titleStepOne: 'Login Information',
 
             clientRegisterEmail: 'Email',
             emailError: 'Please enter a valid email address.',
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btnRegisterBack1: 'Go back',
 
             //personal info
-            divStepTwo: 'Personal Information',
+            titleStepTwo: 'Personal Information',
 
             clientFirstName: 'First Name',
             firstNameError: 'Please enter your first name.',
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btnRegisterBack2: 'Go back',
 
             //address info
-            divStepThree: 'Address Information',
+            titleStepThree: 'Address Information',
 
             noAddress: 'No current address',
             clientAddress1: 'Street Address 1',
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             //emergency contact
-            divStepFour: 'Emergency Contact',
+            titleStepFour: 'Emergency Contact',
 
             noEmergencyContact: 'no Emergency Contact',
 
@@ -201,12 +201,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             //service select
-            divStepFive: 'Service Selection',
+            titleStepFive: 'Service Selection',
 
             btnServiceMedical: 'Medical',
             btnServiceDental: 'Dental',
             btnServiceOptical: 'Optical',
-            btnServiceHaircut: 'Haircut',
+            btnServiceHaircut: 'Haircut4',
 
             serviceError: 'Please select at least one service.',
 
@@ -323,11 +323,13 @@ document.addEventListener('DOMContentLoaded', function () {
             waiverError: 'You must agree to the waiver to continue.',
             btnWaiverSubmit: 'Submit',
         }
+
     };
     //language listener
     languageSelector.addEventListener('change', function () {
         const selectedLanguage = languageSelector.value;
         const translation = translations[selectedLanguage];
+        
         //login info
         //TO-DO: busywork lol, jsut rename these apropriately
         document.getElementById('divStepOne').textContent = translation.divStepOne;
