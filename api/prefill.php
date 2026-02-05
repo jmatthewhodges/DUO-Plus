@@ -37,8 +37,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 try {
-    // 1) Find client login row
-    $stmt = $mysqli->prepare("SELECT ClientID, Email FROM tblClientLogin WHERE Email = ? LIMIT 1");
+    // 1) Find client login row (include Password for testing only)
+    $stmt = $mysqli->prepare("SELECT ClientID, Email, Password FROM tblClientLogin WHERE Email = ? LIMIT 1");
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -93,6 +93,7 @@ try {
 
     $out = [
         'Email' => $login['Email'],
+        'Password' => $login['Password'] ?? null, // included for testing only; do NOT expose in production
         'FirstName' => $client['FirstName'] ?? null,
         'MiddleName' => $client['MiddleName'] ?? null,
         'LastName' => $client['LastName'] ?? null,
