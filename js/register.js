@@ -125,13 +125,13 @@ document.addEventListener('DOMContentLoaded', function () {
             //login info
             titleStepOne: 'Login Information',
 
-            clientRegisterEmail: 'Email',
+            clientRegisterEmailLabel: 'Email',
             emailError: 'Please enter a valid email address.',
 
-            clientRegisterPass: 'Password',
+            clientRegisterPassLabel: 'Password',
             passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
 
-            toggleClientRegisterPass: 'Show password',
+            toggleClientRegisterPassLabel: 'Show password',
 
             btnRegisterNext1: 'Next',
             btnRegisterBack1: 'Go back',
@@ -139,43 +139,43 @@ document.addEventListener('DOMContentLoaded', function () {
             //personal info
             titleStepTwo: 'Personal Information',
 
-            clientFirstName: 'First Name',
+            clientFirstNameLabel: 'First Name',
             firstNameError: 'Please enter your first name.',
 
-            clientMiddleInitial: 'Middle Initial',
+            clientMiddleInitialLabel: 'Middle Initial',
 
-            clientLastName: 'Last Name',
+            clientLastNameLabel: 'Last Name',
             lastNameError: 'Please enter your last name.',
 
             sexLabel: 'Sex',
-            btnSexMale: 'Male',
-            btnSexFemale: 'Female',
-            btnSexIntersex: 'Intersex',
+            btnSexMaleLabel: 'Male',
+            btnSexFemaleLabel: 'Female',
+            btnSexIntersexLabel: 'Intersex',
             sexError: 'Please select your sex.',
 
-            clientDOB: 'Date of Birth',
+            clientDOBLabel: 'Date of Birth',
             dobError: 'Please enter your date of birth.',
 
-            clientPhone: 'Phone',
+            clientPhoneLabel: 'Phone',
             phoneError: 'Phone is invalid format.',
-            btnRegisterNext2: 'Next',
-            btnRegisterBack2: 'Go back',
+            btnRegisterNext2Label: 'Next',
+            btnRegisterBack2Label: 'Go back',
 
             //address info
             titleStepThree: 'Address Information',
 
-            noAddress: 'No current address',
-            clientAddress1: 'Street Address 1',
-            clientAddress2: 'Street Address 2',
+            noAddressLabel: 'No current address',
+            clientAddress1Label: 'Street Address 1',
+            clientAddress2Label: 'Street Address 2',
             address1Error: 'Please enter an address.',
 
-            clientCity: 'City',
+            clientCityLabel: 'City',
             cityError: 'Please enter a city.',
 
-            selectState: 'State',
+            selectStateLabel: 'State',
             stateError: 'Please select a state.',
 
-            clientZipCode: 'Zip Code',
+            clientZipCodeLabel: 'Zip Code',
             zipCode: 'Please enter a 5-digit zip code.',
 
             btnRegisterNext3: 'Next',
@@ -185,12 +185,12 @@ document.addEventListener('DOMContentLoaded', function () {
             //emergency contact
             titleStepFour: 'Emergency Contact',
 
-            noEmergencyContact: 'no Emergency Contact',
+            noEmergencyContactLabel: 'no Emergency Contact',
 
-            emergencyContactFirstName: 'Contact First Name',
+            emergencyContactFirstNameLabel: 'Contact First Name',
             contactFirstName: 'Please enter a first name for your contact.',
 
-            emergencyContactLastName: 'Contact Last Name',
+            emergencyContactLastNameLabel: 'Contact Last Name',
             contactLastName: 'Please enter a last name for your contact.',
 
             emergencyContactPhone: 'Contact Phone',
@@ -203,10 +203,10 @@ document.addEventListener('DOMContentLoaded', function () {
             //service select
             titleStepFive: 'Service Selection',
 
-            btnServiceMedical: 'Medical',
-            btnServiceDental: 'Dental',
-            btnServiceOptical: 'Optical',
-            btnServiceHaircut: 'Haircut4',
+            btnServiceMedicalLabel: 'Medical',
+            btnServiceDentalLabel: 'Dental',
+            btnServiceOpticalLabel: 'Optical',
+            btnServiceHaircutLabel: 'Haircut4',
 
             serviceError: 'Please select at least one service.',
 
@@ -221,109 +221,105 @@ document.addEventListener('DOMContentLoaded', function () {
             waiverError: 'You must agree to the waiver to continue.',
             btnWaiverSubmit: 'Submit',
         },
-
-        //spanish translation
+        //Spanish Translation
         es: {
             //login info
-            divStepOne: 'Login Information',
+            divStepOne: 'Información de Acceso',
 
-            clientRegisterEmail: 'Email',
-            emailError: 'Please enter a valid email address.',
+            clientRegisterEmailLabel: 'Email / correo electronico',
+            emailError: 'Por favor, entre una dirección de correo electrónico válida',
 
-            clientRegisterPass: 'Password',
-            passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
+            clientRegisterPassLabel: 'Contraseña',
+            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
 
-            toggleClientRegisterPass: 'Show password',
+            toggleClientRegisterPassLabel: 'Ver Contraseña',
 
-            btnRegisterNext1: 'Next',
-            btnRegisterBack1: 'Go back',
+
+            btnRegisterNext1: 'Siguiente',
+            btnRegisterBack1: 'Regresar',
 
             //personal info
-            divStepTwo: 'Personal Information',
+            divStepTwo: 'Información personal',
 
-            clientFirstName: 'First Name',
-            firstNameError: 'Please enter your first name.',
+            clientFirstNameLabel: 'Primer nombre',
+            firstNameError: 'Por favor, entre su primer nombre',
 
-            clientMiddleInitial: 'Middle Initial',
+            clientMiddleInitialLabel: 'Inicial del segundo nombre',
 
-            clientLastName: 'Last Name',
-            lastNameError: 'Please enter your last name.',
+            clientLastNameLabel: 'Apellido',
+            lastNameError: 'Por favor entre su apellido',
 
-            sexLabel: 'Sex',
-            btnSexMale: 'Male',
-            btnSexFemale: 'Female',
-            btnSexIntersex: 'Intersex',
-            sexError: 'Please select your sex.',
+            sexLabel: 'Sexo',
+            btnSexMaleLabel: 'Masculino',
+            btnSexFemaleLabel: 'Femenino',
+            btnSexIntersexLabel: 'Intersexual',
+            sexError: 'Por favor seleccione su sexo',
 
-            clientDOB: 'Date of Birth',
-            dobError: 'Please enter your date of birth.',
+            clientDOBLabel: 'Fecha de nacimiento',
+            dobError: 'Por favor entre su fecha de nacimiento',
 
-            clientPhone: 'Phone',
-            phoneError: 'Phone is invalid format.',
-            btnRegisterNext2: 'Next',
-            btnRegisterBack2: 'Go back',
+            clientPhoneLabel: 'Telefono',
+            phoneError: 'Teléfono no es válido',
+            btnRegisterNext2: 'Siguiente',
+            btnRegisterBack2: 'Regresar',
 
             //address info
-            divStepThree: 'Address Information',
+            divStepThree: 'Información de residencia',
 
-            noAddress: 'No current address',
-            clientAddress1: 'Street Address 1',
-            clientAddress2: 'Street Address 2',
-            address1Error: 'Please enter an address.',
+            noAddressLabel: 'no dirección al momento',
+            clientAddress1Label: 'Dirección de residencia 1',
+            clientAddress2Label: 'Dirección de residencia 2',
+            address1Error: 'Por favor entre una dirección',
 
-            clientCity: 'City',
-            cityError: 'Please enter a city.',
+            clientCityLabel: 'Ciudad',
+            cityError: 'Por favor, entre una ciudad',
 
-            selectState: 'State',
-            stateError: 'Please select a state.',
+            selectStateLabel: 'Estado',
+            stateError: 'Por favor seleccione un estado',
 
-            clientZipCode: 'Zip Code',
-            zipCode: 'Please enter a 5-digit zip code.',
+            clientZipCodeLabel: 'Codigo postal',
+            zipCode: 'Por favor entre un código postal de 5 dígitos',
 
-            btnRegisterNext3: 'Next',
-            btnRegisterBack3: 'Go back',
-
+            btnRegisterNext3: 'Siguiente',
+            btnRegisterBack3: 'Regresar',
 
             //emergency contact
-            divStepFour: 'Emergency Contact',
+            divStepFour: 'Contacto de emergencia',
 
-            noEmergencyContact: 'no Emergency Contact',
+            noEmergencyContactLabel: 'No contacto de emergencia',
 
-            emergencyContactFirstName: 'Contact First Name',
-            contactFirstName: 'Please enter a first name for your contact.',
+            emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
+            contactFirstName: 'Por favor, entre el primer nombre de su contacto',
 
-            emergencyContactLastName: 'Contact Last Name',
-            contactLastName: 'Please enter a last name for your contact.',
+            emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
+            contactLastName: 'Por favor, entre el apellido de su contacto',
 
-            emergencyContactPhone: 'Contact Phone',
-            contactPhone: 'Please enter a phone for your contact.',
-            
-            btnRegisterNext4: 'Next',
-            btnRegisterBack4: 'Go back',
-
+            emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
+            contactPhone: 'Por favor entre un teléfono de su contacto',
+           
+            btnRegisterNext4: 'Siguiente',
+            btnRegisterBack4: 'Regresar',
 
             //service select
-            divStepFive: 'Service Selection',
+            divStepFive: 'Selección de servicio ',
 
-            btnServiceMedical: 'Medical',
-            btnServiceDental: 'Dental',
-            btnServiceOptical: 'Optical',
-            btnServiceHaircut: 'Haircut',
+            btnServiceMedicalLabel: 'Medico',
+            btnServiceDentalLabel: 'Dental',
+            btnServiceOpticalLabel: 'Optico',
+            btnServiceHaircutLabel: 'Corte de pelo',
 
-            serviceError: 'Please select at least one service.',
+            serviceError: 'Por favor seleccione por lo menos 1 servicio',
 
-            btnRegisterNext5: 'Next',
-            btnRegisterNext5: 'Go back',
+            btnRegisterNext5: 'Siguiente',
+            btnRegisterNext5: 'Regresar',
 
-
-            //wavier confrim
-            waiverLabel: 'Waiver Agreement Required',
-            collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
-            waiverAgree: 'I have read and agree.',
-            waiverError: 'You must agree to the waiver to continue.',
-            btnWaiverSubmit: 'Submit',
+            //waiver confirm
+            waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
+            collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento',
+            waiverAgree: 'Yo he leído y estoy de acuerdo',
+            waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar',
+            btnWaiverSubmit: 'Entregar',
         }
-
     };
     //language listener
     languageSelector.addEventListener('change', function () {
@@ -332,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         //login info
         //TO-DO: busywork lol, jsut rename these apropriately
-        document.getElementById('TitleStepOne').textContent = translation.TitleStepOne;
+        document.getElementById('titleStepOne').textContent = translation.TitleStepOne;
 
         document.getElementById('clientRegisterEmail').textContent = translation.clientRegisterEmail;
         document.getElementById('emailError').textContent = translation.emailError;
@@ -346,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
 
         //personal info
-        document.getElementById('TitleStepTwo').textContent = translation.TitleStepTwo;
+        document.getElementById('titleStepTwo').textContent = translation.TitleStepTwo;
 
         document.getElementById('clientFirstName').textContent = translation.clientFirstName;
         document.getElementById('firstNameError').textContent = translation.firstNameError;
@@ -371,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
 
         //address info
-        document.getElementById('TitleStepThree').textContent = translation.TitleStepThree;
+        document.getElementById('titleStepThree').textContent = translation.TitleStepThree;
 
         document.getElementById('noAddress').textContent = translation.noAddress;
         document.getElementById('clientAddress1').textContent = translation.clientAddress1;
@@ -391,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
 
         //emergency
-        document.getElementById('TitleStepFour').textContent = translation.TitleStepFour;
+        document.getElementById('titleStepFour').textContent = translation.TitleStepFour;
 
         document.getElementById('noEmergencyContact').textContent = translation.noEmergencyContact;
 
@@ -408,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
 
         //service
-        document.getElementById('TitleStepFive').textContent = translation.TitleStepFive;
+        document.getElementById('titleStepFive').textContent = translation.TitleStepFive;
 
         document.getElementById('btnServiceMedical').textContent = translation.btnServiceMedical;
         document.getElementById('btnServiceDental').textContent = translation.btnServiceDental;
