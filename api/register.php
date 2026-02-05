@@ -25,7 +25,7 @@ $sex = $_POST['sex'] ?? null;
 $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
 // Prepare client info
-$clientCreation = $mysqli->prepare("INSERT INTO tblclients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 // Bind variables to placeholders
 $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone);
 // Execute the statement
@@ -36,7 +36,7 @@ $email = $_POST['email'] ?? null;
 $password = isset($_POST['password']) ? password_hash($_POST['password'], PASSWORD_BCRYPT) : null;
 
 // Prepare client login info
-$loginInsertion = $mysqli->prepare("INSERT INTO tblclientlogin(ClientID, Email, Password) VALUES (?, ?, ?)");
+$loginInsertion = $mysqli->prepare("INSERT INTO tblClientLogin(ClientID, Email, Password) VALUES (?, ?, ?)");
 // Bind variables to placeholders
 $loginInsertion->bind_param("sss", $clientID, $email, $password);
 // Execute the statement
@@ -53,7 +53,7 @@ if ($noAddress == false) {
     $zipCode = $_POST['zipCode'];
 
     // Prepare client address
-    $addressInsertion = $mysqli->prepare("INSERT INTO tblclientaddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $addressInsertion = $mysqli->prepare("INSERT INTO tblClientAddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
     // Bind the variables to the placeholders
     // "s" means string, "d" means double (float or number)
@@ -75,7 +75,7 @@ if (!$noEmergencyContact) {
     $emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;
 
     // Prepare client emergency contact
-    $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblclientemergencycontacts(ClientID, Name, Phone, Status) VALUES (?, ?, ?, ?)");
+    $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblClientEmergencyContacts(ClientID, Name, Phone, Status) VALUES (?, ?, ?, ?)");
 
     // Bind the variables to the placeholders
     $emergencyContactInsertion->bind_param("ssss", $clientID, $emergencyFullName, $emergencyPhone, $status);
@@ -94,9 +94,9 @@ $hasDental  = in_array('dental', $services) ? 1 : 0;
 $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
 // Prepare client services
-$servicesInsertion = $mysqli->prepare("INSERT INTO tblclientregistrations(ClientID, DateTime, Medical, Optical, Dental, Hair) VALUES (?, ?, ?, ?, ?, ?)");
+$servicesInsertion = $mysqli->prepare("INSERT INTO tblClientRegistrations(ClientID, DateTime, Medical, Optical, Dental, Hair) VALUES (?, ?, ?, ?, ?, ?)");
 
-// Bind the variables to the placeholders - use "i" for integers
+// Bind the variables to the placeholders (use "i" for integers)
 $servicesInsertion->bind_param("ssiiii", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
 
 // Execute the statement (currently, end result displayed is just from last insertion which is services)

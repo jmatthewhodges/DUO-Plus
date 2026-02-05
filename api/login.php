@@ -16,7 +16,7 @@ $email = $_POST['email'] ?? null;
 $password = $_POST['password'] ?? null;
 
 // Check login
-$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblclientlogin WHERE Email = ?");
+$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientLogin WHERE Email = ?");
 $loginGrab->bind_param("s", $email);
 $loginGrab->execute();
 $loginGrab->bind_result($clientID, $hashedPassword);
@@ -34,10 +34,10 @@ if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
             a.Street1, a.Street2, a.City, a.State, a.ZIP,
             e.Name AS EmergencyName, e.Phone AS EmergencyPhone,
             r.DateTime AS RegistrationDate, r.Medical, r.Optical, r.Dental, r.Hair
-        FROM tblclients c
-        LEFT JOIN tblclientaddress a ON c.ClientID = a.ClientID
-        LEFT JOIN tblclientemergencycontacts e ON c.ClientID = e.ClientID
-        LEFT JOIN tblclientregistrations r ON c.ClientID = r.ClientID
+        FROM tblClients c
+        LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
+        LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
+        LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
         WHERE c.ClientID = ?
     ");
     $registrationData->bind_param("s", $clientID);
