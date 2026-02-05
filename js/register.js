@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         //login info
         //TO-DO: busywork lol, jsut rename these apropriately
-        document.getElementById('divStepOne').textContent = translation.divStepOne;
+        document.getElementById('TitleStepOne').textContent = translation.TitleStepOne;
 
         document.getElementById('clientRegisterEmail').textContent = translation.clientRegisterEmail;
         document.getElementById('emailError').textContent = translation.emailError;
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
 
         //personal info
-        document.getElementById('divStepTwo').textContent = translation.divStepTwo;
+        document.getElementById('TitleStepTwo').textContent = translation.TitleStepTwo;
 
         document.getElementById('clientFirstName').textContent = translation.clientFirstName;
         document.getElementById('firstNameError').textContent = translation.firstNameError;
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
 
         //address info
-        document.getElementById('divStepThree').textContent = translation.divStepThree;
+        document.getElementById('TitleStepThree').textContent = translation.TitleStepThree;
 
         document.getElementById('noAddress').textContent = translation.noAddress;
         document.getElementById('clientAddress1').textContent = translation.clientAddress1;
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
 
         //emergency
-        document.getElementById('divStepFour').textContent = translation.divStepFour;
+        document.getElementById('TitleStepFour').textContent = translation.TitleStepFour;
 
         document.getElementById('noEmergencyContact').textContent = translation.noEmergencyContact;
 
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
 
         //service
-        document.getElementById('divStepFive').textContent = translation.divStepFive;
+        document.getElementById('TitleStepFive').textContent = translation.TitleStepFive;
 
         document.getElementById('btnServiceMedical').textContent = translation.btnServiceMedical;
         document.getElementById('btnServiceDental').textContent = translation.btnServiceDental;
