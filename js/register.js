@@ -122,9 +122,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const languageSelector = document.getElementById('languageSelect');
 
     const translations = {
+        /* 
+        this is basically what each language looks like under a template. follows a simple idea of  
+        property: 'text for language',
+        it allows for basically a copy and paste sort of idea, all current translations should look similar code wise.
+        also makes editing the translation text easier
+        en = english, es = spanish
+        */
 
         // english translation
-
         en: {
             // Step 0 - Language Select
             titleStepZero: 'Select your preferred language.',
@@ -207,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
         },
 
         // Spanish Translation
-
         es: {
             // Step 0 - Language Select
             titleStepZero: 'Escoja el lenguaje que usted prefiere.',
@@ -294,6 +299,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedLanguage = languageSelector.value;
         const translation = translations[selectedLanguage];
         
+        /* 
+           This is how the the code switches the language for each element.
+           basically goes and check every individual element via "GetElementById" and 
+           perfroms the const "translation" on the textContent
+        */
+
         // Step 0 - Language Select
         document.getElementById('titleStepZero').textContent = translation.titleStepZero;
         document.getElementById('btnRegisterNext0').textContent = translation.btnRegisterNext0;
