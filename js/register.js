@@ -139,6 +139,8 @@ document.addEventListener('DOMContentLoaded', function () {
             //personal info
             titleStepTwo: 'Personal Information',
 
+            interpreterRequestLabel:"I would like to request a Interpreter.",
+            
             clientFirstNameLabel: 'First Name',
             firstNameError: 'Please enter your first name.',
 
@@ -241,6 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
             //personal info
             divStepTwo: 'Información personal',
 
+            interpreterRequestLabel:"Yo gusto solicitar un intérprete.",
+
             clientFirstNameLabel: 'Primer nombre',
             firstNameError: 'Por favor, entre su primer nombre',
 
@@ -326,105 +330,67 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedLanguage = languageSelector.value;
         const translation = translations[selectedLanguage];
         
-        //login info
-        //TO-DO: busywork lol, jsut rename these apropriately
-        document.getElementById('titleStepOne').textContent = translation.TitleStepOne;
-
-        document.getElementById('clientRegisterEmail').textContent = translation.clientRegisterEmail;
-        document.getElementById('emailError').textContent = translation.emailError;
-
-        document.getElementById('clientRegisterPass').textContent = translation.clientRegisterPass;
-        document.getElementById('passwordError').textContent = translation.passwordError;
-
-        document.getElementById('toggleClientRegisterPass').textContent = translation.toggleClientRegisterPass;
-
+        // Step 1 - Login Info
+        document.getElementById('titleStepOne').textContent = translation.titleStepOne;
+        document.getElementById('clientRegisterEmailLabel').textContent = translation.clientRegisterEmailLabel;
+        document.getElementById('clientRegisterPassLabel').textContent = translation.clientRegisterPassLabel;
+        document.getElementById('toggleClientRegisterPassLabel').textContent = translation.toggleClientRegisterPassLabel;
         document.getElementById('btnRegisterNext1').textContent = translation.btnRegisterNext1;
         document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
 
-        //personal info
-        document.getElementById('titleStepTwo').textContent = translation.TitleStepTwo;
-
-        document.getElementById('clientFirstName').textContent = translation.clientFirstName;
-        document.getElementById('firstNameError').textContent = translation.firstNameError;
-
-        document.getElementById('clientMiddleInitial').textContent = translation.clientMiddleInitial;
-
-        document.getElementById('clientLastName').textContent = translation.clientLastName;
-        document.getElementById('lastNameError').textContent = translation.lastNameError;
-
+        // Step 2 - Personal Info
+        document.getElementById('titleStepTwo').textContent = translation.titleStepTwo;
+        document.getElementById('interpreterRequestLabel').textContent = translation.interpreterRequestLabel;
+        document.getElementById('clientFirstNameLabel').textContent = translation.clientFirstNameLabel;
+        document.getElementById('clientMiddleInitialLabel').textContent = translation.clientMiddleInitialLabel;
+        document.getElementById('clientLastNameLabel').textContent = translation.clientLastNameLabel;
         document.getElementById('sexLabel').textContent = translation.sexLabel;
-        document.getElementById('btnSexMale').textContent = translation.btnSexMale;
-        document.getElementById('btnSexFemale').textContent = translation.btnSexFemale;
-        document.getElementById('btnSexIntersex').textContent = translation.btnSexIntersex;
-        document.getElementById('sexError').textContent = translation.sexError;
-
-        document.getElementById('clientDOB').textContent = translation.clientDOB;
-        document.getElementById('dobError').textContent = translation.dobError;
-
-        document.getElementById('clientPhone').textContent = translation.clientPhone;
-        document.getElementById('phoneError').textContent = translation.phoneError;
+        document.getElementById('btnSexMaleLabel').textContent = translation.btnSexMaleLabel;
+        document.getElementById('btnSexFemaleLabel').textContent = translation.btnSexFemaleLabel;
+        document.getElementById('btnSexIntersexLabel').textContent = translation.btnSexIntersexLabel;
+        document.getElementById('clientDOBLabel').textContent = translation.clientDOBLabel;
+        document.getElementById('clientPhoneLabel').textContent = translation.clientPhoneLabel;
         document.getElementById('btnRegisterNext2').textContent = translation.btnRegisterNext2;
         document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
 
-        //address info
-        document.getElementById('titleStepThree').textContent = translation.TitleStepThree;
-
-        document.getElementById('noAddress').textContent = translation.noAddress;
-        document.getElementById('clientAddress1').textContent = translation.clientAddress1;
-        document.getElementById('clientAddress1').textContent = translation.clientAddress2;
-        document.getElementById('address1Error').textContent = translation.address1Error;
-
-        document.getElementById('clientCity').textContent = translation.clientCity;
-        document.getElementById('cityError').textContent = translation.cityError;
-
-        document.getElementById('selectState').textContent = translation.selectState;
-        document.getElementById('stateError').textContent = translation.stateError;
-
-        document.getElementById('clientZipCode').textContent = translation.clientZipCode;
-        document.getElementById('zipCode').textContent = translation.zipCode;
-
+        // Step 3 - Address Info
+        document.getElementById('titleStepThree').textContent = translation.titleStepThree;
+        document.getElementById('noAddressLabel').textContent = translation.noAddressLabel;
+        document.getElementById('clientAddress1Label').textContent = translation.clientAddress1Label;
+        document.getElementById('clientAddress2Label').textContent = translation.clientAddress2Label;
+        document.getElementById('clientCityLabel').textContent = translation.clientCityLabel;
+        document.getElementById('selectStateLabel').textContent = translation.selectStateLabel;
+        document.getElementById('clientZipCodeLabel').textContent = translation.clientZipCodeLabel;
         document.getElementById('btnRegisterNext3').textContent = translation.btnRegisterNext3;
         document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
 
-        //emergency
-        document.getElementById('titleStepFour').textContent = translation.TitleStepFour;
-
-        document.getElementById('noEmergencyContact').textContent = translation.noEmergencyContact;
-
-        document.getElementById('emergencyContactFirstName').textContent = translation.emergencyContactFirstName;
-        document.getElementById('contactFirstName').textContent = translation.contactFirstName;
-
-        document.getElementById('emergencyContactLastName').textContent = translation.emergencyContactLastName;
-        document.getElementById('contactLastName').textContent = translation.contactLastName;
-
-        document.getElementById('emergencyContactPhone').textContent = translation.emergencyContactPhone;
-        document.getElementById('contactPhone').textContent = translation.contactPhone;
-
+        // Step 4 - Emergency Contact
+        document.getElementById('titleStepFour').textContent = translation.titleStepFour;
+        document.getElementById('noEmergencyContactLabel').textContent = translation.noEmergencyContactLabel;
+        document.getElementById('emergencyContactFirstNameLabel').textContent = translation.emergencyContactFirstNameLabel;
+        document.getElementById('emergencyContactLastNameLabel').textContent = translation.emergencyContactLastNameLabel;
+        document.getElementById('emergencyContactPhoneLabel').textContent = translation.emergencyContactPhoneLabel;
         document.getElementById('btnRegisterNext4').textContent = translation.btnRegisterNext4;
         document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
 
-        //service
-        document.getElementById('titleStepFive').textContent = translation.TitleStepFive;
-
-        document.getElementById('btnServiceMedical').textContent = translation.btnServiceMedical;
-        document.getElementById('btnServiceDental').textContent = translation.btnServiceDental;
-        document.getElementById('btnServiceOptical').textContent = translation.btnServiceOptical;
-        document.getElementById('btnServiceHaircut').textContent = translation.btnServiceHaircut;
-
-        document.getElementById('serviceError').textContent = translation.serviceError;
-
+        // Step 5 - Service Selection
+        document.getElementById('titleStepFive').textContent = translation.titleStepFive;
+        document.getElementById('btnServiceMedicalLabel').textContent = translation.btnServiceMedicalLabel;
+        document.getElementById('btnServiceDentalLabel').textContent = translation.btnServiceDentalLabel;
+        document.getElementById('btnServiceOpticalLabel').textContent = translation.btnServiceOpticalLabel;
+        document.getElementById('btnServiceHaircutLabel').textContent = translation.btnServiceHaircutLabel;
         document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
-        document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
+        document.getElementById('btnRegisterBack5').textContent = translation.btnRegisterBack5;
 
-        //wavier
+        // Waiver
         document.getElementById('waiverLabel').textContent = translation.waiverLabel;
         document.getElementById('collapseExample').textContent = translation.collapseExample;
         document.getElementById('waiverAgree').textContent = translation.waiverAgree;
-        document.getElementById('waiverError').textContent = translation.waiverError;
         document.getElementById('btnWaiverSubmit').textContent = translation.btnWaiverSubmit;
     });
 });
 
+document.getElementById('btnRegisterNext0').addEventListener('click', goToStepOne);
 
 
 // ============================================================================
@@ -946,6 +912,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
 function showStepOnly(stepNumber) {
     const allSteps = [
+        document.getElementById('divStepZero'),
         document.getElementById('divStepOne'),
         document.getElementById('divStepTwo'),
         document.getElementById('divStepThree'),

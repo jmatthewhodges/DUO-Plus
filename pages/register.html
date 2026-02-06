@@ -68,6 +68,7 @@
                             <option value="en">English</option>
                             <option value="es">Español</option>
                         </select>
+                        <button id="btnRegisterNext0" type="button"class="btn btn-primary w-100 rounded-2 mb-1">Next / Siguiente</button>
                             <button id="btnRegisterBack0" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
                         <!-- to do: give JS logic to all 3 buttons-->
                     </div>
@@ -117,6 +118,15 @@
                     <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 id="titleStepTwo" class="card-title text-center mb-3">Personal Information</h5>
                         <form id="clientRegisterFormStep2" novalidate>
+
+                            <!-- Interpreter Request-->
+                            <div class="mb-3 text-start form-check d-flex align-items-center">
+                                <input class="form-check-input align-checkbox" type="checkbox" value="" id="interpreterRequest">
+                                <label id="interpreterRequestLabel" class="form-check-label fs-5 ms-2" style="color: black;" for="interpreterRequest">
+                                    I would like to request a Interpreter.
+                                </label>
+                            </div>
+
 
                             <!-- First Name -->
                             <div class="mb-3 text-start">
