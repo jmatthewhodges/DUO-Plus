@@ -117,7 +117,7 @@ document.getElementById('btnRegisterBack0').addEventListener('click', function (
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-    const languageSelector = document.getElementById('language-selector');
+    const languageSelector = document.getElementById('languageSelect');
 
     const translations = {
         //english translation
@@ -830,10 +830,12 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
     // Collect all form data
     const formData = {
         // Step 1
+        languageSelect: document.getElementById('languageSelect').value,
         email: document.getElementById('clientRegisterEmail').value,
         password: document.getElementById('clientRegisterPass').value,
 
         // Step 2
+        interpreterRequest: document.getElementById('interpreterRequest').checked,
         firstName: document.getElementById('clientFirstName').value,
         middleInitial: document.getElementById('clientMiddleInitial').value,
         lastName: document.getElementById('clientLastName').value,
