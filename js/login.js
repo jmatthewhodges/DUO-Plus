@@ -2,8 +2,6 @@
 // CONFIG
 // ============================================================================
 
-//There was some stuff about transitions let me know if I need to include them!
-
 const VALIDATION_PATTERNS = {
     email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
     password: /.+/ // login just checks presence (not strength)
@@ -56,8 +54,8 @@ function validateLoginForm() {
 // EVENTS
 // ============================================================================
 
-// Submit
-document.getElementById('clientLoginForm').addEventListener('submit', function (e) {
+// Button Click Event
+document.getElementById('btnClientLogin').addEventListener('click', function (e) {
     e.preventDefault();
 
     if (!validateLoginForm()) {
