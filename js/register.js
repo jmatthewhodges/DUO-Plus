@@ -89,11 +89,13 @@ function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
     let percentage = 1;
     switch (step) {
-        case 1: percentage = 0; break;
-        case 2: percentage = 25; break;
-        case 3: percentage = 50; break;
-        case 4: percentage = 75; break;
-        case 5: percentage = 99; break;
+        case 0: percentage = 0; break;
+        case 1: percentage = 17; break;
+        case 2: percentage = 34; break;
+        case 3: percentage = 51; break;
+        case 4: percentage = 68; break;
+        case 5: percentage = 85; break;
+        case 6: percentage = 100; break;
         default: percentage = 0;
     }
     progressBar.style.width = percentage + '%';
@@ -120,220 +122,189 @@ document.addEventListener('DOMContentLoaded', function () {
     const languageSelector = document.getElementById('languageSelect');
 
     const translations = {
-        //english translation
-        en: {
-            //login info
-            titleStepOne: 'Login Information',
 
+        // english translation
+
+        en: {
+            // Step 0 - Language Select
+            titleStepZero: 'Select your preferred language.',
+            btnRegisterNext0: 'Next',
+            btnRegisterBack0:'Back to Login',
+
+            // Step 1 - login Info
+            titleStepOne: 'Login Information',
             clientRegisterEmailLabel: 'Email',
             emailError: 'Please enter a valid email address.',
-
             clientRegisterPassLabel: 'Password',
             passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
-
             toggleClientRegisterPassLabel: 'Show password',
-
             btnRegisterNext1: 'Next',
             btnRegisterBack1: 'Go back',
 
-            //personal info
+            // Step 2 - Personal Info
             titleStepTwo: 'Personal Information',
-
             interpreterRequestLabel:"I would like to request a Interpreter.",
-            
             clientFirstNameLabel: 'First Name',
             firstNameError: 'Please enter your first name.',
-
             clientMiddleInitialLabel: 'Middle Initial',
-
             clientLastNameLabel: 'Last Name',
             lastNameError: 'Please enter your last name.',
-
             sexLabel: 'Sex',
             btnSexMaleLabel: 'Male',
             btnSexFemaleLabel: 'Female',
             btnSexIntersexLabel: 'Intersex',
             sexError: 'Please select your sex.',
-
             clientDOBLabel: 'Date of Birth',
             dobError: 'Please enter your date of birth.',
-
             clientPhoneLabel: 'Phone',
             phoneError: 'Phone is invalid format.',
             btnRegisterNext2Label: 'Next',
             btnRegisterBack2Label: 'Go back',
 
-            //address info
+            // Step 3 - Address Info
             titleStepThree: 'Address Information',
-
             noAddressLabel: 'No current address',
             clientAddress1Label: 'Street Address 1',
             clientAddress2Label: 'Street Address 2',
             address1Error: 'Please enter an address.',
-
             clientCityLabel: 'City',
             cityError: 'Please enter a city.',
-
             selectStateLabel: 'State',
             stateError: 'Please select a state.',
-
             clientZipCodeLabel: 'Zip Code',
             zipCode: 'Please enter a 5-digit zip code.',
-
             btnRegisterNext3: 'Next',
             btnRegisterBack3: 'Go back',
 
-
-            //emergency contact
+            // Step 4 - Emergency Contact
             titleStepFour: 'Emergency Contact',
-
             noEmergencyContactLabel: 'no Emergency Contact',
-
             emergencyContactFirstNameLabel: 'Contact First Name',
             contactFirstName: 'Please enter a first name for your contact.',
-
             emergencyContactLastNameLabel: 'Contact Last Name',
             contactLastName: 'Please enter a last name for your contact.',
-
             emergencyContactPhone: 'Contact Phone',
             contactPhone: 'Please enter a phone for your contact.',
-            
             btnRegisterNext4: 'Next',
             btnRegisterBack4: 'Go back',
 
-
-            //service select
+            // Step 5 - Service Select
             titleStepFive: 'Service Selection',
-
-            btnServiceMedicalLabel: 'Medical',
-            btnServiceDentalLabel: 'Dental',
-            btnServiceOpticalLabel: 'Optical',
-            btnServiceHaircutLabel: 'Haircut4',
-
+            btnServiceMedicalLabel: '🏥 Medical',
+            btnServiceDentalLabel: '👁️ Dental',
+            btnServiceOpticalLabel: '🦷 Optical',
+            btnServiceHaircutLabel: '✂️ Haircut',
             serviceError: 'Please select at least one service.',
-
             btnRegisterNext5: 'Next',
             btnRegisterNext5: 'Go back',
 
-
-            //wavier confrim
+            // Finale - Wavier Confirm
             waiverLabel: 'Waiver Agreement Required',
             collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
-            waiverAgree: 'I have read and agree.',
+            waiverAgreeLabel: 'I have read and agree.',
             waiverError: 'You must agree to the waiver to continue.',
             btnWaiverSubmit: 'Submit',
         },
-        //Spanish Translation
-        es: {
-            //login info
-            divStepOne: 'Información de Acceso',
 
+        // Spanish Translation
+
+        es: {
+            // Step 0 - Language Select
+            titleStepZero: 'Escoja el lenguaje que usted prefiere.',
+            btnRegisterNext0: 'Siguiente',
+            btnRegisterBack0:'Volver a iniciar sesión',
+
+            // Step 1 - Login Info
+            divStepOne: 'Información de Acceso',
             clientRegisterEmailLabel: 'Email / correo electronico',
             emailError: 'Por favor, entre una dirección de correo electrónico válida',
-
             clientRegisterPassLabel: 'Contraseña',
             passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
-
             toggleClientRegisterPassLabel: 'Ver Contraseña',
-
-
             btnRegisterNext1: 'Siguiente',
             btnRegisterBack1: 'Regresar',
 
-            //personal info
+            // Step 2 - Personal Info
             divStepTwo: 'Información personal',
-
             interpreterRequestLabel:"Yo gusto solicitar un intérprete.",
-
             clientFirstNameLabel: 'Primer nombre',
             firstNameError: 'Por favor, entre su primer nombre',
-
             clientMiddleInitialLabel: 'Inicial del segundo nombre',
-
             clientLastNameLabel: 'Apellido',
             lastNameError: 'Por favor entre su apellido',
-
             sexLabel: 'Sexo',
             btnSexMaleLabel: 'Masculino',
             btnSexFemaleLabel: 'Femenino',
             btnSexIntersexLabel: 'Intersexual',
             sexError: 'Por favor seleccione su sexo',
-
             clientDOBLabel: 'Fecha de nacimiento',
             dobError: 'Por favor entre su fecha de nacimiento',
-
             clientPhoneLabel: 'Telefono',
             phoneError: 'Teléfono no es válido',
             btnRegisterNext2: 'Siguiente',
             btnRegisterBack2: 'Regresar',
 
-            //address info
+            // Step 3 - Address Info
             divStepThree: 'Información de residencia',
-
             noAddressLabel: 'no dirección al momento',
             clientAddress1Label: 'Dirección de residencia 1',
             clientAddress2Label: 'Dirección de residencia 2',
             address1Error: 'Por favor entre una dirección',
-
             clientCityLabel: 'Ciudad',
             cityError: 'Por favor, entre una ciudad',
-
             selectStateLabel: 'Estado',
             stateError: 'Por favor seleccione un estado',
-
             clientZipCodeLabel: 'Codigo postal',
             zipCode: 'Por favor entre un código postal de 5 dígitos',
-
             btnRegisterNext3: 'Siguiente',
             btnRegisterBack3: 'Regresar',
 
-            //emergency contact
+            // Step 4 - Emergency Contact
             divStepFour: 'Contacto de emergencia',
-
             noEmergencyContactLabel: 'No contacto de emergencia',
-
             emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
             contactFirstName: 'Por favor, entre el primer nombre de su contacto',
-
             emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
             contactLastName: 'Por favor, entre el apellido de su contacto',
-
             emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
             contactPhone: 'Por favor entre un teléfono de su contacto',
-           
             btnRegisterNext4: 'Siguiente',
             btnRegisterBack4: 'Regresar',
 
-            //service select
+            // Step 5 - Service Select
             divStepFive: 'Selección de servicio ',
-
-            btnServiceMedicalLabel: 'Medico',
-            btnServiceDentalLabel: 'Dental',
-            btnServiceOpticalLabel: 'Optico',
-            btnServiceHaircutLabel: 'Corte de pelo',
-
+            btnServiceMedicalLabel: '🏥 Medico',
+            btnServiceDentalLabel: '🦷 Dental',
+            btnServiceOpticalLabel: '👁️ Optico',
+            btnServiceHaircutLabel: '✂️ Corte de pelo',
             serviceError: 'Por favor seleccione por lo menos 1 servicio',
-
             btnRegisterNext5: 'Siguiente',
-            btnRegisterNext5: 'Regresar',
+            btnRegisterBack5: 'Regresar',
 
-            //waiver confirm
+            // Finale - Wavier Confirm
             waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
             collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento',
-            waiverAgree: 'Yo he leído y estoy de acuerdo',
+            waiverAgreeLabel: 'Yo he leído y estoy de acuerdo',
             waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar',
             btnWaiverSubmit: 'Entregar',
         }
     };
-    //language listener
-    languageSelector.addEventListener('change', function () {
+    // step 0 event listeners
+    languageSelector.addEventListener('click', function () {
         const selectedLanguage = languageSelector.value;
         const translation = translations[selectedLanguage];
         
+        // Step 0 - Language Select
+        document.getElementById('titleStepZero').textContent = translation.titleStepZero;
+        document.getElementById('btnRegisterNext0').textContent = translation.btnRegisterNext0;
+        document.getElementById('btnRegisterBack0').textContent = translation.btnRegisterBack0;      
+
         // Step 1 - Login Info
         document.getElementById('titleStepOne').textContent = translation.titleStepOne;
         document.getElementById('clientRegisterEmailLabel').textContent = translation.clientRegisterEmailLabel;
+        document.getElementById('emailError').textContent = translation.emailError;
         document.getElementById('clientRegisterPassLabel').textContent = translation.clientRegisterPassLabel;
+        document.getElementById('passwordError').textContent = translation.passwordError;
         document.getElementById('toggleClientRegisterPassLabel').textContent = translation.toggleClientRegisterPassLabel;
         document.getElementById('btnRegisterNext1').textContent = translation.btnRegisterNext1;
         document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
@@ -342,14 +313,19 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('titleStepTwo').textContent = translation.titleStepTwo;
         document.getElementById('interpreterRequestLabel').textContent = translation.interpreterRequestLabel;
         document.getElementById('clientFirstNameLabel').textContent = translation.clientFirstNameLabel;
+        document.getElementById('firstNameError').textContent = translation.firstNameError;
         document.getElementById('clientMiddleInitialLabel').textContent = translation.clientMiddleInitialLabel;
         document.getElementById('clientLastNameLabel').textContent = translation.clientLastNameLabel;
+        document.getElementById('lastNameError').textContent = translation.lastNameError;
         document.getElementById('sexLabel').textContent = translation.sexLabel;
+        document.getElementById('sexError').textContent = translation.sexError;
         document.getElementById('btnSexMaleLabel').textContent = translation.btnSexMaleLabel;
         document.getElementById('btnSexFemaleLabel').textContent = translation.btnSexFemaleLabel;
         document.getElementById('btnSexIntersexLabel').textContent = translation.btnSexIntersexLabel;
         document.getElementById('clientDOBLabel').textContent = translation.clientDOBLabel;
+        document.getElementById('dobError').textContent = translation.dobError;
         document.getElementById('clientPhoneLabel').textContent = translation.clientPhoneLabel;
+        document.getElementById('phoneError').textContent = translation.phoneError;
         document.getElementById('btnRegisterNext2').textContent = translation.btnRegisterNext2;
         document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
 
@@ -357,10 +333,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('titleStepThree').textContent = translation.titleStepThree;
         document.getElementById('noAddressLabel').textContent = translation.noAddressLabel;
         document.getElementById('clientAddress1Label').textContent = translation.clientAddress1Label;
+        document.getElementById('address1Error').textContent = translation.address1Error;
         document.getElementById('clientAddress2Label').textContent = translation.clientAddress2Label;
         document.getElementById('clientCityLabel').textContent = translation.clientCityLabel;
+        document.getElementById('cityError').textContent = translation.cityError;
         document.getElementById('selectStateLabel').textContent = translation.selectStateLabel;
+        document.getElementById('stateError').textContent = translation.stateError;
         document.getElementById('clientZipCodeLabel').textContent = translation.clientZipCodeLabel;
+        document.getElementById('zipCode').textContent = translation.zipCode;
         document.getElementById('btnRegisterNext3').textContent = translation.btnRegisterNext3;
         document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
 
@@ -368,8 +348,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('titleStepFour').textContent = translation.titleStepFour;
         document.getElementById('noEmergencyContactLabel').textContent = translation.noEmergencyContactLabel;
         document.getElementById('emergencyContactFirstNameLabel').textContent = translation.emergencyContactFirstNameLabel;
+        document.getElementById('contactFirstName').textContent = translation.contactFirstName;
         document.getElementById('emergencyContactLastNameLabel').textContent = translation.emergencyContactLastNameLabel;
+        document.getElementById('contactLastName').textContent = translation.contactLastName;
         document.getElementById('emergencyContactPhoneLabel').textContent = translation.emergencyContactPhoneLabel;
+        document.getElementById('contactPhone').textContent = translation.contactPhone;
         document.getElementById('btnRegisterNext4').textContent = translation.btnRegisterNext4;
         document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
 
@@ -379,14 +362,17 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnServiceDentalLabel').textContent = translation.btnServiceDentalLabel;
         document.getElementById('btnServiceOpticalLabel').textContent = translation.btnServiceOpticalLabel;
         document.getElementById('btnServiceHaircutLabel').textContent = translation.btnServiceHaircutLabel;
+        document.getElementById('serviceError').textContent = translation.serviceError;
         document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
         document.getElementById('btnRegisterBack5').textContent = translation.btnRegisterBack5;
 
-        // Waiver
+        // Finale - Waiver
+        document.getElementById('waiverError').textContent = translation.waiverError;
         document.getElementById('waiverLabel').textContent = translation.waiverLabel;
         document.getElementById('collapseExample').textContent = translation.collapseExample;
-        document.getElementById('waiverAgree').textContent = translation.waiverAgree;
+        document.getElementById('waiverAgreeLabel').textContent = translation.waiverAgreeLabel;
         document.getElementById('btnWaiverSubmit').textContent = translation.btnWaiverSubmit;
+
     });
 });
 
@@ -829,8 +815,10 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     // Collect all form data
     const formData = {
-        // Step 1
+        // Step 0
         languageSelect: document.getElementById('languageSelect').value,
+
+        // Step 1
         email: document.getElementById('clientRegisterEmail').value,
         password: document.getElementById('clientRegisterPass').value,
 
@@ -924,7 +912,7 @@ function showStepOnly(stepNumber) {
 
     allSteps.forEach((step, index) => {
         if (step) {
-            if (index === stepNumber - 1) {
+            if (index === stepNumber) {
                 step.classList.remove('step-hidden');
                 step.classList.add('step-visible');
                 step.style.opacity = '1';
@@ -942,6 +930,7 @@ function showStepOnly(stepNumber) {
 const tempClientID = "9df12a-3lha05-f44zp1"
 const tempServices = ["medical", "dental", "optical", "haircut"]
 
+document.getElementById('skipStep0').addEventListener('click', () => showStepOnly(0));
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
@@ -952,6 +941,10 @@ document.getElementById('skipStep5').addEventListener('click', () => showQR(temp
 // QR Code Logic
 function hideLoginStuff() {
     // Hide login step container
+
+    const loginStep0 = document.getElementById('divStepZero');
+    if (loginStep0) loginStep0.style.display = 'none';
+
     const loginStep1 = document.getElementById('divStepOne');
     if (loginStep1) loginStep1.style.display = 'none';
 
@@ -966,6 +959,10 @@ function hideLoginStuff() {
 
     const loginStep5 = document.getElementById('divStepFive');
     if (loginStep5) loginStep5.style.display = 'none';
+
+    // Hide skip step button if present
+    const skipStep0 = document.getElementById('skipStep0');
+    if (skipStep0) skipStep0.style.display = 'none';
 
     // Hide skip step button if present
     const skipStep1 = document.getElementById('skipStep1');

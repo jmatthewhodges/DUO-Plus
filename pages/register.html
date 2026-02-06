@@ -58,19 +58,21 @@
                     <!-- <div id="divQRCode" class="card-body p-3 p-md-4 p-lg-4" style="display: none;">
                         <canvas class="text-center" id="qr"></canvas>
                     </div> -->
+
                     <!-- STEP 0: Language Select-->
                     <div id="divStepZero" class="card-body p-3 p-md-4 p-lg-4 step-visible">
-                        <h5 id="titleStepZeroEnglish" class="card-title text-center">Select your preferred language.</h5>
-                        <h5 id="titleStepZeroSpanish" class="card-title text-center">Escoja el lenguaje que usted prefiere.</h5>
-                        <!-- Buttons -->
-                         
-                        <select id="languageSelect">
-                            <option value="en">English</option>
-                            <option value="es">Español</option>
-                        </select>
-                        <button id="btnRegisterNext0" type="button"class="btn btn-primary w-100 rounded-2 mb-1">Next / Siguiente</button>
+                        <h5 id="titleStepZero" class="card-title text-center">Select your preferred language.</h5>
+
+                            <!-- Language Select Dropdown-->
+                            <select class="btn btn-primary w-100 rounded-2" id="languageSelect">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                            </select>
+
+                            <!-- Buttons -->
+                            <button id="btnRegisterNext0" type="button"
+                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
                             <button id="btnRegisterBack0" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
-                        <!-- to do: give JS logic to all 3 buttons-->
                     </div>
 
                     <!-- STEP 1: Login Info -->
@@ -423,6 +425,7 @@
                 </div>
 
                 <!-- Debug buttons - remove in production -->
+                <button id="skipStep0" class="btn btn-primary">Step 0</button>
                 <button id="skipStep1" class="btn btn-primary">Step 1</button>
                 <button id="skipStep2" class="btn btn-primary">Step 2</button>
                 <button id="skipStep3" class="btn btn-primary">Step 3</button>
@@ -455,7 +458,7 @@
 
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" value="" id="waiverAgree">
-                        <label class="form-check-label" for="waiverAgree">
+                        <label class="form-check-label" for="waiverAgree" id="waiverAgreeLabel">
                             I have read and agree.
                         </label>
                     </div>
