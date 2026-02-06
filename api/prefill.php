@@ -23,12 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+// Check for email parameter
 if (empty($_GET['email'])) {
     http_response_code(400);
     echo "Missing email parameter.";
     exit;
 }
 
+// validate email
 $email = trim($_GET['email']);
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
@@ -37,19 +39,21 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 try {
-    // 1) Find client login row (include Password for testing only)
+    // 1) Find client ID Based on email
     $stmt = $mysqli->prepare("SELECT ClientID, Email, Password FROM tblClientLogin WHERE Email = ? LIMIT 1");
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $res = $stmt->get_result();
     $login = $res->fetch_assoc();
 
+    // If no user found, return 404
     if (!$login) {
         http_response_code(404);
         echo "No user found for that email.";
         exit;
     }
 
+    // Extract client ID
     $clientID = $login['ClientID'];
 
     // 2) Get client basic info
@@ -91,9 +95,10 @@ try {
         $emLast = $parts[1] ?? null;
     }
 
+    // pulling data together and set for output
     $out = [
         'Email' => $login['Email'],
-        'Password' => $login['Password'] ?? null, // included for testing only; do NOT expose in production
+        'Password' => $login['Password'] ?? null, 
         'FirstName' => $client['FirstName'] ?? null,
         'MiddleName' => $client['MiddleName'] ?? null,
         'LastName' => $client['LastName'] ?? null,
@@ -108,7 +113,9 @@ try {
         'ZIP' => $address['ZIP'] ?? null,
         'emergencyContactFirstName' => $emFirst,
         'emergencyContactLastName' => $emLast,
-        'emergencyContactPhone' => $em['Phone'] ?? null
+        'emergencyContactPhone' => $em['Phone'] ?? null,
+        'noAddress' => empty($address['Street1']),
+        'noEmergencyContact' => empty($em['Name'])
     ];
 
     // If caller asks for JSON, return it; otherwise redirect to register page with prefill flag + email
@@ -118,7 +125,7 @@ try {
         exit;
     }
 
-    // Redirect to register page which will fetch JSON and autofill (no session storage)
+    // Redirect to register page which will fetch JSON and autofill
     $url = '../pages/register.html?prefill=1&email=' . urlencode($login['Email']);
     header('Location: ' . $url);
     exit;

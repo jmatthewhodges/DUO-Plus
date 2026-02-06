@@ -3,10 +3,6 @@ const btnClientLoginEl = document.getElementById('btnClientLogin');
 if (btnClientLoginEl) {
     btnClientLoginEl.addEventListener('click', function () {
         const popup = document.getElementById('prefillPopup');
-        if (!popup) {
-            console.debug('Prefill popup element not found');
-            return;
-        }
         const modal = new bootstrap.Modal(popup);
         modal.show();
     });
@@ -14,7 +10,7 @@ if (btnClientLoginEl) {
     console.debug('Prefill: btnClientLogin not found on this page');
 } 
 
-// Helper: apply prefill data (from fetched JSON or window globals)
+// apply prefill data from fetched JSON
 function applyPrefillData(data) {
     console.debug('applyPrefillData called');
     if (data) {
@@ -35,14 +31,19 @@ function applyPrefillData(data) {
         window.emergencyContactFirstName = data.emergencyContactFirstName || '';
         window.emergencyContactLastName = data.emergencyContactLastName || '';
         window.emergencyContactPhone = data.emergencyContactPhone || '';
+        // selects checkboxes for missing data on address and emergency contact sections
+        window.noAddress = data.noAddress || false;
+        window.noEmergencyContact = data.noEmergencyContact || false;
     }
 
+    // error handling 
     const setIf = (id, value) => {
         const el = document.getElementById(id);
         if (!el) {
             console.debug('Prefill: element not found', id);
             return;
         }
+
         // Record previous value for debugging
         const prev = ('value' in el) ? el.value : el.innerHTML;
         const isPasswordField = id === 'clientRegisterPass';
@@ -57,7 +58,7 @@ function applyPrefillData(data) {
         }
     };
 
-    // Page 1 (include password for testing)
+    // Page 1 
     setIf('clientRegisterEmail', window.Email || '');
     setIf('clientRegisterPass', window.Password || '');
 
@@ -69,18 +70,37 @@ function applyPrefillData(data) {
     setIf('clientPhone', window.Phone || '');
 
     // Address Page
-    setIf('clientAddress1', window.Street1 || '');
-    setIf('clientAddress2', window.Street2 || '');
-    setIf('clientCity', window.City || '');
-    setIf('clientZipCode', window.ZIP || '');
-    if (window.State) {
-        const sel = document.getElementById('selectState');
-        if (sel) {
-            const prev = sel.value;
-            sel.value = window.State;
-            console.debug('Prefill set selectState ->', window.State, 'prev:', prev);
-        } else {
-            console.debug('Prefill: selectState element missing');
+    // If noAddress is true, we check the box or prefill them if data is available
+    if (window.noAddress) {
+        const noAddressCheckbox = document.getElementById('noAddress');
+        if (noAddressCheckbox) {
+            noAddressCheckbox.checked = true;
+            console.debug('Prefill: auto-checked noAddress checkbox');
+            // Disable address fields
+            const addressFields = ['clientAddress1', 'clientAddress2', 'clientCity', 'clientZipCode', 'selectState'];
+            addressFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    console.debug('Prefill: disabled field', id);
+                }
+            });
+        }
+    // If we have address data, prefill it; if noAddress is true, we skip this to avoid conflicts and rely on the checkbox state instead
+    } else {
+        setIf('clientAddress1', window.Street1 || '');
+        setIf('clientAddress2', window.Street2 || '');
+        setIf('clientCity', window.City || '');
+        setIf('clientZipCode', window.ZIP || '');
+        if (window.State) {
+            const sel = document.getElementById('selectState');
+            if (sel) {
+                const prev = sel.value;
+                sel.value = window.State;
+                console.debug('Prefill set selectState ->', window.State, 'prev:', prev);
+            } else {
+                console.debug('Prefill: selectState element missing');
+            }
         }
     }
 
@@ -102,11 +122,28 @@ function applyPrefillData(data) {
     }
 
     // Emergency Contact
-    setIf('emergencyContactFirstName', window.emergencyContactFirstName || '');
-    setIf('emergencyContactLastName', window.emergencyContactLastName || '');
-    setIf('emergencyContactPhone', window.emergencyContactPhone || '');
+    if (window.noEmergencyContact) {
+        const noEmergencyCheckbox = document.getElementById('noEmergencyContact');
+        if (noEmergencyCheckbox) {
+            noEmergencyCheckbox.checked = true;
+            console.debug('Prefill: auto-checked noEmergencyContact checkbox');
+            // Disable emergency contact fields
+            const emergencyFields = ['emergencyContactFirstName', 'emergencyContactLastName', 'emergencyContactPhone'];
+            emergencyFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    console.debug('Prefill: disabled field', id);
+                }
+            });
+        }
+    } else {
+        setIf('emergencyContactFirstName', window.emergencyContactFirstName || '');
+        setIf('emergencyContactLastName', window.emergencyContactLastName || '');
+        setIf('emergencyContactPhone', window.emergencyContactPhone || '');
+    }
 
-    // Summarize what got applied (password intentionally excluded)
+    // Summarize what got applied in console (password excluded for security)
     console.debug('Prefill final values', {
         Email: window.Email,
         FirstName: window.FirstName,
@@ -132,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const params = new URLSearchParams(window.location.search);
         const email = params.get('email');
         console.debug('Prefill params', { prefill: params.get('prefill'), email });
+        
         // If we have an email (or explicit prefill flag), try fetching JSON; otherwise apply any existing globals
         if ((params.get('prefill') === '1' || email) && email) {
             const url = `../api/prefill.php?email=${encodeURIComponent(email)}&format=json`;
