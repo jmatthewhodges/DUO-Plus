@@ -1,6 +1,75 @@
-function submitLogin() {
-    const email = document.getElementById('txtClientEmail').value;
-    const password = document.getElementById('txtClientPassword').value;
+// ============================================================================
+// CONFIG
+// ============================================================================
+
+const VALIDATION_PATTERNS = {
+    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+    password: /.+/ // login just checks presence (not strength)
+};
+
+// ============================================================================
+// UTILITY
+// ============================================================================
+
+function setFieldValidation(field, isValid) {
+    if (isValid) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+    } else {
+        field.classList.remove('is-valid');
+        field.classList.add('is-invalid');
+    }
+}
+
+// ============================================================================
+// LOGIN VALIDATION
+// ============================================================================
+
+function validateLoginForm() {
+    const emailInput = document.getElementById('txtClientEmail');
+    const passInput = document.getElementById('txtClientPassword');
+
+    let isValid = true;
+
+    // Email
+    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
+        setFieldValidation(emailInput, false);
+        isValid = false;
+    } else {
+        setFieldValidation(emailInput, true);
+    }
+
+    // Password (required only)
+    if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
+        setFieldValidation(passInput, false);
+        isValid = false;
+    } else {
+        setFieldValidation(passInput, true);
+    }
+
+    return isValid;
+}
+
+// ============================================================================
+// EVENTS
+// ============================================================================
+
+// Button Click Event
+document.getElementById('btnClientLogin').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    if (!validateLoginForm()) {
+        return;
+    }
+
+    // Optional: loading state
+    const btn = document.getElementById('btnClientLogin');
+    btn.disabled = true;
+
+    const formData = {
+        email: document.getElementById('txtClientEmail').value,
+        password: document.getElementById('txtClientPassword').value
+    };
 
     fetch('../api/login.php', {
         method: 'POST',
@@ -43,5 +112,3 @@ function submitLogin() {
         });
     });
 }
-
-document.getElementById('btnClientLogin').addEventListener('click', submitLogin);
