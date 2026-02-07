@@ -64,12 +64,12 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
 
     // Optional: loading state
     const btn = document.getElementById('btnClientLogin');
+    // Disable button and show spinner
     btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...`;
 
-    const formData = {
-        email: document.getElementById('txtClientEmail').value,
-        password: document.getElementById('txtClientPassword').value
-    };
+    const email = document.getElementById('txtClientEmail').value;
+    const password = document.getElementById('txtClientPassword').value;
 
     fetch('../api/login.php', {
         method: 'POST',
@@ -91,9 +91,15 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
                 showConfirmButton: false,
                 allowOutsideClick: false
             }).then(() => {
-                window.location.href = '../register.html';
+                window.location.href = 'pages/register.html';
+                
             });
         } else {
+            // Clear password field and reset validation
+            const passInput = document.getElementById('txtClientPassword');
+            passInput.value = '';
+            passInput.classList.remove('is-valid', 'is-invalid');
+
             Swal.fire({
                 icon: 'error',
                 title: 'Login Failed',
@@ -110,5 +116,34 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             text: 'Unable to connect to the server.',
             confirmButtonColor: '#174593'
         });
-    });
-}
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Login';
+    })
+});
+
+
+// ============================================================================
+// SHOW / HIDE PASSWORD TOGGLE
+// ============================================================================
+
+document.getElementById('toggleClientPassword').addEventListener('change', function () {
+    const passwordInput = document.getElementById('txtClientPassword');
+    passwordInput.type = this.checked ? 'text' : 'password';
+});
+
+// Enter Key on Email or Password
+document.getElementById('txtClientEmail').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnClientLogin').click();
+    }
+});
+
+document.getElementById('txtClientPassword').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnClientLogin').click();
+    }
+});
