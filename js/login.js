@@ -74,47 +74,41 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     fetch('../api/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ email, password })
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Login Successful',
-                    confirmButtonColor: '#174593'
-                }).then(() => {
-                    window.location.href = 'index.html';
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Login Failed',
-                    text: data.message || 'Invalid email or password.',
-                    confirmButtonColor: '#174593'
-                });
-            }
-        })
-        .catch(() => {
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Store user data in sessionStorage
+            sessionStorage.setItem('userData', JSON.stringify(data.data));
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Welcome Back!',
+                text: `Hello, ${data.data.FirstName}! Redirecting you now...`,
+                timer: 3500,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false
+            }).then(() => {
+                window.location.href = '../register.html';
+            });
+        } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server. Please try again later.',
+                title: 'Login Failed',
+                text: data.message || 'Invalid email or password.',
                 confirmButtonColor: '#174593'
             });
-        })
-});
-
-// Enter key support
-document.getElementById('clientLoginForm').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('btnClientLogin').click();
-    }
-}); 
-
-// Show / hide password
-document.getElementById('toggleClientPassword').addEventListener('change', function () {
-    const passwordInput = document.getElementById('txtClientPassword');
-    passwordInput.type = this.checked ? 'text' : 'password';
-}); 
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Unable to connect to the server.',
+            confirmButtonColor: '#174593'
+        });
+    });
+}
