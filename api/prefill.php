@@ -56,7 +56,9 @@ try {
     // Extract client ID
     $clientID = $login['ClientID'];
 
-    // 2) Get client basic info
+    // ALL INFO EXTRACTED USING CLIENT ID
+
+    // 2) Get client basic info 
     $stmt = $mysqli->prepare("SELECT FirstName, MiddleName, LastName, DOB, Sex FROM tblClients WHERE ClientID = ? LIMIT 1");
     $stmt->bind_param('s', $clientID);
     $stmt->execute();
