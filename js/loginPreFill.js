@@ -236,6 +236,8 @@ if (document.readyState === 'loading') {
 
 function setupPrefillButton() {
     var prefillBtn = document.getElementById('btnPrefillContinue');
+    var prefillModal = document.getElementById('prefillPopup');
+    
     if (prefillBtn) {
         prefillBtn.addEventListener('click', function (e) {
             e.preventDefault();
@@ -252,5 +254,15 @@ function setupPrefillButton() {
             // Navigate to prefill endpoint which will redirect with data or error
             window.location.href = `../api/prefill.php?email=${encodeURIComponent(email)}`;
         });
+        
+        // Add Enter key listener to modal
+        if (prefillModal) {
+            prefillModal.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    prefillBtn.click();
+                }
+            });
+        }
     }
 }
