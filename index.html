@@ -29,7 +29,7 @@
     <!-- Login Box -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
       <div class="card-body p-4">
-        <form id="clientLoginForm" novalidate>
+        <form id="clientLoginForm" method="POST" action="/api/login.php" novalidate>
           <div class="mb-3 text-start">
             <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
@@ -54,7 +54,7 @@
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Login</button>
+          <button id="btnClientLogin" type="submit" style="background-color: #174593;" class="btn btn-primary w-100 rounded-2">Login</button>
         </form>
       </div>
     </div>
@@ -76,7 +76,7 @@
     </div>
 
     <!--pre fill popup explaining to check the filled in data in the register page -->
-    <div class="modal fade" id="prefillPopup" aria-labelledby="prefillPopupLabel" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="prefillPopup" aria-labelledby="prefillPopupLabel" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
@@ -88,7 +88,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="btnPrefillContinue" onclick="location.href='pages/register.html'">Continue</button>
+            <button type="button" class="btn btn-primary" id="btnPrefillContinue">Continue</button>
           </div>
         </div>
       </div>

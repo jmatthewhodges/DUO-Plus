@@ -1,7 +1,8 @@
 // Takes you to the register page with pre filled data
 const btnClientLoginEl = document.getElementById('btnClientLogin');
 if (btnClientLoginEl) {
-    btnClientLoginEl.addEventListener('click', function () {
+    btnClientLoginEl.addEventListener('click', function (e) {
+        e.preventDefault(); // Stop form submission
         const popup = document.getElementById('prefillPopup');
         const modal = new bootstrap.Modal(popup);
         modal.show();
@@ -15,7 +16,7 @@ function applyPrefillData(data) {
     console.debug('applyPrefillData called');
     if (data) {
         window.Email = data.Email || '';
-        window.Password = data.Password || '';
+        // window.Password = data.Password || ''; // Commented out for security - users should enter password fresh
         window.FirstName = data.FirstName || '';
         window.MiddleName = data.MiddleName || '';
         window.LastName = data.LastName || '';
@@ -60,7 +61,7 @@ function applyPrefillData(data) {
 
     // Page 1 
     setIf('clientRegisterEmail', window.Email || '');
-    setIf('clientRegisterPass', window.Password || '');
+    // setIf('clientRegisterPass', window.Password || ''); // Commented out for security
 
     // Page 2
     setIf('clientFirstName', window.FirstName || '');
@@ -163,10 +164,35 @@ function applyPrefillData(data) {
     });
 }
 
-// On page load: try to fetch JSON if an email param is present (redirect sets ?prefill=1&email=...)
+// On page load: try to fetch JSON if an email param is present (redirect sets ?prefill=1&data=...)
 document.addEventListener('DOMContentLoaded', function () {
     try {
         const params = new URLSearchParams(window.location.search);
+        
+        // Check URL params for prefill data passed from prefill.php
+        const prefillData = params.get('data');
+        if (prefillData) {
+            try {
+                const data = JSON.parse(prefillData);
+                console.debug('Prefill data from URL:', data);
+                applyPrefillData(data);
+            } catch (e) {
+                console.error('Failed to parse prefill data:', e);
+            }
+            return;
+        }
+
+        // Check sessionStorage first for prefill data (set by the Continue button)
+        const storedData = sessionStorage.getItem('prefillData');
+        if (storedData) {
+            const data = JSON.parse(storedData);
+            console.debug('Prefill data from sessionStorage:', data);
+            applyPrefillData(data);
+            sessionStorage.removeItem('prefillData'); // Clear it after use
+            return;
+        }
+
+        // Otherwise check URL params
         const email = params.get('email');
         console.debug('Prefill params', { prefill: params.get('prefill'), email });
         
@@ -201,19 +227,30 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) { console.error('Prefill error', e); }
 });
 
-// When user confirms Continue, navigate to the prefill endpoint which will set sessionStorage and redirect
-var prefillBtn = document.getElementById('btnPrefillContinue');
-if (prefillBtn) {
-    prefillBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const emailField = document.getElementById('txtClientEmail');
-        const email = emailField ? emailField.value.trim() : '';
-        if (!email) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Missing Email', text: 'Please enter an email before continuing.', confirmButtonColor: '#174593' });
+// When user confirms Continue, navigate to the prefill endpoint
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupPrefillButton);
+} else {
+    setupPrefillButton();
+}
+
+function setupPrefillButton() {
+    var prefillBtn = document.getElementById('btnPrefillContinue');
+    if (prefillBtn) {
+        prefillBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const emailField = document.getElementById('txtClientEmail');
+            const email = emailField ? emailField.value.trim() : '';
+            if (!email) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing Email', text: 'Please enter an email before continuing.', confirmButtonColor: '#174593' });
+                } else {
+                    alert('Please enter an email before continuing.');
+                }
+                return;
             }
-            return;
-        }
-        window.location.href = `../api/prefill.php?email=${encodeURIComponent(email)}`;
-    });
+            // Navigate to prefill endpoint which will redirect with data or error
+            window.location.href = `../api/prefill.php?email=${encodeURIComponent(email)}`;
+        });
+    }
 }

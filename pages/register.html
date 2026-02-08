@@ -440,6 +440,36 @@
     <script src="../js/register.js"></script>
     <script src="../js/loginPreFill.js"></script>
 
+    <!-- Check for prefill error codes and show Swal warnings -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            const errorCode = params.get('error');
+            
+            const errorMessages = {
+                '2': 'Invalid email format.',
+                '3': 'Database connection error.',
+                '4': 'Method not allowed.',
+                '5': 'Email parameter is required.',
+                '7': 'Password parameter is required.'
+            };
+
+            if (errorCode && errorMessages[errorCode]) {
+                const message = errorMessages[errorCode];
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Prefill Error',
+                        text: message,
+                        confirmButtonColor: '#174593'
+                    });
+                } else {
+                    alert('Prefill Error: ' + message);
+                }
+            }
+        });
+    </script>
+
 </body>
 
 </html>
