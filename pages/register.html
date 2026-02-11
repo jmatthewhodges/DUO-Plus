@@ -15,6 +15,13 @@
 <body>
     <div class="container">
         
+        <div id="divLanguageSwitch">
+            <select name="" id="selLanguageSwitch" class="btn-primary">
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            </select>
+        </div>
+
         <div class="row justify-content-center">
             <!-- Screen size adjustments: mobile screens (col-10), tablets/smaller laptop screens (col-10), 
             desktops/bigger screens (col-6) -->
@@ -59,24 +66,8 @@
                         <canvas class="text-center" id="qr"></canvas>
                     </div> -->
 
-                    <!-- STEP 0: Language Select-->
-                    <div id="divStepZero" class="card-body p-3 p-md-4 p-lg-4 step-visible">
-                        <h5 id="titleStepZero" class="card-title text-center">Select your preferred language.</h5>
-
-                            <!-- Language Select Dropdown-->
-                            <select class="btn btn-primary w-100 rounded-2" id="languageSelect">
-                                <option value="en">English</option>
-                                <option value="es">Español</option>
-                            </select>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext0" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack0" type="button" class="btn btn-primary w-100 rounded-2">Back to Login</button>
-                    </div>
-
                     <!-- STEP 1: Login Info -->
-                    <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
+                    <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
                         <h5 id="titleStepOne" class="card-title text-center">Login Information</h5>
                         <form id="clientRegisterFormStep1" novalidate>
 
@@ -120,15 +111,6 @@
                     <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 id="titleStepTwo" class="card-title text-center mb-3">Personal Information</h5>
                         <form id="clientRegisterFormStep2" novalidate>
-
-                            <!-- Interpreter Request-->
-                            <div class="mb-3 text-start form-check d-flex align-items-center">
-                                <input class="form-check-input align-checkbox" type="checkbox" value="" id="interpreterRequest">
-                                <label id="interpreterRequestLabel" class="form-check-label fs-5 ms-2" style="color: black;" for="interpreterRequest">
-                                    I would like to request a Interpreter.
-                                </label>
-                            </div>
-
 
                             <!-- First Name -->
                             <div class="mb-3 text-start">
@@ -425,7 +407,6 @@
                 </div>
 
                 <!-- Debug buttons - remove in production -->
-                <button id="skipStep0" class="btn btn-primary">Step 0</button>
                 <button id="skipStep1" class="btn btn-primary">Step 1</button>
                 <button id="skipStep2" class="btn btn-primary">Step 2</button>
                 <button id="skipStep3" class="btn btn-primary">Step 3</button>
@@ -482,6 +463,7 @@
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/js/qrious.min.js"></script>
     <script src="../js/register.js"></script>
+    <script src="../js/lang.js"></script>
 </body>
 
 </html>
