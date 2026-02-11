@@ -102,168 +102,72 @@ function updateProgressBar(step) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    
+    // Only prefill if user is logged in
+    if (userData) {
+        // Step 1 - Login Info
+        const emailInput = document.getElementById('clientRegisterEmail');
+        const passInput = document.getElementById('clientRegisterPass');
 
-    const translations = {
-        /* 
-        this is basically what each language looks like under a template. follows a simple idea of  
-        property: 'text for language',
-        it allows for basically a copy and paste sort of idea, all current translations should look similar code wise.
-        also makes editing the translation text easier
-        en = english, es = spanish
-        */
+        console.log(userData);
+        
+        emailInput.value = userData.Email || '';
+        emailInput.disabled = true;
+        
+        passInput.value = userData.Password || '';
+        passInput.disabled = true;
 
-        // english translation
-        en: {
-            // Step 1 - login Info
-            titleStepOne: 'Login Information',
-            clientRegisterEmailLabel: 'Email',
-            emailError: 'Please enter a valid email address.',
-            clientRegisterPassLabel: 'Password',
-            passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
-            toggleClientRegisterPassLabel: 'Show password',
-            btnRegisterNext1: 'Next',
-            btnRegisterBack1: 'Go back',
-
-            // Step 2 - Personal Info
-            titleStepTwo: 'Personal Information',
-            clientFirstNameLabel: 'First Name',
-            firstNameError: 'Please enter your first name.',
-            clientMiddleInitialLabel: 'Middle Initial',
-            clientLastNameLabel: 'Last Name',
-            lastNameError: 'Please enter your last name.',
-            sexLabel: 'Sex',
-            btnSexMaleLabel: 'Male',
-            btnSexFemaleLabel: 'Female',
-            btnSexIntersexLabel: 'Intersex',
-            sexError: 'Please select your sex.',
-            clientDOBLabel: 'Date of Birth',
-            dobError: 'Please enter your date of birth.',
-            clientPhoneLabel: 'Phone',
-            phoneError: 'Phone is invalid format.',
-            btnRegisterNext2Label: 'Next',
-            btnRegisterBack2Label: 'Go back',
-
-            // Step 3 - Address Info
-            titleStepThree: 'Address Information',
-            noAddressLabel: 'No current address',
-            clientAddress1Label: 'Street Address 1',
-            clientAddress2Label: 'Street Address 2',
-            address1Error: 'Please enter an address.',
-            clientCityLabel: 'City',
-            cityError: 'Please enter a city.',
-            selectStateLabel: 'State',
-            stateError: 'Please select a state.',
-            clientZipCodeLabel: 'Zip Code',
-            zipCode: 'Please enter a 5-digit zip code.',
-            btnRegisterNext3: 'Next',
-            btnRegisterBack3: 'Go back',
-
-            // Step 4 - Emergency Contact
-            titleStepFour: 'Emergency Contact',
-            noEmergencyContactLabel: 'no Emergency Contact',
-            emergencyContactFirstNameLabel: 'Contact First Name',
-            contactFirstName: 'Please enter a first name for your contact.',
-            emergencyContactLastNameLabel: 'Contact Last Name',
-            contactLastName: 'Please enter a last name for your contact.',
-            emergencyContactPhone: 'Contact Phone',
-            contactPhone: 'Please enter a phone for your contact.',
-            btnRegisterNext4: 'Next',
-            btnRegisterBack4: 'Go back',
-
-            // Step 5 - Service Select
-            titleStepFive: 'Service Selection',
-            btnServiceMedicalLabel: '🏥 Medical',
-            btnServiceDentalLabel: '👁️ Dental',
-            btnServiceOpticalLabel: '🦷 Optical',
-            btnServiceHaircutLabel: '✂️ Haircut',
-            serviceError: 'Please select at least one service.',
-            btnRegisterNext5: 'Next',
-            btnRegisterNext5: 'Go back',
-
-            // Finale - Wavier Confirm
-            waiverLabel: 'Waiver Agreement Required',
-            collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
-            waiverAgreeLabel: 'I have read and agree.',
-            waiverError: 'You must agree to the waiver to continue.',
-            btnWaiverSubmit: 'Submit',
-        },
-
-        // Spanish Translation
-        es: {
-            // Step 1 - Login Info
-            divStepOne: 'Información de Acceso',
-            clientRegisterEmailLabel: 'Email / correo electronico',
-            emailError: 'Por favor, entre una dirección de correo electrónico válida.',
-            clientRegisterPassLabel: 'Contraseña',
-            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',
-            toggleClientRegisterPassLabel: 'Ver Contraseña',
-            btnRegisterNext1: 'Siguiente',
-            btnRegisterBack1: 'Regresar',
-
-            // Step 2 - Personal Info
-            divStepTwo: 'Información personal',
-            clientFirstNameLabel: 'Primer nombre',
-            firstNameError: 'Por favor entre su primer nombre.',
-            clientMiddleInitialLabel: 'Inicial del segundo nombre',
-            clientLastNameLabel: 'Apellido',
-            lastNameError: 'Por favor entre su apellido.',
-            sexLabel: 'Sexo',
-            btnSexMaleLabel: 'Masculino',
-            btnSexFemaleLabel: 'Femenino',
-            btnSexIntersexLabel: 'Intersexual',
-            sexError: 'Por favor seleccione su sexo.',
-            clientDOBLabel: 'Fecha de nacimiento',
-            dobError: 'Por favor entre su fecha de nacimiento.',
-            clientPhoneLabel: 'Telefono',
-            phoneError: 'Teléfono no es válido.',
-            btnRegisterNext2: 'Siguiente',
-            btnRegisterBack2: 'Regresar',
-
-            // Step 3 - Address Info
-            divStepThree: 'Información de residencia',
-            noAddressLabel: 'no dirección al momento',
-            clientAddress1Label: 'Dirección de residencia 1',
-            clientAddress2Label: 'Dirección de residencia 2',
-            address1Error: 'Por favor entre una dirección.',
-            clientCityLabel: 'Ciudad',
-            cityError: 'Por favor entre una ciudad.',
-            selectStateLabel: 'Estado',
-            stateError: 'Por favor seleccione un estado.',
-            clientZipCodeLabel: 'Codigo postal',
-            zipCode: 'Por favor entre un código postal de 5 dígitos.',
-            btnRegisterNext3: 'Siguiente',
-            btnRegisterBack3: 'Regresar',
-
-            // Step 4 - Emergency Contact
-            divStepFour: 'Contacto de emergencia',
-            noEmergencyContactLabel: 'No contacto de emergencia',
-            emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
-            contactFirstName: 'Por favor entre el primer nombre de su contacto',
-            emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
-            contactLastName: 'Por favor, entre el apellido de su contacto',
-            emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
-            contactPhone: 'Por favor entre un teléfono de su contacto',
-            btnRegisterNext4: 'Siguiente',
-            btnRegisterBack4: 'Regresar',
-
-            // Step 5 - Service Select
-            divStepFive: 'Selección de servicio ',
-            btnServiceMedicalLabel: '🏥 Medico',
-            btnServiceDentalLabel: '🦷 Dental',
-            btnServiceOpticalLabel: '👁️ Optico',
-            btnServiceHaircutLabel: '✂️ Corte de pelo',
-            serviceError: 'Por favor seleccione por lo menos 1 servicio',
-            btnRegisterNext5: 'Siguiente',
-            btnRegisterBack5: 'Regresar',
-
-            // Finale - Wavier Confirm
-            waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
-            collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento',
-            waiverAgreeLabel: 'Yo he leído y estoy de acuerdo',
-            waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar',
-            btnWaiverSubmit: 'Entregar',
+        // Step 2 - Personal Info
+        document.getElementById('clientFirstName').value = userData.FirstName || '';
+        document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
+        document.getElementById('clientLastName').value = userData.LastName || '';
+        document.getElementById('clientDOB').value = userData.DOB || '';
+        
+        // Format phone if exists
+        if (userData.Phone) {
+            const digits = userData.Phone.replace(/\D/g, '');
+            document.getElementById('clientPhone').value = formatPhoneNumber(digits);
         }
-    };
+
+        // Set sex radio button
+        if (userData.Sex) {
+            const sexRadio = document.querySelector(`input[name="clientSex"][value="${userData.Sex}"]`);
+            if (sexRadio) sexRadio.checked = true;
+        }
+
+        // Step 3 - Address Info
+        if (userData.Street1) {
+            document.getElementById('noAddress').checked = false;
+            document.getElementById('clientAddress1').value = userData.Street1 || '';
+            document.getElementById('clientAddress2').value = userData.Street2 || '';
+            document.getElementById('clientCity').value = userData.City || '';
+            document.getElementById('selectState').value = userData.State || '';
+            document.getElementById('clientZipCode').value = userData.ZIP || '';
+        } else {
+            document.getElementById('noAddress').checked = true;
+            document.getElementById('noAddress').dispatchEvent(new Event('change'));
+        }
+
+        // Step 4 - Emergency Contact
+        if (userData.EmergencyName) {
+            document.getElementById('noEmergencyContact').checked = false;
+            // Split emergency name into first and last
+            const nameParts = userData.EmergencyName.split(' ');
+            document.getElementById('emergencyContactFirstName').value = nameParts[0] || '';
+            document.getElementById('emergencyContactLastName').value = nameParts.slice(1).join(' ') || '';
+            
+            if (userData.EmergencyPhone) {
+                const emergencyDigits = userData.EmergencyPhone.replace(/\D/g, '');
+                document.getElementById('emergencyContactPhone').value = formatPhoneNumber(emergencyDigits);
+            }
+        } else {
+            document.getElementById('noEmergencyContact').checked = true;
+            document.getElementById('noEmergencyContact').dispatchEvent(new Event('change'));
+        }
+
+        goToStepTwo();
+    }
     
 });
 
@@ -279,6 +183,13 @@ function goToStepTwo() {
 }
 
 function stepOneSubmit() {
+    // Skip validation if user is already logged in
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    if (userData) {
+        goToStepTwo();
+        return;
+    }
+
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
     let isValid = true;
@@ -724,8 +635,12 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     waiverError.style.display = 'none';
 
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+
     // Collect all form data
     const formData = {
+        clientId: userData?.ClientID || null,
+
         // Step 1
         email: document.getElementById('clientRegisterEmail').value,
         password: document.getElementById('clientRegisterPass').value,
@@ -770,6 +685,9 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         .then(data => {
             const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
             modal.hide();
+
+            // Clear userData after successful registration/update
+            sessionStorage.removeItem('userData');
 
             if (data.success) {
                 Swal.fire({

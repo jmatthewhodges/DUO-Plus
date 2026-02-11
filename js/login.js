@@ -85,14 +85,13 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             Swal.fire({
                 icon: 'success',
                 title: 'Welcome Back!',
-                text: `Hello, ${data.data.FirstName}! Redirecting you now...`,
+                html: `Hello, <strong>${data.data.FirstName}</strong>! Redirecting you now...`,
                 timer: 3500,
                 timerProgressBar: true,
                 showConfirmButton: false,
                 allowOutsideClick: false
             }).then(() => {
                 window.location.href = 'pages/register.html';
-                
             });
         } else {
             // Clear password field and reset validation
