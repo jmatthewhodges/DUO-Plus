@@ -97,3 +97,6 @@ www/
 !.env.example
 # Keep primary SQL schema
 !database/duo_system.sql
+
+# Bootstrap icons folder
+bootstrap-icons-1.13.1/
