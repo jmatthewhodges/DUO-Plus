@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', function () {
         passInput.value = userData.Password || '';
         passInput.disabled = true;
 
+        // Disable back button on step 2 for logged in users
+        document.getElementById('btnRegisterBack2').disabled = true;
+
         // Step 2 - Personal Info
         document.getElementById('clientFirstName').value = userData.FirstName || '';
         document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
@@ -325,6 +328,13 @@ document.getElementById('clientRegisterFormStep2').addEventListener('keydown', f
 document.getElementById('btnRegisterNext2').addEventListener('click', stepTwoSubmit);
 
 document.getElementById('btnRegisterBack2').addEventListener('click', function () {
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    
+    // If logged in, go back to home instead of step 1
+    if (userData) {
+        return;
+    }
+
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
     transitionToStep(stepTwo, stepOne, 1);
