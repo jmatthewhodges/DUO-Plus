@@ -118,7 +118,7 @@ if ($clientID) {
 
 } else {
     // ============================================================================
-    // NEW USER - INSERT (your existing code)
+    // NEW USER - INSERT
     // ============================================================================
     
     // Generate a unique clientID
@@ -207,7 +207,7 @@ if ($clientID) {
     // Bind the variables to the placeholders (use "i" for integers)
     $servicesInsertion->bind_param("ssiiii", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
 
-    // Execute the statement (currently, end result displayed is just from last insertion which is services)
+    // Execute the statement 
     $result = $servicesInsertion->execute();
 
     if ($result) {
