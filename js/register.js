@@ -89,13 +89,11 @@ function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
     let percentage = 1;
     switch (step) {
-        case 0: percentage = 0; break;
-        case 1: percentage = 17; break;
-        case 2: percentage = 34; break;
-        case 3: percentage = 51; break;
-        case 4: percentage = 68; break;
-        case 5: percentage = 85; break;
-        case 6: percentage = 100; break;
+        case 1: percentage = 0; break;
+        case 2: percentage = 25; break;
+        case 3: percentage = 50; break;
+        case 4: percentage = 75; break;
+        case 5: percentage = 99; break;
         default: percentage = 0;
     }
     progressBar.style.width = percentage + '%';
@@ -103,23 +101,7 @@ function updateProgressBar(step) {
     progressBar.setAttribute('aria-valuenow', percentage);
 }
 
-// ============================================================================
-// STEP 0: LANGUAGE SELECT
-// ============================================================================
-
-function goToStepOne() {
-    const stepZero = document.getElementById('divStepZero');
-    const stepOne = document.getElementById('divStepOne');
-    transitionToStep(stepZero, stepOne, 1);
-}
-
-//step 0 event listeners
-document.getElementById('btnRegisterBack0').addEventListener('click', function () {
-    window.location.href = '../index.html';
-});
-
 document.addEventListener('DOMContentLoaded', function () {
-    const languageSelector = document.getElementById('languageSelect');
 
     const translations = {
         /* 
@@ -132,11 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // english translation
         en: {
-            // Step 0 - Language Select
-            titleStepZero: 'Select your preferred language.',
-            btnRegisterNext0: 'Next',
-            btnRegisterBack0:'Back to Login',
-
             // Step 1 - login Info
             titleStepOne: 'Login Information',
             clientRegisterEmailLabel: 'Email',
@@ -149,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Step 2 - Personal Info
             titleStepTwo: 'Personal Information',
-            interpreterRequestLabel:"I would like to request a Interpreter.",
             clientFirstNameLabel: 'First Name',
             firstNameError: 'Please enter your first name.',
             clientMiddleInitialLabel: 'Middle Initial',
@@ -214,38 +190,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Spanish Translation
         es: {
-            // Step 0 - Language Select
-            titleStepZero: 'Escoja el lenguaje que usted prefiere.',
-            btnRegisterNext0: 'Siguiente',
-            btnRegisterBack0:'Volver a iniciar sesión',
-
             // Step 1 - Login Info
             divStepOne: 'Información de Acceso',
             clientRegisterEmailLabel: 'Email / correo electronico',
-            emailError: 'Por favor, entre una dirección de correo electrónico válida',
+            emailError: 'Por favor, entre una dirección de correo electrónico válida.',
             clientRegisterPassLabel: 'Contraseña',
-            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
+            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',
             toggleClientRegisterPassLabel: 'Ver Contraseña',
             btnRegisterNext1: 'Siguiente',
             btnRegisterBack1: 'Regresar',
 
             // Step 2 - Personal Info
             divStepTwo: 'Información personal',
-            interpreterRequestLabel:"Yo gusto solicitar un intérprete.",
             clientFirstNameLabel: 'Primer nombre',
-            firstNameError: 'Por favor, entre su primer nombre',
+            firstNameError: 'Por favor entre su primer nombre.',
             clientMiddleInitialLabel: 'Inicial del segundo nombre',
             clientLastNameLabel: 'Apellido',
-            lastNameError: 'Por favor entre su apellido',
+            lastNameError: 'Por favor entre su apellido.',
             sexLabel: 'Sexo',
             btnSexMaleLabel: 'Masculino',
             btnSexFemaleLabel: 'Femenino',
             btnSexIntersexLabel: 'Intersexual',
-            sexError: 'Por favor seleccione su sexo',
+            sexError: 'Por favor seleccione su sexo.',
             clientDOBLabel: 'Fecha de nacimiento',
-            dobError: 'Por favor entre su fecha de nacimiento',
+            dobError: 'Por favor entre su fecha de nacimiento.',
             clientPhoneLabel: 'Telefono',
-            phoneError: 'Teléfono no es válido',
+            phoneError: 'Teléfono no es válido.',
             btnRegisterNext2: 'Siguiente',
             btnRegisterBack2: 'Regresar',
 
@@ -254,13 +224,13 @@ document.addEventListener('DOMContentLoaded', function () {
             noAddressLabel: 'no dirección al momento',
             clientAddress1Label: 'Dirección de residencia 1',
             clientAddress2Label: 'Dirección de residencia 2',
-            address1Error: 'Por favor entre una dirección',
+            address1Error: 'Por favor entre una dirección.',
             clientCityLabel: 'Ciudad',
-            cityError: 'Por favor, entre una ciudad',
+            cityError: 'Por favor entre una ciudad.',
             selectStateLabel: 'Estado',
-            stateError: 'Por favor seleccione un estado',
+            stateError: 'Por favor seleccione un estado.',
             clientZipCodeLabel: 'Codigo postal',
-            zipCode: 'Por favor entre un código postal de 5 dígitos',
+            zipCode: 'Por favor entre un código postal de 5 dígitos.',
             btnRegisterNext3: 'Siguiente',
             btnRegisterBack3: 'Regresar',
 
@@ -268,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
             divStepFour: 'Contacto de emergencia',
             noEmergencyContactLabel: 'No contacto de emergencia',
             emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
-            contactFirstName: 'Por favor, entre el primer nombre de su contacto',
+            contactFirstName: 'Por favor entre el primer nombre de su contacto',
             emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
             contactLastName: 'Por favor, entre el apellido de su contacto',
             emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
@@ -294,101 +264,8 @@ document.addEventListener('DOMContentLoaded', function () {
             btnWaiverSubmit: 'Entregar',
         }
     };
-    // step 0 event listeners
-    languageSelector.addEventListener('click', function () {
-        const selectedLanguage = languageSelector.value;
-        const translation = translations[selectedLanguage];
-        
-        /* 
-           This is how the the code switches the language for each element.
-           basically goes and check every individual element via "GetElementById" and 
-           perfroms the const "translation" on the textContent
-        */
-
-        // Step 0 - Language Select
-        document.getElementById('titleStepZero').textContent = translation.titleStepZero;
-        document.getElementById('btnRegisterNext0').textContent = translation.btnRegisterNext0;
-        document.getElementById('btnRegisterBack0').textContent = translation.btnRegisterBack0;      
-
-        // Step 1 - Login Info
-        document.getElementById('titleStepOne').textContent = translation.titleStepOne;
-        document.getElementById('clientRegisterEmailLabel').textContent = translation.clientRegisterEmailLabel;
-        document.getElementById('emailError').textContent = translation.emailError;
-        document.getElementById('clientRegisterPassLabel').textContent = translation.clientRegisterPassLabel;
-        document.getElementById('passwordError').textContent = translation.passwordError;
-        document.getElementById('toggleClientRegisterPassLabel').textContent = translation.toggleClientRegisterPassLabel;
-        document.getElementById('btnRegisterNext1').textContent = translation.btnRegisterNext1;
-        document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
-
-        // Step 2 - Personal Info
-        document.getElementById('titleStepTwo').textContent = translation.titleStepTwo;
-        document.getElementById('interpreterRequestLabel').textContent = translation.interpreterRequestLabel;
-        document.getElementById('clientFirstNameLabel').textContent = translation.clientFirstNameLabel;
-        document.getElementById('firstNameError').textContent = translation.firstNameError;
-        document.getElementById('clientMiddleInitialLabel').textContent = translation.clientMiddleInitialLabel;
-        document.getElementById('clientLastNameLabel').textContent = translation.clientLastNameLabel;
-        document.getElementById('lastNameError').textContent = translation.lastNameError;
-        document.getElementById('sexLabel').textContent = translation.sexLabel;
-        document.getElementById('sexError').textContent = translation.sexError;
-        document.getElementById('btnSexMaleLabel').textContent = translation.btnSexMaleLabel;
-        document.getElementById('btnSexFemaleLabel').textContent = translation.btnSexFemaleLabel;
-        document.getElementById('btnSexIntersexLabel').textContent = translation.btnSexIntersexLabel;
-        document.getElementById('clientDOBLabel').textContent = translation.clientDOBLabel;
-        document.getElementById('dobError').textContent = translation.dobError;
-        document.getElementById('clientPhoneLabel').textContent = translation.clientPhoneLabel;
-        document.getElementById('phoneError').textContent = translation.phoneError;
-        document.getElementById('btnRegisterNext2').textContent = translation.btnRegisterNext2;
-        document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
-
-        // Step 3 - Address Info
-        document.getElementById('titleStepThree').textContent = translation.titleStepThree;
-        document.getElementById('noAddressLabel').textContent = translation.noAddressLabel;
-        document.getElementById('clientAddress1Label').textContent = translation.clientAddress1Label;
-        document.getElementById('address1Error').textContent = translation.address1Error;
-        document.getElementById('clientAddress2Label').textContent = translation.clientAddress2Label;
-        document.getElementById('clientCityLabel').textContent = translation.clientCityLabel;
-        document.getElementById('cityError').textContent = translation.cityError;
-        document.getElementById('selectStateLabel').textContent = translation.selectStateLabel;
-        document.getElementById('stateError').textContent = translation.stateError;
-        document.getElementById('clientZipCodeLabel').textContent = translation.clientZipCodeLabel;
-        document.getElementById('zipCode').textContent = translation.zipCode;
-        document.getElementById('btnRegisterNext3').textContent = translation.btnRegisterNext3;
-        document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
-
-        // Step 4 - Emergency Contact
-        document.getElementById('titleStepFour').textContent = translation.titleStepFour;
-        document.getElementById('noEmergencyContactLabel').textContent = translation.noEmergencyContactLabel;
-        document.getElementById('emergencyContactFirstNameLabel').textContent = translation.emergencyContactFirstNameLabel;
-        document.getElementById('contactFirstName').textContent = translation.contactFirstName;
-        document.getElementById('emergencyContactLastNameLabel').textContent = translation.emergencyContactLastNameLabel;
-        document.getElementById('contactLastName').textContent = translation.contactLastName;
-        document.getElementById('emergencyContactPhoneLabel').textContent = translation.emergencyContactPhoneLabel;
-        document.getElementById('contactPhone').textContent = translation.contactPhone;
-        document.getElementById('btnRegisterNext4').textContent = translation.btnRegisterNext4;
-        document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
-
-        // Step 5 - Service Selection
-        document.getElementById('titleStepFive').textContent = translation.titleStepFive;
-        document.getElementById('btnServiceMedicalLabel').textContent = translation.btnServiceMedicalLabel;
-        document.getElementById('btnServiceDentalLabel').textContent = translation.btnServiceDentalLabel;
-        document.getElementById('btnServiceOpticalLabel').textContent = translation.btnServiceOpticalLabel;
-        document.getElementById('btnServiceHaircutLabel').textContent = translation.btnServiceHaircutLabel;
-        document.getElementById('serviceError').textContent = translation.serviceError;
-        document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
-        document.getElementById('btnRegisterBack5').textContent = translation.btnRegisterBack5;
-
-        // Finale - Waiver
-        document.getElementById('waiverError').textContent = translation.waiverError;
-        document.getElementById('waiverLabel').textContent = translation.waiverLabel;
-        document.getElementById('collapseExample').textContent = translation.collapseExample;
-        document.getElementById('waiverAgreeLabel').textContent = translation.waiverAgreeLabel;
-        document.getElementById('btnWaiverSubmit').textContent = translation.btnWaiverSubmit;
-
-    });
+    
 });
-
-document.getElementById('btnRegisterNext0').addEventListener('click', goToStepOne);
-
 
 // ============================================================================
 // STEP 1: LOGIN INFO
@@ -436,9 +313,7 @@ document.getElementById('clientRegisterFormStep1').addEventListener('keydown', f
 document.getElementById('btnRegisterNext1').addEventListener('click', stepOneSubmit);
 
 document.getElementById('btnRegisterBack1').addEventListener('click', function () {
-    const stepOne = document.getElementById('divStepOne');
-    const stepZero = document.getElementById('divStepZero');
-    transitionToStep(stepOne, stepZero, 0);
+    window.location.href = '../index.html';
 });
 
 document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
@@ -595,34 +470,34 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
 
     const address1 = document.getElementById('clientAddress1');
     if (!address1.value.trim()) {
-        address1.classList.add('is-invalid');
+        setFieldValidation(address1, false);
         isValid = false;
     } else {
-        address1.classList.remove('is-invalid');
+        setFieldValidation(address1, true);
     }
 
     const city = document.getElementById('clientCity');
     if (!city.value.trim()) {
-        city.classList.add('is-invalid');
+        setFieldValidation(city, false);
         isValid = false;
     } else {
-        city.classList.remove('is-invalid');
+        setFieldValidation(city, true);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        state.classList.add('is-invalid');
+        setFieldValidation(state, false);
         isValid = false;
     } else {
-        state.classList.remove('is-invalid');
+        setFieldValidation(state, true);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        zipCode.classList.add('is-invalid');
+        setFieldValidation(zipCode, false);
         isValid = false;
     } else {
-        zipCode.classList.remove('is-invalid');
+        setFieldValidation(zipCode, true);
     }
 
     if (isValid) {
@@ -690,18 +565,18 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        firstName.classList.add('is-invalid');
+        setFieldValidation(firstName, false);
         isValid = false;
     } else {
-        firstName.classList.remove('is-invalid');
+        setFieldValidation(firstName, true);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        lastName.classList.add('is-invalid');
+        setFieldValidation(lastName, false);
         isValid = false;
     } else {
-        lastName.classList.remove('is-invalid');
+        setFieldValidation(lastName, true);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
@@ -821,9 +696,17 @@ document.getElementById('emergencyContactLastName').addEventListener('input', fu
 // WAIVER MODAL & FORM SUBMISSION
 // ============================================================================
 
+// Helper to get current language translations
+function getLang() {
+    var lang = sessionStorage.getItem("lang") || "en";
+    return translations[lang];
+}
+
+
 document.getElementById('btnWaiverSubmit').addEventListener('click', function () {
     const btn = this;
     const originalContent = btn.innerHTML;
+    const t = getLang();
 
     // Disable button and show spinner
     btn.disabled = true;
@@ -843,15 +726,11 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     // Collect all form data
     const formData = {
-        // Step 0
-        languageSelect: document.getElementById('languageSelect').value,
-
         // Step 1
         email: document.getElementById('clientRegisterEmail').value,
         password: document.getElementById('clientRegisterPass').value,
 
         // Step 2
-        interpreterRequest: document.getElementById('interpreterRequest').checked,
         firstName: document.getElementById('clientFirstName').value,
         middleInitial: document.getElementById('clientMiddleInitial').value,
         lastName: document.getElementById('clientLastName').value,
@@ -895,8 +774,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Registration Complete!',
-                    text: 'Your account has been created successfully.',
+                    title: t.registrationSuccessTitle,
+                    text: t.registrationSuccessText,
                     confirmButtonColor: '#174593',
                 }).then(() => {
                     window.location.href = '../index.html';
@@ -904,8 +783,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Registration Failed',
-                    text: data.message || 'An error occurred. Please try again.',
+                    title: t.registrationFailedTitle,
+                    text: data.message || t.registrationFailedText,
                     confirmButtonColor: '#174593'
                 });
             }
@@ -918,8 +797,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
             Swal.fire({
                 icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server. Please try again later.',
+                title: t.registrationConnectionErrorTitle,
+                text: t.registrationConnectionErrorText,
                 confirmButtonColor: '#174593'
             });
         })
@@ -937,7 +816,6 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
 function showStepOnly(stepNumber) {
     const allSteps = [
-        document.getElementById('divStepZero'),
         document.getElementById('divStepOne'),
         document.getElementById('divStepTwo'),
         document.getElementById('divStepThree'),
@@ -947,7 +825,7 @@ function showStepOnly(stepNumber) {
 
     allSteps.forEach((step, index) => {
         if (step) {
-            if (index === stepNumber) {
+            if (index + 1 === stepNumber) {
                 step.classList.remove('step-hidden');
                 step.classList.add('step-visible');
                 step.style.opacity = '1';
@@ -965,7 +843,6 @@ function showStepOnly(stepNumber) {
 const tempClientID = "9df12a-3lha05-f44zp1"
 const tempServices = ["medical", "dental", "optical", "haircut"]
 
-document.getElementById('skipStep0').addEventListener('click', () => showStepOnly(0));
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
@@ -976,9 +853,6 @@ document.getElementById('skipStep5').addEventListener('click', () => showQR(temp
 // QR Code Logic
 function hideLoginStuff() {
     // Hide login step container
-
-    const loginStep0 = document.getElementById('divStepZero');
-    if (loginStep0) loginStep0.style.display = 'none';
 
     const loginStep1 = document.getElementById('divStepOne');
     if (loginStep1) loginStep1.style.display = 'none';
@@ -994,10 +868,6 @@ function hideLoginStuff() {
 
     const loginStep5 = document.getElementById('divStepFive');
     if (loginStep5) loginStep5.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep0 = document.getElementById('skipStep0');
-    if (skipStep0) skipStep0.style.display = 'none';
 
     // Hide skip step button if present
     const skipStep1 = document.getElementById('skipStep1');
