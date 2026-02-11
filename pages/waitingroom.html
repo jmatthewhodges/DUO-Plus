@@ -18,7 +18,7 @@
             <!-- Logo -->
             <div class="row mb-4">
                 <div class="col-12 text-center">
-                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 180px;">
+                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 100px;">
                 </div>
             </div>
 
@@ -59,68 +59,140 @@
             <!-- Wait Room List -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
-                    <h5 class="text-white mb-0 fw-bold">Wait List</h5>
-                    <h5 class="text-white mb-0 fw-bold">24</h5>
+                    <h5 class="text-white mb-0 fw-bold">Wait List - 24</h5>
+                    <input type="text" class="form-control form-control-sm w-50" placeholder="Search">
                 </div>
                 
                 <div class="card-body p-0 position-relative">
-                    <div class="custom-scroll-indicator" style="height: 50%; top: 25%;"></div>
-
-                    <!-- Persons In Wait Room Table -->
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;">
                         <table class="table table-borderless align-middle mb-0">
-                            <thead>
+                            <thead class="d-none d-md-table-header-group">
                                 <tr class="border-bottom">
-                                    <th scope="col" class="ps-4">Name</th>
-                                    <th scope="col">DOB</th>
-                                    <th scope="col">Services</th>
-                                    <th scope="col" class="text-end pe-5"></th> 
+                                    <th scope="col" class="ps-3" style="width: 50%;">Name</th>
+                                    
+                                    <th scope="col" style="width: 30%;">DOB</th>
+                                    
+                                    <th scope="col" class="text-end pe-3" style="width: 20%;"></th> 
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="border-bottom">
-                                    <td class="ps-4">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 30px; height: 30px;">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
                                                 <i class="bi bi-person"></i>
                                             </div>
-                                            <span class="fw-bold text-dark">John A. Doe</span>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">John A. Doe</span>
+                                                <span class="text-muted small d-md-none">DOB: 11/01/1978</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="fw-medium">11/01/1978</td>
-                                    <td>
-                                        <div class="d-flex gap-2 text-dark h5 mb-0">
-                                            <i class="bi bi-plus-lg"></i>
-                                            <i class="bi bi-shield-shaded"></i>
-                                            <i class="bi bi-eye"></i>
-                                            <i class="bi bi-scissors"></i>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">11/01/1978</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="border-bottom">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">Jane D. Rett</span>
+                                                <span class="text-muted small d-md-none">DOB: 08/23/1989</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="text-end pe-5">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">08/23/1989</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="border-bottom">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">Michael S. Johnson</span>
+                                                <span class="text-muted small d-md-none">DOB: 03/15/1985</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">03/15/1985</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="border-bottom">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">Sarah M. Williams</span>
+                                                <span class="text-muted small d-md-none">DOB: 09/28/1992</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">09/28/1992</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="border-bottom">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">Robert T. Brown</span>
+                                                <span class="text-muted small d-md-none">DOB: 12/10/1975</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">12/10/1975</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td class="ps-4">
+                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 30px; height: 30px;">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
                                                 <i class="bi bi-person"></i>
                                             </div>
-                                            <span class="fw-bold text-dark">Jane D. Rett</span>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">Amanda C. Davis</span>
+                                                <span class="text-muted small d-md-none">DOB: 05/17/1988</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="fw-medium">08/23/1989</td>
-                                    <td>
-                                        <div class="d-flex gap-2 text-dark h5 mb-0">
-                                            <i class="bi bi-plus-lg"></i>
-                                            <i class="bi bi-shield-shaded"></i>
-                                            <i class="bi bi-eye"></i>
-                                            <i class="bi bi-scissors"></i>
-                                        </div>
-                                    </td>
-                                    <td class="text-end pe-5">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2">Update</button>
+                                    
+                                    <td class="fw-medium d-none d-md-table-cell">05/17/1988</td>
+                                    
+                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
+                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
                                     </td>
                                 </tr>
                             </tbody>
