@@ -10,6 +10,8 @@ var translations = {
     btn2Register: "Register",
 
     // Registration
+
+    progressTitle: "Progress through registration",
     
     // Step 1 - Login Info
     titleStepOne: 'Login Information',
@@ -36,9 +38,9 @@ var translations = {
     clientDOBLabel: 'Date of Birth',
     dobError: 'Please enter your date of birth.',
     clientPhoneLabel: 'Phone',
-    phoneError: 'Phone is invalid format.',
-    btnRegisterNext2Label: 'Next',
-    btnRegisterBack2Label: 'Go back',
+    phoneError: 'Phone number format is invalid.',
+    btnRegisterNext2: 'Next',
+    btnRegisterBack2: 'Go back',
 
     // Step 3 - Address Info
     titleStepThree: 'Address Information',
@@ -62,24 +64,24 @@ var translations = {
     contactFirstName: 'Please enter a first name for your contact.',
     emergencyContactLastNameLabel: 'Contact Last Name',
     contactLastName: 'Please enter a last name for your contact.',
-    emergencyContactPhone: 'Contact Phone',
-    contactPhone: 'Please enter a phone for your contact.',
+    emergencyContactPhoneLabel: 'Contact Phone',
+    contactPhone: 'Please enter a phone number for your contact.',
     btnRegisterNext4: 'Next',
     btnRegisterBack4: 'Go back',
 
     // Step 5 - Service Select
     titleStepFive: 'Service Selection',
     btnServiceMedicalLabel: '🏥 Medical',
-    btnServiceDentalLabel: '👁️ Dental',
-    btnServiceOpticalLabel: '🦷 Optical',
+    btnServiceDentalLabel: '🦷 Dental',
+    btnServiceOpticalLabel: '👁️ Optical',
     btnServiceHaircutLabel: '✂️ Haircut',
     serviceError: 'Please select at least one service.',
     btnRegisterNext5: 'Next',
-    btnRegisterNext5: 'Go back',
+    btnRegisterBack5: 'Go back',
 
     // Wavier Confirm
     waiverLabel: 'Waiver Agreement Required',
-    collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
+    collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsibility at this event.',
     waiverAgreeLabel: 'I have read and agree.',
     waiverError: 'You must agree to the waiver to continue.',
     btnWaiverSubmit: 'Submit',
@@ -104,86 +106,88 @@ var translations = {
 
     // Registration
 
+    progressTitle: "Progreso a través del registro",
+
     // Step 1 - Login Info
     titleStepOne: 'Información de Acceso',
     clientRegisterEmailLabel: 'Email',
-    emailError: 'Por favor, entre una dirección de correo electrónico válida',
+    emailError: 'Por favor, ingrese una dirección de correo electrónico válida.',
     clientRegisterPassLabel: 'Contraseña',
-    passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
-    toggleClientRegisterPassLabel: 'Ver Contraseña',
+    passwordError: 'La contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',
+    toggleClientRegisterPassLabel: 'Ver contraseña',
     btnRegisterNext1: 'Siguiente',
     btnRegisterBack1: 'Volver al inicio de sesión',
     
     // Step 2 - Personal Info
     titleStepTwo: 'Información personal',
     clientFirstNameLabel: 'Primer nombre',
-    firstNameError: 'Por favor, entre su primer nombre',
+    firstNameError: 'Por favor, ingrese su primer nombre.',
     clientMiddleInitialLabel: 'Inicial del segundo nombre',
     clientLastNameLabel: 'Apellido',
-    lastNameError: 'Por favor entre su apellido',
+    lastNameError: 'Por favor, ingrese su apellido.',
     sexLabel: 'Sexo',
     btnSexMaleLabel: 'Masculino',
     btnSexFemaleLabel: 'Femenino',
     btnSexIntersexLabel: 'Intersexual',
-    sexError: 'Por favor seleccione su sexo',
+    sexError: 'Por favor, seleccione su sexo.',
     clientDOBLabel: 'Fecha de nacimiento',
-    dobError: 'Por favor entre su fecha de nacimiento',
-    clientPhoneLabel: 'Telefono',
-    phoneError: 'Teléfono no es válido',
+    dobError: 'Por favor, ingrese su fecha de nacimiento.',
+    clientPhoneLabel: 'Teléfono',
+    phoneError: 'El formato del teléfono no es válido.',
     btnRegisterNext2: 'Siguiente',
     btnRegisterBack2: 'Regresar',
 
     // Step 3 - Address Info
     titleStepThree: 'Información de residencia',
-    noAddressLabel: 'no dirección al momento',
+    noAddressLabel: 'Sin dirección actual',
     clientAddress1Label: 'Dirección de residencia 1',
     clientAddress2Label: 'Dirección de residencia 2',
-    address1Error: 'Por favor entre una dirección',
+    address1Error: 'Por favor, ingrese una dirección.',
     clientCityLabel: 'Ciudad',
-    cityError: 'Por favor, entre una ciudad',
+    cityError: 'Por favor, ingrese una ciudad.',
     selectStateLabel: 'Estado',
-    stateError: 'Por favor seleccione un estado',
-    clientZipCodeLabel: 'Codigo postal',
-    zipCode: 'Por favor entre un código postal de 5 dígitos',
+    stateError: 'Por favor, seleccione un estado.',
+    clientZipCodeLabel: 'Código postal',
+    zipCode: 'Por favor, ingrese un código postal de 5 dígitos.',
     btnRegisterNext3: 'Siguiente',
     btnRegisterBack3: 'Regresar',
 
     // Step 4 - Emergency Contact
     titleStepFour: 'Contacto de emergencia',
-    noEmergencyContactLabel: 'No contacto de emergencia',
-    emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
-    contactFirstName: 'Por favor entre el primer nombre de su contacto',
-    emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
-    contactLastName: 'Por favor, entre el apellido de su contacto',
-    emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
-    contactPhone: 'Por favor entre un teléfono de su contacto',
+    noEmergencyContactLabel: 'Sin contacto de emergencia',
+    emergencyContactFirstNameLabel: 'Primer nombre del contacto de emergencia',
+    contactFirstName: 'Por favor, ingrese el primer nombre de su contacto.',
+    emergencyContactLastNameLabel: 'Apellido del contacto de emergencia',
+    contactLastName: 'Por favor, ingrese el apellido de su contacto.',
+    emergencyContactPhoneLabel: 'Teléfono del contacto de emergencia',
+    contactPhone: 'Por favor, ingrese el teléfono de su contacto.',
     btnRegisterNext4: 'Siguiente',
     btnRegisterBack4: 'Regresar',
 
     // Step 5 - Service Select
-    titleStepFive: 'Selección de servicio ',
-    btnServiceMedicalLabel: '🏥 Medico',
+    titleStepFive: 'Selección de servicio',
+    btnServiceMedicalLabel: '🏥 Médico',
     btnServiceDentalLabel: '🦷 Dental',
-    btnServiceOpticalLabel: '👁️ Optico',
+    btnServiceOpticalLabel: '👁️ Óptico',
     btnServiceHaircutLabel: '✂️ Corte de pelo',
-    serviceError: 'Por favor seleccione por lo menos 1 servicio',
+    serviceError: 'Por favor, seleccione por lo menos un servicio.',
     btnRegisterNext5: 'Siguiente',
     btnRegisterBack5: 'Regresar',
 
     // Wavier Confirm
     waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
-    collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento',
-    waiverAgreeLabel: 'Yo he leído y estoy de acuerdo',
-    waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar',
-    btnWaiverSubmit: 'Entregar',
+    collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento.',
+    waiverAgreeLabel: 'He leído y estoy de acuerdo.',
+    waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar.',
+    btnWaiverSubmit: 'Enviar',
 
     // Notifications
     registrationSuccessTitle: "¡Registro completo!",
     registrationSuccessText: "Su cuenta ha sido creada exitosamente.",
     registrationFailedTitle: "Registro fallido",
-    registrationFailedText: "Se ha producido un error. Inténtalo de nuevo.",
+    registrationFailedText: "Se ha producido un error. Inténtelo de nuevo.",
     registrationConnectionErrorTitle: "Error de conexión",
-    registrationConnectionErrorText: "No se puede conectar al servidor. Inténtalo más tarde."
+    registrationConnectionErrorText: "No se puede conectar al servidor. Inténtelo más tarde."
   }
 };
 

@@ -193,9 +193,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Step 1 - Login Info
             divStepOne: 'Información de Acceso',
             clientRegisterEmailLabel: 'Email / correo electronico',
-            emailError: 'Por favor, entre una dirección de correo electrónico válida',
+            emailError: 'Por favor, entre una dirección de correo electrónico válida.',
             clientRegisterPassLabel: 'Contraseña',
-            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
+            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',
             toggleClientRegisterPassLabel: 'Ver Contraseña',
             btnRegisterNext1: 'Siguiente',
             btnRegisterBack1: 'Regresar',
@@ -203,19 +203,19 @@ document.addEventListener('DOMContentLoaded', function () {
             // Step 2 - Personal Info
             divStepTwo: 'Información personal',
             clientFirstNameLabel: 'Primer nombre',
-            firstNameError: 'Por favor entre su primer nombre',
+            firstNameError: 'Por favor entre su primer nombre.',
             clientMiddleInitialLabel: 'Inicial del segundo nombre',
             clientLastNameLabel: 'Apellido',
-            lastNameError: 'Por favor entre su apellido',
+            lastNameError: 'Por favor entre su apellido.',
             sexLabel: 'Sexo',
             btnSexMaleLabel: 'Masculino',
             btnSexFemaleLabel: 'Femenino',
             btnSexIntersexLabel: 'Intersexual',
-            sexError: 'Por favor seleccione su sexo',
+            sexError: 'Por favor seleccione su sexo.',
             clientDOBLabel: 'Fecha de nacimiento',
-            dobError: 'Por favor entre su fecha de nacimiento',
+            dobError: 'Por favor entre su fecha de nacimiento.',
             clientPhoneLabel: 'Telefono',
-            phoneError: 'Teléfono no es válido',
+            phoneError: 'Teléfono no es válido.',
             btnRegisterNext2: 'Siguiente',
             btnRegisterBack2: 'Regresar',
 
@@ -224,13 +224,13 @@ document.addEventListener('DOMContentLoaded', function () {
             noAddressLabel: 'no dirección al momento',
             clientAddress1Label: 'Dirección de residencia 1',
             clientAddress2Label: 'Dirección de residencia 2',
-            address1Error: 'Por favor entre una dirección',
+            address1Error: 'Por favor entre una dirección.',
             clientCityLabel: 'Ciudad',
-            cityError: 'Por favor entre una ciudad',
+            cityError: 'Por favor entre una ciudad.',
             selectStateLabel: 'Estado',
-            stateError: 'Por favor seleccione un estado',
+            stateError: 'Por favor seleccione un estado.',
             clientZipCodeLabel: 'Codigo postal',
-            zipCode: 'Por favor entre un código postal de 5 dígitos',
+            zipCode: 'Por favor entre un código postal de 5 dígitos.',
             btnRegisterNext3: 'Siguiente',
             btnRegisterBack3: 'Regresar',
 
@@ -470,34 +470,34 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
 
     const address1 = document.getElementById('clientAddress1');
     if (!address1.value.trim()) {
-        address1.classList.add('is-invalid');
+        setFieldValidation(address1, false);
         isValid = false;
     } else {
-        address1.classList.remove('is-invalid');
+        setFieldValidation(address1, true);
     }
 
     const city = document.getElementById('clientCity');
     if (!city.value.trim()) {
-        city.classList.add('is-invalid');
+        setFieldValidation(city, false);
         isValid = false;
     } else {
-        city.classList.remove('is-invalid');
+        setFieldValidation(city, true);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        state.classList.add('is-invalid');
+        setFieldValidation(state, false);
         isValid = false;
     } else {
-        state.classList.remove('is-invalid');
+        setFieldValidation(state, true);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        zipCode.classList.add('is-invalid');
+        setFieldValidation(zipCode, false);
         isValid = false;
     } else {
-        zipCode.classList.remove('is-invalid');
+        setFieldValidation(zipCode, true);
     }
 
     if (isValid) {
@@ -565,18 +565,18 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        firstName.classList.add('is-invalid');
+        setFieldValidation(firstName, false);
         isValid = false;
     } else {
-        firstName.classList.remove('is-invalid');
+        setFieldValidation(firstName, true);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        lastName.classList.add('is-invalid');
+        setFieldValidation(lastName, false);
         isValid = false;
     } else {
-        lastName.classList.remove('is-invalid');
+        setFieldValidation(lastName, true);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
