@@ -17,6 +17,9 @@ $status = "Active";
 // Check if clientId was passed (existing user)
 $clientID = $_POST['clientId'] ?? null;
 
+// Get language preference, default to English if not provided
+$language = $_POST['language'] ?? 'en';
+
 if ($clientID) {
     // ============================================================================
     // EXISTING USER - UPDATE
@@ -30,8 +33,8 @@ if ($clientID) {
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Update client info
-    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
-    $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
+    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ?, Lang = ? WHERE ClientID = ?");
+    $clientUpdate->bind_param("ssssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $language, $clientID);
     $clientUpdate->execute();
 
     $noAddress = $_POST['noAddress'] ?? true;
@@ -133,9 +136,8 @@ if ($clientID) {
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Prepare client info
-    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    // Bind variables to placeholders
-    $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone);
+    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone, Lang) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $clientCreation->bind_param("sssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone, $language);
     // Execute the statement
     $clientCreation->execute();
 

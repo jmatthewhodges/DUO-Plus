@@ -644,7 +644,11 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     // Collect all form data
     const formData = {
+        // If we have ClientID, send it
         clientId: userData?.ClientID || null,
+
+        // Language preference
+        language: sessionStorage.getItem('lang') || 'en',
 
         // Step 1
         email: document.getElementById('clientRegisterEmail').value,
