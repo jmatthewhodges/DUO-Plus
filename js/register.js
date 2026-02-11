@@ -501,17 +501,12 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
     }
 
     const phone = document.getElementById('emergencyContactPhone');
-    // Phone is optional but must be full and formatted if provided
-    if (phone.value.length > 0) {
-        // Require exactly (999) 999-9999 format
-        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-            setFieldValidation(phone, false);
-            isValid = false;
-        } else {
-            setFieldValidation(phone, true);
-        }
+    // Phone is required and must be full and formatted
+    if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
+        setFieldValidation(phone, false);
+        isValid = false;
     } else {
-        setFieldValidation(phone, true); // Optional, so valid if empty
+        setFieldValidation(phone, true);
     }
 
     if (isValid) {
