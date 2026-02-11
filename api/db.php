@@ -16,10 +16,11 @@ $dbHost = $_ENV['DB_HOST'];
 $dbName = $_ENV['DB_NAME'];
 $dbUser = $_ENV['DB_USER'];
 $dbPass = $_ENV['DB_PASS'];
+$dbPort = $_ENV['DB_PORT'];
 
 // Using mysqli (catch error if db connection failed)
 try {
-    $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName, (int)$dbPort);
     //echo json_encode(['success' => true, 'message' => 'Database connection established.']);
 } catch (\Throwable $th) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $th->getMessage()]);

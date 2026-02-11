@@ -60,6 +60,7 @@ body.v-center-page {
   position: relative;
   overflow: hidden;
   background-color: #0f3468 !important;
+  color: white;
 }
 
 /* Primary button hover effect */
@@ -67,6 +68,7 @@ body.v-center-page {
   background-color: #1b3d6c !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px #1b3d6c !important;
+  cursor: pointer;
 }
 
 /* Fade transition for step switching */
@@ -161,4 +163,11 @@ body.v-center-page {
 .progress-bar.bg-warning:hover,
 .progress-bar.bg-warning:focus {
   background-color: #ffca28 !important; /* slightly darker on hover */
+}
+/* Language Select */
+#divLanguageSwitch {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
 }
