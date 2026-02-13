@@ -1,3 +1,6 @@
+// To make modular include <link href="../assets/css/custom.css" rel="stylesheet">
+// and <script src="../js/pinCode.js"></script> in the HTML file
+
 const clearInputs = (inputs) => inputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
 const showError = (msg, err) => err.textContent = msg;
 const hideError = (err) => err.classList.add('d-none');

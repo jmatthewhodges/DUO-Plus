@@ -207,8 +207,8 @@
     <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title" id="pinCodeModalLabel">Enter PIN Code</h5>
+                <div class="modal-header border-0 pb-0" style="background-color:#174593">
+                    <h5 class="modal-title mb-1" id="pinCodeModalLabel" style="color:white">Enter PIN Code</h5>
                 </div>
                 <div class="modal-body text-center pt-4">
                     <p class="text-muted mb-4">Please enter the 6-digit PIN code</p>
@@ -220,6 +220,11 @@
                             <input type="text" maxlength="1" class="pin-input" inputmode="numeric" aria-label="PIN digit 4">
                             <input type="text" maxlength="1" class="pin-input" inputmode="numeric" aria-label="PIN digit 5">
                             <input type="text" maxlength="1" class="pin-input" inputmode="numeric" aria-label="PIN digit 6">
+                        </div>
+                    </form>
+                    <form id="nameEntry">
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            <input type="text" maxlength="30" class="form-control" placeholder="Enter Name" aria-label="Enter Name">
                         </div>
                         <div id="pinErrorMessage" class="alert alert-danger d-none" role="alert"></div>
                         <button type="submit" id="submitPinBtn" class="btn btn-primary w-100">Verify PIN</button>

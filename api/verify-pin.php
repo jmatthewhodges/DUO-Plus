@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die(json_encode(['success' => false, 'error' => 'Method not allowed']));
 }
 
-// Simple rate limiting (max 5 attempts per 15 minutes)
+// Simple rate limiting
 $clientIP = $_SERVER['REMOTE_ADDR'];
 $rateLimitKey = 'pin_attempts_' . $clientIP;
 
