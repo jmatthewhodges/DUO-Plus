@@ -10,6 +10,17 @@ body {
   justify-content: center;
 }
 
+/* Blur content by default on PIN page */
+.container-fluid {
+  filter: blur(4px);
+  transition: filter 0.3s ease;
+}
+
+/* Remove blur after PIN verification */
+.container-fluid.pin-verified {
+  filter: blur(0);
+}
+
 /* Remove default focus outline */
 :focus {
   outline: none;
