@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
 
         try {
-            // Send PIN to backend for verification
             const response = await fetch('/api/verify-pin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -93,12 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || 'Invalid PIN');
             }
 
-            // Mark as verified and close
             pinVerified = true;
             hideError(errorMsg);
             document.querySelector('.container-fluid').classList.add('pin-verified');
             bootstrap.Modal.getInstance(modal).hide();
-            console.log('PIN verified');
         } catch (err) {
             showError(err.message || 'Verification failed', errorMsg);
             errorMsg.classList.remove('d-none');

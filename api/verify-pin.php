@@ -14,20 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $clientIP = $_SERVER['REMOTE_ADDR'];
 $rateLimitKey = 'pin_attempts_' . $clientIP;
 
-if (isset($_SESSION[$rateLimitKey])) {
-    if (time() - $_SESSION[$rateLimitKey]['time'] < 900) {
-        if ($_SESSION[$rateLimitKey]['count'] >= 10) {
-            http_response_code(429);
-            die(json_encode(['success' => false, 'error' => 'Too many attempts. Try again later.']));
-        }
-        if ($_SESSION[$rateLimitKey]['count'] >= 5) {
-            http_response_code(429);
-            die(json_encode(['success' => false, 'error' => 'please ask for the code before continuing.']));
-        }
-    } else {
-        $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
-    }
-} else {
+// Initialize or reset if expired
+if (!isset($_SESSION[$rateLimitKey])) {
+    $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
+} elseif (time() - $_SESSION[$rateLimitKey]['time'] >= 900) {
     $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
 }
 
@@ -37,7 +27,6 @@ $pin = $input['pin'] ?? null;
 
 // Validate PIN format
 if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
-    $_SESSION[$rateLimitKey]['count']++;
     http_response_code(400);
     die(json_encode(['success' => false, 'error' => 'Invalid PIN format']));
 }
@@ -48,11 +37,18 @@ $correctPin = '123456';
 // Verify PIN
 if ($pin !== $correctPin) {
     $_SESSION[$rateLimitKey]['count']++;
+    
+    // Check if rate limit exceeded after incrementing
+    if ($_SESSION[$rateLimitKey]['count'] >= 5) {
+        http_response_code(429);
+        die(json_encode(['success' => false, 'error' => 'Please ask for the code before continuing.']));
+    }
+    
     http_response_code(401);
     die(json_encode(['success' => false, 'error' => 'Invalid PIN']));
 }
 
-// Success
+// Success - reset counter
 $_SESSION[$rateLimitKey]['count'] = 0;
 http_response_code(200);
 echo json_encode(['success' => true, 'message' => 'PIN verified']);
