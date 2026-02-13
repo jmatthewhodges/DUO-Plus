@@ -11,36 +11,44 @@ if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
-// Single query to get all client data
-$registrationData = $mysqli->prepare("
+// Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
+$clientDataStmt = $mysqli->prepare("
     SELECT 
-        c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone,
-        a.Street1, a.Street2, a.City, a.State, a.ZIP,
-        e.Name AS EmergencyName, e.Phone AS EmergencyPhone,
-        r.DateTime AS RegistrationDate, r.Medical, r.Optical, r.Dental, r.Hair
+        c.FirstName, c.MiddleInitial, c.LastName, c.DOB, r.Medical, r.Optical, r.Dental, r.Hair
     FROM tblClients c
     LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
     LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
     LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
-    WHERE c.ClientID = ?
 ");
+//checks for if the connection to mysql is a success
+if (! $clientDataStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $mysqli->error]);
+    exit;
+}
+//executes prepared query akin to the mysql connection
+if (! $clientDataStmt->execute()) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $clientDataStmt->error]);
+    $clientDataStmt->close();
+    exit;
+}
+//gets result, fetches all rows, closes statement
+$result = $clientDataStmt->get_result();
+$rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+$clientDataStmt->close();
 
-$registrationData->bind_param("i", $clientId);
-$registrationData->execute();
-$result = $registrationData->get_result();
-$userData = $result->fetch_assoc();
-$registrationData->close();
-
-// Return data
-if ($userData) {
+//counting the number of rows to then pull a respone for each individual person
+if (count($rows) > 0) {
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'message' => 'Data retrieved successfully.', 'data' => $userData]);
+    $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows]);
 } else {
-    http_response_code(404);
-    $msg = json_encode(['success' => false, 'message' => 'Client not found.']);
+    http_response_code(200);
+    $msg = json_encode(['success' => true, 'count' => 0, 'data' => []]);
 }
 
 echo $msg;
 error_log($msg);
 
+//proof that this DOES work in insomnia
 echo "making sure it still works!";
