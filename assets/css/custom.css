@@ -135,14 +135,14 @@ body.v-center-page {
 .btn-grey:hover,
 .btn-grey:focus {
   background-color: #98a3ab; /* slightly darker on hover */
-  border-color: rgba(11,36,48,0.18);
+  border-color: rgba(255, 255, 255, 1);
   background-image: repeating-linear-gradient(
     135deg,
     rgba(255,255,255,0.32) 0 6px,
     rgba(0,0,0,0.06) 6px 12px
   );
   box-shadow: 0 2px 8px rgba(11,36,48,0.06);
-  color: #07161b;
+  color: white;
   transform: translateY(-1px);
 }
 
@@ -154,20 +154,84 @@ body.v-center-page {
 /* Make warning progress more yellow and remove orange gradient */
 .progress-bar.bg-warning,
 .bg-warning {
-  background-color: #ffd54f !important; /* lighter/more yellow */
+  background-color: #e2b212 !important; /* lighter/more yellow */
   background-image: none !important;   /* remove any orange gradient */
   color: #212529;
   border-color: rgba(0,0,0,0.04);
 }
 
-.progress-bar.bg-warning:hover,
-.progress-bar.bg-warning:focus {
-  background-color: #ffca28 !important; /* slightly darker on hover */
-}
 /* Language Select */
 #divLanguageSwitch {
   position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 1000;
+}
+
+/* ==========================================
+   MODAL ANIMATIONS
+   ========================================== */
+
+/* 1. Fade in the dark background overlay */
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 2. Scale and drop the card in with a slight "spring" bounce */
+@keyframes cardPopIn {
+    from { 
+        opacity: 0; 
+        transform: scale(0.85) translateY(-30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* 3. Apply the animations when the modal is active (d-flex) */
+#checkInModal.d-flex {
+    animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+#checkInModal.d-flex .card {
+    /* The cubic-bezier adds that professional, slight over-shoot "bounce" */
+    animation: cardPopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Custom locked state to preserve btn-grey styling */
+.locked-btn {
+    pointer-events: none; /* Prevents all mouse clicks */
+}
+
+/* ==========================================
+   MODAL EXIT ANIMATIONS
+   ========================================== */
+
+/* Fade out the dark background */
+@keyframes modalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Shrink and fade the card out */
+@keyframes cardPopOut {
+    from { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+    to { 
+        opacity: 0; 
+        transform: scale(0.85) translateY(-30px); 
+    }
+}
+
+/* We will apply this 'closing' class using JavaScript */
+#checkInModal.closing {
+    animation: modalFadeOut 0.5s ease-in forwards;
+}
+
+#checkInModal.closing .card {
+    animation: cardPopOut 0.5s ease-in forwards;
 }
