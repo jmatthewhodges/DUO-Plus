@@ -8,13 +8,16 @@ if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
     $_GET = json_decode(file_get_contents('php://input'), true) ?? [];
 }
 
+// Set response header to JSON
+header('Content-Type: application/json');
+
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
 $clientDataStmt = $mysqli->prepare("
     SELECT 
-        c.FirstName, c.MiddleInitial, c.LastName, c.DOB, r.Medical, r.Optical, r.Dental, r.Hair
+        c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, r.Medical, r.Optical, r.Dental, r.Hair
     FROM tblClients c
     LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
     LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
@@ -23,13 +26,17 @@ $clientDataStmt = $mysqli->prepare("
 //checks for if the connection to mysql is a success
 if (! $clientDataStmt) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $mysqli->error]);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg); 
     exit;
 }
 //executes prepared query akin to the mysql connection
 if (! $clientDataStmt->execute()) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $clientDataStmt->error]);
+    $msg =  json_encode(['success' => false, 'error' => $clientDataStmt->error]);
+    echo $msg;
+    error_log($msg); 
     $clientDataStmt->close();
     exit;
 }
@@ -49,6 +56,3 @@ if (count($rows) > 0) {
 
 echo $msg;
 error_log($msg);
-
-//proof that this DOES work in insomnia
-echo "making sure it still works!";
