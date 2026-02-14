@@ -2,7 +2,8 @@
 // Add to any page: <script src="../js/pinCode.js"></script>
 
 function initializePINModal() {
-    // Inject modal HTML if it doesn't exist
+    // HTML INJECTION: Create and inject modal into page if not already present
+    // Modal includes PIN input fields, name input, error message display, and verify button
     if (!document.getElementById('pinCodeModal')) {
         const modalHTML = `
         <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -42,9 +43,10 @@ function initializePINModal() {
     const showError = (msg, err) => err.textContent = msg;
     const hideError = (err) => err.classList.add('d-none');
 
-    // Check if already verified in this session
+    // PERSISTENCE: Check if user already verified PIN in this browser session
     let pinVerified = sessionStorage.getItem('pinVerified') === 'true' ? true : false;
 
+    // DOM element references
     const inputs = document.querySelectorAll('.pin-input');
     const form = document.getElementById('pinCodeForm');
     const errorMsg = document.getElementById('pinErrorMessage');
@@ -52,7 +54,7 @@ function initializePINModal() {
     const submitBtn = document.getElementById('submitPinBtn');
     const nameEntry = document.getElementById('nameEntry');
 
-    // Prevent modal from closing before PIN verification AND name entry
+    // ANTI-BYPASS: Prevent modal from closing before PIN verification AND name entry
     modal.addEventListener('hide.bs.modal', function(e) {
         const nameInput = nameEntry.querySelector('input[type="text"]');
         if (!pinVerified || !nameInput || !nameInput.value.trim()) {
@@ -60,15 +62,14 @@ function initializePINModal() {
         }
     });
 
-
-    // Prevent escape key
+    // ANTI-BYPASS: Prevent escape key from closing modal before verification
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && !pinVerified) {
             e.preventDefault();
         }
     });
 
-    // Prevent back button
+    // ANTI-BYPASS: Prevent browser back button before verification
     history.pushState(null, null, window.location.href);
     window.addEventListener('popstate', function(e) {
         if (!pinVerified) {
@@ -77,11 +78,12 @@ function initializePINModal() {
         }
     });
 
-    // Remove any close buttons
+    // ANTI-BYPASS: Remove close button from modal header
     const closeButtons = modal.querySelectorAll('.btn-close');
     closeButtons.forEach(btn => btn.style.display = 'none');
 
-    // If already verified in session, unblur screen and skip modal
+    // INITIALIZATION: If already verified in session, unblur screen and skip modal
+    // Otherwise show modal after 500ms delay
     if (pinVerified) {
         const blurTarget = document.querySelector('.container-fluid') || document.body;
         blurTarget.classList.add('pin-verified');
@@ -89,60 +91,54 @@ function initializePINModal() {
         setTimeout(() => new bootstrap.Modal(modal, { backdrop: 'static', keyboard: false }).show(), 500);
     }
 
+    // PIN INPUT HANDLING: Setup event listeners for each PIN digit input
     inputs.forEach((input, i) => {
+        // INPUT EVENT: Auto-focus to next field when digit entered, add visual feedback
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
             this.classList.toggle('filled', !!this.value);
             if (this.value && i < inputs.length - 1) inputs[i + 1].focus();
         });
 
+        // KEYBOARD EVENT: Handle backspace navigation, Enter submission, and block non-numeric keys
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Backspace' && !this.value && i > 0) inputs[i - 1].focus();
             if (e.key === 'Enter' && i === inputs.length - 1) {
-                // Move focus to name input on Enter from last PIN digit
                 const nameInput = nameEntry.querySelector('input[type="text"]');
                 if (nameInput) nameInput.focus();
             }
             if (!/^[0-9]$/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Delete', 'Tab', 'Enter'].includes(e.key))
                 e.preventDefault();
         });
-
-        input.addEventListener('paste', function(e) {
-            e.preventDefault();
-            const digits = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
-            digits.split('').forEach((d, j) => {
-                if (i + j < inputs.length) {
-                    inputs[i + j].value = d;
-                    inputs[i + j].classList.add('filled');
-                }
-            });
-            inputs[Math.min(i + digits.length - 1, inputs.length - 1)].focus();
-        });
     });
 
+    // Prevent form submission on Enter key in PIN inputs
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
     });
 
-    // Handle name entry form submission
+    // NAME ENTRY HANDLING: Process user's name submission
     const nameInput = nameEntry.querySelector('input[type="text"]');
     
-    // Allow Enter key on name input
+    // Allow Enter key to submit name entry form
     nameInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             nameEntry.dispatchEvent(new Event('submit'));
         }
     });
 
+    // FORM SUBMISSION: Send PIN and name to backend for verification
     nameEntry.addEventListener('submit', async function(e) {
         e.preventDefault();
         const pin = Array.from(inputs).map(i => i.value).join('');
         const name = nameInput.value.trim();
 
+        // UI FEEDBACK: Show loading spinner while verifying
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
 
         try {
+            // BACKEND REQUEST: Send PIN and name to /api/verify-pin.php for validation
             const response = await fetch('/api/verify-pin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -151,10 +147,12 @@ function initializePINModal() {
 
             const data = await response.json();
 
+            // ERROR HANDLING: Check response from backend
             if (!data.success) {
                 throw new Error(data.error || 'Verification failed');
             }
 
+            // SUCCESS: Set session, unblur screen, close modal
             pinVerified = true;
             sessionStorage.setItem('pinVerified', 'true');
             document.body.setAttribute('data-pin-verified', 'true');
@@ -163,16 +161,19 @@ function initializePINModal() {
             blurTarget.classList.add('pin-verified');
             bootstrap.Modal.getInstance(modal).hide();
         } catch (err) {
+            // FAILURE: Display error message, clear inputs, refocus on PIN
             showError(err.message, errorMsg);
             errorMsg.classList.remove('d-none');
             clearInputs(inputs);
             inputs[0].focus();
         } finally {
+            // RESTORE UI: Re-enable button after response
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Verify PIN';
         }
     });
 
+    // MODAL SHOW EVENT: Reset form state when modal opens
     modal.addEventListener('show.bs.modal', () => {
         if (pinVerified) {
             return false;
@@ -183,7 +184,7 @@ function initializePINModal() {
     });
 }
 
-// Auto-initialize
+// AUTO-INITIALIZE: Run PIN modal setup when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePINModal);
 } else {
