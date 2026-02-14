@@ -82,12 +82,15 @@ function initializePINModal() {
     const closeButtons = modal.querySelectorAll('.btn-close');
     closeButtons.forEach(btn => btn.style.display = 'none');
 
-    // INITIALIZATION: If already verified in session, unblur screen and skip modal
-    // Otherwise show modal after 500ms delay
+    // INITIALIZATION: If already verified in session, skip modal
+    // Otherwise apply blur and show modal
+    const blurTarget = document.querySelector('.container-fluid') || document.body;
+    
     if (pinVerified) {
-        const blurTarget = document.querySelector('.container-fluid') || document.body;
         blurTarget.classList.add('pin-verified');
     } else {
+        // Apply blur while waiting for PIN
+        blurTarget.style.filter = 'blur(4px)';
         setTimeout(() => new bootstrap.Modal(modal, { backdrop: 'static', keyboard: false }).show(), 500);
     }
 
@@ -158,6 +161,7 @@ function initializePINModal() {
             document.body.setAttribute('data-pin-verified', 'true');
             hideError(errorMsg);
             const blurTarget = document.querySelector('.container-fluid') || document.body;
+            blurTarget.style.filter = '';  // Remove inline blur
             blurTarget.classList.add('pin-verified');
             bootstrap.Modal.getInstance(modal).hide();
         } catch (err) {

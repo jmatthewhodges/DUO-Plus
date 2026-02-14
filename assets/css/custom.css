@@ -10,9 +10,8 @@ body {
   justify-content: center;
 }
 
-/* Blur content by default on PIN page */
+/* Blur will be applied by JavaScript when PIN modal is active */
 .container-fluid {
-  filter: blur(4px);
   transition: filter 0.3s ease;
 }
 
