@@ -22,6 +22,7 @@ $clientDataStmt = $mysqli->prepare("
     LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
     LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
     LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
+    WHERE r.queue = 'registration'
 ");
 //checks for if the connection to mysql is a success
 if (! $clientDataStmt) {
