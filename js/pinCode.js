@@ -9,7 +9,7 @@ function initializePINModal() {
         <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header border-0 pb-0" style="background-color: #174593;">
+                    <div class="modal-header border-0 pb-0 bg-primary">
                         <h5 class="modal-title mb-1" id="pinCodeModalLabel" style="color:white">Enter PIN Code</h5>
                     </div>
                     <div class="modal-body text-center pt-4">
