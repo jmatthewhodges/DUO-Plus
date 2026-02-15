@@ -49,8 +49,7 @@ $correctPin = null;
 try {
     if ($mysqli && !mysqli_connect_error()) {
         // Query database for PIN
-        $stmt = $mysqli->prepare("SELECT pin FROM tblClientPIN LIMIT 1");
-        $stmt->bind_param("s", $pin);
+        $stmt = $mysqli->prepare("SELECT pin FROM tblPinCode LIMIT 1");
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -89,7 +88,7 @@ http_response_code(200);
 
 try {
     if ($mysqli && !mysqli_connect_error()) {
-        $stmt = $mysqli->prepare("insert into tblPinLogs (name, pageName, pin, timestamp) values (?, ?, ?, ?)");
+        $stmt = $mysqli->prepare("insert into tblPinLogs (name, page, pin, time) values (?, ?, ?, ?)");
         $currentTime = date('Y-m-d H:i:s');
         $stmt->bind_param("ssss", $name, $pageName, $pin, $currentTime);
         $stmt->execute();
