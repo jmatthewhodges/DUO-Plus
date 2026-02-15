@@ -15,6 +15,8 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
+
+// To do: add modular support via adding Waiting Room -  should be similar to Registration
 $clientDataStmt = $mysqli->prepare("
     SELECT 
         c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, r.Medical, r.Optical, r.Dental, r.Hair
@@ -22,7 +24,7 @@ $clientDataStmt = $mysqli->prepare("
     LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
     LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
     LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
-    WHERE r.queue = 'registration'
+    WHERE r.queue = ?
 ");
 //checks for if the connection to mysql is a success
 if (! $clientDataStmt) {
@@ -33,9 +35,10 @@ if (! $clientDataStmt) {
     exit;
 }
 //executes prepared query akin to the mysql connection
+$clientDataStmt->bind_param('s', $queue);
 if (! $clientDataStmt->execute()) {
     http_response_code(500);
-    $msg =  json_encode(['success' => false, 'error' => $clientDataStmt->error]);
+    $msg = json_encode(['success' => false, 'error' => $clientDataStmt->error]);
     echo $msg;
     error_log($msg); 
     $clientDataStmt->close();
@@ -54,6 +57,8 @@ if (count($rows) > 0) {
     http_response_code(200);
     $msg = json_encode(['success' => true, 'count' => 0, 'data' => []]);
 }
+
+
 
 echo $msg;
 error_log($msg);
