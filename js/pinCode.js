@@ -9,7 +9,7 @@ function initializePINModal() {
         <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header border-0 pb-0" style="background-color:#174593">
+                    <div class="modal-header border-0 pb-0" style="background-color: #174593;">
                         <h5 class="modal-title mb-1" id="pinCodeModalLabel" style="color:white">Enter PIN Code</h5>
                     </div>
                     <div class="modal-body text-center pt-4">
@@ -28,8 +28,8 @@ function initializePINModal() {
                             <div class="d-flex justify-content-center gap-3 mb-4">
                                 <input type="text" maxlength="30" class="form-control" placeholder="Enter Name" aria-label="Enter Name">
                             </div>
-                            <div id="pinErrorMessage" class="alert alert-danger d-none" role="alert"></div>
-                            <button type="submit" id="submitPinBtn" class="btn btn-primary w-100">Verify PIN</button>
+                            <div id="pinErrorMessage" class="alert alert-danger d-none" role="alert" style="font-size: 0.75rem; padding: 0.375rem 0.5rem; margin-bottom: 0.75rem;"></div>
+                            <button type="submit" id="submitPinBtn" aria-label="Verify PIN button" class="btn btn-primary w-100">Verify PIN</button>
                         </form>
                     </div>
                 </div>
@@ -43,8 +43,8 @@ function initializePINModal() {
     const showError = (msg, err) => err.textContent = msg;
     const hideError = (err) => err.classList.add('d-none');
 
-    // PERSISTENCE: Check if user already verified PIN in this browser session
-    let pinVerified = sessionStorage.getItem('pinVerified') === 'true' ? true : false;
+    // PERSISTENCE: Check if user already verified PIN in this browser
+    let pinVerified = localStorage.getItem('pinVerified') === 'true' ? true : false;
 
     // DOM element references
     const inputs = document.querySelectorAll('.pin-input');
@@ -135,17 +135,18 @@ function initializePINModal() {
         e.preventDefault();
         const pin = Array.from(inputs).map(i => i.value).join('');
         const name = nameInput.value.trim();
+        const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
 
         // UI FEEDBACK: Show loading spinner while verifying
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
 
         try {
-            // BACKEND REQUEST: Send PIN and name to /api/verify-pin.php for validation
+            // BACKEND REQUEST: Send PIN, name, and page name to /api/verify-pin.php for validation
             const response = await fetch('/api/verify-pin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: pin, name: name })
+                body: JSON.stringify({ pin: pin, name: name, pageName: pageName })
             });
 
             const data = await response.json();
@@ -157,7 +158,7 @@ function initializePINModal() {
 
             // SUCCESS: Set session, unblur screen, close modal
             pinVerified = true;
-            sessionStorage.setItem('pinVerified', 'true');
+            localStorage.setItem('pinVerified', 'true');
             document.body.setAttribute('data-pin-verified', 'true');
             hideError(errorMsg);
             const blurTarget = document.querySelector('.container-fluid') || document.body;
@@ -165,11 +166,24 @@ function initializePINModal() {
             blurTarget.classList.add('pin-verified');
             bootstrap.Modal.getInstance(modal).hide();
         } catch (err) {
-            // FAILURE: Display error message, clear inputs, refocus on PIN
+            // FAILURE: Display error message
             showError(err.message, errorMsg);
             errorMsg.classList.remove('d-none');
-            clearInputs(inputs);
-            inputs[0].focus();
+            
+            // Clear only the invalid field - keep the valid one
+            if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
+                // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
+                clearInputs(inputs);
+                inputs[0].focus();
+            } else if (err.message === 'Please enter your name') {
+                // Name is missing, keep PIN, clear name and refocus on name
+                nameInput.value = '';
+                nameInput.focus();
+            } else {
+                // Other errors (rate limit, etc) - clear name only
+                nameInput.value = '';
+                nameInput.focus();
+            }
         } finally {
             // RESTORE UI: Re-enable button after response
             submitBtn.disabled = false;

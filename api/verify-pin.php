@@ -29,6 +29,7 @@ if (!isset($_SESSION[$rateLimitKey])) {
 $input = json_decode(file_get_contents('php://input'), true);
 $pin = $input['pin'] ?? null;
 $name = $input['name'] ?? null;
+$pageName = $input['pageName'] ?? null;
 
 // Validate name
 if (!$name || !is_string($name) || empty(trim($name))) {
@@ -42,14 +43,14 @@ if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
     die(json_encode(['success' => false, 'error' => 'Invalid PIN format']));
 }
 
-// Fetch PIN from database based on client name
+// Fetch PIN from database
 $correctPin = null;
 
 try {
     if ($mysqli && !mysqli_connect_error()) {
-        // Query database for PIN (assumes table "tblClientPIN" with columns "name" and "pin")
-        $stmt = $mysqli->prepare("SELECT pin FROM tblClientPIN WHERE name = ? LIMIT 1");
-        $stmt->bind_param("s", $name);
+        // Query database for PIN
+        $stmt = $mysqli->prepare("SELECT pin FROM tblClientPIN LIMIT 1");
+        $stmt->bind_param("s", $pin);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -85,5 +86,18 @@ if ($pin !== $correctPin) {
 // Success - reset counter
 $_SESSION[$rateLimitKey]['count'] = 0;
 http_response_code(200);
+
+try {
+    if ($mysqli && !mysqli_connect_error()) {
+        $stmt = $mysqli->prepare("insert into tblPinLogs (name, pageName, pin, timestamp) values (?, ?, ?, ?)");
+        $currentTime = date('Y-m-d H:i:s');
+        $stmt->bind_param("ssss", $name, $pageName, $pin, $currentTime);
+        $stmt->execute();
+        $stmt->close();
+    }
+} catch (\Throwable $th) {
+
+}
+
 echo json_encode(['success' => true, 'message' => 'PIN verified']);
 ?>
