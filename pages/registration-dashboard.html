@@ -12,7 +12,7 @@
     <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
 </head>
 
-<body class="d-flex align-items-center vh-100 overflow-hidden bg-light">
+<body class="d-flex align-items-center bg-light">
 
     <div class="container-fluid h-100 p-4">
 
@@ -25,7 +25,7 @@
         <div class="row">
             
             <!-- Registration Card -->
-            <div class="col-lg-8 col-md-12 mb-4 mb-lg-0">
+            <div class="col-lg-8 col-md-12 mb-4 mb-lg-0 p-4">
                 <div class="card h-100">
                     <div class="card-header d-flex align-items-center bg-primary p-3">
                         <div class="header-title">
@@ -34,7 +34,7 @@
                     </div>
                     
                     <!-- Registraion Check-In Table -->
-                    <div class="card-body p-0" style="height: 550px; overflow-y: auto;">
+                    <div class="card-body p-0" style="max-height: calc(100vh - 200px); overflow-y: auto;">
                         <table class="table table-hover mb-0">
                             <thead class="sticky-header">
                                 <tr>
@@ -44,7 +44,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                
                                 <tr class="align-middle">
                                     <td class="ps-4">
                                         <div class="d-flex align-items-center gap-3">
@@ -58,27 +57,27 @@
                                     <td>
                                         <div class="d-flex justify-content-between align-items-center pe-3">
                                             <div class="d-flex gap-3">
-                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Medical" 
+                                                <button class="btn btn-success btn-sm rounded-2" title="Medical" 
                                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="bi bi-plus-lg"></i>
+                                                    <i class="bi bi-heart-pulse text-white"></i>
                                                 </button>
                                                 
-                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Dental" 
+                                                <button class="btn btn-danger btn-sm rounded-2" title="Dental" 
                                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="bi bi-shield-shaded"></i>
                                                 </button>
                                                 
-                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Optical" 
+                                                <button class="btn btn-grey btn-sm rounded-2" title="Optical" 
                                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 
-                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Haircut" 
+                                                <button class="btn btn-success btn-sm rounded-2" title="Haircut" 
                                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="bi bi-scissors"></i>
                                                 </button>
                                             </div>
-                                            <button class="btn btn-primary btn-sm">Check In</button>
+                                            <button class="btn bg-primary text-white btn-sm">Check In</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -96,6 +95,44 @@
                                     <td>
                                         <div class="d-flex justify-content-between align-items-center pe-3">
                                             <div class="d-flex gap-3">
+                                                <button class="btn btn-grey btn-sm rounded-2" title="Medical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-heart-pulse"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-danger btn-sm rounded-2" title="Dental" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-shield-shaded"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-success btn-sm rounded-2" title="Optical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-success btn-sm rounded-2" title="Haircut" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-scissors"></i>
+                                                </button>
+                                            </div>
+                                            <button class="btn bg-primary text-white btn-sm">Check In</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr class="align-middle">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-circle"style="font-size: 1.5rem"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">Michael S. Johnson</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium text-secondary">03/15/1985</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between align-items-center pe-3">
+                                            <div class="d-flex gap-3">
                                                 <button class="btn btn-outline-secondary btn-sm rounded-2" title="Medical" 
                                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="bi bi-plus-lg"></i>
@@ -120,6 +157,121 @@
                                         </div>
                                     </td>
                                 </tr>
+
+                                <tr class="align-middle">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-circle"style="font-size: 1.5rem"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">Sarah M. Williams</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium text-secondary">09/28/1992</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between align-items-center pe-3">
+                                            <div class="d-flex gap-3">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Medical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Dental" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-shield-shaded"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Optical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Haircut" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-scissors"></i>
+                                                </button>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm">Check In</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr class="align-middle">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-circle"style="font-size: 1.5rem"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">Robert T. Brown</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium text-secondary">12/10/1975</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between align-items-center pe-3">
+                                            <div class="d-flex gap-3">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Medical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Dental" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-shield-shaded"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Optical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Haircut" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-scissors"></i>
+                                                </button>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm">Check In</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr class="align-middle">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-circle"style="font-size: 1.5rem"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark">Amanda C. Davis</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium text-secondary">05/17/1988</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between align-items-center pe-3">
+                                            <div class="d-flex gap-3">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Medical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Dental" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-shield-shaded"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Optical" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                
+                                                <button class="btn btn-outline-secondary btn-sm rounded-2" title="Haircut" 
+                                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-scissors"></i>
+                                                </button>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm">Check In</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
                             </tbody>
                         </table>
                     </div>
@@ -129,37 +281,49 @@
             <div class="col-lg-4 col-md-12">
                 
                 <!-- Logo -->
-                <div class="text-end mb-4 d-none d-lg-block">
+                <div class="text-center mb-4 d-none d-lg-block">
                     <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus - Mobile Mission" class="mb-3" style="width: 180px;">
                 </div>
 
-                <!-- Waiting Card-->
-                <h6 class="mb-2" style="color:#174593">Currently in Registration</h6>
-                <div class="card mb-4 shadow-sm rounded-pill">
-                    <div class="card-body d-flex justify-content-between align-items-center px-4">
-                        <i class="bi bi-person-lines-fill"style="font-size: 2rem; line-height: 1;"></i>
-                        <h3 class="mb-0 fw-bold" style="color:#174593">24</h3>
+                <!-- Stats Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary p-3">
+                        <h5 class="text-white mb-0 fw-bold">Statistics</h5>
                     </div>
-                </div>
+                    <div class="card-body p-3">
+                        <div class="row">
+                            <!-- Currently in Registration -->
+                            <div class="col-6 pe-3 border-end">
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Currently in Registration</h6>
+                                <div class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
+                                    <i class="bi bi-person-lines-fill h4 mb-0 text-dark"></i>
+                                    <span class="h3 fw-bold mb-0">24</span>
+                                </div>
+                            </div>
 
-                <!-- Processed Patients-->
-                <h6 class="mb-2" style="color:#174593">Processed Patients</h6>
-                <div class="card mb-4 shadow-sm rounded-pill">
-                    <div class="card-body d-flex justify-content-between align-items-center px-4">
-                        <i class="bi bi-person-check-fill"style="font-size: 2rem; line-height: 1;"></i>
-                        <h3 class="mb-0 fw-bold" style="color:#174593">3</h3>
+                            <!-- Processed Patients -->
+                            <div class="col-6 ps-3">
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Processed Patients</h6>
+                                <div class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
+                                    <i class="bi bi-person-check-fill h4 mb-0 text-dark"></i>
+                                    <span class="h3 fw-bold mb-0">3</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Service Availability-->
-                <h6 class="mb-2" style="color:#174593">Availability</h6>
                 <div class="card">
+                    <div class="card-header bg-primary p-3">
+                        <h5 class="text-white mb-0 fw-bold">Availability</h5>
+                    </div>
                     <div class="card-body d-flex flex-column justify-content-between" style="height: 300px;">
                         
                         <div>
                             <div class="d-flex justify-content-between mb-1">
-                                <span>Medical</span>
-                                <span class="fw-bold">(26/40)</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical</span>
+                                <span class="fw-bold" style="color:black;">(26/40)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-warning" role="progressbar" style="width: 57%"></div>
@@ -168,8 +332,8 @@
 
                         <div>
                             <div class="d-flex justify-content-between mb-1">
-                                <span>Dental</span>
-                                <span class="fw-bold">(20/20)</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Dental</span>
+                                <span class="fw-bold" style="color:black;">(20/20)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
@@ -178,8 +342,8 @@
 
                         <div>
                             <div class="d-flex justify-content-between mb-1">
-                                <span>Optical</span>
-                                <span class="fw-bold">(9/20)</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Optical</span>
+                                <span class="fw-bold" style="color:black;">(9/20)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: 45%"></div>
@@ -188,8 +352,8 @@
 
                         <div>
                             <div class="d-flex justify-content-between mb-1">
-                                <span>Haircut</span>
-                                <span class="fw-bold">(2/30)</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Haircut</span>
+                                <span class="fw-bold" style="color:black;">(2/30)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: 7%"></div>

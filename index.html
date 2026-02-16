@@ -15,6 +15,13 @@
 
 <body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
+  <div id="divLanguageSwitch">
+    <select name="" id="selLanguageSwitch" class="btn-primary">
+      <option value="en">EN</option>
+      <option value="es">ES</option>
+    </select>
+  </div>
+
   <div class="container text-center login-container">
     <!-- Logo Section -->
     <div class="logo-section mb-3">
@@ -22,7 +29,7 @@
     </div>
 
     <!-- Subtitle -->
-    <h5 class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
+    <h5 id="subtitle" class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
       Connecting patients with free<br>care through DUO
     </h5>
 
@@ -31,7 +38,7 @@
       <div class="card-body p-4">
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
-            <label for="txtClientEmail" class="form-label fw-semibold">Email</label>
+            <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
             <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
               aria-describedby="emailError">
             <div class="invalid-feedback" id="emailError" aria-live="polite">
@@ -40,7 +47,7 @@
           </div>
 
           <div class="mb-3 text-start">
-            <label for="txtClientPassword" class="form-label fw-semibold">Password</label>
+            <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
             <input type="password" name="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
               aria-describedby="passwordError">
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
@@ -50,11 +57,11 @@
 
           <div class="form-check form-switch text-start mb-3">
             <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
-            <label class="form-check-label" for="toggleClientPassword">Show password</label>
+            <label id="lblShowPassword" class="form-check-label" for="toggleClientPassword">Show password</label>
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" style="background-color: #174593;"
+          <button id="btnClientLogin" type="button"
             class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
@@ -68,7 +75,7 @@
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
       </div>
 
-      <a href="pages/register.html" style="color: #174593;"
+      <a id="btn2Register" href="pages/register.html" style="color: #174593;"
         class="fw-semibold d-block mb-3 text-decoration-none">Register</a>
 
       <div class="d-flex flex-column align-items-center">
@@ -80,7 +87,7 @@
   <!-- JS Dependencies -->
   <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
   <script src="js/login.js"></script>
-
+  <script src="js/lang.js"></script>
 </body>
 
 </html>
