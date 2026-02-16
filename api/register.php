@@ -14,6 +14,9 @@ $mysqli = $GLOBALS['mysqli'];
 // Set active status?
 $status = "Active";
 
+// Set queue to registration
+$queue = "registration";
+
 // Check if clientId was passed (existing user)
 $clientID = $_POST['clientId'] ?? null;
 
@@ -33,8 +36,8 @@ if ($clientID) {
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Update client info
-    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ?, Lang = ? WHERE ClientID = ?");
-    $clientUpdate->bind_param("ssssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $language, $clientID);
+    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
+    $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
     $clientUpdate->execute();
 
     $noAddress = $_POST['noAddress'] ?? true;
@@ -103,8 +106,8 @@ if ($clientID) {
     $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
     // Update existing registration
-    $servicesUpdate = $mysqli->prepare("UPDATE tblClientRegistrations SET DateTime = ?, Medical = ?, Optical = ?, Dental = ?, Hair = ? WHERE ClientID = ?");
-    $servicesUpdate->bind_param("siiiis", $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair, $clientID);
+    $servicesUpdate = $mysqli->prepare("UPDATE tblClientRegistrations SET DateTime = ?, Medical = ?, Optical = ?, Dental = ?, Hair = ?, Queue = ? WHERE ClientID = ?");
+    $servicesUpdate->bind_param("siiiiss", $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair, $queue, $clientID);
     $result = $servicesUpdate->execute();
 
     if ($result) {
@@ -136,8 +139,8 @@ if ($clientID) {
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Prepare client info
-    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone, Lang) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $clientCreation->bind_param("sssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone, $language);
+    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone);
     // Execute the statement
     $clientCreation->execute();
 
@@ -204,10 +207,10 @@ if ($clientID) {
     $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
     // Prepare client services
-    $servicesInsertion = $mysqli->prepare("INSERT INTO tblClientRegistrations(ClientID, DateTime, Medical, Optical, Dental, Hair) VALUES (?, ?, ?, ?, ?, ?)");
+    $servicesInsertion = $mysqli->prepare("INSERT INTO tblClientRegistrations(ClientID, DateTime, Medical, Optical, Dental, Hair, Queue) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
     // Bind the variables to the placeholders (use "i" for integers)
-    $servicesInsertion->bind_param("ssiiii", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair);
+    $servicesInsertion->bind_param("ssiiiis", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair, $queue);
 
     // Execute the statement 
     $result = $servicesInsertion->execute();
