@@ -1,11 +1,8 @@
 <?php
 
-
-
 // Database connection from other file
 
 require_once __DIR__ . '/db.php';
-
 
 
 // Get header type, set POST request type for JSON data
@@ -16,42 +13,25 @@ if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
 
 }
 
-
-
-// Get set mysql connection
-
+header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
-
-
-// Temporarily define the client's status to the waiting room queue
-
 $checkInStatus = 'waiting_room';
-
-
-
-// Check if clientId was passed
+// Waiting_room -> SQL Queue column
 
 $clientID = $_POST['clientID'] ?? null;
 
-
-
-// If no ID was sent, send a 400 error
-
 if (empty($clientID)) {
-
     http_response_code(400);
-
     echo json_encode(['success' => false, 'error' => 'clientID is required']);
-
     exit;
-
 }
-
-
 
 $services = $_POST['services'] ?? [];
 
+// -------------------------------------------------------------------------
+//  DATA PREPARATION
+// -------------------------------------------------------------------------
 
 
 // Check if needsInterpreter flag exists in the database, if so, turn flag into 1 (true) or 0 (false)
@@ -59,211 +39,130 @@ $services = $_POST['services'] ?? [];
 // If it's missing (from pre-existing registrations) set it to null so we don't incorrectly overwrite existing data
 
 $needsInterpreter = array_key_exists('needsInterpreter', $_POST)
-
     ? ($_POST['needsInterpreter'] ? 1 : 0)
-
     : null;
 
 
-
-// -------------------------------------------------------------------------
-
-// DATA PREPARATION
-
-// -------------------------------------------------------------------------
-
-
-
 $hasMedical = in_array('medical', $services) ? 1 : 0;
-
 $hasOptical = in_array('optical', $services) ? 1 : 0;
-
 $hasDental  = in_array('dental', $services) ? 1 : 0;
-
 $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
-
-
+// -------------------------------------------------------------------------
+//  UPDATE REGISTRATION
 // -------------------------------------------------------------------------
 
-// DATABASE UPDATE
-
-// -------------------------------------------------------------------------
-
-
-
-// Prepare client info
-
-// NOTE: UNCOMMENT THE Queue PART BELOW WHEN WE ADD IT TO THE DATABASE.
-
-// Don't forget to add it back in when we update the DB
-
-$queryString = "UPDATE tblClientRegistrations
-
+$updateRegQuery = "UPDATE tblClientRegistrations
         SET DateTime = NOW(),
-
             Medical = ?,
-
             Optical = ?,
-
             Dental = ?,
+            Hair = ?,
+            Queue = ?
+        WHERE ClientID = ?";
 
-            Hair = ?";
+$stmtReg = $mysqli->prepare($updateRegQuery);
 
-           // Queue = ?";
-
-           
-
-// NOTE: UNCOMMENT THE LINE BELOW WHEN 'Queue' IS ADDED TO DATABASE
-
-// $queryString .= ", Queue = ?";
+// SQL Failed (Crash or syntax error)
 
 
-
-// NOTE: UNCOMMENT THE LINES BELOW WHEN 'NeedsInterpreter' IS ADDED TO DATABASE
-
-/*
-
-if ($needsInterpreter !== null) {
-
-    $queryString .= ", NeedsInterpreter = ?";
-
-}
-
-*/
-
-
-
-// Limits it to 1 in case of duplicate IDs due to conversion of old database
-
-$queryString .= " WHERE ClientID = ? LIMIT 1";
-
-
-
-$checkInUpdate = $mysqli->prepare($queryString);
-
-
-
-// Check if preparation was successful
-
-if (!$checkInUpdate) {
-
+if (!$stmtReg) {
     http_response_code(500);
-
-    echo json_encode(['success' => false, 'message' => 'Query preparation failed: ' . $mysqli->error]);
-
+    echo json_encode(['success' => false, 'message' => 'Registration preparation failed: ' . $mysqli->error]);
     exit;
-
 }
 
 
+// 4 integers (Services) + 2 Strings (Queue column v(which is being bound to waiting_room) & ClientID)
+$stmtReg->bind_param("iiiiss", $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
+if ($stmtReg->affected_rows === 0) {
+    // 0 rows affected could mean ID not found 
+    // or data hasn't changed. So we check if the ID exists
+    $checkId = $mysqli->prepare("SELECT ClientID FROM tblClientRegistrations WHERE ClientID = ?");
+    $checkId->bind_param("s", $clientID);
+    $checkId->execute();
+    $checkId->store_result();
 
-// NOTE: UNCOMMENT THE TEXT BLOCK BELOW AND DELETE THE TEMP BINDING WHEN DB IS READY
+// Checking execution
+if (!$stmtReg->execute()) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Registration update failed: ' . $stmtReg->error]);
+    $stmtReg->close();
+    exit;
+    }
+}
 
-/*
+// If no rows were updated, it means the ClientID 
+// does not exist in registrations. We check if they exist.
+if ($stmtReg->affected_rows === 0) {
+    http_response_code(404);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Client ID not found.',
+        // Showing that the data went through correctly 
+        // for testing purposes.
+        'debug_data' => [
+            'clientID' => $clientID,
+            'queue' => $checkInStatus,
+            'services' => $services,
+            'needsInterpreter' => ($needsInterpreter === 1)
+            ]
+    ]);
+    // We stop execution here so we don't try to insert into Language table for a ghost user
+    $checkId->close();
+    $stmtReg->close();
+    exit;
+}
 
-// Bind parameters. 'i' = integer, 's' = string
+$checkId->close(); // The ID exists, but the data was already up to date.
 
+$stmtReg->close();
+
+// -------------------------------------------------------------------------
+//  DATABASE UPDATE
+// -------------------------------------------------------------------------
+
+// We only touch the language table if the frontend explicitly sent a value.
 if ($needsInterpreter !== null) {
 
-    // 5 integers (Services & Interpeter) + 2 Strings (Queue & ID)
-
-    $checkInUpdate->bind_param("iiiisis",
-
-        $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $needsInterpreter, $clientID
-
-    );
-
-} else {
-
-    // 4 integers (Services) + 2 Strings (Queue & ClientID)
-
-    $checkInUpdate->bind_param("iiiiss",
-
-        $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID
-
-    );
-
-}
-
-*/
-
-
-
-// BINDING WITHOUT QUEUE OR INTERPRETER FOR NOW, UNTIL WE ADD TO THE DATABASE  
-
-// We only bind the 4 services + ClientID. We skip Queue/Interpreter for now.
-
-$checkInUpdate->bind_param("iiiis",
-
-    $hasMedical, $hasOptical, $hasDental, $hasHair, $clientID
-
-);
-
-
-
-if ($checkInUpdate->execute()) {
-
-
-
-    // Check if a row was found
-
-    if ($checkInUpdate->affected_rows > 0) {
-
-        http_response_code(200);
-
-        $msg = json_encode([
-
-            'success' => true,
-
-            'message' => 'Client successfully checked in.',
-
-            // NOTE: We still send the queue back so the frontend works, even though we haven't added it yet.
-
-            'data' => ['clientID' => $clientID, 'queue' => $checkInStatus]
-
-        ]);
-
-        echo $msg;
-
+    // Check if a row exists for this client
+    $checkLang = $mysqli->prepare("SELECT Language_ID FROM tblClientLang WHERE ClientID = ?");
+    $checkLang->bind_param("s", $clientID);
+    $checkLang->execute();
+    $langResult = $checkLang->get_result();
+    
+    // Update or Insert based on result
+    if ($langResult->num_rows > 0) {
+        // Row exists: Update it
+        $stmtLang = $mysqli->prepare("UPDATE tblClientLang SET NeedsInterpreter = ? WHERE ClientID = ?");
+        $stmtLang->bind_param("is", $needsInterpreter, $clientID);
     } else {
-
-        // Query ran correctly, but found nobody to update. ID incorrect
-
-        http_response_code(404);
-
-        $msg = json_encode(['success' => false, 'message' => 'Client ID not found.']);
-
-        echo $msg;
-
-        error_log("Check-in Failed: ClientID $clientID not found.");
-
+        // Row missing: Insert new
+        $stmtLang = $mysqli->prepare("INSERT INTO tblClientLang (NeedsInterpreter, ClientID) VALUES (?, ?)");
+        $stmtLang->bind_param("is", $needsInterpreter, $clientID);
     }
+    $checkLang->close();
 
-
-
-} else {
-
-    // SQL Failed (Crash or syntax error)
-
-    http_response_code(500);
-
-    $msg = json_encode(['success' => false, 'message' => 'Database update failed.']);
-
-    echo $msg;
-
-    error_log("Check-in Error: " . $mysqli->error);
-
+    // Execute the update
+    if (!$stmtLang->execute()) {
+        error_log("Language update failed: " . $stmtLang->error);
+    }
+    $stmtLang->close();
 }
 
+// -------------------------------------------------------------------------
+// SUCCESS RESPONSE
+// -------------------------------------------------------------------------
 
-
-$checkInUpdate->close();
-
-
-
-// add <script src="../js/check-in.js"></script>
-
-// at the bottom of the registration dashboard.html to prepare for when we connect it to client Ids
-
-// Later we connect each button to clientid database so it knows where to attach.
+http_response_code(200);
+echo json_encode(['success' => true, 'message' => 'Client successfully checked in.',
+'debug_data' => [
+        'clientID' => $clientID,
+        'queue' => $checkInStatus,
+        'services' => $services,
+        // Showing that the data went through correctly 
+        // for testing purposes.
+        'needsInterpreter' => ($needsInterpreter === 1)
+    ]
+]);
+exit;
