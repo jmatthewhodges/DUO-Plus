@@ -98,16 +98,7 @@ if ($stmtReg->affected_rows === 0) {
     http_response_code(404);
     echo json_encode([
         'success' => false,
-        'message' => 'Client ID not found.',
-        // Showing that the data went through correctly 
-        // for testing purposes.
-        'debug_data' => [
-            'clientID' => $clientID,
-            'queue' => $checkInStatus,
-            'services' => $services,
-            'needsInterpreter' => ($needsInterpreter === 1)
-            ]
-    ]);
+        'message' => 'Client ID not found.']);
     // We stop execution here so we don't try to insert into Language table for a ghost user
     $checkId->close();
     $stmtReg->close();
@@ -155,14 +146,5 @@ if ($needsInterpreter !== null) {
 // -------------------------------------------------------------------------
 
 http_response_code(200);
-echo json_encode(['success' => true, 'message' => 'Client successfully checked in.',
-'debug_data' => [
-        'clientID' => $clientID,
-        'queue' => $checkInStatus,
-        'services' => $services,
-        // Showing that the data went through correctly 
-        // for testing purposes.
-        'needsInterpreter' => ($needsInterpreter === 1)
-    ]
-]);
+echo json_encode(['success' => true, 'message' => 'Client successfully checked in.']);
 exit;
