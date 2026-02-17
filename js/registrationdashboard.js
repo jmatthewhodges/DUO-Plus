@@ -236,11 +236,13 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     // Show QR Modal
     closeModalAnimated();
 
+    // Check which services were selected for this client to determine which icons to show on the QR code
     const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
     const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
     const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
     const haircutBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
     
+    // We consider a service "selected" if its button is in the "1" state (green) - this means the patient wanted it and it's available
     const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
     const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
     const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
@@ -250,7 +252,9 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         currentRowToUpdate.remove();
     }
 
+    // Delay QR code generation slightly to allow modal to open smoothly
     setTimeout(() => {
+        // Show the QR Code Modal
         const qrCode = document.getElementById('qrCodeModal');
         qrCode.classList.remove('d-none');
         qrCode.classList.add('d-flex');
@@ -350,6 +354,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 document.getElementById('printQrBtn').addEventListener('click', function() {
     // Add print-specific styling to show only the modal
     const style = document.createElement('style');
+    // This CSS will hide everything except the QR code modal when printing
     style.textContent = `
         @media print {
             @page { margin: 0; size: auto; }
