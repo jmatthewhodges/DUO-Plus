@@ -10,6 +10,16 @@ body {
   justify-content: center;
 }
 
+/* Blur will be applied by JavaScript when PIN modal is active */
+.container-fluid {
+  transition: filter 0.3s ease;
+}
+
+/* Remove blur after PIN verification */
+.container-fluid.pin-verified {
+  filter: blur(0);
+}
+
 /* Remove default focus outline */
 :focus {
   outline: none;
@@ -60,6 +70,7 @@ body.v-center-page {
   position: relative;
   overflow: hidden;
   background-color: #0f3468 !important;
+  color: white;
 }
 
 /* Primary button hover effect */
@@ -67,6 +78,7 @@ body.v-center-page {
   background-color: #1b3d6c !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px #1b3d6c !important;
+  cursor: pointer;
 }
 
 /* Fade transition for step switching */
@@ -118,4 +130,178 @@ body.v-center-page {
     width: 5rem;                 /* Adjust size as needed */
     height: 5rem;
     background: #fff; 
+    border: 3px solid #174593;
+    border-radius: 3px;
+}
+
+/* PIN Code Modal Styling */
+.pin-input-group {
+    flex-wrap: nowrap;
+}
+
+.pin-input {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #d3d3d3;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #0f3468;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+    caret-color: #0f3468;
+}
+
+.pin-input:hover {
+    border-color: #174593;
+    background-color: #fff;
+}
+
+.pin-input:focus {
+    border-color: #0f3468;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(15, 52, 104, 0.1);
+    outline: none;
+}
+
+.pin-input.filled {
+    border-color: #0f3468;
+    background-color: #f0f7ff;
+}
+
+.pin-input::placeholder {
+    color: #999;
+}
+
+/* Mobile responsive */
+@media (max-width: 576px) {
+    .pin-input {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .pin-input-group {
+        gap: 2px !important;
+    }
+}
+.btn-grey {
+  /* lighter base so stripes show more clearly */
+  background-color: #adb5bd;
+  color: white; /* darker text for better contrast on lighter bg */
+  /* clearer diagonal stripes (lighter stripe + subtle darker band) */
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255,255,255,0.28) 0 6px,
+    rgba(0,0,0,0.04) 6px 12px
+  );
+  
+  background-blend-mode: normal;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.btn-grey:hover,
+.btn-grey:focus {
+  background-color: #98a3ab; /* slightly darker on hover */
+  border-color: rgba(255, 255, 255, 1);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255,255,255,0.32) 0 6px,
+    rgba(0,0,0,0.06) 6px 12px
+  );
+  box-shadow: 0 2px 8px rgba(11,36,48,0.06);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-grey:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Make warning progress more yellow and remove orange gradient */
+.progress-bar.bg-warning,
+.bg-warning {
+  background-color: #e2b212 !important; /* lighter/more yellow */
+  background-image: none !important;   /* remove any orange gradient */
+  color: #212529;
+  border-color: rgba(0,0,0,0.04);
+}
+
+/* Language Select */
+#divLanguageSwitch {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+/* ==========================================
+   MODAL ANIMATIONS
+   ========================================== */
+
+/* 1. Fade in the dark background overlay */
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 2. Scale and drop the card in with a slight "spring" bounce */
+@keyframes cardPopIn {
+    from { 
+        opacity: 0; 
+        transform: scale(0.85) translateY(-30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* 3. Apply the animations when the modal is active (d-flex) */
+#checkInModal.d-flex {
+    animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+#checkInModal.d-flex .card {
+    /* The cubic-bezier adds that professional, slight over-shoot "bounce" */
+    animation: cardPopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Custom locked state to preserve btn-grey styling */
+.locked-btn {
+    pointer-events: none; /* Prevents all mouse clicks */
+}
+
+/* ==========================================
+   MODAL EXIT ANIMATIONS
+   ========================================== */
+
+/* Fade out the dark background */
+@keyframes modalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Shrink and fade the card out */
+@keyframes cardPopOut {
+    from { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+    to { 
+        opacity: 0; 
+        transform: scale(0.85) translateY(-30px); 
+    }
+}
+
+/* We will apply this 'closing' class using JavaScript */
+#checkInModal.closing {
+    animation: modalFadeOut 0.5s ease-in forwards;
+}
+
+#checkInModal.closing .card {
+    animation: cardPopOut 0.5s ease-in forwards;
 }
