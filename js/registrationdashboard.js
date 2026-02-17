@@ -297,39 +297,25 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     // END QR CODE LOGIC
     //====================================
 
-    // TODO: Fix API response - commented out fetch for now
-    /*
-    // The Fetch Request
+    // Send check-in data to API
     fetch('../api/check-in.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-            clientId: currentClientId,           // The ID we grabbed from the row
-            serviceInfo: selectedDental ? selectedDental.value : null, // The specific dental choice
-            languageInterpreter: isInterpreterNeeded // Boolean (true/false)
+            clientID: currentClientId,
+            services: selectedDental ? ['dental'] : [],
+            needsInterpreter: isInterpreterNeeded
         })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
+        if (!data.success) {
+            // Close QR modal if check-in fails
+            const qrCode = document.getElementById('qrCodeModal');
+            qrCode.classList.add('d-none');
+            qrCode.classList.remove('d-flex');
             
-            closeModalAnimated();
-
-            if (currentRowToUpdate) {
-                currentRowToUpdate.remove();
-            }
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Checked In!',
-                html: `<strong>${currentClientName}</strong> has been successfully processed.`,
-                timer: 2500,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                allowOutsideClick: false
-            });
-
-        } else {
+            console.error('Check-in failed:', data.message);
             Swal.fire({
                 icon: 'error',
                 title: 'Check-In Failed',
@@ -339,7 +325,12 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        // Close QR modal on network error
+        const qrCode = document.getElementById('qrCodeModal');
+        qrCode.classList.add('d-none');
+        qrCode.classList.remove('d-flex');
+        
+        console.error('API Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Connection Error',
@@ -351,10 +342,6 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         btn.disabled = false;
         btn.innerHTML = originalText;
     });
-    */
-    
-    btn.disabled = false;
-    btn.innerHTML = originalText;
 });
 
 //==========================================
