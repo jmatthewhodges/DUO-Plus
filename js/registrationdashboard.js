@@ -1,47 +1,19 @@
 // ==========================================
-// 1. GLOBAL SETTINGS, MOCK DATA & MEMORY
+// 1. GLOBAL SETTINGS & MEMORY
 // ==========================================
 
 // Global Service Availability (true = open, false = full/unavailable)
 const serviceAvailability = {
     medical: true,
-    dental: true,    // Kept as true for testing
+    dental: true,
     optical: true,
     haircut: true
 };
 
-// API Mock Data (Matching your specific incoming structure)
-const patients = [
-    {
-        clientId: 101,
-        firstName: "John",
-        middleInitial: "A",
-        lastName: "Doe",
-        dob: "11/01/1978",
-        serviceInfo: { medical: 1, dental: 1, optical: 0, haircut: 1 } 
-    },
-    {
-        clientId: 102,
-        firstName: "Jane",
-        middleInitial: "D",
-        lastName: "Rhett",
-        dob: "07/21/2001",
-        serviceInfo: { medical: 0, dental: 1, optical: 1, haircut: 1 } 
-    },
-    {
-        clientId: 103,
-        firstName: "Michael",
-        middleInitial: "S",
-        lastName: "Johnson",
-        dob: "03/15/1985",
-        serviceInfo: { medical: 0, dental: 0, optical: 0, haircut: 0 } 
-    }
-];
-
 // Memory variables to remember which row/client was clicked
 let currentRowToUpdate = null;
-let currentClientName = ""; // Used for display in the modal
-let currentClientId = null; // Used for the API request
+let currentClientName = ""; 
+let currentClientId = null; 
 
 // ==========================================
 // 2. DOM ELEMENTS
@@ -49,14 +21,24 @@ let currentClientId = null; // Used for the API request
 const tableBody = document.querySelector('tbody');
 
 // ==========================================
-// 3. HTML GENERATOR FUNCTIONS
+// 3. HELPER FUNCTIONS
 // ==========================================
+
+// Converts "2004-03-03" (API) to "03/03/2004" (Display)
+function formatDOB(dateString) {
+    if (!dateString) return "N/A";
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
+}
 
 function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     let colorClass = '';
     let iconColor = '';
     let disabledAttr = '';
     let isAvailable = serviceAvailability[serviceKey];
+
+    // Ensure state is an integer (API might send strings "1" or "0")
+    state = parseInt(state);
 
     // If they wanted it (1) but it's full, force state to -1 (Red)
     if (state === 1 && !isAvailable) {
@@ -88,16 +70,56 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
-function populateRegistrationTable() {
+// ==========================================
+// 4. MAIN DATA FUNCTIONS
+// ==========================================
+
+// Fetch the queue from the database
+function fetchRegistrationQueue() {
+    // Show a loading state or clear table while fetching
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
+
+    fetch('../api/registration-dashboard.php', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateRegistrationTable(data.data);
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-danger">Failed to load queue.</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching queue:', error);
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-danger">Connection error. Please refresh.</td></tr>';
+        });
+}
+
+function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
-    patients.forEach(patient => {
-        // Construct the full name string
-        const fullName = `${patient.firstName} ${patient.middleInitial}. ${patient.lastName}`;
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
+        return;
+    }
 
-        // Note: We store the clientId in the data-client-id attribute of the <tr>
+    patientsData.forEach(patient => {
+        // 1. Construct Full Name
+        let fullName = `${patient.FirstName} ${patient.LastName}`;
+        if (patient.MiddleInitial) {
+            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
+        }
+
+        // 2. Format DOB
+        const formattedDOB = formatDOB(patient.DOB);
+
+        // 3. Map API keys to our internal keys
         const rowHTML = `
-            <tr class="align-middle" data-client-id="${patient.clientId}">
+            <tr class="align-middle" data-client-id="${patient.ClientID}">
                 <td class="ps-4">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
@@ -106,14 +128,14 @@ function populateRegistrationTable() {
                         <span class="fw-bold text-dark">${fullName}</span>
                     </div>
                 </td>
-                <td class="fw-medium text-secondary">${patient.dob}</td>
+                <td class="fw-medium text-secondary">${formattedDOB}</td>
                 <td>
                     <div class="d-flex justify-content-between align-items-center pe-3">
                         <div class="d-flex gap-3">
-                            ${buildServiceButton('Medical', patient.serviceInfo.medical, 'bi-heart-pulse', 'medical')}
-                            ${buildServiceButton('Dental', patient.serviceInfo.dental, 'bi-shield-shaded', 'dental')}
-                            ${buildServiceButton('Optical', patient.serviceInfo.optical, 'bi-eye', 'optical')}
-                            ${buildServiceButton('Haircut', patient.serviceInfo.haircut, 'bi-scissors', 'haircut')}
+                            ${buildServiceButton('Medical', patient.Medical, 'bi-heart-pulse', 'medical')}
+                            ${buildServiceButton('Dental', patient.Dental, 'bi-shield-shaded', 'dental')}
+                            ${buildServiceButton('Optical', patient.Optical, 'bi-eye', 'optical')}
+                            ${buildServiceButton('Haircut', patient.Hair, 'bi-scissors', 'haircut')}
                         </div>
                         <button class="btn bg-primary text-white btn-sm check-in-btn">Check In</button>
                     </div>
@@ -125,7 +147,7 @@ function populateRegistrationTable() {
 }
 
 // ==========================================
-// 4. EVENT LISTENERS (TABLE CLICKS)
+// 5. EVENT LISTENERS
 // ==========================================
 
 tableBody.addEventListener('click', function(event) {
@@ -154,18 +176,16 @@ tableBody.addEventListener('click', function(event) {
     const checkInBtn = event.target.closest('.check-in-btn');
     if (checkInBtn) {
         
-        // 1. Identify the Row and Data
+        // Identify Row and Client
         currentRowToUpdate = checkInBtn.closest('tr');
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
-        
-        // Grab the Client ID from the data attribute we added in buildRow
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
         
-        // 2. Check Dental Status for this row
+        // Check Dental Status for this row
         const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
         const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
 
-        // 3. Populate Modal UI
+        // Populate Modal UI
         document.getElementById('modalPatientName').innerText = currentClientName;
 
         // Reset inputs
@@ -173,7 +193,7 @@ tableBody.addEventListener('click', function(event) {
         document.getElementById('dentalHygiene').checked = false;
         document.getElementById('dentalExtraction').checked = false;
 
-        // 4. Show/Hide Dental Section
+        // Show/Hide Dental Section
         const dentalSection = document.getElementById('modalDentalSection');
         if (dentalState === 1 && serviceAvailability.dental === true) {
             dentalSection.classList.remove('d-none');
@@ -181,7 +201,7 @@ tableBody.addEventListener('click', function(event) {
             dentalSection.classList.add('d-none');
         }
 
-        // 5. Open Modal
+        // Open Modal
         const modal = document.getElementById('checkInModal');
         modal.classList.remove('d-none');
         modal.classList.add('d-flex'); 
@@ -189,7 +209,7 @@ tableBody.addEventListener('click', function(event) {
 });
 
 // ==========================================
-// 5. MODAL ACTION LISTENERS & FETCH
+// 6. MODAL ACTION LISTENERS & SUBMISSION
 // ==========================================
 
 function closeModalAnimated() {
@@ -211,33 +231,59 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     
     const btn = this; 
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
-    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
     
-    // Validation
-    const dentalSection = document.getElementById('modalDentalSection');
-    if (!dentalSection.classList.contains('d-none') && !selectedDental) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Selection Required',
-            text: 'Please select either Hygiene or Extraction to proceed.',
-            confirmButtonColor: '#174593'
-        });
-        return; 
+    // 1. DYNAMICALLY BUILD THE SERVICES ARRAY
+    const services = [];
+
+    // Check Medical Button in the current row
+    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+    if (parseInt(medicalBtn.getAttribute('data-state')) === 1) {
+        services.push('medical');
     }
 
-    // Loading State
+    // Check Optical Button
+    const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
+    if (parseInt(opticalBtn.getAttribute('data-state')) === 1) {
+        services.push('optical');
+    }
+
+    // Check Haircut Button
+    const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
+    if (parseInt(hairBtn.getAttribute('data-state')) === 1) {
+        services.push('haircut');
+    }
+
+    // Check Dental (Comes from Modal Radio Buttons, not the row button)
+    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
+    const dentalSection = document.getElementById('modalDentalSection');
+    
+    // Validation: If dental section is visible, they MUST pick one
+    if (!dentalSection.classList.contains('d-none')) {
+        if (!selectedDental) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Selection Required',
+                text: 'Please select either Hygiene or Extraction to proceed.',
+                confirmButtonColor: '#174593'
+            });
+            return; 
+        }
+        services.push(selectedDental.value); // Pushes "hygiene" or "extraction"
+    }
+
+    // 2. LOADING STATE
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = 'Processing...';
 
-    // The Fetch Request
+    // 3. THE FETCH REQUEST
     fetch('../api/check-in.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-            clientId: currentClientId,           // The ID we grabbed from the row
-            serviceInfo: selectedDental ? selectedDental.value : null, // The specific dental choice
-            languageInterpreter: isInterpreterNeeded // Boolean (true/false)
+            clientID: currentClientId,           
+            services: services, 
+            needsInterpreter: isInterpreterNeeded 
         })
     })
     .then(response => response.json())
@@ -285,6 +331,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 });
 
 // ==========================================
-// 6. INITIALIZATION
+// 7. INITIALIZATION
 // ==========================================
-populateRegistrationTable();
+// Load the real data when the page loads
+fetchRegistrationQueue();
