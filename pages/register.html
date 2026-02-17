@@ -10,6 +10,7 @@
     <!-- Styles -->
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body>
@@ -35,13 +36,15 @@
                 <!-- QR Code Card -->
                 <div id="divQRCode" class="d-none d-flex justify-content-center">
                     <div class="card shadow-lg border-0 rounded-4 p-3 px-4 text-center">
-                        <h2 class="mb-2" id="qrCardTitle"></h5>
-                        <canvas id="qr"></canvas>
+                        <h1 class="mb-2"style="color:black;" id="qrCardTitle"></h1>
+                        <!--Note: Translator icon is currently not in nodeJS script so it will not appear.-->
+                        <i class="bi bi-chat-dots"style="display: none; font-size: 1rem; color:black;" id="qrCardTranslator"></i>
+                        <canvas class="p-3" id="qr"></canvas>
                         <div class="d-flex justify-content-center gap-3 mt-3">
-                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardMedicalIcon">🏥</h3>
-                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardDentalIcon">🦷</h3>
-                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardOpticalIcon">👁️</h3>
-                            <h3 style="display: none;" class="display-3 mb-0 qr-icon-border" id="qrCardHaircutIcon">✂️</h3>
+                            <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardMedicalIcon"></i>
+                            <i class="bi bi-shield-shaded qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
+                            <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardOpticalIcon"></i>
+                            <i class="bi bi-scissors qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
                         </div>
                     </div>
                 </div>
