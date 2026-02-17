@@ -1,16 +1,11 @@
 <?php
 
 // Database connection from other file
-
 require_once __DIR__ . '/db.php';
 
-
 // Get header type, set POST request type for JSON data
-
 if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-
     $_POST = json_decode(file_get_contents('php://input'), true) ?? [];
-
 }
 
 header('Content-Type: application/json');
@@ -74,38 +69,35 @@ if (!$stmtReg) {
 
 
 // 4 integers (Services) + 2 Strings (Queue column v(which is being bound to waiting_room) & ClientID)
-$stmtReg->bind_param("iiiiss", $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
-if ($stmtReg->affected_rows === 0) {
-    // 0 rows affected could mean ID not found 
-    // or data hasn't changed. So we check if the ID exists
-    $checkId = $mysqli->prepare("SELECT ClientID FROM tblClientRegistrations WHERE ClientID = ?");
-    $checkId->bind_param("s", $clientID);
-    $checkId->execute();
-    $checkId->store_result();
 
-// Checking execution
+$stmtReg->bind_param("iiiiss", $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
+// Only execute and proceed if update is successful
 if (!$stmtReg->execute()) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Registration update failed: ' . $stmtReg->error]);
     $stmtReg->close();
     exit;
-    }
 }
 
-// If no rows were updated, it means the ClientID 
-// does not exist in registrations. We check if they exist.
+// If no rows were updated, it means the ClientID does not exist in registrations or data hasn't changed
 if ($stmtReg->affected_rows === 0) {
-    http_response_code(404);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Client ID not found.']);
-    // We stop execution here so we don't try to insert into Language table for a ghost user
-    $checkId->close();
-    $stmtReg->close();
-    exit;
+    // Check if the ID exists
+    $checkId = $mysqli->prepare("SELECT ClientID FROM tblClientRegistrations WHERE ClientID = ?");
+    $checkId->bind_param("s", $clientID);
+    $checkId->execute();
+    $checkId->store_result();
+    if ($checkId->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Client ID not found.'
+        ]);
+        $checkId->close();
+        $stmtReg->close();
+        exit;
+    }
+    $checkId->close(); // The ID exists, but the data was already up to date.
 }
-
-$checkId->close(); // The ID exists, but the data was already up to date.
 
 $stmtReg->close();
 
@@ -145,6 +137,65 @@ if ($needsInterpreter !== null) {
 // SUCCESS RESPONSE
 // -------------------------------------------------------------------------
 
+
+// Only fetch and return client data if update was successful or data was already up to date
+// (i.e., we did not exit above)
+
+$clientData = [
+    'clientID' => $clientID,
+    'firstName' => null,
+    'middleInitial' => null,
+    'lastName' => null,
+    'services' => [],
+    'needsInterpreter' => $needsInterpreter // default to what was set, will update below
+];
+
+// Get client name info
+$stmtClient = $mysqli->prepare("SELECT FirstName, MiddleInitial, LastName FROM tblClients WHERE ClientID = ?");
+$stmtClient->bind_param("s", $clientID);
+if ($stmtClient->execute()) {
+    $stmtClient->bind_result($firstName, $middleInitial, $lastName);
+    if ($stmtClient->fetch()) {
+        $clientData['firstName'] = $firstName;
+        $clientData['middleInitial'] = $middleInitial;
+        $clientData['lastName'] = $lastName;
+    }
+}
+$stmtClient->close();
+
+// Get services info
+$stmtServices = $mysqli->prepare("SELECT Medical, Optical, Dental, Hair FROM tblClientRegistrations WHERE ClientID = ?");
+$stmtServices->bind_param("s", $clientID);
+if ($stmtServices->execute()) {
+    $stmtServices->bind_result($med, $opt, $dent, $hair);
+    if ($stmtServices->fetch()) {
+        $servicesArr = [];
+        if ($med) $servicesArr[] = 'medical';
+        if ($opt) $servicesArr[] = 'optical';
+        if ($dent) $servicesArr[] = 'dental';
+        if ($hair) $servicesArr[] = 'haircut';
+        $clientData['services'] = $servicesArr;
+    }
+}
+$stmtServices->close();
+
+// Get needsInterpreter from DB if not set in this request
+if ($needsInterpreter === null) {
+    $stmtLang = $mysqli->prepare("SELECT NeedsInterpreter FROM tblClientLang WHERE ClientID = ?");
+    $stmtLang->bind_param("s", $clientID);
+    if ($stmtLang->execute()) {
+        $stmtLang->bind_result($dbNeedsInterpreter);
+        if ($stmtLang->fetch()) {
+            $clientData['needsInterpreter'] = $dbNeedsInterpreter;
+        }
+    }
+    $stmtLang->close();
+}
+
 http_response_code(200);
-echo json_encode(['success' => true, 'message' => 'Client successfully checked in.']);
+echo json_encode([
+    'success' => true,
+    'message' => 'Client successfully checked in.',
+    'client' => $clientData
+]);
 exit;
