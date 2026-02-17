@@ -230,6 +230,75 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     btn.disabled = true;
     btn.innerHTML = 'Processing...';
 
+    //====================================
+    // QR CODE GENERATION & DISPLAY LOGIC
+    //====================================
+    // Show QR Modal
+    closeModalAnimated();
+
+    const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
+    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+    const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
+    const haircutBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
+    
+    const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
+    const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
+    const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
+    const hasHaircut = haircutBtn && haircutBtn.getAttribute('data-state') === '1';
+
+    if (currentRowToUpdate) {
+        currentRowToUpdate.remove();
+    }
+
+    setTimeout(() => {
+        const qrCode = document.getElementById('qrCodeModal');
+        qrCode.classList.remove('d-none');
+        qrCode.classList.add('d-flex');
+        
+        // Populate QR modal with client name
+        document.getElementById('qrCardTitle').textContent = currentClientName;
+        
+        // Generate QR Code - using QRious library
+        var qr = new QRious({
+            element: document.getElementById('qr'),
+            value: currentClientId,
+            size: 200,
+        });
+        
+        // Reset all icons to hidden first
+        document.getElementById('qrCardDentalIcon').style.display = 'none';
+        document.getElementById('qrCardMedicalIcon').style.display = 'none';
+        document.getElementById('qrCardOpticalIcon').style.display = 'none';
+        document.getElementById('qrCardHaircutIcon').style.display = 'none';
+        document.getElementById('qrCardTranslator').style.display = 'none';
+        
+        // Show service icons based on what was selected
+        if (hasDental) {
+            document.getElementById('qrCardDentalIcon').style.display = 'block';
+        }
+        if (hasMedical) {
+            document.getElementById('qrCardMedicalIcon').style.display = 'block';
+        }
+        if (hasOptical) {
+            document.getElementById('qrCardOpticalIcon').style.display = 'block';
+        }
+        if (hasHaircut) {
+            document.getElementById('qrCardHaircutIcon').style.display = 'block';
+        }
+        
+        // Show translator icon if needed
+        const translatorCheck = document.getElementById('translatorCheck');
+        if (translatorCheck && translatorCheck.checked) {
+            document.getElementById('qrCardTranslator').style.display = 'block';
+        }
+    }, 300);
+
+    //====================================
+    // END QR CODE LOGIC
+    //====================================
+
+    // TODO: Fix API response - commented out fetch for now
+    /*
     // The Fetch Request
     fetch('../api/check-in.php', {
         method: 'POST',
@@ -282,7 +351,77 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         btn.disabled = false;
         btn.innerHTML = originalText;
     });
+    */
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
 });
+
+//==========================================
+// 7. PRINT QR CODE FUNCTIONALITY
+//==========================================
+document.getElementById('printQrBtn').addEventListener('click', function() {
+    // Add print-specific styling to show only the modal
+    const style = document.createElement('style');
+    style.textContent = `
+        @media print {
+            @page { margin: 0; size: auto; }
+            html, body { 
+                width: 100%; 
+                height: 100%; 
+                margin: 0; 
+                padding: 0; 
+                background: white;
+            }
+            * { 
+                margin: 0; 
+                padding: 0; 
+                visibility: hidden;
+            }
+            #qrCodeModal, #qrCodeModal * {
+                visibility: visible !important;
+            }
+            #qrCodeModal {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: white !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #qrCodeModal .card {
+                width: 450px;
+                margin: auto;
+                box-shadow: none;
+            }
+            #printQrBtn { 
+                visibility: hidden !important;
+                display: none !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Trigger print
+    window.print();
+    
+    // Close the modal and clean up after print dialog closes
+    setTimeout(() => {
+        document.head.removeChild(style);
+        const qrCode = document.getElementById('qrCodeModal');
+        qrCode.classList.add('d-none');
+        qrCode.classList.remove('d-flex');
+    }, 100);
+});
+
+//============================
+//END PRINT LOGIC
+//============================
 
 // ==========================================
 // 6. INITIALIZATION
