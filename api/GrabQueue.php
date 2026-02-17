@@ -5,7 +5,8 @@ require_once __DIR__ . '/db.php';
 
 // Get header type, set POST request type for JSON data
 if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $_GET = json_decode(file_get_contents('php://input'), true) ?? [];
+    $jsonData = json_decode(file_get_contents('php://input'), true) ?? [];
+    $_GET = array_merge($_GET, $jsonData);
 }
 
 // Set response header to JSON
@@ -13,6 +14,19 @@ header('Content-Type: application/json');
 
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
+
+// Get the queue parameter from GET request
+$queue = $_GET['queue'] ?? null;
+
+error_log('$_GET contents: ' . json_encode($_GET));
+error_log('$_REQUEST contents: ' . json_encode($_REQUEST));
+
+// Validate queue parameter exists
+if (!$queue) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Missing queue parameter']);
+    exit;
+}
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
 
@@ -31,16 +45,16 @@ if (! $clientDataStmt) {
     http_response_code(500);
     $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
     echo $msg;
-    error_log($msg); 
+    error_log($msg);
     exit;
 }
 //executes prepared query akin to the mysql connection
 $clientDataStmt->bind_param('s', $queue);
-if (! $clientDataStmt->execute()) {
+if (!$clientDataStmt->execute()) {
     http_response_code(500);
     $msg = json_encode(['success' => false, 'error' => $clientDataStmt->error]);
     echo $msg;
-    error_log($msg); 
+    error_log($msg);
     $clientDataStmt->close();
     exit;
 }
@@ -55,10 +69,8 @@ if (count($rows) > 0) {
     $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows]);
 } else {
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => 0, 'data' => []]);
+    $msg = json_encode(['success' => false, 'count' => 0, 'error' => 'No users applicable.']);
 }
-
-
 
 echo $msg;
 error_log($msg);
