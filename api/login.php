@@ -1,33 +1,80 @@
 <?php
+/**
+ * ============================================================
+ *  File:        login.php
+ *  Description: Handles user authentication. Validates
+ *               credentials against the database and returns
+ *               client data on successful login.
+ *
+ *  Last Modified By:  Matthew 
+ *  Last Modified On:  Feb 18 @ 2:42 PM
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
 
-// Database connection from other file
-require_once __DIR__ . '/db.php';
+header('Content-Type: application/json');
 
-// Get header type, set POST request type for JSON data
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $_POST = json_decode(file_get_contents('php://input'), true) ?? [];
+// Request method check
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed. Use POST.']);
+    exit;
 }
 
-// Get set mysql connection
+// Content-Type check
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') === false) {
+    http_response_code(415);
+    echo json_encode(['success' => false, 'message' => 'Content-Type must be application/json.']);
+    exit;
+}
+
+// Decode JSON body
+$rawBody = file_get_contents('php://input');
+$_POST = json_decode($rawBody, true);
+
+if (!is_array($_POST)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid JSON body.']);
+    exit;
+}
+
+// Validate required fields
+$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+$password = $_POST['password'] ?? '';
+
+if (empty($email) || empty($password)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
+    exit;
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid email format.']);
+    exit;
+}
+
+// Database connection
+require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
-// From request
-$email = $_POST['email'] ?? null;
-$password = $_POST['password'] ?? null;
-
-// Check login
+// Check login credentials
 $loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientLogin WHERE Email = ?");
+if (!$loginGrab) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database error.']);
+    exit;
+}
 $loginGrab->bind_param("s", $email);
 $loginGrab->execute();
 $loginGrab->bind_result($clientID, $hashedPassword);
 
 if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
-    // Close the previous query
     $loginGrab->close();
-    // Login successful
     http_response_code(200);
     
-    // Single query to get all client data
+    // Get all client data
     $registrationData = $mysqli->prepare("
         SELECT 
             c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone,
@@ -40,6 +87,11 @@ if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
         LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
         WHERE c.ClientID = ?
     ");
+    if (!$registrationData) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error.']);
+        exit;
+    }
     $registrationData->bind_param("s", $clientID);
     $registrationData->execute();
     $result = $registrationData->get_result();
@@ -49,11 +101,9 @@ if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
     echo $msg;
     error_log($msg);
 } else {
-    // Close the previous query
     $loginGrab->close();
-    // Login failed
     http_response_code(401);
-    $msg = json_encode(['success' => false, 'message' => 'Failed login.']);
+    $msg = json_encode(['success' => false, 'message' => 'Invalid email or password.']);
     echo $msg;
     error_log($msg); 
 }

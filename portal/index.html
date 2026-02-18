@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#72B2D4">
+    <title>DUO+ | API Portal</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Shared design system -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Portal styles -->
+    <link href="portal.css" rel="stylesheet">
+
+    <!-- Monospace font for code -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="portal-body">
+
+    <div class="portal-wrapper">
+
+        <!-- ═══════ Sidebar ═══════ -->
+        <aside class="portal-sidebar" id="portalSidebar">
+
+            <!-- Brand -->
+            <div class="sidebar-header">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO+"
+                        style="width: 32px; height: 32px; border-radius: 6px;">
+                    <div>
+                        <h4>API Portal</h4>
+                        <div class="subtitle">DUO+ Developer Tools</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="sidebar-search">
+                <input type="text" id="sidebarSearch" placeholder="Search methods...">
+            </div>
+
+            <!-- Method list (rendered by JS) -->
+            <div class="method-list" id="methodList"></div>
+
+        </aside>
+
+        <!-- ═══════ Main Content ═══════ -->
+        <main class="portal-main" id="mainContent">
+            <!-- Rendered dynamically by portal.js -->
+        </main>
+
+    </div>
+
+    <!-- Mobile sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Portal logic -->
+    <script src="portal.js"></script>
+
+</body>
+
+</html>
