@@ -1,8 +1,18 @@
-// ==========================================
-// 1. GLOBAL SETTINGS & STATE
-// ==========================================
+/**
+ * ============================================================
+ * File:          registrationdashboard.js
+ * Description:   Java Script for managing the registration dashboard, including fetching patient data, rendering the queue, 
+ * handling service selection, and processing check-ins with QR code generation.
+ *
+ * Last Modified By:  Skyler Emery
+ * Last Modified On:  2/18/26
+ * Changes Made:      Readability improvements, added comments.
+ * ============================================================
+*/
 
-// Service availability flags (true = open, false = full/unavailable)
+// 1. GLOBAL SETTINGS & STATE
+
+// Service availability. Will likely be attached to API response in the future, but hardcoded for now
 const serviceAvailability = {
     medical: true,
     dental: true,
@@ -15,24 +25,24 @@ let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
 
-// ==========================================
+//================================================================================
 // 2. DOM REFERENCES
-// ==========================================
 
-const tableBody = document.querySelector('tbody');
-const statRegCount = document.getElementById('stat-reg-count');
-const statCompCount = document.getElementById('stat-comp-count');
+const tableBody = document.querySelector('tbody');      // Link to the Table Body
+const statRegCount = document.getElementById('stat-reg-count'); // Link to "Registration" Number
+const statCompCount = document.getElementById('stat-comp-count'); // Link to "Processed" Number
 
-// ==========================================
+//================================================================================
 // 3. HELPERS
-// ==========================================
 
+//formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
 }
 
+//updates the stats in the dashboard header. Type can be 'registration' or 'completed'. Value is the number to update.
 function updateStats(type, value) {
     if (type === 'registration') {
         if (statRegCount) statRegCount.innerText = value;
@@ -44,6 +54,7 @@ function updateStats(type, value) {
     }
 }
 
+// Closes the check-in modal with a fade-out animation
 function closeModalAnimated() {
     const modal = document.getElementById('checkInModal');
     modal.classList.add('closing');
@@ -53,12 +64,15 @@ function closeModalAnimated() {
     }, 250);
 }
 
+// Closes the QR code modal card
 function closeQrModal() {
     const qrModal = document.getElementById('qrCodeModal');
     qrModal.classList.add('d-none');
     qrModal.classList.remove('d-flex');
 }
 
+// Creates the HTML for a service button based on the service type, current state, and availability. 
+//State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
 function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     let colorClass = '';
     let iconColor = '';
@@ -66,7 +80,7 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     const isAvailable = serviceAvailability[serviceKey];
     state = parseInt(state);
 
-    // If the patient wanted it but the service is unavailable, mark as locked
+    // If the patient wanted it but the service is unavailable, lock it and show as unavailable (red)
     if (state === 1 && !isAvailable) { state = -1; }
 
     if (state === 1) {
@@ -88,14 +102,15 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
-// ==========================================
+//================================================================================
 // 4. DATA FETCHING & TABLE RENDERING
-// ==========================================
 
+// Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
 
-    fetch('../api/registration-dashboard.php', {
+    //fetch queue data from API
+    fetch('../api/GrabQueue.php?queue=registration', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -115,14 +130,18 @@ function fetchRegistrationQueue() {
         });
 }
 
+// Populates the registration table with patient data. If no patients are in the queue, shows a friendly message. 
+// Each row includes the patient's name, DOB, requested services, and a "Check In" button.
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
+    // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
         return;
     }
 
+    //properly format each patient's name and DOB, then create a table row with their info and requested services
     patientsData.forEach(patient => {
         let fullName = `${patient.FirstName} ${patient.LastName}`;
         if (patient.MiddleInitial) {
@@ -158,19 +177,21 @@ function populateRegistrationTable(patientsData) {
     });
 }
 
-// ==========================================
+//================================================================================
 // 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
-// ==========================================
 
+// Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
-    // --- Service Button Toggle ---
+
     const serviceBtn = event.target.closest('.service-btn');
     if (serviceBtn) {
         if (serviceBtn.hasAttribute('disabled') || serviceBtn.classList.contains('locked-btn')) return;
 
+        // Toggle service state between 1 (selected) and 0 (not selected)
         let currentState = parseInt(serviceBtn.getAttribute('data-state'));
         const icon = serviceBtn.querySelector('i');
 
+        // If the service is currently selected, deselect it. If it's not selected, select it. Update button styles accordingly.
         if (currentState === 1) {
             serviceBtn.setAttribute('data-state', '0');
             serviceBtn.classList.replace('btn-success', 'btn-grey');
@@ -183,7 +204,7 @@ tableBody.addEventListener('click', function (event) {
         return;
     }
 
-    // --- Check-In Button ---
+    // If a check-in button was clicked, open the check-in modal and populate it with the patient's info and requested services
     const checkInBtn = event.target.closest('.check-in-btn');
     if (checkInBtn) {
         currentRowToUpdate = checkInBtn.closest('tr');
@@ -211,10 +232,11 @@ tableBody.addEventListener('click', function (event) {
     }
 });
 
-// ==========================================
+//================================================================================
 // 6. CHECK-IN MODAL SUBMISSION
-// ==========================================
 
+// When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
+// and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
 document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
     closeModalAnimated();
 });
@@ -238,6 +260,8 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
     const dentalSection = document.getElementById('modalDentalSection');
 
+    // If the dental section is visible but no option is selected, show a warning and prevent submission. 
+    // Otherwise, add the selected dental service to the services array.
     if (!dentalSection.classList.contains('d-none')) {
         if (!selectedDental) {
             Swal.fire({
@@ -251,60 +275,17 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         services.push(selectedDental.value);
     }
 
-    // Loading state
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = 'Processing...';
-
-    // Close check-in modal
-    closeModalAnimated();
-
-    // Capture service states for QR card before removing the row
+    // Capture service states for QR card NOW (while DOM still exists)
     const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
     const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
     const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
     const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
     const hasHaircut = hairBtn && hairBtn.getAttribute('data-state') === '1';
 
-    // Remove patient from queue table
-    if (currentRowToUpdate) {
-        currentRowToUpdate.remove();
-    }
-
-    // Show QR modal after a brief delay for smooth transition
-    setTimeout(() => {
-        const qrModal = document.getElementById('qrCodeModal');
-        qrModal.classList.remove('d-none');
-        qrModal.classList.add('d-flex');
-
-        document.getElementById('qrCardTitle').textContent = currentClientName;
-
-        // Generate QR Code (QRious library)
-        new QRious({
-            element: document.getElementById('qr'),
-            value: currentClientId,
-            size: 200,
-        });
-
-        // Reset all QR card icons
-        document.getElementById('qrCardDentalIcon').style.display = 'none';
-        document.getElementById('qrCardMedicalIcon').style.display = 'none';
-        document.getElementById('qrCardOpticalIcon').style.display = 'none';
-        document.getElementById('qrCardHaircutIcon').style.display = 'none';
-        document.getElementById('qrCardTranslator').style.display = 'none';
-
-        // Show icons for selected services
-        if (hasDental) document.getElementById('qrCardDentalIcon').style.display = 'block';
-        if (hasMedical) document.getElementById('qrCardMedicalIcon').style.display = 'block';
-        if (hasOptical) document.getElementById('qrCardOpticalIcon').style.display = 'block';
-        if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.display = 'block';
-
-        // Translator badge
-        const translatorCheck = document.getElementById('translatorCheck');
-        if (translatorCheck && translatorCheck.checked) {
-            document.getElementById('qrCardTranslator').style.display = 'block';
-        }
-    }, 300);
+    // Loading state
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...';
 
     // Send check-in data to API
     fetch('../api/check-in.php', {
@@ -319,12 +300,56 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // QR modal stays open so the user can print
+                // Success! Now it is safe to remove the row and show QR.
+                
+                // Close check-in modal
+                closeModalAnimated();
+
+                // Remove patient from queue table
+                if (currentRowToUpdate) {
+                    currentRowToUpdate.remove();
+                }
+
+                // Update Stats
                 let currentReg = parseInt(statRegCount.innerText) || 0;
                 updateStats('registration', Math.max(0, currentReg - 1));
                 if (statCompCount) statCompCount.innerText = data.clientsProcessed;
                 console.log("Stats Updated: Registration -1, Completed:", data.clientsProcessed);
+
+                // Show QR modal
+                const qrModal = document.getElementById('qrCodeModal');
+                qrModal.classList.remove('d-none');
+                qrModal.classList.add('d-flex');
+
+                document.getElementById('qrCardTitle').textContent = currentClientName;
+
+                // Generate QR Code (QRious library)
+                new QRious({
+                    element: document.getElementById('qr'),
+                    value: currentClientId,
+                    size: 200,
+                });
+
+                // Reset all QR card icons
+                document.getElementById('qrCardDentalIcon').style.display = 'none';
+                document.getElementById('qrCardMedicalIcon').style.display = 'none';
+                document.getElementById('qrCardOpticalIcon').style.display = 'none';
+                document.getElementById('qrCardHaircutIcon').style.display = 'none';
+                document.getElementById('qrCardTranslator').style.display = 'none';
+
+                // Show icons for selected services (using state captured earlier)
+                if (hasDental) document.getElementById('qrCardDentalIcon').style.display = 'block';
+                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.display = 'block';
+                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.display = 'block';
+                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.display = 'block';
+
+                // Translator badge
+                if (isInterpreterNeeded) {
+                    document.getElementById('qrCardTranslator').style.display = 'block';
+                }
+
             } else {
+                // Check-in failed logic
                 closeQrModal();
                 console.error('Check-in failed:', data.message);
                 Swal.fire({
@@ -351,10 +376,10 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         });
 });
 
-// ==========================================
+//================================================================================
 // 7. PRINT QR CODE
-// ==========================================
 
+// When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
     style.textContent = `
@@ -409,8 +434,7 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
 });
 
-// ==========================================
+//================================================================================
 // 8. INITIALIZATION
-// ==========================================
 
 fetchRegistrationQueue();
