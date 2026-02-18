@@ -77,8 +77,6 @@ if (count($rows) > 0) {
 } else {
     http_response_code(201);
     $msg = json_encode(['success' => false, 'count' => 0, 'error' => 'No users applicable.']);
-    http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => 0, 'data' => [], 'clientsProcessed' => $clientsProcessed]);
 }
 
 echo $msg;
