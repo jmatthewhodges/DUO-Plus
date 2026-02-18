@@ -1,7 +1,18 @@
-// ============================================================================
-// CONFIG
-// ============================================================================
+/**
+ * ============================================================
+ *  File:        register.js
+ *  Description: Multi-step registration form logic. Handles
+ *               validation, input masks, step navigation,
+ *               waiver agreement, and API submission for
+ *               both new and returning users.
+ *
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 18 @ 2:58 PM
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
 
+// Config
 const TRANSITION_DURATION = 500; // ms for step fade animation
 
 // Validation regex patterns
@@ -23,11 +34,7 @@ const INPUT_FILTERS = {
     nonDigit: /\D/g
 };
 
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
+// Utility functions
 // Fade transition between steps
 function transitionToStep(fromStep, toStep, targetStepNumber) {
     fromStep.style.opacity = '0';
@@ -81,10 +88,7 @@ const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.ge
 dobInput.max = minAgeDate.toISOString().split('T')[0];
 
 
-// ============================================================================
-// PROGRESS BAR
-// ============================================================================
-
+// Progress bar
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
     let percentage = 1;
@@ -103,7 +107,7 @@ function updateProgressBar(step) {
 
 document.addEventListener('DOMContentLoaded', function () {
     const userData = JSON.parse(sessionStorage.getItem('userData'));
-    
+
     // Only prefill if user is logged in
     if (userData) {
         // Step 1 - Login Info
@@ -111,10 +115,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const passInput = document.getElementById('clientRegisterPass');
 
         console.log(userData);
-        
+
         emailInput.value = userData.Email || '';
         emailInput.disabled = true;
-        
+
         passInput.value = userData.Password || '';
         passInput.disabled = true;
 
@@ -126,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
         document.getElementById('clientLastName').value = userData.LastName || '';
         document.getElementById('clientDOB').value = userData.DOB || '';
-        
+
         // Format phone if exists
         if (userData.Phone) {
             const digits = userData.Phone.replace(/\D/g, '');
@@ -159,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const nameParts = userData.EmergencyName.split(' ');
             document.getElementById('emergencyContactFirstName').value = nameParts[0] || '';
             document.getElementById('emergencyContactLastName').value = nameParts.slice(1).join(' ') || '';
-            
+
             if (userData.EmergencyPhone) {
                 const emergencyDigits = userData.EmergencyPhone.replace(/\D/g, '');
                 document.getElementById('emergencyContactPhone').value = formatPhoneNumber(emergencyDigits);
@@ -171,13 +175,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         goToStepTwo();
     }
-    
+
 });
 
-// ============================================================================
-// STEP 1: LOGIN INFO
-// ============================================================================
-
+//  Step 1 - Login Info
 function goToStepTwo() {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
@@ -236,10 +237,7 @@ document.getElementById('toggleClientRegisterPass').addEventListener('change', f
 });
 
 
-// ============================================================================
-// STEP 2: PERSONAL INFO
-// ============================================================================
-
+// Step 2 - Personal Info
 function goToStepThree() {
     const stepTwo = document.getElementById('divStepTwo');
     const stepThree = document.getElementById('divStepThree');
@@ -270,7 +268,7 @@ function stepTwoSubmit() {
         setFieldValidation(lastName, true);
     }
 
-    // --- DOB 18+ validation ---
+    // DOB 18+ validation
     if (!dob.value) {
         setFieldValidation(dob, false);
         isValid = false;
@@ -329,7 +327,7 @@ document.getElementById('btnRegisterNext2').addEventListener('click', stepTwoSub
 
 document.getElementById('btnRegisterBack2').addEventListener('click', function () {
     const userData = JSON.parse(sessionStorage.getItem('userData'));
-    
+
     // If logged in, go back to home instead of step 1
     if (userData) {
         return;
@@ -340,11 +338,7 @@ document.getElementById('btnRegisterBack2').addEventListener('click', function (
     transitionToStep(stepTwo, stepOne, 1);
 });
 
-
-// ============================================================================
-// STEP 3: ADDRESS INFO
-// ============================================================================
-
+// Step 3 - Address Info
 function goToStepFour() {
     const stepThree = document.getElementById('divStepThree');
     const stepFour = document.getElementById('divStepFour');
@@ -439,11 +433,7 @@ document.getElementById('clientRegisterFormStep3').addEventListener('keydown', f
     }
 });
 
-
-// ============================================================================
-// STEP 4: EMERGENCY CONTACT
-// ============================================================================
-
+// Step 4 - Emergency Contact
 function goToStepFive() {
     const stepFour = document.getElementById('divStepFour');
     const stepFive = document.getElementById('divStepFive');
@@ -527,11 +517,7 @@ document.getElementById('clientRegisterFormStep4').addEventListener('keydown', f
     }
 });
 
-
-// ============================================================================
-// STEP 5: SERVICE SELECTION
-// ============================================================================
-
+// Step 5 - Service Selection
 document.getElementById('btnRegisterNext5').addEventListener('click', function () {
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
     const serviceError = document.getElementById('serviceError');
@@ -554,11 +540,7 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
     transitionToStep(stepFive, stepFour, 4);
 });
 
-
-// ============================================================================
-// INPUT MASKS
-// ============================================================================
-
+// Input masks
 // Names - letters, hyphens, apostrophes only
 document.getElementById('clientFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
@@ -608,16 +590,12 @@ document.getElementById('emergencyContactLastName').addEventListener('input', fu
 });
 
 
-// ============================================================================
-// WAIVER MODAL & FORM SUBMISSION
-// ============================================================================
-
+// Waiver modal & form submission
 // Helper to get current language translations
 function getLang() {
     var lang = sessionStorage.getItem("lang") || "en";
     return translations[lang];
 }
-
 
 document.getElementById('btnWaiverSubmit').addEventListener('click', function () {
     const btn = this;
@@ -737,10 +715,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 });
 
 
-// ============================================================================
 // DEBUG - Skip to any step (remove in production)
-// ============================================================================
-
 function showStepOnly(stepNumber) {
     const allSteps = [
         document.getElementById('divStepOne'),
@@ -767,90 +742,8 @@ function showStepOnly(stepNumber) {
     updateProgressBar(stepNumber);
 }
 
-const tempClientID = "9df12a-3lha05-f44zp1"
-const tempServices = ["medical", "dental", "optical", "haircut"]
-
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
 document.getElementById('skipStep4').addEventListener('click', () => showStepOnly(4));
-document.getElementById('skipStep5').addEventListener('click', () => showQR(tempClientID, "Bobby A.", "Jones", tempServices));
-
-
-// QR Code Logic
-function hideLoginStuff() {
-    // Hide login step container
-
-    const loginStep1 = document.getElementById('divStepOne');
-    if (loginStep1) loginStep1.style.display = 'none';
-
-    const loginStep2 = document.getElementById('divStepTwo');
-    if (loginStep2) loginStep2.style.display = 'none';
-
-    const loginStep3 = document.getElementById('divStepThree');
-    if (loginStep3) loginStep3.style.display = 'none';
-
-    const loginStep4 = document.getElementById('divStepFour');
-    if (loginStep4) loginStep4.style.display = 'none';
-
-    const loginStep5 = document.getElementById('divStepFive');
-    if (loginStep5) loginStep5.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep1 = document.getElementById('skipStep1');
-    if (skipStep1) skipStep1.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep2 = document.getElementById('skipStep2');
-    if (skipStep2) skipStep2.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep3 = document.getElementById('skipStep3');
-    if (skipStep3) skipStep3.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep4 = document.getElementById('skipStep4');
-    if (skipStep4) skipStep4.style.display = 'none';
-
-    // Hide other stuff
-    const substitle = document.getElementById('divStepOneSubtitle');
-    if (substitle) substitle.style.display = 'none';
-
-    const wholeProgressBar = document.getElementById('wholeProgressBar');
-    if (wholeProgressBar) wholeProgressBar.style.display = 'none';
-}
-
-function showQR(clientID, firstName, lastName, services, language) {
-    hideLoginStuff()
-
-    var qr = new QRious({
-        element: document.getElementById('qr'),
-        value: clientID,
-        size: 200,
-    })
-
-    if (Array.isArray(services)) {
-        if (services.includes("medical")) {
-            document.getElementById('qrCardMedicalIcon').style.display = "block"
-        }
-        if (services.includes("dental")) {
-            document.getElementById('qrCardDentalIcon').style.display = "block"
-        }
-        if (services.includes("optical")) {
-            document.getElementById('qrCardOpticalIcon').style.display = "block"
-        }
-        if (services.includes("haircut")) {
-            document.getElementById('qrCardHaircutIcon').style.display = "block"
-        }
-    }
-
-    // Set the QR card title to the user's name
-    const qrTitle = document.getElementById('qrCardTitle');
-    if (qrTitle) {
-        qrTitle.textContent = `${firstName} ${lastName}`;
-    }
-
-    const qrCode = document.getElementById('divQRCode');
-    qrCode.style.display = 'flex';
-    document.getElementById('divQRCode').classList.remove('d-none');
-}
+document.getElementById('skipStep5').addEventListener('click', () => showStepOnly(5));

@@ -1,16 +1,29 @@
 <?php
+/**
+ * ============================================================
+ *  File:        register.php
+ *  Description: Handles client registration. Supports both
+ *               new user creation and existing user updates
+ *               including address, emergency contacts, and
+ *               service selections.
+ *
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 18 @ 2:42 PM
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
 
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
-// ─── Request method check ─────────────────────────────────────────────
+// Request method check
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed. Use POST.']);
     exit;
 }
 
-// ─── Content-Type check ───────────────────────────────────────────────
+// Content-Type check
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 if (stripos($contentType, 'application/json') === false) {
     http_response_code(415);
@@ -18,7 +31,7 @@ if (stripos($contentType, 'application/json') === false) {
     exit;
 }
 
-// ─── Decode JSON body ─────────────────────────────────────────────────
+// Decode JSON body
 $rawBody = file_get_contents('php://input');
 $_POST = json_decode($rawBody, true);
 
@@ -28,25 +41,19 @@ if (!is_array($_POST)) {
     exit;
 }
 
-// Database connection from other file
+// Database connection
 require_once __DIR__ . '/db.php';
-
-// Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
-// Set active status
+// Defaults
 $status = "Active";
-
-// Set queue to registration
 $queue = "registration";
 
-// Check if clientId was passed (existing user)
+// Check if existing user or new user
 $clientID = $_POST['clientId'] ?? null;
 
 if ($clientID) {
-    // ============================================================================
     // EXISTING USER - UPDATE
-    // ============================================================================
     
     $firstName = isset($_POST['firstName']) ? ucfirst(strtolower(trim($_POST['firstName']))) : null;
     $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
@@ -67,7 +74,7 @@ if ($clientID) {
 
     $noAddress = $_POST['noAddress'] ?? true;
 
-    // If client has address
+    // Address
     if ($noAddress == false) {
         $address1 = $_POST['address1'] ?? '';
         $address2 = $_POST['address2'] ?? null;
@@ -102,7 +109,7 @@ if ($clientID) {
 
     $noEmergencyContact = $_POST['noEmergencyContact'] ?? true;
 
-    // If client has emergency contact
+    // Emergency contact
     if (!$noEmergencyContact) {
         $emergencyFirstName = isset($_POST['emergencyFirstName']) ? ucfirst(strtolower(trim($_POST['emergencyFirstName']))) : '';
         $emergencyLastName = isset($_POST['emergencyLastName']) ? ucfirst(strtolower(trim($_POST['emergencyLastName']))) : '';
@@ -134,7 +141,7 @@ if ($clientID) {
         }
     }
 
-    // Get current date + time
+    // Services and registration
     $currentDateTime = date('Y-m-d H:i:s');
     $services = $_POST['services'] ?? [];
     $hasMedical = in_array('medical', $services) ? 1 : 0;
@@ -142,7 +149,7 @@ if ($clientID) {
     $hasDental  = in_array('dental', $services) ? 1 : 0;
     $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
-    // Update existing registration
+    // Update registration
     $servicesUpdate = $mysqli->prepare("UPDATE tblClientRegistrations SET DateTime = ?, Medical = ?, Optical = ?, Dental = ?, Hair = ?, Queue = ? WHERE ClientID = ?");
     $servicesUpdate->bind_param("siiiiss", $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair, $queue, $clientID);
     $result = $servicesUpdate->execute();
@@ -160,11 +167,9 @@ if ($clientID) {
     }
 
 } else {
-    // ============================================================================
     // NEW USER - INSERT
-    // ============================================================================
 
-    // ─── Validate required fields ─────────────────────────────────────────
+    // Validate required fields
     $required = ['firstName', 'lastName', 'dob', 'sex', 'email', 'password'];
     $missing = [];
     foreach ($required as $field) {
@@ -178,32 +183,31 @@ if ($clientID) {
         exit;
     }
 
-    // ─── Validate email format ────────────────────────────────────────────
+    // Validate email format
     if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid email format.']);
         exit;
     }
 
-    // ─── Validate sex value ───────────────────────────────────────────────
+    // Validate sex value
     if (!in_array($_POST['sex'], ['Male', 'Female', 'Intersex'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Sex must be Male, Female, or Intersex.']);
         exit;
     }
-    
-    // Generate a unique clientID
+
+    // Generate unique clientID and prepare data
     $clientID = bin2hex(random_bytes(8));
     $firstName = ucfirst(strtolower(trim($_POST['firstName'])));
     $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
     $lastName = ucfirst(strtolower(trim($_POST['lastName'])));
-    // Get current date
     $dateCreated = date('Y-m-d');
     $dob = $_POST['dob'];
     $sex = $_POST['sex'];
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
-    // Prepare client info
+    // Insert client
     $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$clientCreation) {
         http_response_code(500);
@@ -217,11 +221,11 @@ if ($clientID) {
         exit;
     }
 
+    // Insert login credentials
     $email = trim($_POST['email']);
-    // Hash the password using bcrypt
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
-    // Prepare client login info
+
     $loginInsertion = $mysqli->prepare("INSERT INTO tblClientLogin(ClientID, Email, Password) VALUES (?, ?, ?)");
     if (!$loginInsertion) {
         http_response_code(500);
@@ -237,7 +241,7 @@ if ($clientID) {
 
     $noAddress = $_POST['noAddress'] ?? true;
 
-    // If client has address
+    // Address
     if ($noAddress == false) {
         $address1 = $_POST['address1'] ?? '';
         $address2 = $_POST['address2'] ?? null;
@@ -251,20 +255,15 @@ if ($clientID) {
             exit;
         }
 
-        // Prepare client address
+        // Insert address
         $addressInsertion = $mysqli->prepare("INSERT INTO tblClientAddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
-
-        // Bind the variables to the placeholders
-        // "s" means string, "d" means double (float or number)
         $addressInsertion->bind_param("sssssss", $address1, $address2, $city, $state, $zipCode, $status, $clientID);
-
-        // Execute the statement
         $addressInsertion->execute();
     }
 
     $noEmergencyContact = $_POST['noEmergencyContact'] ?? true;
 
-    // If client has emergency contact
+    // Emergency contact
     if (!$noEmergencyContact) {
         $emergencyFirstName = isset($_POST['emergencyFirstName']) ? ucfirst(strtolower(trim($_POST['emergencyFirstName']))) : '';
         $emergencyLastName = isset($_POST['emergencyLastName']) ? ucfirst(strtolower(trim($_POST['emergencyLastName']))) : '';
@@ -276,44 +275,34 @@ if ($clientID) {
             exit;
         }
 
-        // String together first & last name
         $emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;
 
-        // Prepare client emergency contact
+        // Insert emergency contact
         $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblClientEmergencyContacts(ClientID, Name, Phone, Status) VALUES (?, ?, ?, ?)");
-
-        // Bind the variables to the placeholders
         $emergencyContactInsertion->bind_param("ssss", $clientID, $emergencyFullName, $emergencyPhone, $status);
-
-        // Execute the statement
         $emergencyContactInsertion->execute();
     }
 
-    // Get current date + time
+    // Services and registration
     $currentDateTime = date('Y-m-d H:i:s');
     $services = $_POST['services'] ?? [];
-    // Check services array - cast to int for database
     $hasMedical = in_array('medical', $services) ? 1 : 0;
     $hasOptical = in_array('optical', $services) ? 1 : 0;
     $hasDental  = in_array('dental', $services) ? 1 : 0;
     $hasHair    = in_array('haircut', $services) ? 1 : 0;
 
-    // Prepare client services
+    // Insert registration
     $servicesInsertion = $mysqli->prepare("INSERT INTO tblClientRegistrations(ClientID, DateTime, Medical, Optical, Dental, Hair, Queue) VALUES (?, ?, ?, ?, ?, ?, ?)");
-
-    // Bind the variables to the placeholders (use "i" for integers)
     $servicesInsertion->bind_param("ssiiiis", $clientID, $currentDateTime, $hasMedical, $hasOptical, $hasDental, $hasHair, $queue);
-
-    // Execute the statement 
     $result = $servicesInsertion->execute();
 
     if ($result) {
-        http_response_code(201); // Created
+        http_response_code(201);
         $msg = json_encode(['success' => true, 'message' => 'New client created.']);
         echo $msg;
         error_log($msg); 
     } else {
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         $msg = json_encode(['success' => false, 'message' => 'Insert failed']);
         echo $msg;
         error_log($msg); 

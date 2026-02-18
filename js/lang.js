@@ -1,6 +1,19 @@
+/**
+ * ============================================================
+ *  File:        lang.js
+ *  Description: Language translation system. Stores English
+ *               and Spanish translations and applies them
+ *               based on the user's language selection.
+ *
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 18 @ 2:44 PM
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
+
 var translations = {
   en: {
-    // Login 
+    // Login
     subtitle: "Connecting patients with free<br>care through DUO",
     lblClientEmail: "Email",
     lblClientPassword: "Password",
@@ -10,9 +23,8 @@ var translations = {
     btn2Register: "Register",
 
     // Registration
-
     progressTitle: "Progress through registration",
-    
+
     // Step 1 - Login Info
     titleStepOne: 'Login Information',
     clientRegisterEmailLabel: 'Email',
@@ -22,7 +34,7 @@ var translations = {
     toggleClientRegisterPassLabel: 'Show password',
     btnRegisterNext1: 'Next',
     btnRegisterBack1: 'Back to Login',
-    
+
     // Step 2 - Personal Info
     titleStepTwo: 'Personal Information',
     clientFirstNameLabel: 'First Name',
@@ -79,7 +91,7 @@ var translations = {
     btnRegisterNext5: 'Next',
     btnRegisterBack5: 'Go back',
 
-    // Wavier Confirm
+    // Waiver
     waiverLabel: 'Waiver Agreement Required',
     collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsibility at this event.',
     waiverAgreeLabel: 'I have read and agree.',
@@ -93,9 +105,9 @@ var translations = {
     registrationFailedText: "An error occurred. Please try again.",
     registrationConnectionErrorTitle: "Connection Error",
     registrationConnectionErrorText: "Unable to connect to the server. Please try again later."
-},
+  },
   es: {
-    // Login page
+    // Login
     subtitle: "Conectando pacientes con atención<br>gratuita a través de DUO",
     lblClientEmail: "Email",
     lblClientPassword: "Contraseña",
@@ -105,7 +117,6 @@ var translations = {
     btn2Register: "Registrarse",
 
     // Registration
-
     progressTitle: "Progreso a través del registro",
 
     // Step 1 - Login Info
@@ -117,7 +128,7 @@ var translations = {
     toggleClientRegisterPassLabel: 'Ver contraseña',
     btnRegisterNext1: 'Siguiente',
     btnRegisterBack1: 'Volver al inicio de sesión',
-    
+
     // Step 2 - Personal Info
     titleStepTwo: 'Información personal',
     clientFirstNameLabel: 'Primer nombre',
@@ -174,7 +185,7 @@ var translations = {
     btnRegisterNext5: 'Siguiente',
     btnRegisterBack5: 'Regresar',
 
-    // Wavier Confirm
+    // Waiver
     waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
     collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento.',
     waiverAgreeLabel: 'He leído y estoy de acuerdo.',
@@ -206,7 +217,7 @@ if (savedLang) {
   }
 }
 
-// Save and apply on change
+// Apply language on change
 select.addEventListener("change", function () {
   var lang = this.value;
   sessionStorage.setItem("lang", lang);

@@ -1,3 +1,15 @@
+<!--
+ ============================================================
+  File:        register.html
+  Description: Multi-step client registration page. Includes
+               login info, personal details, address, emergency
+               contact, service selection, and waiver agreement.
+
+  Last Modified By:  Matthew
+  Last Modified On:  Feb 18 @ 2:40 PM
+  Changes Made:      Added multi-line comment header
+ ============================================================
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,11 +27,11 @@
 
 <body>
     <div class="container">
-        
+
         <div id="divLanguageSwitch">
             <select name="" id="selLanguageSwitch" class="btn-primary">
-            <option value="en">EN</option>
-            <option value="es">ES</option>
+                <option value="en">EN</option>
+                <option value="es">ES</option>
             </select>
         </div>
 
@@ -36,15 +48,20 @@
                 <!-- QR Code Card -->
                 <div id="divQRCode" class="d-none d-flex justify-content-center">
                     <div class="card shadow-lg border-0 rounded-4 p-3 px-4 text-center">
-                        <h1 class="mb-2"style="color:black;" id="qrCardTitle"></h1>
+                        <h1 class="mb-2" style="color:black;" id="qrCardTitle"></h1>
                         <!--Note: Translator icon is currently not in nodeJS script so it will not appear.-->
-                        <i class="bi bi-chat-dots"style="display: none; font-size: 1rem; color:black;" id="qrCardTranslator"></i>
+                        <i class="bi bi-chat-dots" style="display: none; font-size: 1rem; color:black;"
+                            id="qrCardTranslator"></i>
                         <canvas class="p-3" id="qr"></canvas>
                         <div class="d-flex justify-content-center gap-3 mt-3">
-                            <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardMedicalIcon"></i>
-                            <i class="bi bi-shield-shaded qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
-                            <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardOpticalIcon"></i>
-                            <i class="bi bi-scissors qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
+                            <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;"
+                                id="qrCardMedicalIcon"></i>
+                            <i class="bi bi-shield-shaded qr-icon-border"
+                                style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
+                            <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;"
+                                id="qrCardOpticalIcon"></i>
+                            <i class="bi bi-scissors qr-icon-border"
+                                style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
                         </div>
                     </div>
                 </div>
@@ -58,8 +75,8 @@
 
                 <!-- Progress Bar -->
                 <div id="wholeProgressBar" class="progress mb-3">
-                    <div class="progress-bar progress-bar-striped bg-success" id="progressBarTop" role="progressbar" style="width: 0%;"
-                        aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    <div class="progress-bar progress-bar-striped bg-success" id="progressBarTop" role="progressbar"
+                        style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>
 
                 <!-- Registration Card -->
@@ -76,7 +93,8 @@
 
                             <!-- Email -->
                             <div class="mb-3 text-start">
-                                <label id="clientRegisterEmailLabel" for="clientRegisterEmail" class="form-label fw-semibold">Email</label>
+                                <label id="clientRegisterEmailLabel" for="clientRegisterEmail"
+                                    class="form-label fw-semibold">Email</label>
                                 <input type="email" id="clientRegisterEmail" class="form-control input-black" required
                                     aria-describedby="emailError">
                                 <div class="invalid-feedback" id="emailError" aria-live="polite">
@@ -86,7 +104,8 @@
 
                             <!-- Password -->
                             <div class="mb-3 text-start">
-                                <label id="clientRegisterPassLabel" for="clientRegisterPass" class="form-label fw-semibold">Password</label>
+                                <label id="clientRegisterPassLabel" for="clientRegisterPass"
+                                    class="form-label fw-semibold">Password</label>
                                 <input type="password" id="clientRegisterPass" class="form-control input-black" required
                                     aria-describedby="passwordError">
                                 <div class="invalid-feedback" id="passwordError" aria-live="polite">
@@ -99,13 +118,15 @@
                             <div class="form-check form-switch text-start mb-3">
                                 <input class="form-check-input" type="checkbox" id="toggleClientRegisterPass"
                                     aria-label="Show password">
-                                <label id="toggleClientRegisterPassLabel" class="form-check-label" for="toggleClientRegisterPass">Show password</label>
+                                <label id="toggleClientRegisterPassLabel" class="form-check-label"
+                                    for="toggleClientRegisterPass">Show password</label>
                             </div>
 
                             <!-- Buttons -->
                             <button id="btnRegisterNext1" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack1" type="button" class="btn btn-primary w-100 rounded-2">Go Back</button>
+                            <button id="btnRegisterBack1" type="button" class="btn btn-primary w-100 rounded-2">Go
+                                Back</button>
                         </form>
                     </div>
 
@@ -117,7 +138,8 @@
 
                             <!-- First Name -->
                             <div class="mb-3 text-start">
-                                <label id="clientFirstNameLabel" for="clientFirstName" class="form-label fw-semibold">First Name</label>
+                                <label id="clientFirstNameLabel" for="clientFirstName"
+                                    class="form-label fw-semibold">First Name</label>
                                 <input type="text" id="clientFirstName" class="form-control input-black" required
                                     aria-describedby="firstNameError">
                                 <div class="invalid-feedback" id="firstNameError" aria-live="polite">
@@ -127,13 +149,16 @@
 
                             <!-- Middle Initial (optional) -->
                             <div class="mb-3 text-start">
-                                <label id="clientMiddleInitialLabel"for="clientMiddleInitial" class="form-label fw-semibold">Middle Initial</label>
-                                <input type="text" id="clientMiddleInitial" class="form-control input-black" maxlength="1">
+                                <label id="clientMiddleInitialLabel" for="clientMiddleInitial"
+                                    class="form-label fw-semibold">Middle Initial</label>
+                                <input type="text" id="clientMiddleInitial" class="form-control input-black"
+                                    maxlength="1">
                             </div>
 
                             <!-- Last Name -->
                             <div class="mb-3 text-start">
-                                <label id="clientLastNameLabel"for="clientLastName" class="form-label fw-semibold">Last Name</label>
+                                <label id="clientLastNameLabel" for="clientLastName" class="form-label fw-semibold">Last
+                                    Name</label>
                                 <input type="text" id="clientLastName" class="form-control input-black" required
                                     aria-describedby="lastNameError">
                                 <div class="invalid-feedback" id="lastNameError" aria-live="polite">
@@ -147,15 +172,18 @@
                                 <div class="btn-group" role="group" aria-label="Select your sex.">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
-                                    <label class="btn btn-outline-primary" id="btnSexMaleLabel"for="btnSexMale">Male</label>
+                                    <label class="btn btn-outline-primary" id="btnSexMaleLabel"
+                                        for="btnSexMale">Male</label>
 
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexFemale"
                                         value="female">
-                                    <label class="btn btn-outline-primary" id="btnSexFemaleLabel" for="btnSexFemale">Female</label>
+                                    <label class="btn btn-outline-primary" id="btnSexFemaleLabel"
+                                        for="btnSexFemale">Female</label>
 
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexIntersex"
                                         value="intersex">
-                                    <label class="btn btn-outline-primary" id="btnSexIntersexLabel" for="btnSexIntersex">Intersex</label>
+                                    <label class="btn btn-outline-primary" id="btnSexIntersexLabel"
+                                        for="btnSexIntersex">Intersex</label>
                                 </div>
                                 <div class="invalid-feedback" id="sexError" style="display: none;">
                                     Please select your sex.
@@ -164,7 +192,8 @@
 
                             <!-- Date of Birth -->
                             <div class="mb-3 text-start">
-                                <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of Birth</label>
+                                <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of
+                                    Birth</label>
                                 <input type="date" id="clientDOB" class="form-control input-black" required
                                     aria-describedby="dobError">
                                 <div class="invalid-feedback" id="dobError" aria-live="polite">
@@ -174,8 +203,10 @@
 
                             <!-- Phone (optional) -->
                             <div class="mb-3 text-start">
-                                <label id="clientPhoneLabel" for="clientPhone" class="form-label fw-semibold">Phone</label>
-                                <input type="tel" id="clientPhone" class="form-control input-black" aria-describedby="phoneError">
+                                <label id="clientPhoneLabel" for="clientPhone"
+                                    class="form-label fw-semibold">Phone</label>
+                                <input type="tel" id="clientPhone" class="form-control input-black"
+                                    aria-describedby="phoneError">
                                 <div class="invalid-feedback" id="phoneError" aria-live="polite">
                                     Phone is invalid format.
                                 </div>
@@ -197,15 +228,18 @@
 
                             <!-- No Address Checkbox -->
                             <div class="mb-3 text-start form-check d-flex align-items-center">
-                                <input class="form-check-input align-checkbox" type="checkbox" style="cursor: pointer;" value="" id="noAddress">
-                                <label class="form-check-label fs-5 ms-2" style="color: black; cursor: pointer;" id="noAddressLabel"for="noAddress">
+                                <input class="form-check-input align-checkbox" type="checkbox" style="cursor: pointer;"
+                                    value="" id="noAddress">
+                                <label class="form-check-label fs-5 ms-2" style="color: black; cursor: pointer;"
+                                    id="noAddressLabel" for="noAddress">
                                     No current address
                                 </label>
                             </div>
 
                             <!-- Street Address 1 -->
                             <div class="mb-3 text-start">
-                                <label for="clientAddress1" id="clientAddress1Label" class="form-label fw-semibold">Street Address 1</label>
+                                <label for="clientAddress1" id="clientAddress1Label"
+                                    class="form-label fw-semibold">Street Address 1</label>
                                 <input type="text" id="clientAddress1" class="form-control input-black" required
                                     aria-describedby="address1Error">
                                 <div class="invalid-feedback" id="address1Error" aria-live="polite">
@@ -215,7 +249,8 @@
 
                             <!-- Street Address 2 (optional) -->
                             <div class="mb-3 text-start">
-                                <label id="clientAddress2Label"for="clientAddress2" class="form-label fw-semibold">Street Address 2</label>
+                                <label id="clientAddress2Label" for="clientAddress2"
+                                    class="form-label fw-semibold">Street Address 2</label>
                                 <input type="text" id="clientAddress2" class="form-control input-black">
                             </div>
 
@@ -231,7 +266,8 @@
 
                             <!-- State -->
                             <div class="mb-3 text-start">
-                                <label id="selectStateLabel" for="selectState" class="form-label fw-semibold">State</label>
+                                <label id="selectStateLabel" for="selectState"
+                                    class="form-label fw-semibold">State</label>
                                 <select class="form-select" id="selectState" required aria-describedby="stateError">
                                     <option selected disabled value="">Choose...</option>
                                     <option value="AL">Alabama</option>
@@ -292,9 +328,11 @@
 
                             <!-- Zip Code -->
                             <div class="mb-3 text-start">
-                                <label id="clientZipCodeLabel"for="clientZipCode" class="form-label fw-semibold">Zip Code</label>
+                                <label id="clientZipCodeLabel" for="clientZipCode" class="form-label fw-semibold">Zip
+                                    Code</label>
                                 <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
-                                    id="clientZipCode" class="form-control input-black" required aria-describedby="zipCode">
+                                    id="clientZipCode" class="form-control input-black" required
+                                    aria-describedby="zipCode">
                                 <div class="invalid-feedback" id="zipCode" aria-live="polite">
                                     Please enter a 5-digit zip code.
                                 </div>
@@ -316,18 +354,21 @@
 
                             <!-- No Emergency Contact Checkbox -->
                             <div class="mb-3 text-start form-check d-flex align-items-center">
-                                <input class="form-check-input align-checkbox" style="cursor: pointer" type="checkbox" value="" id="noEmergencyContact">
-                                <label id="noEmergencyContactLabel" class="form-check-label fs-5 ms-2" style="color: black; cursor: pointer" for="noEmergencyContact">
+                                <input class="form-check-input align-checkbox" style="cursor: pointer" type="checkbox"
+                                    value="" id="noEmergencyContact">
+                                <label id="noEmergencyContactLabel" class="form-check-label fs-5 ms-2"
+                                    style="color: black; cursor: pointer" for="noEmergencyContact">
                                     No emergency contact
                                 </label>
                             </div>
 
                             <!-- Contact First Name -->
                             <div class="mb-3 text-start">
-                                <label id="emergencyContactFirstNameLabel"for="emergencyContactFirstName" class="form-label fw-semibold">Contact First
+                                <label id="emergencyContactFirstNameLabel" for="emergencyContactFirstName"
+                                    class="form-label fw-semibold">Contact First
                                     Name</label>
-                                <input type="text" id="emergencyContactFirstName" class="form-control input-black" required
-                                    aria-describedby="contactFirstName">
+                                <input type="text" id="emergencyContactFirstName" class="form-control input-black"
+                                    required aria-describedby="contactFirstName">
                                 <div class="invalid-feedback" id="contactFirstName" aria-live="polite">
                                     Please enter a first name for your contact.
                                 </div>
@@ -335,10 +376,11 @@
 
                             <!-- Contact Last Name -->
                             <div class="mb-3 text-start">
-                                <label id="emergencyContactLastNameLabel" for="emergencyContactLastName" class="form-label fw-semibold">Contact Last
+                                <label id="emergencyContactLastNameLabel" for="emergencyContactLastName"
+                                    class="form-label fw-semibold">Contact Last
                                     Name</label>
-                                <input type="text" id="emergencyContactLastName" class="form-control input-black" required
-                                    aria-describedby="contactLastName">
+                                <input type="text" id="emergencyContactLastName" class="form-control input-black"
+                                    required aria-describedby="contactLastName">
                                 <div class="invalid-feedback" id="contactLastName" aria-live="polite">
                                     Please enter a last name for your contact.
                                 </div>
@@ -346,7 +388,8 @@
 
                             <!-- Contact Phone -->
                             <div class="mb-3 text-start">
-                                <label id="emergencyContactPhoneLabel" for="emergencyContactPhone" class="form-label fw-semibold">Contact Phone</label>
+                                <label id="emergencyContactPhoneLabel" for="emergencyContactPhone"
+                                    class="form-label fw-semibold">Contact Phone</label>
                                 <input type="tel" id="emergencyContactPhone" class="form-control input-black" required
                                     aria-describedby="contactPhone">
                                 <div class="invalid-feedback" id="contactPhone" aria-live="polite">
@@ -373,24 +416,32 @@
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceMedical" value="medical" style="cursor: pointer">
-                                        <label id="btnServiceMedicalLabel" class="form-check-label"  style="color: #174593; cursor: pointer; user-select: none;" for="btnServiceMedical">🏥 Medical</label>
+                                        <label id="btnServiceMedicalLabel" class="form-check-label"
+                                            style="color: #174593; cursor: pointer; user-select: none;"
+                                            for="btnServiceMedical">🏥 Medical</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceOptical" value="optical" style="cursor: pointer">
-                                        <label id="btnServiceOpticalLabel" class="form-check-label" style="color: #174593; cursor: pointer; user-select: none;" for="btnServiceOptical">👁️ Optical</label>
+                                        <label id="btnServiceOpticalLabel" class="form-check-label"
+                                            style="color: #174593; cursor: pointer; user-select: none;"
+                                            for="btnServiceOptical">👁️ Optical</label>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceDental" value="dental" style="cursor: pointer">
-                                        <label id="btnServiceDentalLabel" class="form-check-label" style="color: #174593; cursor: pointer; user-select: none;" for="btnServiceDental">🦷 Dental</label>
+                                        <label id="btnServiceDentalLabel" class="form-check-label"
+                                            style="color: #174593; cursor: pointer; user-select: none;"
+                                            for="btnServiceDental">🦷 Dental</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="clientServices"
                                             id="btnServiceHaircut" value="haircut" style="cursor: pointer">
-                                        <label id="btnServiceHaircutLabel" class="form-check-label" style="color: #174593; cursor: pointer; user-select: none;" for="btnServiceHaircut">✂️ Haircut</label>
+                                        <label id="btnServiceHaircutLabel" class="form-check-label"
+                                            style="color: #174593; cursor: pointer; user-select: none;"
+                                            for="btnServiceHaircut">✂️ Haircut</label>
                                     </div>
                                 </div>
                             </div>
@@ -458,7 +509,7 @@
 
             </div>
         </div>
-    </div >
+    </div>
 
     <!-- Scripts -->
     <script src="../assets/js/core/libs.min.js"></script>
