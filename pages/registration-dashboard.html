@@ -183,6 +183,26 @@
         </div>
     </div>
 
+<!-- QR Code Modal -->
+<div id="qrCodeModal" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none justify-content-center align-items-center" style="z-index: 1050;">
+    <div class="card shadow-lg border-0 rounded-4 p-3 px-4 text-center position-relative" style="width: 450px; max-width: 90vw;">
+        <i class="bi bi-chat-dots" style="display: none; font-size: 1.5rem; color:black; position: absolute; top: 1rem; right: 1rem;" id="qrCardTranslator"></i>
+        <h1 class="mb-2" style="color:black;" id="qrCardTitle"></h1>
+        <canvas class="p-3" id="qr"></canvas>
+        <div class="d-flex justify-content-center gap-3 mt-3">
+            <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardMedicalIcon"></i>
+            <i class="bi bi-shield-shaded qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
+            <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardOpticalIcon"></i>
+            <i class="bi bi-scissors qr-icon-border" style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
+        </div>
+        <button type="button" class="btn bg-primary text-white btn-sm mt-3" id="printQrBtn">
+            <i class="bi bi-printer"></i> Print QR Code
+        </button>
+    </div>
+</div>
+<!-- QR CODE MODAL END   -->
+
+    <script src="../assets/js/qrious.min.js"></script>
     <script src="../js/registrationdashboard.js"></script>
     <script src="../assets/js/hope-ui.js"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
