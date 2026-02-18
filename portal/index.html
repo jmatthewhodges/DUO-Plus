@@ -2,72 +2,73 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#72B2D4">
-  <title>DUO+ | API Portal</title>
-  <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
-  <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
-  <link href="../assets/css/custom.css" rel="stylesheet">
-  <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
-  <link href="portal.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#72B2D4">
+    <title>DUO+ | API Portal</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Shared design system -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Portal styles -->
+    <link href="portal.css" rel="stylesheet">
+
+    <!-- Monospace font for code -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
 
-<body class="d-flex align-items-start pb-5">
+<body class="portal-body">
 
-  <div class="container-fluid p-4">
+    <div class="portal-wrapper">
 
-    <!-- Logo + title -->
-    <div class="text-center mb-4">
-      <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" class="mb-2" style="width: 120px;">
-      <h5 class="fw-bold mb-0" style="color:#0f3468;">API Portal</h5>
-      <p class="text-muted small mb-0">Test methods — modular &amp; isolated</p>
+        <!-- ═══════ Sidebar ═══════ -->
+        <aside class="portal-sidebar" id="portalSidebar">
+
+            <!-- Brand -->
+            <div class="sidebar-header">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO+"
+                        style="width: 32px; height: 32px; border-radius: 6px;">
+                    <div>
+                        <h4>API Portal</h4>
+                        <div class="subtitle">DUO+ Developer Tools</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="sidebar-search">
+                <input type="text" id="sidebarSearch" placeholder="Search methods...">
+            </div>
+
+            <!-- Method list (rendered by JS) -->
+            <div class="method-list" id="methodList"></div>
+
+        </aside>
+
+        <!-- ═══════ Main Content ═══════ -->
+        <main class="portal-main" id="mainContent">
+            <!-- Rendered dynamically by portal.js -->
+        </main>
+
     </div>
 
-    <!-- Two-panel layout -->
-    <div class="portal-wrap">
+    <!-- Mobile sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
 
-      <!-- Sidebar: method list -->
-      <aside class="portal-sidebar" id="methodSidebar">
-        <!-- Populated by PortalUI -->
-      </aside>
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <!-- Main: detail panel -->
-      <section class="portal-main">
+    <!-- Portal logic -->
+    <script src="portal.js"></script>
 
-        <!-- Placeholder (visible until a method is selected) -->
-        <div class="card h-100" id="detailPlaceholder">
-          <div class="card-body portal-placeholder">
-            <i class="bi bi-cursor-fill"></i>
-            <p>Select a method from the sidebar to get started.</p>
-          </div>
-        </div>
-
-        <!-- Detail panel (hidden until selection) -->
-        <div class="card" id="detailPanel" hidden>
-          <div class="card-body p-4">
-            <!-- Filled dynamically by PortalUI -->
-          </div>
-        </div>
-
-      </section>
-    </div>
-
-    <!-- Footer note -->
-    <div class="text-center mt-3">
-      <p class="text-muted small mb-0">
-        <strong style="color:#0f3468;">Add methods:</strong>
-        edit <code>portal/endpoints.js</code> &rarr; add an object to <code>PORTAL_METHODS</code> &rarr; refresh.
-      </p>
-    </div>
-  </div>
-
-  <!-- Scripts: order matters (data → client → UI → framework) -->
-  <script src="endpoints.js"></script>
-  <script src="api-client.js"></script>
-  <script src="../assets/js/hope-ui.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="portal.js"></script>
 </body>
 
 </html>
