@@ -1,6 +1,7 @@
 <?php
 
 header('Content-Type: application/json');
+date_default_timezone_set('America/Chicago');
 
 // ─── Request method check ─────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
