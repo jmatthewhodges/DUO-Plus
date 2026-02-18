@@ -1,17 +1,40 @@
 <?php
 
+header('Content-Type: application/json');
+date_default_timezone_set('America/Chicago');
+
+// ─── Request method check ─────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed. Use POST.']);
+    exit;
+}
+
+// ─── Content-Type check ───────────────────────────────────────────────
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') === false) {
+    http_response_code(415);
+    echo json_encode(['success' => false, 'message' => 'Content-Type must be application/json.']);
+    exit;
+}
+
+// ─── Decode JSON body ─────────────────────────────────────────────────
+$rawBody = file_get_contents('php://input');
+$_POST = json_decode($rawBody, true);
+
+if (!is_array($_POST)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid JSON body.']);
+    exit;
+}
+
 // Database connection from other file
 require_once __DIR__ . '/db.php';
-
-// Get header type, set POST request type for JSON data
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $_POST = json_decode(file_get_contents('php://input'), true) ?? [];
-}
 
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
-// Set active status?
+// Set active status
 $status = "Active";
 
 // Set queue to registration
@@ -20,23 +43,25 @@ $queue = "registration";
 // Check if clientId was passed (existing user)
 $clientID = $_POST['clientId'] ?? null;
 
-// Get language preference, default to English if not provided
-$language = $_POST['language'] ?? 'en';
-
 if ($clientID) {
     // ============================================================================
     // EXISTING USER - UPDATE
     // ============================================================================
     
-    $firstName = $_POST['firstName'] ?? null;
-    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? $_POST['middleInitial'] : null;
-    $lastName = $_POST['lastName'] ?? null;
+    $firstName = isset($_POST['firstName']) ? ucfirst(strtolower(trim($_POST['firstName']))) : null;
+    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
+    $lastName = isset($_POST['lastName']) ? ucfirst(strtolower(trim($_POST['lastName']))) : null;
     $dob = $_POST['dob'] ?? null;
     $sex = $_POST['sex'] ?? null;
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Update client info
     $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
+    if (!$clientUpdate) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+        exit;
+    }
     $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
     $clientUpdate->execute();
 
@@ -44,11 +69,17 @@ if ($clientID) {
 
     // If client has address
     if ($noAddress == false) {
-        $address1 = $_POST['address1'];
+        $address1 = $_POST['address1'] ?? '';
         $address2 = $_POST['address2'] ?? null;
-        $city = $_POST['city'];
-        $state = $_POST['state'];
-        $zipCode = $_POST['zipCode'];
+        $city = isset($_POST['city']) ? ucfirst(strtolower(trim($_POST['city']))) : '';
+        $state = $_POST['state'] ?? '';
+        $zipCode = $_POST['zipCode'] ?? '';
+
+        if (empty($address1) || empty($city) || empty($state) || empty($zipCode)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Address fields (address1, city, state, zipCode) are required when noAddress is false.']);
+            exit;
+        }
 
         // Check if address exists
         $checkAddress = $mysqli->prepare("SELECT ClientID FROM tblClientAddress WHERE ClientID = ? AND Status = 'Active'");
@@ -73,9 +104,15 @@ if ($clientID) {
 
     // If client has emergency contact
     if (!$noEmergencyContact) {
-        $emergencyFirstName = $_POST['emergencyFirstName'];
-        $emergencyLastName = $_POST['emergencyLastName'];
-        $emergencyPhone = $_POST['emergencyPhone'];
+        $emergencyFirstName = isset($_POST['emergencyFirstName']) ? ucfirst(strtolower(trim($_POST['emergencyFirstName']))) : '';
+        $emergencyLastName = isset($_POST['emergencyLastName']) ? ucfirst(strtolower(trim($_POST['emergencyLastName']))) : '';
+        $emergencyPhone = $_POST['emergencyPhone'] ?? '';
+
+        if (empty($emergencyFirstName) || empty($emergencyLastName) || empty($emergencyPhone)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Emergency contact fields (emergencyFirstName, emergencyLastName, emergencyPhone) are required when noEmergencyContact is false.']);
+            exit;
+        }
         $emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;
 
         // Check if emergency contact exists
@@ -126,44 +163,93 @@ if ($clientID) {
     // ============================================================================
     // NEW USER - INSERT
     // ============================================================================
+
+    // ─── Validate required fields ─────────────────────────────────────────
+    $required = ['firstName', 'lastName', 'dob', 'sex', 'email', 'password'];
+    $missing = [];
+    foreach ($required as $field) {
+        if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+            $missing[] = $field;
+        }
+    }
+    if (!empty($missing)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing required fields: ' . implode(', ', $missing)]);
+        exit;
+    }
+
+    // ─── Validate email format ────────────────────────────────────────────
+    if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid email format.']);
+        exit;
+    }
+
+    // ─── Validate sex value ───────────────────────────────────────────────
+    if (!in_array($_POST['sex'], ['Male', 'Female', 'Intersex'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Sex must be Male, Female, or Intersex.']);
+        exit;
+    }
     
     // Generate a unique clientID
     $clientID = bin2hex(random_bytes(8));
-    $firstName = $_POST['firstName'] ?? null;
-    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? $_POST['middleInitial'] : null;
-    $lastName = $_POST['lastName'] ?? null;
+    $firstName = ucfirst(strtolower(trim($_POST['firstName'])));
+    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
+    $lastName = ucfirst(strtolower(trim($_POST['lastName'])));
     // Get current date
     $dateCreated = date('Y-m-d');
-    $dob = $_POST['dob'] ?? null;
-    $sex = $_POST['sex'] ?? null;
+    $dob = $_POST['dob'];
+    $sex = $_POST['sex'];
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Prepare client info
     $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DateCreated, DOB, Sex, Phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$clientCreation) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+        exit;
+    }
     $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dateCreated, $dob, $sex, $phone);
-    // Execute the statement
-    $clientCreation->execute();
+    if (!$clientCreation->execute()) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to create client: ' . $clientCreation->error]);
+        exit;
+    }
 
-    $email = $_POST['email'] ?? null;
+    $email = trim($_POST['email']);
     // Hash the password using bcrypt
-    $password = isset($_POST['password']) ? password_hash($_POST['password'], PASSWORD_BCRYPT) : null;
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
     // Prepare client login info
     $loginInsertion = $mysqli->prepare("INSERT INTO tblClientLogin(ClientID, Email, Password) VALUES (?, ?, ?)");
-    // Bind variables to placeholders
+    if (!$loginInsertion) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+        exit;
+    }
     $loginInsertion->bind_param("sss", $clientID, $email, $password);
-    // Execute the statement
-    $loginInsertion->execute();
+    if (!$loginInsertion->execute()) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to create login: ' . $loginInsertion->error]);
+        exit;
+    }
 
     $noAddress = $_POST['noAddress'] ?? true;
 
     // If client has address
     if ($noAddress == false) {
-        $address1 = $_POST['address1'];
+        $address1 = $_POST['address1'] ?? '';
         $address2 = $_POST['address2'] ?? null;
-        $city = $_POST['city'];
-        $state = $_POST['state'];
-        $zipCode = $_POST['zipCode'];
+        $city = isset($_POST['city']) ? ucfirst(strtolower(trim($_POST['city']))) : '';
+        $state = $_POST['state'] ?? '';
+        $zipCode = $_POST['zipCode'] ?? '';
+
+        if (empty($address1) || empty($city) || empty($state) || empty($zipCode)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Address fields (address1, city, state, zipCode) are required when noAddress is false.']);
+            exit;
+        }
 
         // Prepare client address
         $addressInsertion = $mysqli->prepare("INSERT INTO tblClientAddress(Street1, Street2, City, State, ZIP, Status, ClientID) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -180,9 +266,15 @@ if ($clientID) {
 
     // If client has emergency contact
     if (!$noEmergencyContact) {
-        $emergencyFirstName = $_POST['emergencyFirstName'];
-        $emergencyLastName = $_POST['emergencyLastName'];
-        $emergencyPhone = $_POST['emergencyPhone'];
+        $emergencyFirstName = isset($_POST['emergencyFirstName']) ? ucfirst(strtolower(trim($_POST['emergencyFirstName']))) : '';
+        $emergencyLastName = isset($_POST['emergencyLastName']) ? ucfirst(strtolower(trim($_POST['emergencyLastName']))) : '';
+        $emergencyPhone = $_POST['emergencyPhone'] ?? '';
+
+        if (empty($emergencyFirstName) || empty($emergencyLastName) || empty($emergencyPhone)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Emergency contact fields (emergencyFirstName, emergencyLastName, emergencyPhone) are required when noEmergencyContact is false.']);
+            exit;
+        }
 
         // String together first & last name
         $emergencyFullName = $emergencyFirstName . " " . $emergencyLastName;

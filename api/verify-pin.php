@@ -89,6 +89,7 @@ http_response_code(200);
 try {
     if ($mysqli && !mysqli_connect_error()) {
         $stmt = $mysqli->prepare("insert into tblPinLogs (name, page, pin, time) values (?, ?, ?, ?)");
+        date_default_timezone_set('America/Chicago');
         $currentTime = date('Y-m-d H:i:s');
         $stmt->bind_param("ssss", $name, $pageName, $pin, $currentTime);
         $stmt->execute();
