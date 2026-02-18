@@ -35,7 +35,7 @@ function initializePINModal() {
                 </div>
             </div>
         </div>`;
-
+        
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
@@ -43,34 +43,8 @@ function initializePINModal() {
     const showError = (msg, err) => err.textContent = msg;
     const hideError = (err) => err.classList.add('d-none');
 
-    // PERSISTENCE: Heartbeat approach — each tab writes a timestamp to localStorage
-    // every few seconds. On load, if the last heartbeat is stale (older than the
-    // expiry window), no tab was alive, meaning the browser was fully closed, so
-    // we clear the PIN. Refresh and navigation keep the heartbeat alive so they
-    // never falsely trigger a PIN reset.
-    const HEARTBEAT_INTERVAL = 4000; // write every 4s
-    const HEARTBEAT_EXPIRY = 6000; // stale after 6s (allows one missed beat)
-
-    const lastBeat = parseInt(localStorage.getItem('pinHeartbeat') || '0', 10);
-    const browserWasClosed = (Date.now() - lastBeat) > HEARTBEAT_EXPIRY;
-
-    if (browserWasClosed) {
-        localStorage.removeItem('pinVerified');
-    }
-
-    // Start heartbeat for this tab
-    function beatHeart() {
-        localStorage.setItem('pinHeartbeat', Date.now());
-    }
-    beatHeart();
-    const heartbeatTimer = setInterval(beatHeart, HEARTBEAT_INTERVAL);
-
-    // Stop heartbeat when tab is hidden/closed (cleans up, but not relied on for logic)
-    window.addEventListener('pagehide', function () {
-        clearInterval(heartbeatTimer);
-    });
-
-    let pinVerified = localStorage.getItem('pinVerified') === 'true';
+    // PERSISTENCE: Check if user already verified PIN in this browser
+    let pinVerified = localStorage.getItem('pinVerified') === 'true' ? true : false;
 
     // DOM element references
     const inputs = document.querySelectorAll('.pin-input');
@@ -81,7 +55,7 @@ function initializePINModal() {
     const nameEntry = document.getElementById('nameEntry');
 
     // ANTI-BYPASS: Prevent modal from closing before PIN verification AND name entry
-    modal.addEventListener('hide.bs.modal', function (e) {
+    modal.addEventListener('hide.bs.modal', function(e) {
         const nameInput = nameEntry.querySelector('input[type="text"]');
         if (!pinVerified || !nameInput || !nameInput.value.trim()) {
             e.preventDefault();
@@ -89,7 +63,7 @@ function initializePINModal() {
     });
 
     // ANTI-BYPASS: Prevent escape key from closing modal before verification
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && !pinVerified) {
             e.preventDefault();
         }
@@ -97,7 +71,7 @@ function initializePINModal() {
 
     // ANTI-BYPASS: Prevent browser back button before verification
     history.pushState(null, null, window.location.href);
-    window.addEventListener('popstate', function (e) {
+    window.addEventListener('popstate', function(e) {
         if (!pinVerified) {
             e.preventDefault();
             history.pushState(null, null, window.location.href);
@@ -111,7 +85,7 @@ function initializePINModal() {
     // INITIALIZATION: If already verified in session, skip modal
     // Otherwise apply blur and show modal
     const blurTarget = document.querySelector('.container-fluid') || document.body;
-
+    
     if (pinVerified) {
         blurTarget.classList.add('pin-verified');
     } else {
@@ -123,14 +97,14 @@ function initializePINModal() {
     // PIN INPUT HANDLING: Setup event listeners for each PIN digit input
     inputs.forEach((input, i) => {
         // INPUT EVENT: Auto-focus to next field when digit entered, add visual feedback
-        input.addEventListener('input', function () {
+        input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
             this.classList.toggle('filled', !!this.value);
             if (this.value && i < inputs.length - 1) inputs[i + 1].focus();
         });
 
         // KEYBOARD EVENT: Handle backspace navigation, Enter submission, and block non-numeric keys
-        input.addEventListener('keydown', function (e) {
+        input.addEventListener('keydown', function(e) {
             if (e.key === 'Backspace' && !this.value && i > 0) inputs[i - 1].focus();
             if (e.key === 'Enter' && i === inputs.length - 1) {
                 const nameInput = nameEntry.querySelector('input[type="text"]');
@@ -142,22 +116,22 @@ function initializePINModal() {
     });
 
     // Prevent form submission on Enter key in PIN inputs
-    form.addEventListener('submit', async function (e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
     });
 
     // NAME ENTRY HANDLING: Process user's name submission
     const nameInput = nameEntry.querySelector('input[type="text"]');
-
+    
     // Allow Enter key to submit name entry form
-    nameInput.addEventListener('keydown', function (e) {
+    nameInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             nameEntry.dispatchEvent(new Event('submit'));
         }
     });
 
     // FORM SUBMISSION: Send PIN and name to backend for verification
-    nameEntry.addEventListener('submit', async function (e) {
+    nameEntry.addEventListener('submit', async function(e) {
         e.preventDefault();
         const pin = Array.from(inputs).map(i => i.value).join('');
         const name = nameInput.value.trim();
@@ -195,7 +169,7 @@ function initializePINModal() {
             // FAILURE: Display error message
             showError(err.message, errorMsg);
             errorMsg.classList.remove('d-none');
-
+            
             // Clear only the invalid field - keep the valid one
             if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
                 // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
