@@ -389,7 +389,8 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
                 margin: auto;
                 box-shadow: none;
             }
-            #printQrBtn { 
+            #printQrBtn,
+            #closeQrBtn { 
                 display: none !important;
             }
         }
