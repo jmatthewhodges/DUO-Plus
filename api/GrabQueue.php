@@ -27,7 +27,6 @@ if (!$queue) {
 }
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-// To do: add modular support via adding Waiting Room -  should be similar to Registration
 $clientDataStmt = $mysqli->prepare("
     SELECT 
         c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
@@ -69,7 +68,7 @@ if (count($rows) > 0) {
     http_response_code(200);
     $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows]);
 } else {
-    http_response_code(200);
+    http_response_code(201);
     $msg = json_encode(['success' => false, 'count' => 0, 'error' => 'No users applicable.']);
 }
 
