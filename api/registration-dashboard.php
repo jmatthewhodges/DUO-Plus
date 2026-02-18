@@ -46,13 +46,20 @@ $result = $clientDataStmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $clientDataStmt->close();
 
-//counting the number of rows to then pull a respone for each individual person
+// Fetch processed patients count from stats table
+$clientsProcessed = 0;
+$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
+if ($statsResult && $row = $statsResult->fetch_assoc()) {
+    $clientsProcessed = (int)$row['clientsProcessed'];
+}
+
+//counting the number of rows to then pull a response for each individual person
 if (count($rows) > 0) {
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows]);
+    $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows, 'clientsProcessed' => $clientsProcessed]);
 } else {
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => 0, 'data' => []]);
+    $msg = json_encode(['success' => true, 'count' => 0, 'data' => [], 'clientsProcessed' => $clientsProcessed]);
 }
 
 echo $msg;

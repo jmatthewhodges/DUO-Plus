@@ -11,6 +11,9 @@ if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
 header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
+date_default_timezone_set('America/Chicago');
+$now = date('Y-m-d H:i:s');
+
 $checkInStatus = 'waiting_room';
 // Waiting_room -> SQL Queue column
 
@@ -28,15 +31,11 @@ $services = $_POST['services'] ?? [];
 //  DATA PREPARATION
 // -------------------------------------------------------------------------
 
-
 // Check if needsInterpreter flag exists in the database, if so, turn flag into 1 (true) or 0 (false)
-
 // If it's missing (from pre-existing registrations) set it to null so we don't incorrectly overwrite existing data
-
 $needsInterpreter = array_key_exists('needsInterpreter', $_POST)
     ? ($_POST['needsInterpreter'] ? 1 : 0)
     : null;
-
 
 $hasMedical = in_array('medical', $services) ? 1 : 0;
 $hasOptical = in_array('optical', $services) ? 1 : 0;
@@ -48,7 +47,7 @@ $hasHair    = in_array('haircut', $services) ? 1 : 0;
 // -------------------------------------------------------------------------
 
 $updateRegQuery = "UPDATE tblClientRegistrations
-        SET DateTime = NOW(),
+        SET DateTime = ?,
             Medical = ?,
             Optical = ?,
             Dental = ?,
@@ -70,7 +69,7 @@ if (!$stmtReg) {
 
 // 4 integers (Services) + 2 Strings (Queue column v(which is being bound to waiting_room) & ClientID)
 
-$stmtReg->bind_param("iiiiss", $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
+$stmtReg->bind_param("siiiiss", $now, $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
 // Only execute and proceed if update is successful
 if (!$stmtReg->execute()) {
     http_response_code(500);
@@ -102,7 +101,24 @@ if ($stmtReg->affected_rows === 0) {
 $stmtReg->close();
 
 // -------------------------------------------------------------------------
-//  DATABASE UPDATE
+//  UPDATE REGISTRATION STATS
+// -------------------------------------------------------------------------
+
+$clientsProcessed = 0;
+$stmtStats = $mysqli->prepare("UPDATE tblregistrationstats SET clientsProcessed = clientsProcessed + 1");
+if ($stmtStats && $stmtStats->execute()) {
+    $stmtStats->close();
+    // Fetch the updated count
+    $result = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
+    if ($result && $row = $result->fetch_assoc()) {
+        $clientsProcessed = (int)$row['clientsProcessed'];
+    }
+} else {
+    error_log("Stats update failed: " . $mysqli->error);
+}
+
+// -------------------------------------------------------------------------
+//  LANGUAGE UPDATE
 // -------------------------------------------------------------------------
 
 // We only touch the language table if the frontend explicitly sent a value.
@@ -196,6 +212,7 @@ http_response_code(200);
 echo json_encode([
     'success' => true,
     'message' => 'Client successfully checked in.',
-    'client' => $clientData
+    'client' => $clientData,
+    'clientsProcessed' => $clientsProcessed
 ]);
 exit;
