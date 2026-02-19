@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ * File:          Verify-Pin.php
+ * Description:   This is the API End Point for pinCode.js 
+ *
+ * Last Modified By:  Cameron Jasper
+ * Last Modified On:  2/19/2026 3:00 PM
+ * Changes Made:      Updated php to work with new DB structure 
+ * ============================================================
+*/
+
 <?php
 error_reporting(0);
 ini_set('display_errors', 0);
