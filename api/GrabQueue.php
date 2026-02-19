@@ -16,7 +16,7 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Get the queue parameter from GET request
-$queue = $_GET['queue'] ?? null;
+$queue = $_GET['serviceName'] ?? null;
 
 
 // Validate queue parameter exists
@@ -27,15 +27,17 @@ if (!$queue) {
 }
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-$clientDataStmt = $mysqli->prepare("
-    SELECT 
+$clientDataStmt = $mysqli->prepare(
+    // noted tables to get on railway for revamp: tblClientAuth, tblClients, 
+    // tblServices, tblVisitServices, tblVisits
+    "SELECT 
         c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
-        r.Medical, r.Optical, r.Dental, r.Hair
+        v.RegistrationStatus
     FROM tblClients c
-    LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
-    LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
-    LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
-    WHERE r.queue = ?
+    LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+    LEFT JOIN tblVisitservices s ON v.EventID = s.EventID
+    LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
+    WHERE i.serviceName = ?
 ");
 
 // Checks for if the connection to mysql is a success
