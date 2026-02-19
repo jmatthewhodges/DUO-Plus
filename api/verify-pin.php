@@ -43,19 +43,21 @@ if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
     die(json_encode(['success' => false, 'error' => 'Invalid PIN format']));
 }
 
-// Fetch PIN from database
+// Fetch PIN from database and make defaults NULL
 $correctPin = null;
+$pinId = null;
 
 try {
     if ($mysqli && !mysqli_connect_error()) {
-        // Query database for PIN
-        $stmt = $mysqli->prepare("SELECT pin FROM tblPinCode LIMIT 1");
+        // Query database for PIN and ID
+        $stmt = $mysqli->prepare("SELECT PinID, PinValue FROM tblPinCode LIMIT 1");
         $stmt->execute();
         $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $correctPin = $row['pin'];
+            $correctPin = $row['PinValue'];
+            $pinId = $row['PinID'];
         }
         $stmt->close();
     }
@@ -66,6 +68,7 @@ try {
 // Use default if DB lookup failed
 if (!$correctPin) {
     $correctPin = '123456';
+    $pinId = null;
 }
 
 // Verify PIN
@@ -86,16 +89,26 @@ if ($pin !== $correctPin) {
 $_SESSION[$rateLimitKey]['count'] = 0;
 http_response_code(200);
 
+// Generate UUID for PinCodeLogID
+$PinCodeLogID = sprintf(
+    '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+    mt_rand(0, 0xffff),
+    mt_rand(0, 0x0fff) | 0x4000,
+    mt_rand(0, 0x3fff) | 0x8000,
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+);
+
 try {
     if ($mysqli && !mysqli_connect_error()) {
-        $stmt = $mysqli->prepare("insert into tblPinLogs (name, page, pin, time) values (?, ?, ?, ?)");
+        $stmt = $mysqli->prepare("insert into tblPinCodeLogs (PinCodeLogID, PinID, Name, DateUsed, PageName) values (?, ?, ?, ?, ?)");
         $currentTime = date('Y-m-d H:i:s');
-        $stmt->bind_param("ssss", $name, $pageName, $pin, $currentTime);
+        $stmt->bind_param("sssss", $PinCodeLogID, $pinId, $name, $currentTime, $pageName);
         $stmt->execute();
         $stmt->close();
     }
 } catch (\Throwable $th) {
-
+    // Log insertion handled silently
 }
 
 echo json_encode(['success' => true, 'message' => 'PIN verified']);
