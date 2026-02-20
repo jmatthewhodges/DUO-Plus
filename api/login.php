@@ -6,9 +6,9 @@
  *               credentials against the database and returns
  *               client data on successful login.
  *
- *  Last Modified By:  Matthew 
- *  Last Modified On:  Feb 18 @ 2:42 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified By:  Lauren
+ *  Last Modified On:  Feb 19 @ 7:35 PM
+ *  Changes Made:      Updated endpoint to work with new database structure.
  * ============================================================
 */
 
@@ -60,10 +60,10 @@ require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
 // Check login credentials
-$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientLogin WHERE Email = ?");
+$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientAuth WHERE Email = ?");
 if (!$loginGrab) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database error.']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
     exit;
 }
 $loginGrab->bind_param("s", $email);
@@ -77,27 +77,54 @@ if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
     // Get all client data
     $registrationData = $mysqli->prepare("
         SELECT 
-            c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone,
+            c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone, c.TranslatorNeeded,
             a.Street1, a.Street2, a.City, a.State, a.ZIP,
             e.Name AS EmergencyName, e.Phone AS EmergencyPhone,
-            r.DateTime AS RegistrationDate, r.Medical, r.Optical, r.Dental, r.Hair
+            auth.Email
         FROM tblClients c
+        LEFT JOIN tblClientAuth auth ON c.ClientID = auth.ClientID
         LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
         LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
-        LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
         WHERE c.ClientID = ?
     ");
     if (!$registrationData) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Database error.']);
+        echo json_encode(['success' => false, 'message' => 'Database error.'. $mysqli->error]);
         exit;
     }
     $registrationData->bind_param("s", $clientID);
     $registrationData->execute();
     $result = $registrationData->get_result();
     $userData = $result->fetch_assoc();
+    $registrationData->close();
+
+
+    // Get array of services
+    $activeServices = [];
+    $servicesQuery = $mysqli->prepare("
+        SELECT s.ServiceName 
+        FROM tblVisitServices vs
+        JOIN tblVisits v ON vs.VisitID = v.VisitID
+        JOIN tblServices s ON vs.ServiceID = s.ServiceID
+        WHERE v.ClientID = ? AND vs.ServiceStatus != 'Complete'
+    ");
     
-    $msg = json_encode(['success' => true, 'message' => 'Successful login.', 'data' => $userData]);
+    if ($servicesQuery) {
+        $servicesQuery->bind_param("s", $clientID);
+        $servicesQuery->execute();
+        $servicesQuery->bind_result($serviceName);
+        while ($servicesQuery->fetch()) {
+            $activeServices[] = strtolower($serviceName); 
+        }
+        $servicesQuery->close();
+    }
+
+    // Attach services to user data (will be empty [] if they are new/have no services)
+    $userData['activeServices'] = $activeServices;
+
+    
+    
+    $msg = json_encode(['success' => true, 'message' => 'Successful login.']);
     echo $msg;
     error_log($msg);
 } else {

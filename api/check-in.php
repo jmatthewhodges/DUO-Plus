@@ -1,11 +1,33 @@
 <?php
+/**
+ * ============================================================
+ * File:          check-in.php
+ * Description:   Updates database tables. Changes the client's 
+ *                queue position and services requested, and 
+ *                checks whether they need a language interpreter.
+ * 
+ * Last Modified By:  Lauren
+ * Last Modified On:  Feb 19 @ 7:35 PM
+ * Changes Made:      Updated endpoint to work with new database structure.
+ * ============================================================
+*/
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
 
-// Get header type, set POST request type for JSON data
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $_POST = json_decode(file_get_contents('php://input'), true) ?? [];
+// Get header type
+if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
+    http_response_code(415);
+    exit(json_encode(['success' => false, 'error' => 'Invalid content type. Expected application/json.']));
+}
+
+// If above works, set POST request type for JSON data
+$_POST = json_decode(file_get_contents('php://input'), true) ?? [];
+$clientID = $_POST['clientID'] ?? null;
+
+if (empty($clientID)) {
+    http_response_code(400);
+    exit(json_encode(['success' => false, 'error' => 'clientID is required']));
 }
 
 header('Content-Type: application/json');
@@ -14,145 +36,123 @@ $mysqli = $GLOBALS['mysqli'];
 date_default_timezone_set('America/Chicago');
 $now = date('Y-m-d H:i:s');
 
-$checkInStatus = 'waiting_room';
-// Waiting_room -> SQL Queue column
 
-$clientID = $_POST['clientID'] ?? null;
-
-if (empty($clientID)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'clientID is required']);
-    exit;
-}
+// -------------------------------------------------------------------------
+//  DATA PREPARATION & TRANSLATOR FLAG
+// -------------------------------------------------------------------------
 
 $services = $_POST['services'] ?? [];
 
-// -------------------------------------------------------------------------
-//  DATA PREPARATION
-// -------------------------------------------------------------------------
-
 // Check if needsInterpreter flag exists in the database, if so, turn flag into 1 (true) or 0 (false)
 // If it's missing (from pre-existing registrations) set it to null so we don't incorrectly overwrite existing data
-$needsInterpreter = array_key_exists('needsInterpreter', $_POST)
-    ? ($_POST['needsInterpreter'] ? 1 : 0)
-    : null;
 
-$hasMedical = in_array('medical', $services) ? 1 : 0;
-$hasOptical = in_array('optical', $services) ? 1 : 0;
-$hasDental  = in_array('dental', $services) ? 1 : 0;
-$hasHair    = in_array('haircut', $services) ? 1 : 0;
+$needsInterpreter = isset($_POST['needsInterpreter']) ? (int)$_POST['needsInterpreter'] : null;
+
+// Update translation flag
+if ($needsInterpreter !== null) {
+    $stmtClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
+    $stmtClient->bind_param("is", $needsInterpreter, $clientID);
+    $stmtClient->execute();
+    $stmtClient->close();
+}
+
+// Fetch active event
+$eventResult = $mysqli->query("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+$eventID = $eventResult && $eventResult->num_rows > 0 ? $eventResult->fetch_object()->EventID : null;
+
+if (!$eventID) {
+    http_response_code(400);
+    exit(json_encode(['success' => false, 'message' => 'No active event found.']));
+}
+
+
+// -------------------------------------------------------------------------
+//  CLIENT VALIDATION
+// -------------------------------------------------------------------------
+
+$checkClient = $mysqli->prepare("SELECT ClientID FROM tblClients WHERE ClientID = ?");
+$checkClient->bind_param("s", $clientID);
+$checkClient->execute();
+$checkClient->store_result();
+
+if ($checkClient->num_rows === 0) {
+    http_response_code(404);
+    exit(json_encode(['success' => false, 'message' => 'Profile not found. Please register first.']));
+}
+$checkClient->close();
+
+
 
 // -------------------------------------------------------------------------
 //  UPDATE REGISTRATION
 // -------------------------------------------------------------------------
 
-$updateRegQuery = "UPDATE tblClientRegistrations
-        SET DateTime = ?,
-            Medical = ?,
-            Optical = ?,
-            Dental = ?,
-            Hair = ?,
-            Queue = ?
-        WHERE ClientID = ?";
+$regStatus = 'Registered';
 
-$stmtReg = $mysqli->prepare($updateRegQuery);
+// Insert new visit data for check-in
+$visitID = $clientID . "_" . $eventID; 
 
-// SQL Failed (Crash or syntax error)
+$visitCheck = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) 
+    VALUES (?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE 
+        RegistrationStatus = VALUES(RegistrationStatus), 
+        CheckInTime = VALUES(CheckInTime)
+");
 
+$visitCheck->bind_param("ssssss", $visitID, $clientID, $eventID, $regStatus, $now, $clientID);
 
-if (!$stmtReg) {
+if (!$visitCheck->execute()) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Registration preparation failed: ' . $mysqli->error]);
-    exit;
+    exit(json_encode(['success' => false, 'message' => 'Visit failed: ' . $visitCheck->error]));
 }
+$visitCheck->close();
 
+// -------------------------------------------------------------------------
+//  SERVICE ASSIGNMENT
+// -------------------------------------------------------------------------
 
-// 4 integers (Services) + 2 Strings (Queue column v(which is being bound to waiting_room) & ClientID)
+// Remove old selections from previous visits
+$mysqli->query("DELETE FROM tblVisitServices WHERE VisitID = '$visitID'");
 
-$stmtReg->bind_param("siiiiss", $now, $hasMedical, $hasOptical, $hasDental, $hasHair, $checkInStatus, $clientID);
-// Only execute and proceed if update is successful
-if (!$stmtReg->execute()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Registration update failed: ' . $stmtReg->error]);
-    $stmtReg->close();
-    exit;
-}
+if (!empty($services)) {
+    $initialServiceStatus = 'Pending'; 
+    $stmtInsertService = $mysqli->prepare("INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority) VALUES (?, ?, ?, ?, ?)");
 
-// If no rows were updated, it means the ClientID does not exist in registrations or data hasn't changed
-if ($stmtReg->affected_rows === 0) {
-    // Check if the ID exists
-    $checkId = $mysqli->prepare("SELECT ClientID FROM tblClientRegistrations WHERE ClientID = ?");
-    $checkId->bind_param("s", $clientID);
-    $checkId->execute();
-    $checkId->store_result();
-    if ($checkId->num_rows === 0) {
-        http_response_code(404);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Client ID not found.'
-        ]);
-        $checkId->close();
-        $stmtReg->close();
-        exit;
+    foreach ($services as $serviceID) {
+        // Temporary service ID
+        $visitServiceEntryID = $visitID . "_" . $serviceID; 
+        $stmtInsertService->bind_param("sssss", $visitServiceEntryID, $visitID, $serviceID, $initialServiceStatus, $now);
+        $stmtInsertService->execute();
     }
-    $checkId->close(); // The ID exists, but the data was already up to date.
+    $stmtInsertService->close();
 }
 
-$stmtReg->close();
+// -------------------------------------------------------------------------
+//  tblAnalytics UPDATE
+// -------------------------------------------------------------------------
+
+$analyticsStatKey = 'clientsProcessed';
+$analyticsStatID = "stat_" . $eventID; 
+
+$mysqli->query("INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated) 
+    VALUES ('$analyticsStatID', '$eventID', '$analyticsStatKey', 1, '$now') 
+    ON DUPLICATE KEY UPDATE StatValue = StatValue + 1, LastUpdated = '$now'
+");
 
 // -------------------------------------------------------------------------
 //  UPDATE REGISTRATION STATS
 // -------------------------------------------------------------------------
 
+// Fetch the updated count to return in the response
 $clientsProcessed = 0;
-$stmtStats = $mysqli->prepare("UPDATE tblregistrationstats SET clientsProcessed = clientsProcessed + 1");
-if ($stmtStats && $stmtStats->execute()) {
-    $stmtStats->close();
-    // Fetch the updated count
-    $result = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
-    if ($result && $row = $result->fetch_assoc()) {
-        $clientsProcessed = (int)$row['clientsProcessed'];
-    }
-} else {
-    error_log("Stats update failed: " . $mysqli->error);
-}
-
-// -------------------------------------------------------------------------
-//  LANGUAGE UPDATE
-// -------------------------------------------------------------------------
-
-// We only touch the language table if the frontend explicitly sent a value.
-if ($needsInterpreter !== null) {
-
-    // Check if a row exists for this client
-    $checkLang = $mysqli->prepare("SELECT Language_ID FROM tblClientLang WHERE ClientID = ?");
-    $checkLang->bind_param("s", $clientID);
-    $checkLang->execute();
-    $langResult = $checkLang->get_result();
-    
-    // Update or Insert based on result
-    if ($langResult->num_rows > 0) {
-        // Row exists: Update it
-        $stmtLang = $mysqli->prepare("UPDATE tblClientLang SET NeedsInterpreter = ? WHERE ClientID = ?");
-        $stmtLang->bind_param("is", $needsInterpreter, $clientID);
-    } else {
-        // Row missing: Insert new
-        $stmtLang = $mysqli->prepare("INSERT INTO tblClientLang (NeedsInterpreter, ClientID) VALUES (?, ?)");
-        $stmtLang->bind_param("is", $needsInterpreter, $clientID);
-    }
-    $checkLang->close();
-
-    // Execute the update
-    if (!$stmtLang->execute()) {
-        error_log("Language update failed: " . $stmtLang->error);
-    }
-    $stmtLang->close();
+$resStat = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE EventID = '$eventID' AND StatKey = '$analyticsStatKey'");
+if ($row = $resStat->fetch_assoc()) {
+    $clientsProcessed = (int)$row['StatValue'];
 }
 
 // -------------------------------------------------------------------------
 // SUCCESS RESPONSE
 // -------------------------------------------------------------------------
-
 
 // Only fetch and return client data if update was successful or data was already up to date
 // (i.e., we did not exit above)
@@ -162,8 +162,8 @@ $clientData = [
     'firstName' => null,
     'middleInitial' => null,
     'lastName' => null,
-    'services' => [],
-    'needsInterpreter' => $needsInterpreter // default to what was set, will update below
+    'services' => $services, // Changed from [] to $services
+    'needsInterpreter' => $needsInterpreter
 ];
 
 // Get client name info
@@ -179,40 +179,13 @@ if ($stmtClient->execute()) {
 }
 $stmtClient->close();
 
-// Get services info
-$stmtServices = $mysqli->prepare("SELECT Medical, Optical, Dental, Hair FROM tblClientRegistrations WHERE ClientID = ?");
-$stmtServices->bind_param("s", $clientID);
-if ($stmtServices->execute()) {
-    $stmtServices->bind_result($med, $opt, $dent, $hair);
-    if ($stmtServices->fetch()) {
-        $servicesArr = [];
-        if ($med) $servicesArr[] = 'medical';
-        if ($opt) $servicesArr[] = 'optical';
-        if ($dent) $servicesArr[] = 'dental';
-        if ($hair) $servicesArr[] = 'haircut';
-        $clientData['services'] = $servicesArr;
-    }
-}
-$stmtServices->close();
-
-// Get needsInterpreter from DB if not set in this request
-if ($needsInterpreter === null) {
-    $stmtLang = $mysqli->prepare("SELECT NeedsInterpreter FROM tblClientLang WHERE ClientID = ?");
-    $stmtLang->bind_param("s", $clientID);
-    if ($stmtLang->execute()) {
-        $stmtLang->bind_result($dbNeedsInterpreter);
-        if ($stmtLang->fetch()) {
-            $clientData['needsInterpreter'] = $dbNeedsInterpreter;
-        }
-    }
-    $stmtLang->close();
-}
 
 http_response_code(200);
 echo json_encode([
     'success' => true,
     'message' => 'Client successfully checked in.',
-    'client' => $clientData,
+    //  'client' => $clientData,
+    // 'visitID' => $visitID,
     'clientsProcessed' => $clientsProcessed
 ]);
 exit;
