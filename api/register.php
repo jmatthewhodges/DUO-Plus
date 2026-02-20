@@ -59,7 +59,7 @@ if ($clientID) {
     $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
     $lastName = isset($_POST['lastName']) ? ucfirst(strtolower(trim($_POST['lastName']))) : null;
     $dob = $_POST['dob'] ?? null;
-    $sex = $_POST['sex'] ?? null;
+    $sex = strtolower(trim($_POST['sex']));
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Update client info
@@ -296,8 +296,12 @@ if ($clientID) {
 } else {
     // NEW USER - INSERT
 
-    // Validate required fields
-    $required = ['firstName', 'lastName', 'dob', 'sex', 'email', 'password'];
+    $isNewUser = empty($_POST['clientID']);
+    $required = ['firstName', 'lastName', 'dob', 'sex'];
+    if ($isNewUser) {
+        $required[] = 'email';
+        $required[] = 'password';
+    }
     $missing = [];
     foreach ($required as $field) {
         if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
@@ -332,7 +336,7 @@ if ($clientID) {
     $lastName = ucfirst(strtolower(trim($_POST['lastName'])));
     $dateCreated = date('Y-m-d H:i:s');
     $dob = $_POST['dob'];
-    $sex = $_POST['sex'];
+    $sex = strtolower(trim($_POST['sex']));
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Insert client
