@@ -28,7 +28,7 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Get the queue parameter from GET request
-$queue = $_GET['ServiceStatus'] ?? null;
+$queue = $_GET['RegistrationStatus'] ?? null;
 
 
 // Validate queue parameter exists
@@ -49,7 +49,7 @@ $clientDataStmt = $mysqli->prepare(
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
     LEFT JOIN tblVisitServices s ON v.VisitID = s.VisitID
 	LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
-WHERE s.ServiceStatus = ?
+WHERE v.RegistrationStatus = ?
 ");
 
 // Checks for if the connection to mysql is a success
