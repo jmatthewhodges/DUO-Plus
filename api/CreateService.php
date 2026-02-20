@@ -1,11 +1,11 @@
 <?php
 /**
  * ============================================================
- *  File:        CreateEvent.php
- *  Description: Handles creating a new event.
+ *  File:        CreateService.php
+ *  Description: Handles creating a new service.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 19 @ 7:36 PM
+ *  Last Modified On:  Feb 19 @ 7:47 PM
  *  Changes Made:      Initial creation & update for portal
  * ============================================================
 */
@@ -43,17 +43,14 @@ require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
 // Validate required fields
-$EventDate = $_POST['EventDate'] ?? '';
-$LocationName = $_POST['LocationName'] ?? '';
-$IsActive = ($_POST['IsActive'] === true || $_POST['IsActive'] === 1 || $_POST['IsActive'] === "1") ? 1 : 0;
+$ServiceID = $_POST['ServiceID'] ?? '';
+$ServiceName = $_POST['ServiceName'] ?? '';
+$IconTag = $_POST['IconTag'] ?? '';
 
 $missingFields = [];
-if (empty($EventDate)) $missingFields[] = 'EventDate';
-if (empty($LocationName)) $missingFields[] = 'LocationName';
-// Validate IsActive: must be present and either 1, 0, true, or false
-if (!array_key_exists('IsActive', $_POST) || !in_array($_POST['IsActive'], [1, 0, "1", "0", true, false], true)) {
-    $missingFields[] = 'IsActive (must be boolean true/false or 1/0)';
-}
+if (empty($ServiceID)) $missingFields[] = 'ServiceID';
+if (empty($ServiceName)) $missingFields[] = 'ServiceName';
+if (empty($IconTag)) $missingFields[] = 'IconTag';
 
 // Return error for missing fields
 if (!empty($missingFields)) {
@@ -65,19 +62,9 @@ if (!empty($missingFields)) {
     exit;
 }
 
-// Then validate EventDate format
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $EventDate)) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'EventDate must be in YYYY-MM-DD format.'
-    ]);
-    exit;
-}
-
-// Check for duplicate event (same LocationName and EventDate)
-$dupCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblEvents WHERE LocationName = ? AND EventDate = ?");
-$dupCheck->bind_param("ss", $LocationName, $EventDate);
+// Check for duplicate ServiceID or ServiceName
+$dupCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ServiceID = ? OR ServiceName = ?");
+$dupCheck->bind_param("ss", $ServiceID, $ServiceName);
 $dupCheck->execute();
 $dupCheck->bind_result($count);
 $dupCheck->fetch();
@@ -87,36 +74,33 @@ if ($count > 0) {
     http_response_code(409);
     echo json_encode([
         'success' => false,
-        'message' => 'An event with this LocationName and EventDate already exists.'
+        'message' => 'A service with this ServiceID or ServiceName already exists.'
     ]);
     exit;
 }
 
-// Generate unique EventID
-$EventID = bin2hex(random_bytes(8));
-
 // Prepare the query with temp variables
-$eventInsert = $mysqli->prepare("INSERT INTO tblEvents (EventID, EventDate, LocationName, IsActive) VALUES (?, ?, ?, ?)");
+$serviceInsert = $mysqli->prepare("INSERT INTO tblServices (ServiceID, ServiceName, IconTag) VALUES (?, ?, ?)");
 
 // Check for error
-if (!$eventInsert) {
+if (!$serviceInsert) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
     exit;
 }
 
-$eventInsert->bind_param("sssi", $EventID, $EventDate, $LocationName, $IsActive);
-$result = $eventInsert->execute();
+$serviceInsert->bind_param("sss", $ServiceID, $ServiceName, $IconTag);
+$result = $serviceInsert->execute();
 
 // Give response
 if ($result) {
     http_response_code(201);
-    $msg = json_encode(['success' => true, 'message' => 'New event created.']);
+    $msg = json_encode(['success' => true, 'message' => 'New service created.']);
     echo $msg;
     error_log($msg); 
 } else {
     http_response_code(400);
-    $msg = json_encode(['success' => false, 'message' => 'Event creation failed.']);
+    $msg = json_encode(['success' => false, 'message' => 'Service creation failed.']);
     echo $msg;
     error_log($msg); 
 }

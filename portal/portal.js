@@ -79,6 +79,41 @@ const API_METHODS = [
             IsActive: true,
         }
     },
+    {
+        id: 'AddEventService',
+        name: 'Add Event Service',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/AddEventService.php',
+        description: 'Add a service to an event.',
+        params: [
+            { name: 'EventID', type: 'text', required: true, default: '', description: 'ID for the event that is getting the service' },
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'ID for the service that is getting added to the event' },
+            { name: 'MaxCapacity', type: 'number', required: true, default: '', description: 'Max capacity for the service' },
+            { name: 'CurrentAssigned', type: 'number', required: true, default: '', description: 'Number of clients currently assigned to this service' },
+            { name: 'IsClosed', type: 'checkbox', required: true, default: '', description: 'Status for if the event is currently offering this service' }
+        ],
+    },
+
+    // Service
+    {
+        id: 'CreateService',
+        name: 'Create Service',
+        category: 'Service',
+        method: 'POST',
+        endpoint: '/api/CreateService.php',
+        description: 'Create a new service.',
+        params: [
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'Unique identifier for the service' },
+            { name: 'ServiceName', type: 'text', required: true, default: '', description: 'Name for the service' },
+            { name: 'IconTag', type: 'text', required: true, default: '', description: 'Offical icon tag for the service' }
+        ],
+        testData: {
+            ServiceID: 'MedicalFollowUp',
+            ServiceName: 'Medical - Follow Up',
+            IconTag: "faUpArrow",
+        }
+    },
 
     // ─── Registration ─────────────────────────────────────────────────────
     {
@@ -494,6 +529,10 @@ const API_METHODS = [
                 } catch {
                     body[p.name] = el.value;
                 }
+            } else if (p.type === 'number') {
+                // Convert to number if not empty
+                const val = el.value.trim();
+                if (val !== '') body[p.name] = Number(val);
             } else {
                 const val = el.value.trim();
                 if (val !== '') body[p.name] = val;
