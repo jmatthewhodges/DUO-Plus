@@ -1,3 +1,4 @@
+<?php
 /**
  * ============================================================
  * File:          Verify-Pin.php
@@ -8,8 +9,6 @@
  * Changes Made:      Updated php to work with new DB structure 
  * ============================================================
 */
-
-<?php
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json');
