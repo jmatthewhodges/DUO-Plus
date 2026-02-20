@@ -2,11 +2,11 @@
 /**
  * ============================================================
  *  File:        ClearDatabase.php
- *  Purpose:     Clear all data from every table in the database
+ *  Purpose:     Clear all test/client-related data from the database
  * 
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 19 @ 9:08 PM
- *  Changes Made:      Initial creation 
+ *  Last Modified On:  Feb 18 @ 9:33 PM
+ *  Changes Made:      Updated to only clear test data
  * ============================================================
  */
 
@@ -27,24 +27,16 @@ $mysqli = $GLOBALS['mysqli'];
 // Disable foreign key checks to allow truncating tables with relationships
 $mysqli->query("SET FOREIGN_KEY_CHECKS = 0");
 
-// List all tables to clear, in dependency-safe order
+// Only clear client/test-related tables
 $tables = [
     'tblMovementLogs',
     'tblVisitServices',
     'tblVisits',
-    'tblEventServices',
     'tblVisitServiceSelections',
-    'tblAnalytics',
     'tblClientEmergencyContacts',
     'tblClientAddress',
     'tblClientAuth',
-    'tblClients',
-    'tblEvents',
-    'tblServices',
-    'tblFoodDistributionLog',
-    'tblPinCodeLogs',
-    'tblPinCode',
-    'tblAPIKeys'
+    'tblClients'
 ];
 
 $errors = [];
@@ -58,7 +50,7 @@ foreach ($tables as $table) {
 $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
 
 if (empty($errors)) {
-    echo json_encode(['success' => true, 'message' => 'All tables cleared successfully.']);
+    echo json_encode(['success' => true, 'message' => 'Test/client tables cleared successfully.']);
 } else {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Some tables could not be cleared.', 'errors' => $errors]);

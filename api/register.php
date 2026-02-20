@@ -8,8 +8,8 @@
  *               service selections.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:42 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 18 @ 9:26 PM
+ *  Changes Made:      Updated for new DB structure
  * ============================================================
 */
 
@@ -46,13 +46,13 @@ require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
 // Defaults
-$status = "Active";
 $queue = "registration";
 
 // Check if existing user or new user
 $clientID = $_POST['clientID'] ?? null;
 
 if ($clientID) {
+    $mysqli->begin_transaction();
     // EXISTING USER - UPDATE
     
     $firstName = isset($_POST['firstName']) ? ucfirst(strtolower(trim($_POST['firstName']))) : null;
@@ -65,12 +65,18 @@ if ($clientID) {
     // Update client info
     $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
     if (!$clientUpdate) {
+        $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
         exit;
     }
     $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
-    $clientUpdate->execute();
+    if (!$clientUpdate->execute()) {
+        $mysqli->rollback();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $clientUpdate->error]);
+        exit;
+    }
 
     $noAddress = $_POST['noAddress'] ?? true;
 
@@ -97,16 +103,37 @@ if ($clientID) {
         if ($addressResult->num_rows > 0) {
             // Update existing address
             $addressUpdate = $mysqli->prepare("UPDATE tblClientAddress SET Street1 = ?, Street2 = ?, City = ?, State = ?, ZIP = ? WHERE ClientID = ?");
+            if (!$addressUpdate) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+                exit;
+            }
             $addressUpdate->bind_param("ssssss", $address1, $address2, $city, $state, $zipCode, $clientID);
-            $addressUpdate->execute();
+            if (!$addressUpdate->execute()) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to update address: ' . $addressUpdate->error]);
+                exit;
+            }
         } else {
             // Insert new address
             // Generate unique AddressID
             $AddressID = bin2hex(random_bytes(8));
-
             $addressInsertion = $mysqli->prepare("INSERT INTO tblClientAddress(AddressID, ClientID, Street1, Street2, City, State, ZIP) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            if (!$addressInsertion) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+                exit;
+            }
             $addressInsertion->bind_param("sssssss", $AddressID, $clientID, $address1, $address2, $city, $state, $zipCode);
-            $addressInsertion->execute();
+            if (!$addressInsertion->execute()) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to insert address: ' . $addressInsertion->error]);
+                exit;
+            }
         }
     }
 
@@ -134,16 +161,37 @@ if ($clientID) {
         if ($emergencyResult->num_rows > 0) {
             // Update existing emergency contact
             $emergencyUpdate = $mysqli->prepare("UPDATE tblClientEmergencyContacts SET Name = ?, Phone = ? WHERE ClientID = ?");
+            if (!$emergencyUpdate) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+                exit;
+            }
             $emergencyUpdate->bind_param("sss", $emergencyFullName, $emergencyPhone, $clientID);
-            $emergencyUpdate->execute();
+            if (!$emergencyUpdate->execute()) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to update emergency contact: ' . $emergencyUpdate->error]);
+                exit;
+            }
         } else {
             // Insert new emergency contact
             // Generate unique ContactID
             $ContactID = bin2hex(random_bytes(8));
-
             $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblClientEmergencyContacts(ContactID, ClientID, Name, Phone) VALUES (?, ?, ?, ?)");
+            if (!$emergencyContactInsertion) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+                exit;
+            }
             $emergencyContactInsertion->bind_param("ssss", $ContactID, $clientID, $emergencyFullName, $emergencyPhone);
-            $emergencyContactInsertion->execute();
+            if (!$emergencyContactInsertion->execute()) {
+                $mysqli->rollback();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to insert emergency contact: ' . $emergencyContactInsertion->error]);
+                exit;
+            }
         }
     }
 
@@ -195,17 +243,51 @@ if ($clientID) {
 
     // (Optional) Remove previous selections for this client/event
     $deleteOld = $mysqli->prepare("DELETE FROM tblVisitServiceSelections WHERE ClientID = ? AND EventID = ?");
+    if (!$deleteOld) {
+        $mysqli->rollback();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+        exit;
+    }
     $deleteOld->bind_param("ss", $clientID, $EventID);
-    $deleteOld->execute();
+    if (!$deleteOld->execute()) {
+        $mysqli->rollback();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to clear previous service selections: ' . $deleteOld->error]);
+        exit;
+    }
 
     // Insert new selections
     foreach ($services as $service) {
         $selectionID = bin2hex(random_bytes(8));
         $stmt = $mysqli->prepare("INSERT INTO tblVisitServiceSelections (SelectionID, ClientID, EventID, ServiceID, DateSelected) VALUES (?, ?, ?, ?, NOW())");
+        if (!$stmt) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
         $stmt->bind_param("ssss", $selectionID, $clientID, $EventID, $service);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to insert service selection: ' . $stmt->error]);
+            exit;
+        }
     }
 
+    // Insert/Update visit record to put client in registration queue
+    $visitID = bin2hex(random_bytes(8));
+    $registrationStatus = 'Registered';
+    $checkInTime = null;
+    $qrCodeData = null;
+    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+    if ($visitInsert) {
+        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+        $visitInsert->execute();
+    }
+
+    $mysqli->commit();
     http_response_code(200);
     $msg = json_encode(['success' => true, 'message' => 'Information and services updated successfully.']);
     echo $msg;
@@ -235,8 +317,9 @@ if ($clientID) {
         exit;
     }
 
-    // Validate sex value
-    if (!in_array($_POST['sex'], ['Male', 'Female', 'Intersex'])) {
+    // Validate sex value (case-insensitive)
+    $validSex = ['male', 'female', 'intersex'];
+    if (!in_array(strtolower($_POST['sex']), $validSex)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Sex must be Male, Female, or Intersex.']);
         exit;
@@ -253,14 +336,17 @@ if ($clientID) {
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
     // Insert client
+    $mysqli->begin_transaction();
     $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$clientCreation) {
+        $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
         exit;
     }
     $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $dateCreated);
     if (!$clientCreation->execute()) {
+        $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Failed to create client: ' . $clientCreation->error]);
         exit;
@@ -274,12 +360,14 @@ if ($clientID) {
 
     $loginInsertion = $mysqli->prepare("INSERT INTO tblClientAuth(AuthID, ClientID, Email, Password) VALUES (?, ?, ?, ?)");
     if (!$loginInsertion) {
+        $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
         exit;
     }
     $loginInsertion->bind_param("ssss", $AuthID, $clientID, $email, $password);
     if (!$loginInsertion->execute()) {
+        $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Failed to create login: ' . $loginInsertion->error]);
         exit;
@@ -305,8 +393,19 @@ if ($clientID) {
 
         // Insert address
         $addressInsertion = $mysqli->prepare("INSERT INTO tblClientAddress(AddressID, ClientID, Street1, Street2, City, State, ZIP) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        if (!$addressInsertion) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
         $addressInsertion->bind_param("sssssss", $AddressID, $clientID, $address1, $address2, $city, $state, $zipCode);
-        $addressInsertion->execute();
+        if (!$addressInsertion->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to insert address: ' . $addressInsertion->error]);
+            exit;
+        }
     }
 
     $noEmergencyContact = $_POST['noEmergencyContact'] ?? true;
@@ -329,8 +428,19 @@ if ($clientID) {
 
         // Insert emergency contact
         $emergencyContactInsertion = $mysqli->prepare("INSERT INTO tblClientEmergencyContacts(ContactID, ClientID, Name, Phone) VALUES (?, ?, ?, ?)");
+        if (!$emergencyContactInsertion) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
         $emergencyContactInsertion->bind_param("ssss", $ContactID, $clientID, $emergencyFullName, $emergencyPhone);
-        $emergencyContactInsertion->execute();
+        if (!$emergencyContactInsertion->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to insert emergency contact: ' . $emergencyContactInsertion->error]);
+            exit;
+        }
     }
 
     /// Insert selected services into tblVisitServiceSelections
@@ -382,10 +492,33 @@ if ($clientID) {
     foreach ($services as $service) {
         $selectionID = bin2hex(random_bytes(8));
         $stmt = $mysqli->prepare("INSERT INTO tblVisitServiceSelections (SelectionID, ClientID, EventID, ServiceID, DateSelected) VALUES (?, ?, ?, ?, NOW())");
+        if (!$stmt) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
         $stmt->bind_param("ssss", $selectionID, $clientID, $EventID, $service);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to insert service selection: ' . $stmt->error]);
+            exit;
+        }
     }
 
+    // Insert visit record to put client in registration queue
+    $visitID = bin2hex(random_bytes(8));
+    $registrationStatus = 'Registered';
+    $checkInTime = null;
+    $qrCodeData = null;
+    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+    if ($visitInsert) {
+        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+        $visitInsert->execute();
+    }
+
+    $mysqli->commit();
     http_response_code(201);
     $msg = json_encode(['success' => true, 'message' => 'New client created and services selected.']);
     echo $msg;
