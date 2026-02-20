@@ -68,9 +68,9 @@ $clientDataStmt->close();
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
 //$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
-$statsResult = $mysqli->query("SELECT statKey FROM tblAnalytics LIMIT 1");
+$statsResult = $mysqli->query("SELECT statValue FROM tblAnalytics LIMIT 1");
 if ($statsResult && $row = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$row['clientsProcessed'];
+    $clientsProcessed = (int)$row['statValue'];
 }
 
 // Counting the number of rows to then pull a responsse for each individual person
