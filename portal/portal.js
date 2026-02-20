@@ -60,6 +60,26 @@ const API_METHODS = [
         }
     },
 
+    // Event
+    {
+        id: 'CreateEvent',
+        name: 'Create Event',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/CreateEvent.php',
+        description: 'Create a new event.',
+        params: [
+            { name: 'EventDate', type: 'date', required: true, default: '', description: 'Date the event takes place' },
+            { name: 'LocationName', type: 'text', required: true, default: '', description: 'Name for the location of the event' },
+            { name: 'IsActive', type: 'checkbox', required: true, default: '', description: 'Active status for the event' }
+        ],
+        testData: {
+            EventDate: '2000-01-01',
+            LocationName: 'LifeChurchCookeville',
+            IsActive: true,
+        }
+    },
+
     // ─── Registration ─────────────────────────────────────────────────────
     {
         id: 'register',
