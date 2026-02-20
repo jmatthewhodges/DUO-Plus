@@ -1,4 +1,16 @@
 <?php
+/**
+ * ============================================================
+ *  File:        GrabQueue.php
+ *  Description: Simple PHP endpoint that gets needed users
+ *               from inputted "servicestatus". for use in 
+ *               scnarios such as registration dashboard.
+ *
+ *  Last Modified By:  Miguel
+ *  Last Modified On:  Feb 20 @ 8:10 AM
+ *  Changes Made:      edited SQL query to fit current DB
+ * ============================================================
+*/
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
@@ -67,10 +79,9 @@ $clientDataStmt->close();
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-//$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
-$statsResult = $mysqli->query("SELECT statValue FROM tblAnalytics LIMIT 1");
+$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblAnalytics LIMIT 1");
 if ($statsResult && $row = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$row['statValue'];
+    $clientsProcessed = (int)$row['clientsProcessed'];
 }
 
 // Counting the number of rows to then pull a responsse for each individual person
