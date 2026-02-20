@@ -16,7 +16,7 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Get the queue parameter from GET request
-$queue = $_GET['serviceName'] ?? null;
+$queue = $_GET['ServiceStatus'] ?? null;
 
 
 // Validate queue parameter exists
@@ -32,12 +32,12 @@ $clientDataStmt = $mysqli->prepare(
     // tblServices, tblVisitServices, tblVisits
     "SELECT 
         c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
-        v.RegistrationStatus
+        v.RegistrationStatus, s.ServiceStatus, s.QueuePriority, i.ServiceName
     FROM tblClients c
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
-    LEFT JOIN tblVisitservices s ON v.EventID = s.EventID
-    LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
-    WHERE i.serviceName = ?
+    LEFT JOIN tblVisitServices s ON v.VisitID = s.VisitID
+	LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
+WHERE s.ServiceStatus = ?
 ");
 
 // Checks for if the connection to mysql is a success
@@ -67,7 +67,8 @@ $clientDataStmt->close();
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
+//$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
+$statsResult = $mysqli->query("SELECT statKey FROM tblAnalytics LIMIT 1");
 if ($statsResult && $row = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$row['clientsProcessed'];
 }
