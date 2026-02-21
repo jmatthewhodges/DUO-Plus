@@ -24,6 +24,20 @@
 
 const API_METHODS = [
 
+    // Testing
+    {
+        id: 'ClearClients',
+        name: 'Clear Clients',
+        category: 'Testing',
+        method: 'POST',
+        endpoint: '/api/ClearClients.php',
+        description: 'Remove all current client information from the database.',
+        params: [
+        ],
+        testData: {
+        }
+    },
+
     // ─── Authentication ───────────────────────────────────────────────────
     {
         id: 'login',
@@ -57,6 +71,26 @@ const API_METHODS = [
             pin: '123456',
             name: 'Jane Volunteer',
             pageName: 'registration-dashboard'
+        }
+    },
+
+    {
+        id: 'CreatePin',
+        name: 'Create Pin',
+        category: 'Authentication',
+        method: 'POST',
+        endpoint: '/api/CreatePin.php',
+        description: 'Create a new 6-digit PIN code entry in tblPinCode.',
+        params: [
+            {
+                name: 'PinValue',
+                type: 'string',
+                required: true,
+                description: 'Exactly 6 numeric digits (e.g. "847291")'
+            }
+        ],
+        testData: {
+            PinValue: '123456'
         }
     },
 

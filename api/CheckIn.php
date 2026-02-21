@@ -160,7 +160,7 @@ $insertService->close();
 $statKey = 'clientsProcessed';
 $updateStat = $mysqli->prepare(
     "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
-     WHERE EventID = ? AND StatKey = ?"
+     WHERE EventID = ? AND StatID = ?"
 );
 if ($updateStat) {
     $updateStat->bind_param('ss', $eventID, $statKey);
@@ -171,7 +171,7 @@ if ($updateStat) {
 // Fetch updated clientsProcessed to return to frontend
 $clientsProcessed = 0;
 $statFetch = $mysqli->query(
-    "SELECT StatValue FROM tblAnalytics WHERE EventID = '$eventID' AND StatKey = 'clientsProcessed' LIMIT 1"
+    "SELECT StatValue FROM tblAnalytics WHERE EventID = '$eventID' AND StatID = 'clientsProcessed' LIMIT 1"
 );
 if ($statFetch && $statRow = $statFetch->fetch_assoc()) {
     $clientsProcessed = (int)$statRow['StatValue'];

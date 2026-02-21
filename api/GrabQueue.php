@@ -93,14 +93,12 @@ if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
-// Counting the number of rows to then pull a responsse for each individual person
-if (count($rows) > 0) {
-    http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows, 'clientsProcessed' => $clientsProcessed]);
-} else {
-    http_response_code(201);
-    $msg = json_encode(['success' => false, 'count' => 0, 'error' => 'No users applicable.']);
-}
-
+http_response_code(200);
+$msg = json_encode([
+    'success' => true,
+    'count' => count($rows),
+    'data' => $rows,
+    'clientsProcessed' => $clientsProcessed
+]);
 echo $msg;
 error_log($msg);

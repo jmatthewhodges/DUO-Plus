@@ -1,12 +1,11 @@
 /**
  * ============================================================
  * File:           registrationdashboard.js
- * Description:    Java Script for managing the registration dashboard, including fetching patient data, rendering the queue, 
- * handling service selection, and processing check-ins with QR code generation.
+ * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Skyler Emery
- * Last Modified On:  2/21/26
- * Changes Made:      Added medical sub-selection (Exam / Follow Up) to check-in modal, mirroring dental pattern.
+ * Last Modified By:  Matthew
+ * Last Modified On:  Feb 21 @ 5:05 PM
+ * Changes Made:      Updated for new DB structure.
  * ============================================================
 */
 
@@ -117,17 +116,15 @@ function fetchRegistrationQueue() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Filter out non-client objects (e.g., stats)
                 const clients = (data.data || []).filter(item => item.ClientID);
-                if (clients.count === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
-                } else {
-                    populateRegistrationTable(clients);
-                }
+                populateRegistrationTable(clients);
                 updateStats('registration', clients.length);
-                if (statCompCount) statCompCount.innerText = data.clientsProcessed;
             } else {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-danger">Failed to load queue.</td></tr>';
+                tableBody.innerHTML = 'No patients currently in queue.';
+            }
+            // Always update processed count if it came back
+            if (statCompCount && data.clientsProcessed !== undefined) {
+                statCompCount.innerText = data.clientsProcessed;
             }
         })
         .catch(error => {
@@ -371,10 +368,17 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 }
 
                 // Update Stats
+                // Decrement registration count
                 let currentReg = parseInt(statRegCount.innerText) || 0;
-                updateStats('registration', Math.max(0, currentReg - 1));
-                if (statCompCount) statCompCount.innerText = data.clientsProcessed;
-                console.log("Stats Updated: Registration -1, Completed:", data.clientsProcessed);
+                statRegCount.innerText = Math.max(0, currentReg - 1);
+
+                // Update processed count from API (source of truth is the DB)
+                if (statCompCount && data.clientsProcessed !== undefined) {
+                    statCompCount.innerText = data.clientsProcessed;
+                } else if (statCompCount) {
+                    // Fallback: increment locally if API didn't return updated count
+                    statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                }
 
                 // Show QR modal
                 const qrModal = document.getElementById('qrCodeModal');
@@ -498,9 +502,18 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
 
 document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
+    fetchRegistrationQueue();
 });
 
 //================================================================================
 // 8. INITIALIZATION
-
 fetchRegistrationQueue();
+
+// Auto-refresh every 30 seconds (unless checkIn modal is open)
+setInterval(() => {
+    const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
+    const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
+    if (!checkInOpen && !qrOpen) {
+        fetchRegistrationQueue();
+    }
+}, 30000);

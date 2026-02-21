@@ -1,8 +1,8 @@
 <?php
 /**
  * ============================================================
- *  File:        ClearDatabase.php
- *  Purpose:     Clear all test/client-related data from the database
+ *  File:        ClearClients.php
+ *  Purpose:     Clear all test/client-related data from the db
  * 
  *  Last Modified By:  Matthew
  *  Last Modified On:  Feb 18 @ 9:33 PM
