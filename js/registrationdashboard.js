@@ -110,16 +110,17 @@ function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
 
     //fetch queue data from API
-    fetch('../api/GrabQueue.php?queue=registration', {
+    fetch('../api/GrabQueue.php?RegistrationStatus=Registered', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                populateRegistrationTable(data.data);
-                // Use the API's truth for stats
-                updateStats('registration', data.data.length);
+                // Filter out non-client objects (e.g., stats)
+                const clients = (data.data || []).filter(item => item.ClientID);
+                populateRegistrationTable(clients);
+                updateStats('registration', clients.length);
                 if (statCompCount) statCompCount.innerText = data.clientsProcessed;
             } else {
                 tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-danger">Failed to load queue.</td></tr>';
@@ -164,6 +165,13 @@ function populateRegistrationTable(patientsData) {
             fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
         }
         const formattedDOB = formatDOB(patient.DOB);
+
+        // Map services array to individual fields
+        const serviceSet = new Set(patient.services || []);
+        patient.Medical = serviceSet.has('medical') ? 1 : 0;
+        patient.Dental = serviceSet.has('dental') ? 1 : 0;
+        patient.Optical = serviceSet.has('optical') ? 1 : 0;
+        patient.Hair = serviceSet.has('haircut') ? 1 : 0;
 
         const rowHTML = `
             <tr class="align-middle" data-client-id="${patient.ClientID}">

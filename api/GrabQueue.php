@@ -6,9 +6,9 @@
  *               from inputted "servicestatus". for use in 
  *               scnarios such as registration dashboard.
  *
- *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 20 @ 8:10 AM
- *  Changes Made:      edited SQL query to fit current DB
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 21 @ 11:05 AM
+ *  Changes Made:      Modified for new DB structure
  * ============================================================
 */
 
@@ -30,7 +30,6 @@ $mysqli = $GLOBALS['mysqli'];
 // Get the queue parameter from GET request
 $queue = $_GET['RegistrationStatus'] ?? null;
 
-
 // Validate queue parameter exists
 if (!$queue) {
     http_response_code(400);
@@ -40,17 +39,19 @@ if (!$queue) {
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
 $clientDataStmt = $mysqli->prepare(
-    // noted tables to get on railway for revamp: tblClientAuth, tblClients, 
-    // tblServices, tblVisitServices, tblVisits
     "SELECT 
-        c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
-        v.RegistrationStatus, s.ServiceStatus, s.QueuePriority, i.ServiceName
+        c.ClientID, 
+        c.FirstName, 
+        c.MiddleInitial, 
+        c.LastName, 
+        c.DOB, 
+        GROUP_CONCAT(s.ServiceID) AS ServiceSelections
     FROM tblClients c
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
-    LEFT JOIN tblVisitServices s ON v.VisitID = s.VisitID
-	LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
-WHERE v.RegistrationStatus = ?
-");
+    LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
+    WHERE v.RegistrationStatus = ?
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
+);
 
 // Checks for if the connection to mysql is a success
 if (!$clientDataStmt) {
@@ -77,11 +78,18 @@ $result = $clientDataStmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $clientDataStmt->close();
 
+// Convert ServiceSelections to array
+foreach ($rows as &$row) {
+    $row['services'] = $row['ServiceSelections'] ? explode(',', $row['ServiceSelections']) : [];
+    unset($row['ServiceSelections']);
+}
+
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblAnalytics LIMIT 1");
+$EventID = "4cbde538985861b9"; // Hardcoded eventID
+$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
 if ($statsResult && $row = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$row['clientsProcessed'];
+    $clientsProcessed = (int)$row['StatValue'];
 }
 
 // Counting the number of rows to then pull a responsse for each individual person

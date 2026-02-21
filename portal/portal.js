@@ -199,7 +199,7 @@ const API_METHODS = [
         name: 'Registration Dashboard',
         category: 'Registration Dashboard',
         method: 'GET',
-        endpoint: '/api/registration-dashboard.php',
+        endpoint: '/api/GrabQueue.php?RegistrationStatus=Registered',
         description: 'Fetch all clients currently in the "registration" queue with their services and info. No parameters required.',
         params: [],
         testData: {}
