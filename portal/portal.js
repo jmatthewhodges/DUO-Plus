@@ -142,7 +142,7 @@ const API_METHODS = [
             { name: 'emergencyFirstName', type: 'text', required: false, default: '', description: 'Emergency contact first name' },
             { name: 'emergencyLastName', type: 'text', required: false, default: '', description: 'Emergency contact last name' },
             { name: 'emergencyPhone', type: 'text', required: false, default: '', description: 'Emergency contact phone' },
-            { name: 'EventID', type: 'text', required: true, default: '', description: 'ID of the event attending' },
+            { name: 'EventID', type: 'text', required: true, default: '4cbde538985861b9', description: 'ID of the event attending' },
             { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'JSON array of services: medical, optical, dental, haircut' }
         ],
         testData: () => {

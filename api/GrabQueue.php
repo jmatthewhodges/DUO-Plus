@@ -83,13 +83,14 @@ foreach ($rows as &$row) {
     $row['services'] = $row['ServiceSelections'] ? explode(',', $row['ServiceSelections']) : [];
     unset($row['ServiceSelections']);
 }
+unset($row); 
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
 $EventID = "4cbde538985861b9"; // Hardcoded eventID
 $statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
-if ($statsResult && $row = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$row['StatValue'];
+if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
+    $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
 // Counting the number of rows to then pull a responsse for each individual person

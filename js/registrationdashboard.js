@@ -5,8 +5,8 @@
  * handling service selection, and processing check-ins with QR code generation.
  *
  * Last Modified By:  Skyler Emery
- * Last Modified On:  2/18/26
- * Changes Made:      Readability improvements, added comments, Bold/All-Caps name, and Fixed Icon Slots.
+ * Last Modified On:  2/21/26
+ * Changes Made:      Added medical sub-selection (Exam / Follow Up) to check-in modal, mirroring dental pattern.
  * ============================================================
 */
 
@@ -119,7 +119,11 @@ function fetchRegistrationQueue() {
             if (data.success) {
                 // Filter out non-client objects (e.g., stats)
                 const clients = (data.data || []).filter(item => item.ClientID);
-                populateRegistrationTable(clients);
+                if (clients.count === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
+                } else {
+                    populateRegistrationTable(clients);
+                }
                 updateStats('registration', clients.length);
                 if (statCompCount) statCompCount.innerText = data.clientsProcessed;
             } else {
@@ -235,10 +239,10 @@ tableBody.addEventListener('click', function (event) {
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
 
+        // --- Dental section ---
         const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
         const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
 
-        document.getElementById('modalPatientName').innerText = currentClientName;
         document.getElementById('translatorCheck').checked = false;
         document.getElementById('dentalHygiene').checked = false;
         document.getElementById('dentalExtraction').checked = false;
@@ -249,6 +253,22 @@ tableBody.addEventListener('click', function (event) {
         } else {
             dentalSection.classList.add('d-none');
         }
+
+        // --- Medical section ---
+        const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+        const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
+
+        document.getElementById('medicalExam').checked = false;
+        document.getElementById('medicalFollowUp').checked = false;
+
+        const medicalSection = document.getElementById('modalMedicalSection');
+        if (medicalState === 1 && serviceAvailability.medical) {
+            medicalSection.classList.remove('d-none');
+        } else {
+            medicalSection.classList.add('d-none');
+        }
+
+        document.getElementById('modalPatientName').innerText = currentClientName;
 
         const modal = document.getElementById('checkInModal');
         modal.classList.remove('d-none');
@@ -272,20 +292,35 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     // Build services array from selected buttons
     const services = [];
 
-    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-    if (parseInt(medicalBtn.getAttribute('data-state')) === 1) services.push('medical');
+    // --- Medical: requires sub-selection (Exam or Follow Up) ---
+    const medicalSection = document.getElementById('modalMedicalSection');
+    const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
 
+    if (!medicalSection.classList.contains('d-none')) {
+        if (!selectedMedical) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Selection Required',
+                text: 'Please select either Exam or Follow Up to proceed.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+        services.push(selectedMedical.value);
+    }
+
+    // --- Optical ---
     const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
     if (parseInt(opticalBtn.getAttribute('data-state')) === 1) services.push('optical');
 
+    // --- Haircut ---
     const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
     if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
 
-    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
+    // --- Dental: requires sub-selection (Hygiene or Extraction) ---
     const dentalSection = document.getElementById('modalDentalSection');
+    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
 
-    // If the dental section is visible but no option is selected, show a warning and prevent submission. 
-    // Otherwise, add the selected dental service to the services array.
     if (!dentalSection.classList.contains('d-none')) {
         if (!selectedDental) {
             Swal.fire({
@@ -301,10 +336,11 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 
     // Capture service states for QR card NOW (while DOM still exists)
     const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-    const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
+    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+    const hasDental  = dentalBtn  && dentalBtn.getAttribute('data-state')  === '1';
     const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
     const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
-    const hasHaircut = hairBtn && hairBtn.getAttribute('data-state') === '1';
+    const hasHaircut = hairBtn    && hairBtn.getAttribute('data-state')    === '1';
 
     // Loading state
     const originalText = btn.innerHTML;
@@ -312,7 +348,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     btn.innerHTML = 'Processing...';
 
     // Send check-in data to API
-    fetch('../api/check-in.php', {
+    fetch('../api/CheckIn.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -363,13 +399,13 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 qrIcons.forEach(id => {
                     const iconEl = document.getElementById(id);
                     iconEl.style.visibility = 'hidden';
-                    iconEl.style.display = 'inline-flex'; // Ensure display is not 'none' so visibility works
+                    iconEl.style.display = 'inline-flex';
                 });
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
                 // Show icons for selected services by making them visible (preserves their fixed positions)
                 if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
-                if (hasDental)  document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
+                if (hasDental)  document.getElementById('qrCardDentalIcon').style.visibility  = 'visible';
                 if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
                 if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
