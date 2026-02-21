@@ -1,4 +1,16 @@
 <?php
+/**
+ * ============================================================
+ *  File:        GrabQueue.php
+ *  Description: Simple PHP endpoint that gets needed users
+ *               from inputted "servicestatus". for use in 
+ *               scnarios such as registration dashboard.
+ *
+ *  Last Modified By:  Miguel
+ *  Last Modified On:  Feb 20 @ 8:10 AM
+ *  Changes Made:      edited SQL query to fit current DB
+ * ============================================================
+*/
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
@@ -16,7 +28,7 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Get the queue parameter from GET request
-$queue = $_GET['queue'] ?? null;
+$queue = $_GET['RegistrationStatus'] ?? null;
 
 
 // Validate queue parameter exists
@@ -27,15 +39,17 @@ if (!$queue) {
 }
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-$clientDataStmt = $mysqli->prepare("
-    SELECT 
+$clientDataStmt = $mysqli->prepare(
+    // noted tables to get on railway for revamp: tblClientAuth, tblClients, 
+    // tblServices, tblVisitServices, tblVisits
+    "SELECT 
         c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
-        r.Medical, r.Optical, r.Dental, r.Hair
+        v.RegistrationStatus, s.ServiceStatus, s.QueuePriority, i.ServiceName
     FROM tblClients c
-    LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
-    LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
-    LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
-    WHERE r.queue = ?
+    LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+    LEFT JOIN tblVisitServices s ON v.VisitID = s.VisitID
+	LEFT JOIN tblServices i ON s.ServiceID = i.ServiceID
+WHERE v.RegistrationStatus = ?
 ");
 
 // Checks for if the connection to mysql is a success
@@ -65,7 +79,7 @@ $clientDataStmt->close();
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
+$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblAnalytics LIMIT 1");
 if ($statsResult && $row = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$row['clientsProcessed'];
 }
