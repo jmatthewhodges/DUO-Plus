@@ -1,41 +1,35 @@
 <?php
+/**
+ * ============================================================
+ *  File:        db.php
+ *  Description: Database connection configuration and setup.
+ *               Loads environment variables and establishes
+ *               a MySQLi connection for use across API endpoints.
+ *
+ *  Last Modified By:  Matthew 
+ *  Last Modified On:  Feb 18 @ 2:41 PM 
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
 
-// Tell mysqli to throw exceptions
+// Throw exceptions on mysqli errors
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// phpdotenv library
+// Load .env from root
 require_once __DIR__ . '/../vendor/autoload.php';
-
-// Point to .env in root folder
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-// Load it -> use safeLoad() to ignore exception for no .env found
 $dotenv->safeLoad();
 
-// Credentials from .env
+// Database credentials
 $dbHost = $_ENV['DB_HOST'];
 $dbName = $_ENV['DB_NAME'];
 $dbUser = $_ENV['DB_USER'];
 $dbPass = $_ENV['DB_PASS'];
 $dbPort = $_ENV['DB_PORT'];
 
-// Using mysqli (catch error if db connection failed)
+// Connect to database
 try {
     $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName, (int)$dbPort);
-    //echo json_encode(['success' => true, 'message' => 'Database connection established.']);
 } catch (\Throwable $th) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $th->getMessage()]);
-} 
-
-/*
-For all API endpoints:
-
-// Grab database connection from file
-require_once DIR . '/db.php';
-
-// Always set content type (not always the same)
-header('Content-Type: application/json');
-
-// Declare mysqli to use connection
-$mysqli = $GLOBALS['mysqli'];
-
-*/
+}

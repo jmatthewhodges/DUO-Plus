@@ -1,7 +1,18 @@
-// ============================================================================
-// CONFIG
-// ============================================================================
+/**
+ * ============================================================
+ *  File:        register.js
+ *  Description: Multi-step registration form logic. Handles
+ *               validation, input masks, step navigation,
+ *               waiver agreement, and API submission for
+ *               both new and returning users.
+ *
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 18 @ 2:58 PM
+ *  Changes Made:      Added multi-line comment header and cleaned up code
+ * ============================================================
+*/
 
+// Config
 const TRANSITION_DURATION = 500; // ms for step fade animation
 
 // Validation regex patterns
@@ -23,11 +34,7 @@ const INPUT_FILTERS = {
     nonDigit: /\D/g
 };
 
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
+// Utility functions
 // Fade transition between steps
 function transitionToStep(fromStep, toStep, targetStepNumber) {
     fromStep.style.opacity = '0';
@@ -81,21 +88,16 @@ const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.ge
 dobInput.max = minAgeDate.toISOString().split('T')[0];
 
 
-// ============================================================================
-// PROGRESS BAR
-// ============================================================================
-
+// Progress bar
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
     let percentage = 1;
     switch (step) {
-        case 0: percentage = 0; break;
-        case 1: percentage = 17; break;
-        case 2: percentage = 34; break;
-        case 3: percentage = 51; break;
-        case 4: percentage = 68; break;
-        case 5: percentage = 85; break;
-        case 6: percentage = 100; break;
+        case 1: percentage = 0; break;
+        case 2: percentage = 25; break;
+        case 3: percentage = 50; break;
+        case 4: percentage = 75; break;
+        case 5: percentage = 99; break;
         default: percentage = 0;
     }
     progressBar.style.width = percentage + '%';
@@ -103,297 +105,81 @@ function updateProgressBar(step) {
     progressBar.setAttribute('aria-valuenow', percentage);
 }
 
-// ============================================================================
-// STEP 0: LANGUAGE SELECT
-// ============================================================================
-
-function goToStepOne() {
-    const stepZero = document.getElementById('divStepZero');
-    const stepOne = document.getElementById('divStepOne');
-    transitionToStep(stepZero, stepOne, 1);
-}
-
-//step 0 event listeners
-document.getElementById('btnRegisterBack0').addEventListener('click', function () {
-    window.location.href = '../index.html';
-});
-
 document.addEventListener('DOMContentLoaded', function () {
-    const languageSelector = document.getElementById('languageSelect');
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
 
-    const translations = {
-        /* 
-        this is basically what each language looks like under a template. follows a simple idea of  
-        property: 'text for language',
-        it allows for basically a copy and paste sort of idea, all current translations should look similar code wise.
-        also makes editing the translation text easier
-        en = english, es = spanish
-        */
-
-        // english translation
-        en: {
-            // Step 0 - Language Select
-            titleStepZero: 'Select your preferred language.',
-            btnRegisterNext0: 'Next',
-            btnRegisterBack0:'Back to Login',
-
-            // Step 1 - login Info
-            titleStepOne: 'Login Information',
-            clientRegisterEmailLabel: 'Email',
-            emailError: 'Please enter a valid email address.',
-            clientRegisterPassLabel: 'Password',
-            passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
-            toggleClientRegisterPassLabel: 'Show password',
-            btnRegisterNext1: 'Next',
-            btnRegisterBack1: 'Go back',
-
-            // Step 2 - Personal Info
-            titleStepTwo: 'Personal Information',
-            interpreterRequestLabel:"I would like to request a Interpreter.",
-            clientFirstNameLabel: 'First Name',
-            firstNameError: 'Please enter your first name.',
-            clientMiddleInitialLabel: 'Middle Initial',
-            clientLastNameLabel: 'Last Name',
-            lastNameError: 'Please enter your last name.',
-            sexLabel: 'Sex',
-            btnSexMaleLabel: 'Male',
-            btnSexFemaleLabel: 'Female',
-            btnSexIntersexLabel: 'Intersex',
-            sexError: 'Please select your sex.',
-            clientDOBLabel: 'Date of Birth',
-            dobError: 'Please enter your date of birth.',
-            clientPhoneLabel: 'Phone',
-            phoneError: 'Phone is invalid format.',
-            btnRegisterNext2Label: 'Next',
-            btnRegisterBack2Label: 'Go back',
-
-            // Step 3 - Address Info
-            titleStepThree: 'Address Information',
-            noAddressLabel: 'No current address',
-            clientAddress1Label: 'Street Address 1',
-            clientAddress2Label: 'Street Address 2',
-            address1Error: 'Please enter an address.',
-            clientCityLabel: 'City',
-            cityError: 'Please enter a city.',
-            selectStateLabel: 'State',
-            stateError: 'Please select a state.',
-            clientZipCodeLabel: 'Zip Code',
-            zipCode: 'Please enter a 5-digit zip code.',
-            btnRegisterNext3: 'Next',
-            btnRegisterBack3: 'Go back',
-
-            // Step 4 - Emergency Contact
-            titleStepFour: 'Emergency Contact',
-            noEmergencyContactLabel: 'no Emergency Contact',
-            emergencyContactFirstNameLabel: 'Contact First Name',
-            contactFirstName: 'Please enter a first name for your contact.',
-            emergencyContactLastNameLabel: 'Contact Last Name',
-            contactLastName: 'Please enter a last name for your contact.',
-            emergencyContactPhone: 'Contact Phone',
-            contactPhone: 'Please enter a phone for your contact.',
-            btnRegisterNext4: 'Next',
-            btnRegisterBack4: 'Go back',
-
-            // Step 5 - Service Select
-            titleStepFive: 'Service Selection',
-            btnServiceMedicalLabel: '🏥 Medical',
-            btnServiceDentalLabel: '👁️ Dental',
-            btnServiceOpticalLabel: '🦷 Optical',
-            btnServiceHaircutLabel: '✂️ Haircut',
-            serviceError: 'Please select at least one service.',
-            btnRegisterNext5: 'Next',
-            btnRegisterNext5: 'Go back',
-
-            // Finale - Wavier Confirm
-            waiverLabel: 'Waiver Agreement Required',
-            collapseExample: 'DUO is not entitled to anything that happens to you. You accept full responsiblity at this event.',
-            waiverAgreeLabel: 'I have read and agree.',
-            waiverError: 'You must agree to the waiver to continue.',
-            btnWaiverSubmit: 'Submit',
-        },
-
-        // Spanish Translation
-        es: {
-            // Step 0 - Language Select
-            titleStepZero: 'Escoja el lenguaje que usted prefiere.',
-            btnRegisterNext0: 'Siguiente',
-            btnRegisterBack0:'Volver a iniciar sesión',
-
-            // Step 1 - Login Info
-            divStepOne: 'Información de Acceso',
-            clientRegisterEmailLabel: 'Email / correo electronico',
-            emailError: 'Por favor, entre una dirección de correo electrónico válida',
-            clientRegisterPassLabel: 'Contraseña',
-            passwordError: 'Contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número',
-            toggleClientRegisterPassLabel: 'Ver Contraseña',
-            btnRegisterNext1: 'Siguiente',
-            btnRegisterBack1: 'Regresar',
-
-            // Step 2 - Personal Info
-            divStepTwo: 'Información personal',
-            interpreterRequestLabel:"Yo gusto solicitar un intérprete.",
-            clientFirstNameLabel: 'Primer nombre',
-            firstNameError: 'Por favor, entre su primer nombre',
-            clientMiddleInitialLabel: 'Inicial del segundo nombre',
-            clientLastNameLabel: 'Apellido',
-            lastNameError: 'Por favor entre su apellido',
-            sexLabel: 'Sexo',
-            btnSexMaleLabel: 'Masculino',
-            btnSexFemaleLabel: 'Femenino',
-            btnSexIntersexLabel: 'Intersexual',
-            sexError: 'Por favor seleccione su sexo',
-            clientDOBLabel: 'Fecha de nacimiento',
-            dobError: 'Por favor entre su fecha de nacimiento',
-            clientPhoneLabel: 'Telefono',
-            phoneError: 'Teléfono no es válido',
-            btnRegisterNext2: 'Siguiente',
-            btnRegisterBack2: 'Regresar',
-
-            // Step 3 - Address Info
-            divStepThree: 'Información de residencia',
-            noAddressLabel: 'no dirección al momento',
-            clientAddress1Label: 'Dirección de residencia 1',
-            clientAddress2Label: 'Dirección de residencia 2',
-            address1Error: 'Por favor entre una dirección',
-            clientCityLabel: 'Ciudad',
-            cityError: 'Por favor, entre una ciudad',
-            selectStateLabel: 'Estado',
-            stateError: 'Por favor seleccione un estado',
-            clientZipCodeLabel: 'Codigo postal',
-            zipCode: 'Por favor entre un código postal de 5 dígitos',
-            btnRegisterNext3: 'Siguiente',
-            btnRegisterBack3: 'Regresar',
-
-            // Step 4 - Emergency Contact
-            divStepFour: 'Contacto de emergencia',
-            noEmergencyContactLabel: 'No contacto de emergencia',
-            emergencyContactFirstNameLabel: 'Primer nombre de contacto de emergencia',
-            contactFirstName: 'Por favor, entre el primer nombre de su contacto',
-            emergencyContactLastNameLabel: 'Apellido de su contacto de emergencia',
-            contactLastName: 'Por favor, entre el apellido de su contacto',
-            emergencyContactPhoneLabel: 'Teléfono de su contacto de emergencia',
-            contactPhone: 'Por favor entre un teléfono de su contacto',
-            btnRegisterNext4: 'Siguiente',
-            btnRegisterBack4: 'Regresar',
-
-            // Step 5 - Service Select
-            divStepFive: 'Selección de servicio ',
-            btnServiceMedicalLabel: '🏥 Medico',
-            btnServiceDentalLabel: '🦷 Dental',
-            btnServiceOpticalLabel: '👁️ Optico',
-            btnServiceHaircutLabel: '✂️ Corte de pelo',
-            serviceError: 'Por favor seleccione por lo menos 1 servicio',
-            btnRegisterNext5: 'Siguiente',
-            btnRegisterBack5: 'Regresar',
-
-            // Finale - Wavier Confirm
-            waiverLabel: 'Acuerdo de renuncia de responsabilidad requerido',
-            collapseExample: 'DUO no es acreedor a nada que le suceda a usted. Usted acepta completa responsabilidad en este evento',
-            waiverAgreeLabel: 'Yo he leído y estoy de acuerdo',
-            waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar',
-            btnWaiverSubmit: 'Entregar',
-        }
-    };
-    // step 0 event listeners
-    languageSelector.addEventListener('click', function () {
-        const selectedLanguage = languageSelector.value;
-        const translation = translations[selectedLanguage];
-        
-        /* 
-           This is how the the code switches the language for each element.
-           basically goes and check every individual element via "GetElementById" and 
-           perfroms the const "translation" on the textContent
-        */
-
-        // Step 0 - Language Select
-        document.getElementById('titleStepZero').textContent = translation.titleStepZero;
-        document.getElementById('btnRegisterNext0').textContent = translation.btnRegisterNext0;
-        document.getElementById('btnRegisterBack0').textContent = translation.btnRegisterBack0;      
-
+    // Only prefill if user is logged in
+    if (userData) {
         // Step 1 - Login Info
-        document.getElementById('titleStepOne').textContent = translation.titleStepOne;
-        document.getElementById('clientRegisterEmailLabel').textContent = translation.clientRegisterEmailLabel;
-        document.getElementById('emailError').textContent = translation.emailError;
-        document.getElementById('clientRegisterPassLabel').textContent = translation.clientRegisterPassLabel;
-        document.getElementById('passwordError').textContent = translation.passwordError;
-        document.getElementById('toggleClientRegisterPassLabel').textContent = translation.toggleClientRegisterPassLabel;
-        document.getElementById('btnRegisterNext1').textContent = translation.btnRegisterNext1;
-        document.getElementById('btnRegisterBack1').textContent = translation.btnRegisterBack1;
+        const emailInput = document.getElementById('clientRegisterEmail');
+        const passInput = document.getElementById('clientRegisterPass');
+
+        console.log(userData);
+
+        emailInput.value = userData.Email || '';
+        emailInput.disabled = true;
+
+        passInput.value = userData.Password || '';
+        passInput.disabled = true;
+
+        // Disable back button on step 2 for logged in users
+        document.getElementById('btnRegisterBack2').disabled = true;
 
         // Step 2 - Personal Info
-        document.getElementById('titleStepTwo').textContent = translation.titleStepTwo;
-        document.getElementById('interpreterRequestLabel').textContent = translation.interpreterRequestLabel;
-        document.getElementById('clientFirstNameLabel').textContent = translation.clientFirstNameLabel;
-        document.getElementById('firstNameError').textContent = translation.firstNameError;
-        document.getElementById('clientMiddleInitialLabel').textContent = translation.clientMiddleInitialLabel;
-        document.getElementById('clientLastNameLabel').textContent = translation.clientLastNameLabel;
-        document.getElementById('lastNameError').textContent = translation.lastNameError;
-        document.getElementById('sexLabel').textContent = translation.sexLabel;
-        document.getElementById('sexError').textContent = translation.sexError;
-        document.getElementById('btnSexMaleLabel').textContent = translation.btnSexMaleLabel;
-        document.getElementById('btnSexFemaleLabel').textContent = translation.btnSexFemaleLabel;
-        document.getElementById('btnSexIntersexLabel').textContent = translation.btnSexIntersexLabel;
-        document.getElementById('clientDOBLabel').textContent = translation.clientDOBLabel;
-        document.getElementById('dobError').textContent = translation.dobError;
-        document.getElementById('clientPhoneLabel').textContent = translation.clientPhoneLabel;
-        document.getElementById('phoneError').textContent = translation.phoneError;
-        document.getElementById('btnRegisterNext2').textContent = translation.btnRegisterNext2;
-        document.getElementById('btnRegisterBack2').textContent = translation.btnRegisterBack2;
+        document.getElementById('clientFirstName').value = userData.FirstName || '';
+        document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
+        document.getElementById('clientLastName').value = userData.LastName || '';
+        document.getElementById('clientDOB').value = userData.DOB || '';
+
+        // Format phone if exists
+        if (userData.Phone) {
+            const digits = userData.Phone.replace(/\D/g, '');
+            document.getElementById('clientPhone').value = formatPhoneNumber(digits);
+        }
+
+        // Set sex radio button
+        if (userData.Sex) {
+            const normalizedSex = userData.Sex.trim().toLowerCase();
+            const sexRadio = document.querySelector(`input[name="clientSex"][value="${normalizedSex}"]`);
+            if (sexRadio) sexRadio.checked = true;
+        }
 
         // Step 3 - Address Info
-        document.getElementById('titleStepThree').textContent = translation.titleStepThree;
-        document.getElementById('noAddressLabel').textContent = translation.noAddressLabel;
-        document.getElementById('clientAddress1Label').textContent = translation.clientAddress1Label;
-        document.getElementById('address1Error').textContent = translation.address1Error;
-        document.getElementById('clientAddress2Label').textContent = translation.clientAddress2Label;
-        document.getElementById('clientCityLabel').textContent = translation.clientCityLabel;
-        document.getElementById('cityError').textContent = translation.cityError;
-        document.getElementById('selectStateLabel').textContent = translation.selectStateLabel;
-        document.getElementById('stateError').textContent = translation.stateError;
-        document.getElementById('clientZipCodeLabel').textContent = translation.clientZipCodeLabel;
-        document.getElementById('zipCode').textContent = translation.zipCode;
-        document.getElementById('btnRegisterNext3').textContent = translation.btnRegisterNext3;
-        document.getElementById('btnRegisterBack3').textContent = translation.btnRegisterBack3;
+        if (userData.Street1) {
+            document.getElementById('noAddress').checked = false;
+            document.getElementById('clientAddress1').value = userData.Street1 || '';
+            document.getElementById('clientAddress2').value = userData.Street2 || '';
+            document.getElementById('clientCity').value = userData.City || '';
+            document.getElementById('selectState').value = userData.State || '';
+            document.getElementById('clientZipCode').value = userData.ZIP || '';
+        } else {
+            document.getElementById('noAddress').checked = true;
+            document.getElementById('noAddress').dispatchEvent(new Event('change'));
+        }
 
         // Step 4 - Emergency Contact
-        document.getElementById('titleStepFour').textContent = translation.titleStepFour;
-        document.getElementById('noEmergencyContactLabel').textContent = translation.noEmergencyContactLabel;
-        document.getElementById('emergencyContactFirstNameLabel').textContent = translation.emergencyContactFirstNameLabel;
-        document.getElementById('contactFirstName').textContent = translation.contactFirstName;
-        document.getElementById('emergencyContactLastNameLabel').textContent = translation.emergencyContactLastNameLabel;
-        document.getElementById('contactLastName').textContent = translation.contactLastName;
-        document.getElementById('emergencyContactPhoneLabel').textContent = translation.emergencyContactPhoneLabel;
-        document.getElementById('contactPhone').textContent = translation.contactPhone;
-        document.getElementById('btnRegisterNext4').textContent = translation.btnRegisterNext4;
-        document.getElementById('btnRegisterBack4').textContent = translation.btnRegisterBack4;
+        if (userData.EmergencyName) {
+            document.getElementById('noEmergencyContact').checked = false;
+            // Split emergency name into first and last
+            const nameParts = userData.EmergencyName.split(' ');
+            document.getElementById('emergencyContactFirstName').value = nameParts[0] || '';
+            document.getElementById('emergencyContactLastName').value = nameParts.slice(1).join(' ') || '';
 
-        // Step 5 - Service Selection
-        document.getElementById('titleStepFive').textContent = translation.titleStepFive;
-        document.getElementById('btnServiceMedicalLabel').textContent = translation.btnServiceMedicalLabel;
-        document.getElementById('btnServiceDentalLabel').textContent = translation.btnServiceDentalLabel;
-        document.getElementById('btnServiceOpticalLabel').textContent = translation.btnServiceOpticalLabel;
-        document.getElementById('btnServiceHaircutLabel').textContent = translation.btnServiceHaircutLabel;
-        document.getElementById('serviceError').textContent = translation.serviceError;
-        document.getElementById('btnRegisterNext5').textContent = translation.btnRegisterNext5;
-        document.getElementById('btnRegisterBack5').textContent = translation.btnRegisterBack5;
+            if (userData.EmergencyPhone) {
+                const emergencyDigits = userData.EmergencyPhone.replace(/\D/g, '');
+                document.getElementById('emergencyContactPhone').value = formatPhoneNumber(emergencyDigits);
+            }
+        } else {
+            document.getElementById('noEmergencyContact').checked = true;
+            document.getElementById('noEmergencyContact').dispatchEvent(new Event('change'));
+        }
 
-        // Finale - Waiver
-        document.getElementById('waiverError').textContent = translation.waiverError;
-        document.getElementById('waiverLabel').textContent = translation.waiverLabel;
-        document.getElementById('collapseExample').textContent = translation.collapseExample;
-        document.getElementById('waiverAgreeLabel').textContent = translation.waiverAgreeLabel;
-        document.getElementById('btnWaiverSubmit').textContent = translation.btnWaiverSubmit;
+        goToStepTwo();
+    }
 
-    });
 });
 
-document.getElementById('btnRegisterNext0').addEventListener('click', goToStepOne);
-
-
-// ============================================================================
-// STEP 1: LOGIN INFO
-// ============================================================================
-
+//  Step 1 - Login Info
 function goToStepTwo() {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
@@ -402,6 +188,13 @@ function goToStepTwo() {
 }
 
 function stepOneSubmit() {
+    // Skip validation if user is already logged in
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    if (userData) {
+        goToStepTwo();
+        return;
+    }
+
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
     let isValid = true;
@@ -436,9 +229,7 @@ document.getElementById('clientRegisterFormStep1').addEventListener('keydown', f
 document.getElementById('btnRegisterNext1').addEventListener('click', stepOneSubmit);
 
 document.getElementById('btnRegisterBack1').addEventListener('click', function () {
-    const stepOne = document.getElementById('divStepOne');
-    const stepZero = document.getElementById('divStepZero');
-    transitionToStep(stepOne, stepZero, 0);
+    window.location.href = '../index.html';
 });
 
 document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
@@ -447,10 +238,7 @@ document.getElementById('toggleClientRegisterPass').addEventListener('change', f
 });
 
 
-// ============================================================================
-// STEP 2: PERSONAL INFO
-// ============================================================================
-
+// Step 2 - Personal Info
 function goToStepThree() {
     const stepTwo = document.getElementById('divStepTwo');
     const stepThree = document.getElementById('divStepThree');
@@ -481,7 +269,7 @@ function stepTwoSubmit() {
         setFieldValidation(lastName, true);
     }
 
-    // --- DOB 18+ validation ---
+    // DOB 18+ validation
     if (!dob.value) {
         setFieldValidation(dob, false);
         isValid = false;
@@ -539,16 +327,19 @@ document.getElementById('clientRegisterFormStep2').addEventListener('keydown', f
 document.getElementById('btnRegisterNext2').addEventListener('click', stepTwoSubmit);
 
 document.getElementById('btnRegisterBack2').addEventListener('click', function () {
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+
+    // If logged in, go back to home instead of step 1
+    if (userData) {
+        return;
+    }
+
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
     transitionToStep(stepTwo, stepOne, 1);
 });
 
-
-// ============================================================================
-// STEP 3: ADDRESS INFO
-// ============================================================================
-
+// Step 3 - Address Info
 function goToStepFour() {
     const stepThree = document.getElementById('divStepThree');
     const stepFour = document.getElementById('divStepFour');
@@ -595,34 +386,34 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
 
     const address1 = document.getElementById('clientAddress1');
     if (!address1.value.trim()) {
-        address1.classList.add('is-invalid');
+        setFieldValidation(address1, false);
         isValid = false;
     } else {
-        address1.classList.remove('is-invalid');
+        setFieldValidation(address1, true);
     }
 
     const city = document.getElementById('clientCity');
     if (!city.value.trim()) {
-        city.classList.add('is-invalid');
+        setFieldValidation(city, false);
         isValid = false;
     } else {
-        city.classList.remove('is-invalid');
+        setFieldValidation(city, true);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        state.classList.add('is-invalid');
+        setFieldValidation(state, false);
         isValid = false;
     } else {
-        state.classList.remove('is-invalid');
+        setFieldValidation(state, true);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        zipCode.classList.add('is-invalid');
+        setFieldValidation(zipCode, false);
         isValid = false;
     } else {
-        zipCode.classList.remove('is-invalid');
+        setFieldValidation(zipCode, true);
     }
 
     if (isValid) {
@@ -643,11 +434,7 @@ document.getElementById('clientRegisterFormStep3').addEventListener('keydown', f
     }
 });
 
-
-// ============================================================================
-// STEP 4: EMERGENCY CONTACT
-// ============================================================================
-
+// Step 4 - Emergency Contact
 function goToStepFive() {
     const stepFour = document.getElementById('divStepFour');
     const stepFive = document.getElementById('divStepFive');
@@ -690,32 +477,27 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        firstName.classList.add('is-invalid');
+        setFieldValidation(firstName, false);
         isValid = false;
     } else {
-        firstName.classList.remove('is-invalid');
+        setFieldValidation(firstName, true);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        lastName.classList.add('is-invalid');
+        setFieldValidation(lastName, false);
         isValid = false;
     } else {
-        lastName.classList.remove('is-invalid');
+        setFieldValidation(lastName, true);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
-    // Phone is optional but must be full and formatted if provided
-    if (phone.value.length > 0) {
-        // Require exactly (999) 999-9999 format
-        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-            setFieldValidation(phone, false);
-            isValid = false;
-        } else {
-            setFieldValidation(phone, true);
-        }
+    // Phone is required and must be full and formatted
+    if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
+        setFieldValidation(phone, false);
+        isValid = false;
     } else {
-        setFieldValidation(phone, true); // Optional, so valid if empty
+        setFieldValidation(phone, true);
     }
 
     if (isValid) {
@@ -736,11 +518,7 @@ document.getElementById('clientRegisterFormStep4').addEventListener('keydown', f
     }
 });
 
-
-// ============================================================================
-// STEP 5: SERVICE SELECTION
-// ============================================================================
-
+// Step 5 - Service Selection
 document.getElementById('btnRegisterNext5').addEventListener('click', function () {
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
     const serviceError = document.getElementById('serviceError');
@@ -763,11 +541,7 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
     transitionToStep(stepFive, stepFour, 4);
 });
 
-
-// ============================================================================
-// INPUT MASKS
-// ============================================================================
-
+// Input masks
 // Names - letters, hyphens, apostrophes only
 document.getElementById('clientFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
@@ -817,13 +591,17 @@ document.getElementById('emergencyContactLastName').addEventListener('input', fu
 });
 
 
-// ============================================================================
-// WAIVER MODAL & FORM SUBMISSION
-// ============================================================================
+// Waiver modal & form submission
+// Helper to get current language translations
+function getLang() {
+    var lang = sessionStorage.getItem("lang") || "en";
+    return translations[lang];
+}
 
 document.getElementById('btnWaiverSubmit').addEventListener('click', function () {
     const btn = this;
     const originalContent = btn.innerHTML;
+    const t = getLang();
 
     // Disable button and show spinner
     btn.disabled = true;
@@ -841,17 +619,18 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     waiverError.style.display = 'none';
 
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+
     // Collect all form data
     const formData = {
-        // Step 0
-        languageSelect: document.getElementById('languageSelect').value,
+        // If we have ClientID, send it
+        clientID: userData?.ClientID || null,
 
         // Step 1
-        email: document.getElementById('clientRegisterEmail').value,
-        password: document.getElementById('clientRegisterPass').value,
+        // email: document.getElementById('clientRegisterEmail').value,
+        // password: document.getElementById('clientRegisterPass').value,
 
         // Step 2
-        interpreterRequest: document.getElementById('interpreterRequest').checked,
         firstName: document.getElementById('clientFirstName').value,
         middleInitial: document.getElementById('clientMiddleInitial').value,
         lastName: document.getElementById('clientLastName').value,
@@ -875,11 +654,19 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         // Remove phone input mask before sending
         emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
 
+        // Hard code event ID (for now)
+        EventID: "4cbde538985861b9",
+
         // Step 5
         services: Array.from(
             document.querySelectorAll('input[name="clientServices"]:checked')
         ).map(s => s.value),
     };
+
+    if (!userData?.ClientID) {
+        formData.email = document.getElementById('clientRegisterEmail').value;
+        formData.password = document.getElementById('clientRegisterPass').value;
+    }
 
     // Send to API
     fetch('../api/register.php', {
@@ -892,11 +679,14 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
             modal.hide();
 
+            // Clear userData after successful registration/update
+            sessionStorage.removeItem('userData');
+
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Registration Complete!',
-                    text: 'Your account has been created successfully.',
+                    title: t.registrationSuccessTitle,
+                    text: t.registrationSuccessText,
                     confirmButtonColor: '#174593',
                 }).then(() => {
                     window.location.href = '../index.html';
@@ -904,8 +694,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Registration Failed',
-                    text: data.message || 'An error occurred. Please try again.',
+                    title: t.registrationFailedTitle,
+                    text: data.message || t.registrationFailedText,
                     confirmButtonColor: '#174593'
                 });
             }
@@ -918,8 +708,8 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
             Swal.fire({
                 icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server. Please try again later.',
+                title: t.registrationConnectionErrorTitle,
+                text: t.registrationConnectionErrorText,
                 confirmButtonColor: '#174593'
             });
         })
@@ -931,13 +721,9 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 });
 
 
-// ============================================================================
 // DEBUG - Skip to any step (remove in production)
-// ============================================================================
-
 function showStepOnly(stepNumber) {
     const allSteps = [
-        document.getElementById('divStepZero'),
         document.getElementById('divStepOne'),
         document.getElementById('divStepTwo'),
         document.getElementById('divStepThree'),
@@ -947,7 +733,7 @@ function showStepOnly(stepNumber) {
 
     allSteps.forEach((step, index) => {
         if (step) {
-            if (index === stepNumber) {
+            if (index + 1 === stepNumber) {
                 step.classList.remove('step-hidden');
                 step.classList.add('step-visible');
                 step.style.opacity = '1';
@@ -962,98 +748,8 @@ function showStepOnly(stepNumber) {
     updateProgressBar(stepNumber);
 }
 
-const tempClientID = "9df12a-3lha05-f44zp1"
-const tempServices = ["medical", "dental", "optical", "haircut"]
-
-document.getElementById('skipStep0').addEventListener('click', () => showStepOnly(0));
 document.getElementById('skipStep1').addEventListener('click', () => showStepOnly(1));
 document.getElementById('skipStep2').addEventListener('click', () => showStepOnly(2));
 document.getElementById('skipStep3').addEventListener('click', () => showStepOnly(3));
 document.getElementById('skipStep4').addEventListener('click', () => showStepOnly(4));
-document.getElementById('skipStep5').addEventListener('click', () => showQR(tempClientID, "Bobby", "Jones", tempServices));
-
-
-// QR Code Logic
-function hideLoginStuff() {
-    // Hide login step container
-
-    const loginStep0 = document.getElementById('divStepZero');
-    if (loginStep0) loginStep0.style.display = 'none';
-
-    const loginStep1 = document.getElementById('divStepOne');
-    if (loginStep1) loginStep1.style.display = 'none';
-
-    const loginStep2 = document.getElementById('divStepTwo');
-    if (loginStep2) loginStep2.style.display = 'none';
-
-    const loginStep3 = document.getElementById('divStepThree');
-    if (loginStep3) loginStep3.style.display = 'none';
-
-    const loginStep4 = document.getElementById('divStepFour');
-    if (loginStep4) loginStep4.style.display = 'none';
-
-    const loginStep5 = document.getElementById('divStepFive');
-    if (loginStep5) loginStep5.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep0 = document.getElementById('skipStep0');
-    if (skipStep0) skipStep0.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep1 = document.getElementById('skipStep1');
-    if (skipStep1) skipStep1.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep2 = document.getElementById('skipStep2');
-    if (skipStep2) skipStep2.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep3 = document.getElementById('skipStep3');
-    if (skipStep3) skipStep3.style.display = 'none';
-
-    // Hide skip step button if present
-    const skipStep4 = document.getElementById('skipStep4');
-    if (skipStep4) skipStep4.style.display = 'none';
-
-    // Hide other stuff
-    const substitle = document.getElementById('divStepOneSubtitle');
-    if (substitle) substitle.style.display = 'none';
-
-    const wholeProgressBar = document.getElementById('wholeProgressBar');
-    if (wholeProgressBar) wholeProgressBar.style.display = 'none';
-}
-
-function showQR(clientID, firstName, lastName, services, language) {
-    hideLoginStuff()
-
-    var qr = new QRious({
-        element: document.getElementById('qr'),
-        value: clientID,
-        size: 200,
-    })
-
-    if (Array.isArray(services)) {
-        if (services.includes("medical")) {
-            document.getElementById('qrCardMedicalIcon').style.display = "block"
-        }
-        if (services.includes("dental")) {
-            document.getElementById('qrCardDentalIcon').style.display = "block"
-        }
-        if (services.includes("optical")) {
-            document.getElementById('qrCardOpticalIcon').style.display = "block"
-        }
-        if (services.includes("haircut")) {
-            document.getElementById('qrCardHaircutIcon').style.display = "block"
-        }
-    }
-
-    // Set the QR card title to the user's name
-    const qrTitle = document.getElementById('qrCardTitle');
-    if (qrTitle) {
-        qrTitle.textContent = `${firstName} ${lastName}`;
-    }
-
-    const qrCode = document.getElementById('divQRCode');
-    qrCode.style.display = 'flex';
-    document.getElementById('divQRCode').classList.remove('d-none');
-}
+document.getElementById('skipStep5').addEventListener('click', () => showStepOnly(5));
