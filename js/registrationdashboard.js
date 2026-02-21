@@ -1,12 +1,12 @@
 /**
  * ============================================================
- * File:          registrationdashboard.js
- * Description:   Java Script for managing the registration dashboard, including fetching patient data, rendering the queue, 
+ * File:           registrationdashboard.js
+ * Description:    Java Script for managing the registration dashboard, including fetching patient data, rendering the queue, 
  * handling service selection, and processing check-ins with QR code generation.
  *
  * Last Modified By:  Skyler Emery
  * Last Modified On:  2/18/26
- * Changes Made:      Readability improvements, added comments.
+ * Changes Made:      Readability improvements, added comments, Bold/All-Caps name, and Fixed Icon Slots.
  * ============================================================
 */
 
@@ -118,6 +118,7 @@ function fetchRegistrationQueue() {
         .then(data => {
             if (data.success) {
                 populateRegistrationTable(data.data);
+                // Use the API's truth for stats
                 updateStats('registration', data.data.length);
                 if (statCompCount) statCompCount.innerText = data.clientsProcessed;
             } else {
@@ -130,8 +131,8 @@ function fetchRegistrationQueue() {
         });
 }
 
-// Populates the registration table with patient data. If no patients are in the queue, shows a friendly message. 
-// Each row includes the patient's name, DOB, requested services, and a "Check In" button.
+// Populates the registration table with patient data. 
+// SORTING: Orders by Last Name (A-Z), then First Name (A-Z).
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
@@ -140,6 +141,21 @@ function populateRegistrationTable(patientsData) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
         return;
     }
+
+    // Sort patients by Last Name, then First Name (both case-insensitive)
+    patientsData.sort((a, b) => {
+        
+        //Compare Last Names (Case-insensitive)
+        const lastNameComparison = a.LastName.localeCompare(b.LastName);
+        
+        // If Last Names are different, use that order
+        if (lastNameComparison !== 0) {
+            return lastNameComparison;
+        }
+        
+        // If Last Names are identical (e.g., two "Smiths"), sort by First Name
+        return a.FirstName.localeCompare(b.FirstName);
+    });
 
     //properly format each patient's name and DOB, then create a table row with their info and requested services
     patientsData.forEach(patient => {
@@ -321,7 +337,11 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
-                document.getElementById('qrCardTitle').textContent = currentClientName;
+                // Split name and convert First Name to BOLD and ALL CAPS
+                const nameParts = currentClientName.split(' ');
+                const firstName = nameParts[0].toUpperCase();
+                const lastName = nameParts.slice(1).join(' ');
+                document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
 
                 // Generate QR Code (QRious library)
                 new QRious({
@@ -330,18 +350,20 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     size: 200,
                 });
 
-                // Reset all QR card icons
-                document.getElementById('qrCardDentalIcon').style.display = 'none';
-                document.getElementById('qrCardMedicalIcon').style.display = 'none';
-                document.getElementById('qrCardOpticalIcon').style.display = 'none';
-                document.getElementById('qrCardHaircutIcon').style.display = 'none';
+                // Reset all QR card icons to be invisible but still occupy their "slot" (using visibility)
+                const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
+                qrIcons.forEach(id => {
+                    const iconEl = document.getElementById(id);
+                    iconEl.style.visibility = 'hidden';
+                    iconEl.style.display = 'inline-flex'; // Ensure display is not 'none' so visibility works
+                });
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
-                // Show icons for selected services (using state captured earlier)
-                if (hasDental) document.getElementById('qrCardDentalIcon').style.display = 'block';
-                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.display = 'block';
-                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.display = 'block';
-                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.display = 'block';
+                // Show icons for selected services by making them visible (preserves their fixed positions)
+                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
+                if (hasDental)  document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
+                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
+                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
                 // Translator badge
                 if (isInterpreterNeeded) {
