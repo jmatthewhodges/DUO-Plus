@@ -222,6 +222,28 @@ const API_METHODS = [
             needsInterpreter: true
         }
     },
+
+    // Analytics
+    {
+        id: 'CreateStat',
+        name: 'Create Statistic',
+        category: 'Analytics',
+        method: 'POST',
+        endpoint: '/api/CreateStat.php',
+        description: 'Create a new statistic to track.',
+        params: [
+            { name: 'StatID', type: 'text', required: true, default: '', description: 'Unique identifier for the statistic' },
+            { name: 'EventID', type: 'text', required: true, default: '', description: 'Event that statistic is getting tracked for' },
+            { name: 'StatKey', type: 'text', required: true, default: '', description: 'Name of the statistic' },
+            { name: 'StatValue', type: 'text', required: true, default: '', description: 'Starting value of the statistic' }
+        ],
+        testData: {
+            StatID: 'opticalWaiting',
+            EventID: '4cbde538985861b9',
+            StatKey: "Optical - Waiting",
+            StatValue: 0
+        }
+    },
 ];
 
 
