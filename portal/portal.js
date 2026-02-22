@@ -230,7 +230,7 @@ const API_METHODS = [
         description: 'Check a registered client into the waiting room and set their selected services.',
         params: [
             { name: 'clientID', type: 'text', required: true, default: '', description: 'Client UUID' },
-            { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'JSON array: medical, optical, dental, haircut' },
+            { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'Has to match valid ServiceID' },
             { name: 'needsInterpreter', type: 'checkbox', required: false, default: false, description: 'Does the client need an interpreter?' }
         ],
         testData: {
