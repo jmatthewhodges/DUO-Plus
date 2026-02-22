@@ -1,7 +1,7 @@
 <?php
 /**
  * ============================================================
- *  File:        login.php
+ *  File:        Login.php
  *  Description: Handles user authentication. Validates
  *               credentials against the database and returns
  *               client data on successful login.

@@ -24,27 +24,13 @@
 
 const API_METHODS = [
 
-    // Testing
-    {
-        id: 'ClearClients',
-        name: 'Clear Clients',
-        category: 'Testing',
-        method: 'POST',
-        endpoint: '/api/ClearClients.php',
-        description: 'Remove all current client information from the database.',
-        params: [
-        ],
-        testData: {
-        }
-    },
-
     // ─── Authentication ───────────────────────────────────────────────────
     {
         id: 'login',
         name: 'Client Login',
         category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/login.php',
+        endpoint: '/api/Login.php',
         description: 'Authenticate a client with email and password. Returns full client data on success.',
         params: [
             { name: 'email', type: 'email', required: true, default: '', description: 'Client email address' },
@@ -60,7 +46,7 @@ const API_METHODS = [
         name: 'Verify Volunteer PIN',
         category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/verify-pin.php',
+        endpoint: '/api/VerifyPin.php',
         description: 'Verify a 6-digit volunteer PIN code. Rate-limited (5 attempts per 15 min).',
         params: [
             { name: 'pin', type: 'text', required: true, default: '', description: '6-digit numeric PIN' },
@@ -73,7 +59,6 @@ const API_METHODS = [
             pageName: 'registration-dashboard'
         }
     },
-
     {
         id: 'CreatePin',
         name: 'Create Pin',
@@ -93,69 +78,12 @@ const API_METHODS = [
             PinValue: '123456'
         }
     },
-
-    // Event
-    {
-        id: 'CreateEvent',
-        name: 'Create Event',
-        category: 'Event',
-        method: 'POST',
-        endpoint: '/api/CreateEvent.php',
-        description: 'Create a new event.',
-        params: [
-            { name: 'EventDate', type: 'date', required: true, default: '', description: 'Date the event takes place' },
-            { name: 'LocationName', type: 'text', required: true, default: '', description: 'Name for the location of the event' },
-            { name: 'IsActive', type: 'checkbox', required: true, default: '', description: 'Active status for the event' }
-        ],
-        testData: {
-            EventDate: '2000-01-01',
-            LocationName: 'LifeChurchCookeville',
-            IsActive: true,
-        }
-    },
-    {
-        id: 'AddEventService',
-        name: 'Add Event Service',
-        category: 'Event',
-        method: 'POST',
-        endpoint: '/api/AddEventService.php',
-        description: 'Add a service to an event.',
-        params: [
-            { name: 'EventID', type: 'text', required: true, default: '', description: 'ID for the event that is getting the service' },
-            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'ID for the service that is getting added to the event' },
-            { name: 'MaxCapacity', type: 'number', required: true, default: '', description: 'Max capacity for the service' },
-            { name: 'CurrentAssigned', type: 'number', required: true, default: '', description: 'Number of clients currently assigned to this service' },
-            { name: 'IsClosed', type: 'checkbox', required: true, default: '', description: 'Status for if the event is currently offering this service' }
-        ],
-    },
-
-    // Service
-    {
-        id: 'CreateService',
-        name: 'Create Service',
-        category: 'Service',
-        method: 'POST',
-        endpoint: '/api/CreateService.php',
-        description: 'Create a new service.',
-        params: [
-            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'Unique identifier for the service' },
-            { name: 'ServiceName', type: 'text', required: true, default: '', description: 'Name for the service' },
-            { name: 'IconTag', type: 'text', required: true, default: '', description: 'Offical icon tag for the service' }
-        ],
-        testData: {
-            ServiceID: 'MedicalFollowUp',
-            ServiceName: 'Medical - Follow Up',
-            IconTag: "faUpArrow",
-        }
-    },
-
-    // ─── Registration ─────────────────────────────────────────────────────
     {
         id: 'register',
         name: 'Register',
-        category: 'Registration',
+        category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/register.php',
+        endpoint: '/api/Register.php',
         description: 'Create a brand-new client with personal info, address, emergency contact, and services.',
         params: [
             { name: 'firstName', type: 'text', required: true, default: '', description: 'First name' },
@@ -227,7 +155,62 @@ const API_METHODS = [
         }
     },
 
-    // ─── Registration ─────────────────────────────────────────────────────
+    // ─── Event ────────────────────────────────────────────────────────────
+    {
+        id: 'CreateEvent',
+        name: 'Create Event',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/CreateEvent.php',
+        description: 'Create a new event.',
+        params: [
+            { name: 'EventDate', type: 'date', required: true, default: '', description: 'Date the event takes place' },
+            { name: 'LocationName', type: 'text', required: true, default: '', description: 'Name for the location of the event' },
+            { name: 'IsActive', type: 'checkbox', required: true, default: '', description: 'Active status for the event' }
+        ],
+        testData: {
+            EventDate: '2000-01-01',
+            LocationName: 'LifeChurchCookeville',
+            IsActive: true,
+        }
+    },
+    {
+        id: 'AddEventService',
+        name: 'Add Event Service',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/AddEventService.php',
+        description: 'Add a service to an event.',
+        params: [
+            { name: 'EventID', type: 'text', required: true, default: '', description: 'ID for the event that is getting the service' },
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'ID for the service that is getting added to the event' },
+            { name: 'MaxCapacity', type: 'number', required: true, default: '', description: 'Max capacity for the service' },
+            { name: 'CurrentAssigned', type: 'number', required: true, default: '', description: 'Number of clients currently assigned to this service' },
+            { name: 'IsClosed', type: 'checkbox', required: true, default: '', description: 'Status for if the event is currently offering this service' }
+        ],
+    },
+
+    // ─── Service ──────────────────────────────────────────────────────────
+    {
+        id: 'CreateService',
+        name: 'Create Service',
+        category: 'Service',
+        method: 'POST',
+        endpoint: '/api/CreateService.php',
+        description: 'Create a new service.',
+        params: [
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'Unique identifier for the service' },
+            { name: 'ServiceName', type: 'text', required: true, default: '', description: 'Name for the service' },
+            { name: 'IconTag', type: 'text', required: true, default: '', description: 'Offical icon tag for the service' }
+        ],
+        testData: {
+            ServiceID: 'MedicalFollowUp',
+            ServiceName: 'Medical - Follow Up',
+            IconTag: "faUpArrow",
+        }
+    },
+
+    // ─── Registration Dashboard ───────────────────────────────────────────
     {
         id: 'registration-dashboard',
         name: 'Registration Dashboard',
@@ -243,7 +226,7 @@ const API_METHODS = [
         name: 'Check-In',
         category: 'Registration Dashboard',
         method: 'POST',
-        endpoint: '/api/check-in.php',
+        endpoint: '/api/CheckIn.php',
         description: 'Check a registered client into the waiting room and set their selected services.',
         params: [
             { name: 'clientID', type: 'text', required: true, default: '', description: 'Client UUID' },
@@ -257,7 +240,7 @@ const API_METHODS = [
         }
     },
 
-    // Analytics
+    // ─── Analytics ────────────────────────────────────────────────────────
     {
         id: 'CreateStat',
         name: 'Create Statistic',
@@ -278,6 +261,21 @@ const API_METHODS = [
             StatValue: 0
         }
     },
+
+    // ─── Testing ──────────────────────────────────────────────────────────
+    {
+        id: 'ClearClients',
+        name: 'Clear Clients',
+        category: 'Testing',
+        method: 'POST',
+        endpoint: '/api/ClearClients.php',
+        description: 'Remove all current client information from the database.',
+        params: [
+        ],
+        testData: {
+        }
+    },
+
 ];
 
 

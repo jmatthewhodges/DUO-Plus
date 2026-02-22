@@ -100,7 +100,7 @@ var translations = {
 
     // Notifications
     registrationSuccessTitle: "Registration Complete!",
-    registrationSuccessText: "You have been officialy registered.",
+    registrationSuccessText: "You have been officially registered.",
     registrationFailedTitle: "Registration Failed",
     registrationFailedText: "An error occurred. Please try again.",
     registrationConnectionErrorTitle: "Connection Error",

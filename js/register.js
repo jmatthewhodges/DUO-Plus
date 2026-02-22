@@ -669,7 +669,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
     }
 
     // Send to API
-    fetch('../api/register.php', {
+    fetch('../api/Register.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

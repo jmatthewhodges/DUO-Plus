@@ -143,7 +143,7 @@ function initializePINModal() {
 
         try {
             // BACKEND REQUEST: Send PIN, name, and page name to /api/verify-pin.php for validation
-            const response = await fetch('/api/verify-pin.php', {
+            const response = await fetch('/api/VerifyPin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pin: pin, name: name, pageName: pageName })

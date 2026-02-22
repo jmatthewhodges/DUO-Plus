@@ -4,8 +4,8 @@
  *  File:        CreatePin.php
  *  Description: Handles creating a new PIN code entry in tblPinCode.
  *
- *  Last Modified By:  Claude
- *  Last Modified On:  Feb 21, 2026
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 22 11:00 AM
  *  Changes Made:      Fixed to match tblPinCode structure
  *                     (PinID, PinValue, LastUpdated)
  * ============================================================

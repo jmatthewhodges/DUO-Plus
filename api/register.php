@@ -1,7 +1,7 @@
 <?php
 /**
  * ============================================================
- *  File:        register.php
+ *  File:        Register.php
  *  Description: Handles client registration. Supports both
  *               new user creation and existing user updates
  *               including address, emergency contacts, and
@@ -277,14 +277,31 @@ if ($clientID) {
     }
 
     // Insert/Update visit record to put client in registration queue
-    $visitID = bin2hex(random_bytes(8));
-    $registrationStatus = 'Registered';
-    $checkInTime = null;
-    $qrCodeData = null;
-    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
-    if ($visitInsert) {
-        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
-        $visitInsert->execute();
+    $checkVisit = $mysqli->prepare("SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ?");
+    $checkVisit->bind_param("ss", $clientID, $EventID);
+    $checkVisit->execute();
+    $visitResult = $checkVisit->get_result();
+
+    if ($visitResult->num_rows > 0) {
+        // Visit already exists — update status back to Registered
+        $existingVisit = $visitResult->fetch_assoc();
+        $existingVisitID = $existingVisit['VisitID'];
+        $visitUpdate = $mysqli->prepare("UPDATE tblVisits SET RegistrationStatus = 'Registered' WHERE VisitID = ?");
+        if ($visitUpdate) {
+            $visitUpdate->bind_param("s", $existingVisitID);
+            $visitUpdate->execute();
+        }
+    } else {
+        // No visit record yet — insert one
+        $visitID = bin2hex(random_bytes(8));
+        $registrationStatus = 'Registered';
+        $checkInTime = null;
+        $qrCodeData = null;
+        $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+        if ($visitInsert) {
+            $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+            $visitInsert->execute();
+        }
     }
 
     $mysqli->commit();

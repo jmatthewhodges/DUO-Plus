@@ -86,7 +86,7 @@ if ($eventCount == 0) {
 }
 
 // Check for duplicate StatID
-$statCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblanalytics WHERE StatID = ?");
+$statCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblAnalytics WHERE StatID = ?");
 $statCheck->bind_param("s", $StatID);
 $statCheck->execute();
 $statCheck->bind_result($statCount);
@@ -102,7 +102,7 @@ if ($statCount > 0) {
 $LastUpdated = date('Y-m-d H:i:s');
 
 // Prepare the query with temp variables
-$createStat = $mysqli->prepare("INSERT INTO tblanalytics (StatID, EventID, StatKey, StatValue, LastUpdated) VALUES (?, ?, ?, ?, ?)");
+$createStat = $mysqli->prepare("INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated) VALUES (?, ?, ?, ?, ?)");
 
 // Check for error
 if (!$createStat) {

@@ -1,11 +1,11 @@
 <?php
 /**
  * ============================================================
- * File:          Verify-Pin.php
+ * File:          VerifyPin.php
  * Description:   API endpoint for PIN code access restriction.
  *
- * Last Modified By:  Claude
- * Last Modified On:  2/21/2026
+ * Last Modified By:  Matthew
+ * Last Modified On:  Feb 22 11:00 AM
  * Changes Made:      Added structured error handling, rate limit
  *                    check before processing, input sanitization,
  *                    DB connection validation, and error logging.
