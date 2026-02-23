@@ -51,6 +51,11 @@ $clientDataStmt = $mysqli->prepare(
     LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
     WHERE v.RegistrationStatus = ?
     GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
+    // to do: give logic in query that orders the quey by things like Services (i.e. dental, optical) 
+    // ORDER BY ServiceSelections
+    // or check in time (asec or dsec?)
+    // add "v.CheckInTime" to GROUP BY clause to make it work
+    // ORDER BY v.CheckInTime
 );
 
 // Checks for if the connection to mysql is a success
