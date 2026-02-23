@@ -30,6 +30,26 @@ $mysqli = $GLOBALS['mysqli'];
 // Get the queue parameter from GET request
 $queue = $_GET['RegistrationStatus'] ?? null;
 
+// Sorting parameters (has defaults if not provided)
+$sort = strtolower($_GET['sort'] ?? 'firstname');
+$order = strtolower($_GET['order'] ?? 'asc');
+
+// list of allowed sortable columns (for easier readability)
+$allowedSort = [
+    'firstname' => 'c.FirstName',
+    'lastname'  => 'c.LastName',
+    'dob'       => 'c.DOB',
+    'clientid'  => 'c.ClientID',
+    'services' => 'GROUP_CONCAT(s.ServiceID)'
+];
+
+// Validate sort column
+$sortColumn = $allowedSort[$sort] ?? 'c.FirstName';
+
+// Validate order direction (this is what determines if it's acending or decending)
+$orderDirection = ($order === 'desc') ? 'DESC' : 'ASC';
+
+
 // Validate queue parameter exists
 if (!$queue) {
     http_response_code(400);
@@ -50,12 +70,8 @@ $clientDataStmt = $mysqli->prepare(
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
     LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
     WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
-    // to do: give logic in query that orders the quey by things like Services (i.e. dental, optical) 
-    // ORDER BY ServiceSelections
-    // or check in time (asec or dsec?)
-    // add "v.CheckInTime" to GROUP BY clause to make it work
-    // ORDER BY v.CheckInTime
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
+    ORDER BY $sortColumn $orderDirection"
 );
 
 // Checks for if the connection to mysql is a success
