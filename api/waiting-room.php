@@ -30,10 +30,10 @@ We need three variables to consider when it come to queueing:
         (which is determined by the first time they were finalized at checked in(aka registration dashboard)),
     how long they have been in the wait room for 
         (needs to update every time a service is finished, for example, if I get out of medical,
-        my wait room time should be the exact time I got out), 
+        my wait room time should be the exact time I got out), DONE
     and if the service is currently not full of clients receiving treatment 
         (aka if only 4 people can be worked on in dental, it shouldn't be selecting a person for dental
-         to be treated right now because there are no empty seats).
+         to be treated right now because there are no empty seats). DONE
 
 Another thing, split the files for the endpoints.
 Change this file to registration-dashboard.php and then make a new one specifically for the waiting room code called waiting-room.php.
@@ -43,9 +43,34 @@ but let me know if a DB addition is needed for initial time checked in to compar
 //total time @ event
 
 
-//how long they have been @ wait room
+/*
+---------------------------------
+         PART 2
+Client waiting time check
+----------------------------------
+*/
+
+//how long they have been @ wait room (this currently gets anyone who is 30 minutes past their check in time)
+$clientTimeSelect = $mysqli->prepare("
+    SELECT c.ClientID, c.FirstName, c.LastName, v.CheckInTime
+    FROM tblVisits v
+    JOIN tblClients c ON v.ClientID = c.ClientID
+    WHERE v.CheckInTime < DATE_SUB(NOW(), INTERVAL 30 MINUTE)"
+);
+$clientTimeSelect->execute();
+$clientTimes = $clientTimeSelect->get_result()->fetch_all(MYSQLI_ASSOC);
+$clientTimeSelect->close();
+echo json_encode([
+    "ClientTimes"      => $clientTimes
+]);
 
 
+/*
+---------------------------------
+         PART 3
+Check for if service is full
+----------------------------------
+*/
 
 //check if queue is full
 if (!isset($_GET['ServiceID'])) {
@@ -70,6 +95,7 @@ if (!$service) {
     echo json_encode(["error" => "Service not found"]);
     exit;
 }
+
 
 // check to see if service is full
 $isFull = $service['CurrentAssigned'] >= $service['MaxCapacity'];
