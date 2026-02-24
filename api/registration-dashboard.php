@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        GrabQueue.php
+ *  File:        registration-dashboard.php
  *  Description: Simple PHP endpoint that gets needed users
  *               from inputted "servicestatus". for use in 
  *               scnarios such as registration dashboard.
  *
  *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 23 @ 6:15 PM
- *  Changes Made:      Modified to include sorting function
+ *  Last Modified On:  Feb 23 @ 9:38 PM
+ *  Changes Made:      renamed from GrabQueue.php to current name
  * ============================================================
 */
 
