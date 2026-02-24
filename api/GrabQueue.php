@@ -6,9 +6,9 @@
  *               from inputted "servicestatus". for use in 
  *               scnarios such as registration dashboard.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 21 @ 11:05 AM
- *  Changes Made:      Modified for new DB structure
+ *  Last Modified By:  Miguel
+ *  Last Modified On:  Feb 23 @ 6:15 PM
+ *  Changes Made:      Modified to include sorting function
  * ============================================================
 */
 
