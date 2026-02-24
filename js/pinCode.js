@@ -54,11 +54,34 @@ function initializePINModal() {
     const submitBtn = document.getElementById('submitPinBtn');
     const nameEntry = document.getElementById('nameEntry');
 
+    // QR CODE AUTO-FILL: Check for PIN in URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPin = urlParams.get('pin');
+    const stationId = urlParams.get('stationId');
+    
+    // Store stationId globally if provided
+    if (stationId) {
+        window.stationId = stationId;
+    }
+
     // ANTI-BYPASS: Prevent modal from closing before PIN verification AND name entry
     modal.addEventListener('hide.bs.modal', function(e) {
         const nameInput = nameEntry.querySelector('input[type="text"]');
         if (!pinVerified || !nameInput || !nameInput.value.trim()) {
             e.preventDefault();
+        }
+    });
+
+    // Auto-fill PIN when modal is shown (if provided in URL)
+    modal.addEventListener('shown.bs.modal', function() {
+        if (urlPin && urlPin.length === 6 && /^\d+$/.test(urlPin)) {
+            const pinInputs = document.querySelectorAll('.pin-input');
+            urlPin.split('').forEach((digit, index) => {
+                if (pinInputs[index]) {
+                    pinInputs[index].value = digit;
+                    pinInputs[index].classList.add('filled');
+                }
+            });
         }
     });
 
