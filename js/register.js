@@ -139,7 +139,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Set sex radio button
         if (userData.Sex) {
-            const sexRadio = document.querySelector(`input[name="clientSex"][value="${userData.Sex}"]`);
+            const normalizedSex = userData.Sex.trim().toLowerCase();
+            const sexRadio = document.querySelector(`input[name="clientSex"][value="${normalizedSex}"]`);
             if (sexRadio) sexRadio.checked = true;
         }
 
@@ -623,14 +624,11 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
     // Collect all form data
     const formData = {
         // If we have ClientID, send it
-        clientId: userData?.ClientID || null,
-
-        // Language preference
-        language: sessionStorage.getItem('lang') || 'en',
+        clientID: userData?.ClientID || null,
 
         // Step 1
-        email: document.getElementById('clientRegisterEmail').value,
-        password: document.getElementById('clientRegisterPass').value,
+        // email: document.getElementById('clientRegisterEmail').value,
+        // password: document.getElementById('clientRegisterPass').value,
 
         // Step 2
         firstName: document.getElementById('clientFirstName').value,
@@ -656,14 +654,22 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
         // Remove phone input mask before sending
         emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
 
+        // Hard code event ID (for now)
+        EventID: "4cbde538985861b9",
+
         // Step 5
         services: Array.from(
             document.querySelectorAll('input[name="clientServices"]:checked')
         ).map(s => s.value),
     };
 
+    if (!userData?.ClientID) {
+        formData.email = document.getElementById('clientRegisterEmail').value;
+        formData.password = document.getElementById('clientRegisterPass').value;
+    }
+
     // Send to API
-    fetch('../api/register.php', {
+    fetch('../api/Register.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

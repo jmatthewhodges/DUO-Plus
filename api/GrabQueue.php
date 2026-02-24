@@ -1,4 +1,16 @@
 <?php
+/**
+ * ============================================================
+ *  File:        GrabQueue.php
+ *  Description: Simple PHP endpoint that gets needed users
+ *               from inputted "servicestatus". for use in 
+ *               scnarios such as registration dashboard.
+ *
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 21 @ 11:05 AM
+ *  Changes Made:      Modified for new DB structure
+ * ============================================================
+*/
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
@@ -16,8 +28,7 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Get the queue parameter from GET request
-$queue = $_GET['queue'] ?? null;
-
+$queue = $_GET['RegistrationStatus'] ?? null;
 
 // Validate queue parameter exists
 if (!$queue) {
@@ -27,16 +38,20 @@ if (!$queue) {
 }
 
 // Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-$clientDataStmt = $mysqli->prepare("
-    SELECT 
-        c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, 
-        r.Medical, r.Optical, r.Dental, r.Hair
+$clientDataStmt = $mysqli->prepare(
+    "SELECT 
+        c.ClientID, 
+        c.FirstName, 
+        c.MiddleInitial, 
+        c.LastName, 
+        c.DOB, 
+        GROUP_CONCAT(s.ServiceID) AS ServiceSelections
     FROM tblClients c
-    LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
-    LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
-    LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
-    WHERE r.queue = ?
-");
+    LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+    LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
+    WHERE v.RegistrationStatus = ?
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
+);
 
 // Checks for if the connection to mysql is a success
 if (!$clientDataStmt) {
@@ -63,21 +78,27 @@ $result = $clientDataStmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $clientDataStmt->close();
 
+// Convert ServiceSelections to array
+foreach ($rows as &$row) {
+    $row['services'] = $row['ServiceSelections'] ? explode(',', $row['ServiceSelections']) : [];
+    unset($row['ServiceSelections']);
+}
+unset($row); 
+
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$statsResult = $mysqli->query("SELECT clientsProcessed FROM tblregistrationstats LIMIT 1");
-if ($statsResult && $row = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$row['clientsProcessed'];
+$EventID = "4cbde538985861b9"; // Hardcoded eventID
+$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
+if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
+    $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
-// Counting the number of rows to then pull a responsse for each individual person
-if (count($rows) > 0) {
-    http_response_code(200);
-    $msg = json_encode(['success' => true, 'count' => count($rows), 'data' => $rows, 'clientsProcessed' => $clientsProcessed]);
-} else {
-    http_response_code(201);
-    $msg = json_encode(['success' => false, 'count' => 0, 'error' => 'No users applicable.']);
-}
-
+http_response_code(200);
+$msg = json_encode([
+    'success' => true,
+    'count' => count($rows),
+    'data' => $rows,
+    'clientsProcessed' => $clientsProcessed
+]);
 echo $msg;
 error_log($msg);

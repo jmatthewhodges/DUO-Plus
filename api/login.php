@@ -1,16 +1,16 @@
 <?php
 /**
  * ============================================================
- *  File:        login.php
+ *  File:        Login.php
  *  Description: Handles user authentication. Validates
  *               credentials against the database and returns
  *               client data on successful login.
- *
- *  Last Modified By:  Matthew 
- *  Last Modified On:  Feb 18 @ 2:42 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ * 
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 19 @ 9:34 PM
+ *  Changes Made:      Update for new DB
  * ============================================================
-*/
+ */
 
 header('Content-Type: application/json');
 
@@ -59,8 +59,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
-// Check login credentials
-$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientLogin WHERE Email = ?");
+// Check login credentials in tblClientAuth
+$loginGrab = $mysqli->prepare("SELECT ClientID, Password FROM tblClientAuth WHERE Email = ?");
 if (!$loginGrab) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error.']);
@@ -73,18 +73,17 @@ $loginGrab->bind_result($clientID, $hashedPassword);
 if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
     $loginGrab->close();
     http_response_code(200);
-    
-    // Get all client data
+
+    // Get all client data from tblClients and related tables
     $registrationData = $mysqli->prepare("
         SELECT 
             c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DateCreated, c.DOB, c.Sex, c.Phone,
+            c.TranslatorNeeded,
             a.Street1, a.Street2, a.City, a.State, a.ZIP,
-            e.Name AS EmergencyName, e.Phone AS EmergencyPhone,
-            r.DateTime AS RegistrationDate, r.Medical, r.Optical, r.Dental, r.Hair
+            e.Name AS EmergencyName, e.Phone AS EmergencyPhone
         FROM tblClients c
         LEFT JOIN tblClientAddress a ON c.ClientID = a.ClientID
         LEFT JOIN tblClientEmergencyContacts e ON c.ClientID = e.ClientID
-        LEFT JOIN tblClientRegistrations r ON c.ClientID = r.ClientID
         WHERE c.ClientID = ?
     ");
     if (!$registrationData) {
@@ -96,7 +95,7 @@ if ($loginGrab->fetch() && password_verify($password, $hashedPassword)) {
     $registrationData->execute();
     $result = $registrationData->get_result();
     $userData = $result->fetch_assoc();
-    
+
     $msg = json_encode(['success' => true, 'message' => 'Successful login.', 'data' => $userData]);
     echo $msg;
     error_log($msg);

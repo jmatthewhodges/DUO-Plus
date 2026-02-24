@@ -151,17 +151,23 @@ body.v-center-page {
     font-size: x-large;
 }
 
+/* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: block !important; /* Changed from inline-flex to block to reserve space */
     width: 5rem;
     height: 5rem;
     background: #fff;
     border: 3px solid black;
-    border-radius: 20%; /* This makes it a circle */
+    border-radius: 20%;
+    /* Ensure the icon inside is centered even in a block container */
+    line-height: 5rem; 
+    text-align: center;
 }
 
+/* Add a wrapper style for the icons in your HTML if you want better spacing control */
+#qrCodeModal .d-flex.justify-content-center.gap-3.mt-3 {
+    min-height: 5.5rem; /* Prevents layout shifting */
+}
 /* PIN Code Modal Styling */
 .pin-input-group {
     flex-wrap: nowrap;

@@ -73,7 +73,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     const password = document.getElementById('txtClientPassword').value;
 
     // Send login request to API
-    fetch('../api/login.php', {
+    fetch('../api/Login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -88,7 +88,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
                     icon: 'success',
                     title: 'Welcome Back!',
                     html: `Hello, <strong>${data.data.FirstName}</strong>! Redirecting you now...`,
-                    timer: 3500,
+                    timer: 2000,
                     timerProgressBar: true,
                     showConfirmButton: false,
                     allowOutsideClick: false

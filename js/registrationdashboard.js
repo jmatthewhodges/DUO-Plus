@@ -1,12 +1,11 @@
 /**
  * ============================================================
- * File:          registrationdashboard.js
- * Description:   Java Script for managing the registration dashboard, including fetching patient data, rendering the queue, 
- * handling service selection, and processing check-ins with QR code generation.
+ * File:           registrationdashboard.js
+ * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Skyler Emery
- * Last Modified On:  2/18/26
- * Changes Made:      Readability improvements, added comments.
+ * Last Modified By:  Matthew
+ * Last Modified On:  Feb 21 @ 5:05 PM
+ * Changes Made:      Updated for new DB structure.
  * ============================================================
 */
 
@@ -110,18 +109,22 @@ function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
 
     //fetch queue data from API
-    fetch('../api/GrabQueue.php?queue=registration', {
+    fetch('../api/GrabQueue.php?RegistrationStatus=Registered', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                populateRegistrationTable(data.data);
-                updateStats('registration', data.data.length);
-                if (statCompCount) statCompCount.innerText = data.clientsProcessed;
+                const clients = (data.data || []).filter(item => item.ClientID);
+                populateRegistrationTable(clients);
+                updateStats('registration', clients.length);
             } else {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-danger">Failed to load queue.</td></tr>';
+                tableBody.innerHTML = 'No patients currently in queue.';
+            }
+            // Always update processed count if it came back
+            if (statCompCount && data.clientsProcessed !== undefined) {
+                statCompCount.innerText = data.clientsProcessed;
             }
         })
         .catch(error => {
@@ -130,8 +133,8 @@ function fetchRegistrationQueue() {
         });
 }
 
-// Populates the registration table with patient data. If no patients are in the queue, shows a friendly message. 
-// Each row includes the patient's name, DOB, requested services, and a "Check In" button.
+// Populates the registration table with patient data. 
+// SORTING: Orders by Last Name (A-Z), then First Name (A-Z).
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
@@ -141,6 +144,21 @@ function populateRegistrationTable(patientsData) {
         return;
     }
 
+    // Sort patients by Last Name, then First Name (both case-insensitive)
+    patientsData.sort((a, b) => {
+        
+        //Compare Last Names (Case-insensitive)
+        const lastNameComparison = a.LastName.localeCompare(b.LastName);
+        
+        // If Last Names are different, use that order
+        if (lastNameComparison !== 0) {
+            return lastNameComparison;
+        }
+        
+        // If Last Names are identical (e.g., two "Smiths"), sort by First Name
+        return a.FirstName.localeCompare(b.FirstName);
+    });
+
     //properly format each patient's name and DOB, then create a table row with their info and requested services
     patientsData.forEach(patient => {
         let fullName = `${patient.FirstName} ${patient.LastName}`;
@@ -148,6 +166,13 @@ function populateRegistrationTable(patientsData) {
             fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
         }
         const formattedDOB = formatDOB(patient.DOB);
+
+        // Map services array to individual fields
+        const serviceSet = new Set(patient.services || []);
+        patient.Medical = serviceSet.has('medical') ? 1 : 0;
+        patient.Dental = serviceSet.has('dental') ? 1 : 0;
+        patient.Optical = serviceSet.has('optical') ? 1 : 0;
+        patient.Hair = serviceSet.has('haircut') ? 1 : 0;
 
         const rowHTML = `
             <tr class="align-middle" data-client-id="${patient.ClientID}">
@@ -211,10 +236,10 @@ tableBody.addEventListener('click', function (event) {
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
 
+        // --- Dental section ---
         const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
         const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
 
-        document.getElementById('modalPatientName').innerText = currentClientName;
         document.getElementById('translatorCheck').checked = false;
         document.getElementById('dentalHygiene').checked = false;
         document.getElementById('dentalExtraction').checked = false;
@@ -225,6 +250,22 @@ tableBody.addEventListener('click', function (event) {
         } else {
             dentalSection.classList.add('d-none');
         }
+
+        // --- Medical section ---
+        const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+        const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
+
+        document.getElementById('medicalExam').checked = false;
+        document.getElementById('medicalFollowUp').checked = false;
+
+        const medicalSection = document.getElementById('modalMedicalSection');
+        if (medicalState === 1 && serviceAvailability.medical) {
+            medicalSection.classList.remove('d-none');
+        } else {
+            medicalSection.classList.add('d-none');
+        }
+
+        document.getElementById('modalPatientName').innerText = currentClientName;
 
         const modal = document.getElementById('checkInModal');
         modal.classList.remove('d-none');
@@ -248,20 +289,35 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     // Build services array from selected buttons
     const services = [];
 
-    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-    if (parseInt(medicalBtn.getAttribute('data-state')) === 1) services.push('medical');
+    // --- Medical: requires sub-selection (Exam or Follow Up) ---
+    const medicalSection = document.getElementById('modalMedicalSection');
+    const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
 
+    if (!medicalSection.classList.contains('d-none')) {
+        if (!selectedMedical) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Selection Required',
+                text: 'Please select either Exam or Follow Up to proceed.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+        services.push(selectedMedical.value);
+    }
+
+    // --- Optical ---
     const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
     if (parseInt(opticalBtn.getAttribute('data-state')) === 1) services.push('optical');
 
+    // --- Haircut ---
     const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
     if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
 
-    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
+    // --- Dental: requires sub-selection (Hygiene or Extraction) ---
     const dentalSection = document.getElementById('modalDentalSection');
+    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
 
-    // If the dental section is visible but no option is selected, show a warning and prevent submission. 
-    // Otherwise, add the selected dental service to the services array.
     if (!dentalSection.classList.contains('d-none')) {
         if (!selectedDental) {
             Swal.fire({
@@ -277,10 +333,11 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 
     // Capture service states for QR card NOW (while DOM still exists)
     const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-    const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
+    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
+    const hasDental  = dentalBtn  && dentalBtn.getAttribute('data-state')  === '1';
     const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
     const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
-    const hasHaircut = hairBtn && hairBtn.getAttribute('data-state') === '1';
+    const hasHaircut = hairBtn    && hairBtn.getAttribute('data-state')    === '1';
 
     // Loading state
     const originalText = btn.innerHTML;
@@ -288,7 +345,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     btn.innerHTML = 'Processing...';
 
     // Send check-in data to API
-    fetch('../api/check-in.php', {
+    fetch('../api/CheckIn.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -311,17 +368,28 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 }
 
                 // Update Stats
+                // Decrement registration count
                 let currentReg = parseInt(statRegCount.innerText) || 0;
-                updateStats('registration', Math.max(0, currentReg - 1));
-                if (statCompCount) statCompCount.innerText = data.clientsProcessed;
-                console.log("Stats Updated: Registration -1, Completed:", data.clientsProcessed);
+                statRegCount.innerText = Math.max(0, currentReg - 1);
+
+                // Update processed count from API (source of truth is the DB)
+                if (statCompCount && data.clientsProcessed !== undefined) {
+                    statCompCount.innerText = data.clientsProcessed;
+                } else if (statCompCount) {
+                    // Fallback: increment locally if API didn't return updated count
+                    statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                }
 
                 // Show QR modal
                 const qrModal = document.getElementById('qrCodeModal');
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
-                document.getElementById('qrCardTitle').textContent = currentClientName;
+                // Split name and convert First Name to BOLD and ALL CAPS
+                const nameParts = currentClientName.split(' ');
+                const firstName = nameParts[0].toUpperCase();
+                const lastName = nameParts.slice(1).join(' ');
+                document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
 
                 // Generate QR Code (QRious library)
                 new QRious({
@@ -330,18 +398,20 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     size: 200,
                 });
 
-                // Reset all QR card icons
-                document.getElementById('qrCardDentalIcon').style.display = 'none';
-                document.getElementById('qrCardMedicalIcon').style.display = 'none';
-                document.getElementById('qrCardOpticalIcon').style.display = 'none';
-                document.getElementById('qrCardHaircutIcon').style.display = 'none';
+                // Reset all QR card icons to be invisible but still occupy their "slot" (using visibility)
+                const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
+                qrIcons.forEach(id => {
+                    const iconEl = document.getElementById(id);
+                    iconEl.style.visibility = 'hidden';
+                    iconEl.style.display = 'inline-flex';
+                });
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
-                // Show icons for selected services (using state captured earlier)
-                if (hasDental) document.getElementById('qrCardDentalIcon').style.display = 'block';
-                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.display = 'block';
-                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.display = 'block';
-                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.display = 'block';
+                // Show icons for selected services by making them visible (preserves their fixed positions)
+                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
+                if (hasDental)  document.getElementById('qrCardDentalIcon').style.visibility  = 'visible';
+                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
+                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
                 // Translator badge
                 if (isInterpreterNeeded) {
@@ -432,9 +502,18 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
 
 document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
+    fetchRegistrationQueue();
 });
 
 //================================================================================
 // 8. INITIALIZATION
-
 fetchRegistrationQueue();
+
+// Auto-refresh every 30 seconds (unless checkIn modal is open)
+setInterval(() => {
+    const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
+    const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
+    if (!checkInOpen && !qrOpen) {
+        fetchRegistrationQueue();
+    }
+}, 30000);

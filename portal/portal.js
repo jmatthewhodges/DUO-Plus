@@ -30,7 +30,7 @@ const API_METHODS = [
         name: 'Client Login',
         category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/login.php',
+        endpoint: '/api/Login.php',
         description: 'Authenticate a client with email and password. Returns full client data on success.',
         params: [
             { name: 'email', type: 'email', required: true, default: '', description: 'Client email address' },
@@ -46,7 +46,7 @@ const API_METHODS = [
         name: 'Verify Volunteer PIN',
         category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/verify-pin.php',
+        endpoint: '/api/VerifyPin.php',
         description: 'Verify a 6-digit volunteer PIN code. Rate-limited (5 attempts per 15 min).',
         params: [
             { name: 'pin', type: 'text', required: true, default: '', description: '6-digit numeric PIN' },
@@ -59,14 +59,31 @@ const API_METHODS = [
             pageName: 'registration-dashboard'
         }
     },
-
-    // ─── Registration ─────────────────────────────────────────────────────
+    {
+        id: 'CreatePin',
+        name: 'Create Pin',
+        category: 'Authentication',
+        method: 'POST',
+        endpoint: '/api/CreatePin.php',
+        description: 'Create a new 6-digit PIN code entry in tblPinCode.',
+        params: [
+            {
+                name: 'PinValue',
+                type: 'string',
+                required: true,
+                description: 'Exactly 6 numeric digits (e.g. "847291")'
+            }
+        ],
+        testData: {
+            PinValue: '123456'
+        }
+    },
     {
         id: 'register',
         name: 'Register',
-        category: 'Registration',
+        category: 'Authentication',
         method: 'POST',
-        endpoint: '/api/register.php',
+        endpoint: '/api/Register.php',
         description: 'Create a brand-new client with personal info, address, emergency contact, and services.',
         params: [
             { name: 'firstName', type: 'text', required: true, default: '', description: 'First name' },
@@ -87,6 +104,7 @@ const API_METHODS = [
             { name: 'emergencyFirstName', type: 'text', required: false, default: '', description: 'Emergency contact first name' },
             { name: 'emergencyLastName', type: 'text', required: false, default: '', description: 'Emergency contact last name' },
             { name: 'emergencyPhone', type: 'text', required: false, default: '', description: 'Emergency contact phone' },
+            { name: 'EventID', type: 'text', required: true, default: '4cbde538985861b9', description: 'ID of the event attending' },
             { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'JSON array of services: medical, optical, dental, haircut' }
         ],
         testData: () => {
@@ -137,13 +155,68 @@ const API_METHODS = [
         }
     },
 
-    // ─── Registration ─────────────────────────────────────────────────────
+    // ─── Event ────────────────────────────────────────────────────────────
+    {
+        id: 'CreateEvent',
+        name: 'Create Event',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/CreateEvent.php',
+        description: 'Create a new event.',
+        params: [
+            { name: 'EventDate', type: 'date', required: true, default: '', description: 'Date the event takes place' },
+            { name: 'LocationName', type: 'text', required: true, default: '', description: 'Name for the location of the event' },
+            { name: 'IsActive', type: 'checkbox', required: true, default: '', description: 'Active status for the event' }
+        ],
+        testData: {
+            EventDate: '2000-01-01',
+            LocationName: 'LifeChurchCookeville',
+            IsActive: true,
+        }
+    },
+    {
+        id: 'AddEventService',
+        name: 'Add Event Service',
+        category: 'Event',
+        method: 'POST',
+        endpoint: '/api/AddEventService.php',
+        description: 'Add a service to an event.',
+        params: [
+            { name: 'EventID', type: 'text', required: true, default: '', description: 'ID for the event that is getting the service' },
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'ID for the service that is getting added to the event' },
+            { name: 'MaxCapacity', type: 'number', required: true, default: '', description: 'Max capacity for the service' },
+            { name: 'CurrentAssigned', type: 'number', required: true, default: '', description: 'Number of clients currently assigned to this service' },
+            { name: 'IsClosed', type: 'checkbox', required: true, default: '', description: 'Status for if the event is currently offering this service' }
+        ],
+    },
+
+    // ─── Service ──────────────────────────────────────────────────────────
+    {
+        id: 'CreateService',
+        name: 'Create Service',
+        category: 'Service',
+        method: 'POST',
+        endpoint: '/api/CreateService.php',
+        description: 'Create a new service.',
+        params: [
+            { name: 'ServiceID', type: 'text', required: true, default: '', description: 'Unique identifier for the service' },
+            { name: 'ServiceName', type: 'text', required: true, default: '', description: 'Name for the service' },
+            { name: 'IconTag', type: 'text', required: true, default: '', description: 'Offical icon tag for the service' }
+        ],
+        testData: {
+            ServiceID: 'MedicalFollowUp',
+            ServiceName: 'Medical - Follow Up',
+            IconTag: "faUpArrow",
+        }
+    },
+
+    // ─── Registration Dashboard ───────────────────────────────────────────
     {
         id: 'registration-dashboard',
         name: 'Registration Dashboard',
         category: 'Registration Dashboard',
         method: 'GET',
-        endpoint: '/api/registration-dashboard.php',
+        endpoint: '/api/GrabQueue.php?RegistrationStatus=Registered',
         description: 'Fetch all clients currently in the "registration" queue with their services and info. No parameters required.',
         params: [],
         testData: {}
@@ -153,11 +226,11 @@ const API_METHODS = [
         name: 'Check-In',
         category: 'Registration Dashboard',
         method: 'POST',
-        endpoint: '/api/check-in.php',
+        endpoint: '/api/CheckIn.php',
         description: 'Check a registered client into the waiting room and set their selected services.',
         params: [
             { name: 'clientID', type: 'text', required: true, default: '', description: 'Client UUID' },
-            { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'JSON array: medical, optical, dental, haircut' },
+            { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'Has to match valid ServiceID' },
             { name: 'needsInterpreter', type: 'checkbox', required: false, default: false, description: 'Does the client need an interpreter?' }
         ],
         testData: {
@@ -166,6 +239,43 @@ const API_METHODS = [
             needsInterpreter: true
         }
     },
+
+    // ─── Analytics ────────────────────────────────────────────────────────
+    {
+        id: 'CreateStat',
+        name: 'Create Statistic',
+        category: 'Analytics',
+        method: 'POST',
+        endpoint: '/api/CreateStat.php',
+        description: 'Create a new statistic to track.',
+        params: [
+            { name: 'StatID', type: 'text', required: true, default: '', description: 'Unique identifier for the statistic' },
+            { name: 'EventID', type: 'text', required: true, default: '', description: 'Event that statistic is getting tracked for' },
+            { name: 'StatKey', type: 'text', required: true, default: '', description: 'Name of the statistic' },
+            { name: 'StatValue', type: 'text', required: true, default: '', description: 'Starting value of the statistic' }
+        ],
+        testData: {
+            StatID: 'opticalWaiting',
+            EventID: '4cbde538985861b9',
+            StatKey: "Optical - Waiting",
+            StatValue: 0
+        }
+    },
+
+    // ─── Testing ──────────────────────────────────────────────────────────
+    {
+        id: 'ClearClients',
+        name: 'Clear Clients',
+        category: 'Testing',
+        method: 'POST',
+        endpoint: '/api/ClearClients.php',
+        description: 'Remove all current client information from the database.',
+        params: [
+        ],
+        testData: {
+        }
+    },
+
 ];
 
 
@@ -474,6 +584,10 @@ const API_METHODS = [
                 } catch {
                     body[p.name] = el.value;
                 }
+            } else if (p.type === 'number') {
+                // Convert to number if not empty
+                const val = el.value.trim();
+                if (val !== '') body[p.name] = Number(val);
             } else {
                 const val = el.value.trim();
                 if (val !== '') body[p.name] = val;
