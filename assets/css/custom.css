@@ -344,15 +344,6 @@ body.v-center-page {
    REGISTRATION DASHBOARD
    ========================================== */
 
-/* Hide scrollbar but keep scroll functionality */
-.card-body::-webkit-scrollbar {
-    display: none;
-}
-.card-body {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
 /* Check-in button hover */
 .check-in-btn {
     transition: all 0.2s ease;
@@ -361,4 +352,18 @@ body.v-center-page {
     background-color: #10326e !important; /* Darker shade of new color */
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================
+   WAITING ROOM & GENERAL SCROLLING
+   ========================================== */
+
+/* Hide scrollbar while keeping functionality */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scroll {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
 }
