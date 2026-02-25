@@ -402,7 +402,7 @@ body.v-center-page {
     background-color: #10326e !important;
     /* Darker shade of new color */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(236, 192, 192, 0.15);
 }
 
 /* ==========================================
@@ -509,4 +509,30 @@ body.v-center-page {
 .dev-step-btn:hover {
     background: rgba(23, 69, 147, 0.18);
     color: #174593;
+}
+
+/* Hide scrollbar while keeping functionality */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Prevent page-level scrolling */
+html, body {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Hide scrollbar on the table card-body while keeping it scrollable */
+.card-body[style*="overflow-y"]::-webkit-scrollbar {
+    display: none;
+}
+
+.card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
