@@ -1,0 +1,111 @@
+<!--
+ ============================================================
+  File:        food-truck.html
+  Description: Food truck counter.
+
+  Last Modified By:  Lauren
+  Last Modified On:  Feb 24 @ 9:02 PM
+  Changes Made:      Created file
+ ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta + Title -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUO+ | Food Truck</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Styles -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="food-truck-page">
+    <!-- Container -->
+    <main class="container food-truck-shell">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-9 col-xl-8">
+        <!-- Logo -->
+    <div class="text-center mb-4">
+        <img src="../assets/images/DUOvolunteerlogo.png" alt="Logo" width="168">
+    </div>
+
+        <!-- Main card with blue header -->
+        <div class="food-truck-backdrop rounded-4 p-1 p-md-2">
+            <section class="card border-0 rounded-4 overflow-hidden">
+                <header class="bg-primary text-white px-4 py-3">
+                    <h1 class="h4 mb-0 text-white">Food Truck</h1>
+                </header>
+
+                <div class="card-body p-4 bg-white">
+
+                    <!-- Food truck counter summaries-->
+
+                        <!-- Clients served counter -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <h2 class="h6 text-primary fw-semibold mb-2">Clients Served</h2>
+                            <div class="d-flex align-items-center justify-content-between rounded-pill border shadow-sm px-3 py-2">
+                                <i class="bi bi-cup-hot fs-3 text-dark" aria-hidden="true"></i>
+                                <span id="clientsServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">24</span>
+                            </div>
+                        </div>
+
+                        <!-- Volunteers served counter-->
+                        <div class="col-12 col-md-6">
+                            <h2 class="h6 text-primary fw-semibold mb-2">Volunteers Served</h2>
+                            <div class="d-flex align-items-center justify-content-between rounded-pill border shadow-sm px-3 py-2">
+                                <i class="bi bi-people fs-3 text-dark" aria-hidden="true"></i>
+                                <span id="volunteersServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blue bars with left minus & right plus controls -->
+
+                        <!-- Clients served +- buttons-->
+                    <div class="btn-primary rounded-pill d-flex align-items-center justify-content-between px-3 py-2 mb-3" role="group" aria-label="Clients served controls">
+                        <button id="clientsMinus" class="btn p-0 border-0 bg-transparent text-white fs-3 lh-1 d-inline-flex align-items-center justify-content-center" type="button" aria-label="Decrease clients served">
+                            <i class="bi bi-dash-circle-fill" aria-hidden="true"></i><span class="visually-hidden">Decrease</span>
+                        </button>
+                        <span class="small">Clients Served</span>
+                        <button id="clientsPlus" class="btn p-0 border-0 bg-transparent text-white fs-3 lh-1 d-inline-flex align-items-center justify-content-center" type="button" aria-label="Increase clients served">
+                            <i class="bi bi-plus-circle-fill" aria-hidden="true"></i><span class="visually-hidden">Increase</span>
+                        </button>
+                    </div>
+
+                        <!-- Volunteers served +- buttons-->
+                    <div class="btn-primary rounded-pill d-flex align-items-center justify-content-between px-3 py-2" role="group" aria-label="Volunteers served controls">
+                        <button id="volunteersMinus" class="btn p-0 border-0 bg-transparent text-white fs-3 lh-1 d-inline-flex align-items-center justify-content-center" type="button" aria-label="Decrease volunteers served">
+                            <i class="bi bi-dash-circle-fill" aria-hidden="true"></i><span class="visually-hidden">Decrease</span>
+                        </button>
+                        <span class="small">Volunteers Served</span>
+                        <button id="volunteersPlus" class="btn p-0 border-0 bg-transparent text-white fs-3 lh-1 d-inline-flex align-items-center justify-content-center" type="button" aria-label="Increase volunteers served">
+                            <i class="bi bi-plus-circle-fill" aria-hidden="true"></i><span class="visually-hidden">Increase</span>
+                        </button>
+                    </div>
+
+                </div>
+                
+            </section>
+
+        </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="../js/food-truck.js"></script>
+
+
+
+
+
+</body>
+
+</html>
