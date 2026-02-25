@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        registration-dashboard.php
+ *  File:        GrabQueue.php
  *  Description: Simple PHP endpoint that gets needed users
  *               from inputted "servicestatus". for use in 
  *               scnarios such as registration dashboard.
  *
- *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 23 @ 9:38 PM
- *  Changes Made:      renamed from GrabQueue.php to current name
+ *  Last Modified By:  Cameron
+ *  Last Modified On:  Feb 24 @ 9:00 PM
+ *  Changes Made:      Added service availability connectivity
  * ============================================================
 */
 
@@ -30,26 +30,6 @@ $mysqli = $GLOBALS['mysqli'];
 // Get the queue parameter from GET request
 $queue = $_GET['RegistrationStatus'] ?? null;
 
-// Sorting parameters (has defaults if not provided)
-$sort = strtolower($_GET['sort'] ?? 'firstname');
-$order = strtolower($_GET['order'] ?? 'asc');
-
-// list of allowed sortable columns (for easier readability)
-$allowedSort = [
-    'firstname' => 'c.FirstName',
-    'lastname'  => 'c.LastName',
-    'dob'       => 'c.DOB',
-    'clientid'  => 'c.ClientID',
-    'services' => 'GROUP_CONCAT(s.ServiceID)'
-];
-
-// Validate sort column
-$sortColumn = $allowedSort[$sort] ?? 'c.FirstName';
-
-// Validate order direction (this is what determines if it's acending or decending)
-$orderDirection = ($order === 'desc') ? 'DESC' : 'ASC';
-
-
 // Validate queue parameter exists
 if (!$queue) {
     http_response_code(400);
@@ -70,8 +50,7 @@ $clientDataStmt = $mysqli->prepare(
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
     LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
     WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
-    ORDER BY $sortColumn $orderDirection"
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
 );
 
 // Checks for if the connection to mysql is a success
@@ -114,12 +93,40 @@ if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
+// Fetch service availability data from tblEventServices
+$serviceAvailability = [];
+$serviceQuery = $mysqli->prepare(
+    "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed,
+            s.ServiceName
+     FROM tblEventServices es
+     LEFT JOIN tblServices s ON es.ServiceID = s.ServiceID
+     WHERE es.EventID = ?"
+);
+
+if ($serviceQuery) {
+    $serviceQuery->bind_param('s', $EventID);
+    $serviceQuery->execute();
+    $serviceResult = $serviceQuery->get_result();
+    
+    while ($serviceRow = $serviceResult->fetch_assoc()) {
+        $serviceAvailability[] = [
+            'serviceID' => $serviceRow['ServiceID'],
+            'serviceName' => $serviceRow['ServiceName'],
+            'maxCapacity' => (int)$serviceRow['MaxCapacity'],
+            'currentAssigned' => (int)$serviceRow['CurrentAssigned'],
+            'isClosed' => (int)$serviceRow['IsClosed']
+        ];
+    }
+    $serviceQuery->close();
+}
+
 http_response_code(200);
 $msg = json_encode([
     'success' => true,
     'count' => count($rows),
     'data' => $rows,
-    'clientsProcessed' => $clientsProcessed
+    'clientsProcessed' => $clientsProcessed,
+    'services' => $serviceAvailability
 ]);
 echo $msg;
 error_log($msg);

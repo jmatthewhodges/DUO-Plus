@@ -8,6 +8,7 @@
  *  Last Modified On:  Feb 24 @ 7:53 PM
  *  Changes Made:      Renamed CheckInTime -> EnteredWaitingRoom (updates every check-in)
  *                     Added FirstCheckedIn (one-time insert, never overwritten)
+ *                     Added checkedIn list to response for registration table
  * ============================================================
 */
 
@@ -103,9 +104,9 @@ if (!$visitRow) {
     exit;
 }
 
-$visitID       = $visitRow['VisitID'];
+$visitID          = $visitRow['VisitID'];
 $alreadyCheckedIn = !empty($visitRow['FirstCheckedIn']); // true if they've checked in before
-$now           = date('Y-m-d H:i:s');
+$now              = date('Y-m-d H:i:s');
 
 // Update tblVisits:
 //   - EnteredWaitingRoom: always updated (tracks most recent entry)
@@ -191,12 +192,32 @@ if ($statFetch && $statRow = $statFetch->fetch_assoc()) {
     $clientsProcessed = (int)$statRow['StatValue'];
 }
 
+// Fetch all checked-in clients for this event (for registration table)
+$checkedIn = [];
+$checkedInQuery = $mysqli->prepare(
+    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded,
+            GROUP_CONCAT(vs.ServiceID ORDER BY vs.ServiceID SEPARATOR ', ') AS Services
+     FROM tblVisits v
+     JOIN tblClients c ON c.ClientID = v.ClientID
+     JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
+     WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
+     GROUP BY c.ClientID
+     ORDER BY c.LastName ASC, c.FirstName ASC"
+);
+if ($checkedInQuery) {
+    $checkedInQuery->bind_param('s', $eventID);
+    $checkedInQuery->execute();
+    $checkedIn = $checkedInQuery->get_result()->fetch_all(MYSQLI_ASSOC);
+    $checkedInQuery->close();
+}
+
 // Success
 http_response_code(200);
 echo json_encode([
     'success'          => true,
     'message'          => 'Client checked in successfully.',
     'visitID'          => $visitID,
-    'firstCheckIn'     => !$alreadyCheckedIn, // lets frontend know if this was their first time
-    'clientsProcessed' => $clientsProcessed
+    'firstCheckIn'     => !$alreadyCheckedIn,
+    'clientsProcessed' => $clientsProcessed,
+    'checkedIn'        => $checkedIn
 ]);

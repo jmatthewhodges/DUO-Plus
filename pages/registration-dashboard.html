@@ -1,3 +1,13 @@
+<!--
+ * ============================================================
+ * File:           registrationdashboard.js
+ * Description:    Handles managing the registration dashboard.
+ *
+ * Last Modified By:  Cameron
+ * Last Modified On:  Feb 24 @ 9:00 PM
+ * Changes Made:      Changed for new DB structure and added dynamic service progress bars.
+ * ============================================================
+!-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -88,56 +98,66 @@
                     <div class="card-header bg-primary p-3">
                         <h5 class="text-white mb-0 fw-bold">Availability</h5>
                     </div>
-                    <div class="card-body d-flex flex-column justify-content-between gap-3" style="height: 350px;">
+                        <div class="card-body d-flex flex-column gap-3 p-3">
 
-                        <div>
+                        <div id="service-medical-exam">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical</span>
-                                <span class="fw-bold" style="color:black;">(26/40)</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Exam</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 57%"></div>
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
 
-                        <div>
+                        <div id="service-medical-follow-up">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Follow Up</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div id="service-dental-hygiene">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Dental - Hygiene</span>
-                                <span class="fw-bold" style="color:black;">(15/15)</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
 
-                        <div>
+                        <div id="service-dental-extraction">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Dental -
                                     Extraction</span>
-                                <span class="fw-bold" style="color:black;">(5/5)</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
 
-                        <div>
+                        <div id="service-optical">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Optical</span>
-                                <span class="fw-bold" style="color:black;">(9/20)</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 45%"></div>
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
 
-                        <div>
+                        <div id="service-haircut">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Haircut</span>
-                                <span class="fw-bold" style="color:black;">(2/30)</span>
+                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 7%"></div>
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
 
