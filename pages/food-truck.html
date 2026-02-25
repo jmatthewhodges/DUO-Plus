@@ -4,8 +4,8 @@
   Description: Food truck counter.
 
   Last Modified By:  Lauren
-  Last Modified On:  Feb 24 @ 9:02 PM
-  Changes Made:      Created file
+  Last Modified On:  Feb 24 @ 10:56 PM
+  Changes Made:      Added button to bottom
  ============================================================
 -->
 <!DOCTYPE html>
@@ -51,7 +51,7 @@
                             <h2 class="h6 text-primary fw-semibold mb-2">Clients Served</h2>
                             <div class="d-flex align-items-center justify-content-between rounded-pill border shadow-sm px-3 py-2">
                                 <i class="bi bi-cup-hot fs-3 text-dark" aria-hidden="true"></i>
-                                <span id="clientsServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">24</span>
+                                <span id="clientsServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">0</span>
                             </div>
                         </div>
 
@@ -60,7 +60,7 @@
                             <h2 class="h6 text-primary fw-semibold mb-2">Volunteers Served</h2>
                             <div class="d-flex align-items-center justify-content-between rounded-pill border shadow-sm px-3 py-2">
                                 <i class="bi bi-people fs-3 text-dark" aria-hidden="true"></i>
-                                <span id="volunteersServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">5</span>
+                                <span id="volunteersServed" class="h2 fw-bold text-dark mb-0" aria-live="polite">0</span>
                             </div>
                         </div>
                     </div>
@@ -89,23 +89,27 @@
                         </button>
                     </div>
 
-                </div>
-                
-            </section>
+                            <!-- Status text for autosave and manual saving -->
+                            <p id="foodTruckStatus" class="small text-muted mt-3 mb-0" aria-live="polite"></p>
 
-        </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- End event button -->
+                <div class="text-center mt-3">
+                    <button id="endEventBtn" class="btn btn-primary px-4" type="button">
+                        <i class="bi bi-stop-circle me-1" aria-hidden="true"></i>
+                        End Event
+                    </button>
+                </div>
+
             </div>
         </div>
-
     </main>
 
     <!-- Scripts -->
     <script src="../js/food-truck.js"></script>
 
-
-
-
-
 </body>
-
 </html>
