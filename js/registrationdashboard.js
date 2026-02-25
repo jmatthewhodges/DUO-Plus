@@ -433,7 +433,6 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Success! Now it is safe to remove the row and show QR.
                 
                 // Close check-in modal
                 closeModalAnimated();
@@ -592,4 +591,5 @@ setInterval(() => {
     if (!checkInOpen && !qrOpen) {
         fetchRegistrationQueue();
     }
+    console.log("Fetching registered clients....")
 }, 30000);
