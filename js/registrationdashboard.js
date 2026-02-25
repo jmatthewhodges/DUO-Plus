@@ -32,6 +32,27 @@ const clearSearchBtn = document.getElementById('clearSearchBtn');
 const noSearchResults = document.getElementById('noSearchResults');
 const noSearchTerm = document.getElementById('noSearchTerm');
 
+// --- Tab State & Elements ---
+let currentTab = 'registration'; // Tracks if we are viewing 'registration' or 'checked-in'
+const btnRegistration = document.getElementById('btn-registration');
+const btnCheckedIn = document.getElementById('btn-checked-in');
+
+btnRegistration.addEventListener('click', () => {
+    if (currentTab === 'registration') return;
+    currentTab = 'registration';
+    btnRegistration.classList.add('active');
+    btnCheckedIn.classList.remove('active');
+    fetchRegistrationQueue(); // Re-fetch for registration queue
+});
+
+btnCheckedIn.addEventListener('click', () => {
+    if (currentTab === 'checked-in') return;
+    currentTab = 'checked-in';
+    btnCheckedIn.classList.add('active');
+    btnRegistration.classList.remove('active');
+    fetchRegistrationQueue(); // Re-fetch for checked-in queue
+});
+
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
