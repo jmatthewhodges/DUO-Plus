@@ -6,9 +6,9 @@
  *               from inputted "servicestatus". for use in 
  *               scnarios such as registration dashboard.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 21 @ 11:05 AM
- *  Changes Made:      Modified for new DB structure
+ *  Last Modified By:  Cameron
+ *  Last Modified On:  Feb 24 @ 9:00 PM
+ *  Changes Made:      Added service availability connectivity
  * ============================================================
 */
 
@@ -93,12 +93,40 @@ if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
+// Fetch service availability data from tblEventServices
+$serviceAvailability = [];
+$serviceQuery = $mysqli->prepare(
+    "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed,
+            s.ServiceName
+     FROM tblEventServices es
+     LEFT JOIN tblServices s ON es.ServiceID = s.ServiceID
+     WHERE es.EventID = ?"
+);
+
+if ($serviceQuery) {
+    $serviceQuery->bind_param('s', $EventID);
+    $serviceQuery->execute();
+    $serviceResult = $serviceQuery->get_result();
+    
+    while ($serviceRow = $serviceResult->fetch_assoc()) {
+        $serviceAvailability[] = [
+            'serviceID' => $serviceRow['ServiceID'],
+            'serviceName' => $serviceRow['ServiceName'],
+            'maxCapacity' => (int)$serviceRow['MaxCapacity'],
+            'currentAssigned' => (int)$serviceRow['CurrentAssigned'],
+            'isClosed' => (int)$serviceRow['IsClosed']
+        ];
+    }
+    $serviceQuery->close();
+}
+
 http_response_code(200);
 $msg = json_encode([
     'success' => true,
     'count' => count($rows),
     'data' => $rows,
-    'clientsProcessed' => $clientsProcessed
+    'clientsProcessed' => $clientsProcessed,
+    'services' => $serviceAvailability
 ]);
 echo $msg;
 error_log($msg);
