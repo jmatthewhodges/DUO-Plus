@@ -290,15 +290,10 @@ body.v-center-page {
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Make warning progress more yellow and remove orange gradient */
-.progress-bar.bg-warning,
-.bg-warning {
-    background-color: #e2b212 !important;
-    /* lighter/more yellow */
+/* Basic progress bar styling */
+#wholeProgressBar .progress-bar {
+    background-color: #174593 !important;
     background-image: none !important;
-    /* remove any orange gradient */
-    color: #212529;
-    border-color: rgba(0, 0, 0, 0.04);
 }
 
 /* Language Select */

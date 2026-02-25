@@ -126,12 +126,6 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
         })
 });
 
-// Show/hide password checkbox
-document.getElementById('toggleClientPassword').addEventListener('change', function () {
-    const passwordInput = document.getElementById('txtClientPassword');
-    passwordInput.type = this.checked ? 'text' : 'password';
-});
-
 // Enter key on email field triggers login
 document.getElementById('txtClientEmail').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {

@@ -73,18 +73,8 @@
                     </h5>
                 </div>
 
-                <!-- Progress Bar -->
-                <div id="wholeProgressBar" class="progress mb-3">
-                    <div class="progress-bar progress-bar-striped bg-success" id="progressBarTop" role="progressbar"
-                        style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                </div>
-
                 <!-- Registration Card -->
                 <div class="card shadow-lg border-0 rounded-4">
-
-                    <!-- <div id="divQRCode" class="card-body p-3 p-md-4 p-lg-4" style="display: none;">
-                        <canvas class="text-center" id="qr"></canvas>
-                    </div> -->
 
                     <!-- STEP 1: Login Info -->
                     <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
@@ -94,32 +84,23 @@
                             <!-- Email -->
                             <div class="mb-3 text-start">
                                 <label id="clientRegisterEmailLabel" for="clientRegisterEmail"
-                                    class="form-label fw-semibold">Email</label>
+                                    class="form-label fw-semibold">Email <span class="text-danger"
+                                        aria-hidden="true">*</span></label>
                                 <input type="email" id="clientRegisterEmail" class="form-control input-black" required
-                                    aria-describedby="emailError">
-                                <div class="invalid-feedback" id="emailError" aria-live="polite">
-                                    Please enter a valid email address.
-                                </div>
+                                    placeholder="john.doe@example.com">
+
                             </div>
 
                             <!-- Password -->
                             <div class="mb-3 text-start">
                                 <label id="clientRegisterPassLabel" for="clientRegisterPass"
-                                    class="form-label fw-semibold">Password</label>
+                                    class="form-label fw-semibold">Password <span class="text-danger"
+                                        aria-hidden="true">*</span></label>
                                 <input type="password" id="clientRegisterPass" class="form-control input-black" required
-                                    aria-describedby="passwordError">
-                                <div class="invalid-feedback" id="passwordError" aria-live="polite">
-                                    Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter,
-                                    and 1 number.
+                                    aria-describedby="passwordHint">
+                                <div class="form-text text-muted" id="passwordHint">
+                                    8+ characters, 1 uppercase, 1 lowercase, and 1 number.
                                 </div>
-                            </div>
-
-                            <!-- Show Password Toggle -->
-                            <div class="form-check form-switch text-start mb-3">
-                                <input class="form-check-input" type="checkbox" id="toggleClientRegisterPass"
-                                    aria-label="Show password">
-                                <label id="toggleClientRegisterPassLabel" class="form-check-label"
-                                    for="toggleClientRegisterPass">Show password</label>
                             </div>
 
                             <!-- Buttons -->
@@ -130,7 +111,6 @@
                         </form>
                     </div>
 
-
                     <!-- STEP 2: Personal Info -->
                     <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 id="titleStepTwo" class="card-title text-center mb-3">Personal Information</h5>
@@ -139,18 +119,16 @@
                             <!-- First Name -->
                             <div class="mb-3 text-start">
                                 <label id="clientFirstNameLabel" for="clientFirstName"
-                                    class="form-label fw-semibold">First Name</label>
-                                <input type="text" id="clientFirstName" class="form-control input-black" required
-                                    aria-describedby="firstNameError">
-                                <div class="invalid-feedback" id="firstNameError" aria-live="polite">
-                                    Please enter your first name.
-                                </div>
+                                    class="form-label fw-semibold">First Name <span class="text-danger"
+                                        aria-hidden="true">*</span></label>
+                                <input type="text" id="clientFirstName" class="form-control input-black" required>
                             </div>
 
                             <!-- Middle Initial (optional) -->
                             <div class="mb-3 text-start">
                                 <label id="clientMiddleInitialLabel" for="clientMiddleInitial"
-                                    class="form-label fw-semibold">Middle Initial</label>
+                                    class="form-label fw-semibold">Middle Initial <span
+                                        class="text-muted fw-normal small">(optional)</span></label>
                                 <input type="text" id="clientMiddleInitial" class="form-control input-black"
                                     maxlength="1">
                             </div>
@@ -158,17 +136,14 @@
                             <!-- Last Name -->
                             <div class="mb-3 text-start">
                                 <label id="clientLastNameLabel" for="clientLastName" class="form-label fw-semibold">Last
-                                    Name</label>
-                                <input type="text" id="clientLastName" class="form-control input-black" required
-                                    aria-describedby="lastNameError">
-                                <div class="invalid-feedback" id="lastNameError" aria-live="polite">
-                                    Please enter your last name.
-                                </div>
+                                    Name <span class="text-danger" aria-hidden="true">*</span></label>
+                                <input type="text" id="clientLastName" class="form-control input-black" required>
                             </div>
 
                             <!-- Sex -->
                             <div class="mb-3 text-start">
-                                <label class="form-label fw-semibold d-block" id="sexLabel">Sex</label>
+                                <label class="form-label fw-semibold d-block" id="sexLabel">Sex <span
+                                        class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="btn-group" role="group" aria-label="Select your sex.">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
@@ -185,31 +160,21 @@
                                     <label class="btn btn-outline-primary" id="btnSexIntersexLabel"
                                         for="btnSexIntersex">Intersex</label>
                                 </div>
-                                <div class="invalid-feedback" id="sexError" style="display: none;">
-                                    Please select your sex.
-                                </div>
+
                             </div>
 
                             <!-- Date of Birth -->
                             <div class="mb-3 text-start">
-                                <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of
-                                    Birth</label>
-                                <input type="date" id="clientDOB" class="form-control input-black" required
-                                    aria-describedby="dobError">
-                                <div class="invalid-feedback" id="dobError" aria-live="polite">
-                                    Please enter your date of birth.
-                                </div>
+                                <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of Birth
+                                    <span class="text-danger" aria-hidden="true">*</span></label>
+                                <input type="date" id="clientDOB" class="form-control input-black" required>
                             </div>
 
                             <!-- Phone (optional) -->
                             <div class="mb-3 text-start">
-                                <label id="clientPhoneLabel" for="clientPhone"
-                                    class="form-label fw-semibold">Phone</label>
-                                <input type="tel" id="clientPhone" class="form-control input-black"
-                                    aria-describedby="phoneError">
-                                <div class="invalid-feedback" id="phoneError" aria-live="polite">
-                                    Phone is invalid format.
-                                </div>
+                                <label id="clientPhoneLabel" for="clientPhone" class="form-label fw-semibold">Phone
+                                    <span class="text-muted fw-normal small">(optional)</span></label>
+                                <input type="tel" id="clientPhone" class="form-control input-black">
                             </div>
 
                             <!-- Buttons -->
@@ -462,6 +427,23 @@
                         </form>
                     </div>
 
+                    <!-- Progress Bar -->
+                    <div id="wholeProgressBar" class="px-3 px-md-4 mb-3">
+                        <div class="progress" style="height: 8px; border-radius: 999px; background: #e9ecef;">
+                            <div class="progress-bar bg-success" id="progressBarTop" role="progressbar"
+                                style="width: 17%; border-radius: 999px; transition: width 0.5s ease;"
+                                aria-valuenow="17" aria-valuemin="0" aria-valuemax="100"
+                                aria-label="Registration progress, step 1 of 5"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1" id="progressStepLabels"
+                            style="font-size: 0.65rem; color: #aaa;" aria-hidden="true">
+                            <span>Login</span>
+                            <span>Personal</span>
+                            <span>Address</span>
+                            <span>Emergency</span>
+                            <span>Services</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Dev: Step jumper -->

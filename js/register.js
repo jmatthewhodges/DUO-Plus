@@ -18,7 +18,7 @@ const TRANSITION_DURATION = 500; // ms for step fade animation
 // Validation regex patterns
 const VALIDATION_PATTERNS = {
     email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
-    password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/,  // 8+ chars, upper, lower, number
+    password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/,  // 8+ non-space chars, upper, lower, number
     phone: /^[\d\s\-\(\)]{10,}$/,
     phoneFormatted: /^\(\d{3}\) \d{3}-\d{4}$/,
     zipCode: /^[0-9]{5}$/
@@ -91,18 +91,13 @@ dobInput.max = minAgeDate.toISOString().split('T')[0];
 // Progress bar
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
-    let percentage = 1;
-    switch (step) {
-        case 1: percentage = 0; break;
-        case 2: percentage = 25; break;
-        case 3: percentage = 50; break;
-        case 4: percentage = 75; break;
-        case 5: percentage = 99; break;
-        default: percentage = 0;
-    }
+    const percentages = { 1: 17, 2: 34, 3: 51, 4: 68, 5: 85 };
+    const percentage = percentages[step] ?? 17;
+
     progressBar.style.width = percentage + '%';
-    progressBar.textContent = percentage + '%';
+    progressBar.textContent = ''; // Remove the "0%" text
     progressBar.setAttribute('aria-valuenow', percentage);
+    progressBar.setAttribute('aria-label', `Registration progress, step ${step} of 5`);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -197,25 +192,27 @@ function stepOneSubmit() {
 
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
-    let isValid = true;
+    const errors = [];
 
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value)) {
-        setFieldValidation(emailInput, false);
-        isValid = false;
-    } else {
-        setFieldValidation(emailInput, true);
+    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
+        errors.push('Please enter a valid email address.');
     }
 
     if (!VALIDATION_PATTERNS.password.test(passInput.value)) {
-        setFieldValidation(passInput, false);
-        isValid = false;
-    } else {
-        setFieldValidation(passInput, true);
+        errors.push('Please enter a valid password.');
     }
 
-    if (isValid) {
-        goToStepTwo();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepTwo();
 }
 
 // Step 1 event listeners
@@ -232,12 +229,6 @@ document.getElementById('btnRegisterBack1').addEventListener('click', function (
     window.location.href = '../index.html';
 });
 
-document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
-    const passwordInput = document.getElementById('clientRegisterPass');
-    passwordInput.type = this.checked ? 'text' : 'password';
-});
-
-
 // Step 2 - Personal Info
 function goToStepThree() {
     const stepTwo = document.getElementById('divStepTwo');
@@ -251,69 +242,49 @@ function stepTwoSubmit() {
     const dob = document.getElementById('clientDOB');
     const phone = document.getElementById('clientPhone');
     const sexRadios = document.querySelectorAll('input[name="clientSex"]');
-    const sexError = document.getElementById('sexError');
-
-    let isValid = true;
+    const errors = [];
 
     if (!firstName.value.trim()) {
-        setFieldValidation(firstName, false);
-        isValid = false;
-    } else {
-        setFieldValidation(firstName, true);
+        errors.push('Please enter your first name.');
     }
 
     if (!lastName.value.trim()) {
-        setFieldValidation(lastName, false);
-        isValid = false;
-    } else {
-        setFieldValidation(lastName, true);
-    }
-
-    // DOB 18+ validation
-    if (!dob.value) {
-        setFieldValidation(dob, false);
-        isValid = false;
-    } else {
-        // Check if DOB is at least 18 years ago
-        const enteredDate = new Date(dob.value);
-        const today = new Date();
-        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-        if (enteredDate > minAgeDate) {
-            setFieldValidation(dob, false);
-            isValid = false;
-            // Optionally show a message:
-            dob.setCustomValidity('You must be at least 18 years old.');
-            dob.reportValidity();
-        } else {
-            setFieldValidation(dob, true);
-            dob.setCustomValidity('');
-        }
+        errors.push('Please enter your last name.');
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
     if (!sexSelected) {
-        sexError.style.display = 'block';
-        isValid = false;
-    } else {
-        sexError.style.display = 'none'; // Always hide if valid
+        errors.push('Please select your sex.');
     }
 
-    // Phone is optional but must be full and formatted if provided
-    if (phone.value.length > 0) {
-        // Require exactly (999) 999-9999 format
-        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-            setFieldValidation(phone, false);
-            isValid = false;
-        } else {
-            setFieldValidation(phone, true);
+    // DOB 18+ validation
+    if (!dob.value) {
+        errors.push('Please enter your date of birth.');
+    } else {
+        const enteredDate = new Date(dob.value);
+        const today = new Date();
+        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        if (enteredDate > minAgeDate) {
+            errors.push('You must be at least 18 years old.');
         }
-    } else {
-        setFieldValidation(phone, true); // Optional, so valid if empty
     }
 
-    if (isValid) {
-        goToStepThree();
+    // Phone optional but must match format if provided
+    if (phone.value.length > 0 && !VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
+        errors.push('Please enter a valid 10-digit phone number — (123) 456-7890.');
     }
+
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
+    goToStepThree();
 }
 
 // Step 2 event listeners
@@ -542,6 +513,75 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
 });
 
 // Input masks
+// Step 1 - Valid feedback on blur (green checkmark when leaving field)
+document.getElementById('clientRegisterEmail').addEventListener('blur', function () {
+    if (VALIDATION_PATTERNS.email.test(this.value.trim())) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
+
+document.getElementById('clientRegisterPass').addEventListener('blur', function () {
+    if (VALIDATION_PATTERNS.password.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
+
+// Step 2 - Valid feedback on blur
+document.getElementById('clientFirstName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+    }
+    this.classList.remove('is-invalid');
+});
+
+document.getElementById('clientLastName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+    }
+    this.classList.remove('is-invalid');
+});
+
+document.getElementById('clientDOB').addEventListener('blur', function () {
+    if (!this.value) {
+        this.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+    const enteredDate = new Date(this.value);
+    const today = new Date();
+    const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (enteredDate <= minAgeDate) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientPhone').addEventListener('blur', function () {
+    if (this.value.length === 0) {
+        this.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+    if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
 // Names - letters, hyphens, apostrophes only
 document.getElementById('clientFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
