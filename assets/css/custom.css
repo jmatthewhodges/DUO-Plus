@@ -511,25 +511,20 @@ body.v-center-page {
     color: #174593;
 }
 
-/* Hide scrollbar while keeping functionality */
-.custom-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.custom-scroll {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-/* Prevent page-level scrolling */
-html, body {
+/* Lock scroll on dashboard page only */
+body.no-scroll {
     overflow: hidden;
     height: 100%;
 }
 
 /* Hide scrollbar on the table card-body while keeping it scrollable */
-.card-body[style*="overflow-y"]::-webkit-scrollbar {
+body.no-scroll .card-body[style*="overflow-y"]::-webkit-scrollbar {
     display: none;
+}
+
+body.no-scroll .card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .card-body[style*="overflow-y"] {
