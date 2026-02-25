@@ -39,8 +39,8 @@
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
-              aria-describedby="emailError">
+            <input type="email" name="email" id="txtClientEmail" class="form-control"
+              placeholder="ex: johndoe@gmail.com" required aria-describedby="emailError">
             <div class="invalid-feedback" id="emailError" aria-live="polite">
               Please enter an email address.
             </div>
@@ -48,8 +48,8 @@
 
           <div class="mb-3 text-start">
             <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
-              aria-describedby="passwordError">
+            <input type="password" name="password" id="txtClientPassword" class="form-control"
+              placeholder="ex: password123" required aria-describedby="passwordError">
             <div class="invalid-feedback" id="passwordError" aria-live="polite">
               Please enter a password.
             </div>
@@ -61,8 +61,7 @@
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button"
-            class="btn btn-primary w-100 rounded-2 ">Login</button>
+          <button id="btnClientLogin" type="button" class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
     </div>
@@ -83,14 +82,16 @@
       </div>
     </div>
 
-    <!-- API Portal Link -->
-    <div class="mt-1 mb-2">
-      <a href="/portal/" style="color: #6c8cbf; font-size: 0.75rem; letter-spacing: 0.03em;"
-        class="text-decoration-none fw-semibold opacity-75">
-        API Portal
-      </a>
+    <!-- Dev Links -->
+    <div class="text-center mt-2 mb-1">
+      <div class="dev-bar">
+        <span class="dev-bar-label">Dev</span>
+        <a href="/portal/" class="dev-link">API Portal</a>
+        <a href="pages/registration-dashboard.html" class="dev-link">Reg. Dashboard</a>
+        <a href="pages/waitingroom.html" class="dev-link">Waiting Room</a>
+        <a href="pages/service-scan.html" class="dev-link">Service Scan</a>
+      </div>
     </div>
-
   </div>
 
   <!-- JS Dependencies -->
