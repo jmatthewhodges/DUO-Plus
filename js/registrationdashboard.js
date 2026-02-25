@@ -3,11 +3,13 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 21 @ 5:05 PM
- * Changes Made:      Updated for new DB structure.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Feb 24 @ 9:00 PM
+ * Changes Made:      Added dynamic service progress bars and added dynamic color
  * ============================================================
 */
+
+// 1. GLOBAL SETTINGS & STATE
 
 // Service availability. Will likely be attached to API response in the future, but hardcoded for now
 const serviceAvailability = {
@@ -17,20 +19,32 @@ const serviceAvailability = {
     haircut: true
 };
 
+// Service configuration mapping ServiceID to display info
+// This maps possible service ID patterns to container IDs and display names
+const serviceMapping = {
+    'medicalExam': { containerId: 'service-medical-exam', displayName: 'Medical - Exam' },
+    'medicalFollowUp': { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
+    'dentalHygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
+    'dentalExtraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
+    'optical': { containerId: 'service-optical', displayName: 'Optical' },
+    'haircut': { containerId: 'service-haircut', displayName: 'Haircut' },
+    'hair': { containerId: 'service-haircut', displayName: 'Haircut' }
+};
+
 // Active check-in state
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
 
+//================================================================================
+// 2. DOM REFERENCES
+
 const tableBody = document.querySelector('tbody');      // Link to the Table Body
 const statRegCount = document.getElementById('stat-reg-count'); // Link to "Registration" Number
 const statCompCount = document.getElementById('stat-comp-count'); // Link to "Processed" Number
 
-// Search elements
-const searchInput = document.getElementById('registrationSearch');
-const clearSearchBtn = document.getElementById('clearSearchBtn');
-const noSearchResults = document.getElementById('noSearchResults');
-const noSearchTerm = document.getElementById('noSearchTerm');
+//================================================================================
+// 3. HELPERS
 
 // --- Tab State & Elements ---
 let currentTab = 'registration'; // Tracks if we are viewing 'registration' or 'checked-in'
@@ -58,6 +72,66 @@ function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+//updates the service progress bars based on availability data from API
+function updateServiceProgressBars(servicesData) {
+    if (!servicesData || !Array.isArray(servicesData)) return;
+
+    // Initialize all service containers first (optional - for services not in API response)
+    Object.values(serviceMapping).forEach(mapping => {
+        const container = document.getElementById(mapping.containerId);
+        if (container) {
+            const countSpan = container.querySelector('.service-count');
+            const progressBar = container.querySelector('.progress-bar');
+            if (countSpan) countSpan.textContent = '(0/0)';
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+        }
+    });
+
+    // Update services based on API data
+    servicesData.forEach(service => {
+        const serviceID = service.serviceID || '';
+        const mapping = serviceMapping[serviceID];
+        
+        if (!mapping) return; // Skip if we don't have a mapping for this service
+        
+        const container = document.getElementById(mapping.containerId);
+        if (!container) return;
+
+        const countSpan = container.querySelector('.service-count');
+        const progressBar = container.querySelector('.progress-bar');
+        
+        const maxCapacity = service.maxCapacity || 0;
+        const currentAssigned = service.currentAssigned || 0;
+        
+        // Calculate percentage (avoid division by zero)
+        const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+        
+        // Update display text
+        if (countSpan) {
+            countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
+        }
+        
+        // Update progress bar width and color based on capacity
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+            
+            // Remove all color classes
+            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            
+            // Add color based on percentage
+            if (percentage <= 50) {
+                progressBar.classList.add('bg-success');  // Green: under 50%
+            } else if (percentage < 80) {
+                progressBar.classList.add('bg-warning');  // Yellow: 50-80%
+            } else {
+                progressBar.classList.add('bg-danger');   // Red: 80%+
+            }
+        }
+    });
 }
 
 //updates the stats in the dashboard header. Type can be 'registration' or 'completed'. Value is the number to update.
@@ -90,7 +164,7 @@ function closeQrModal() {
 }
 
 // Creates the HTML for a service button based on the service type, current state, and availability. 
-// State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
+//State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
 function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     let colorClass = '';
     let iconColor = '';
@@ -120,44 +194,8 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
-// Filters the visible table rows based on the current search query.
-// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
-// Shows a "no results" message when nothing matches.
-function applySearch() {
-    const query = searchInput.value.trim().toLowerCase();
-    const rows = tableBody.querySelectorAll('tr[data-client-id]');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const nameEl = row.querySelector('.fw-bold.text-dark');
-        if (!nameEl) return;
-        const name = nameEl.innerText.toLowerCase();
-        const matches = name.includes(query);
-        row.style.display = matches ? '' : 'none';
-        if (matches) visibleCount++;
-    });
-
-    // Toggle "no results" message
-    if (query && visibleCount === 0) {
-        noSearchResults.classList.remove('d-none');
-        noSearchTerm.textContent = searchInput.value.trim();
-    } else {
-        noSearchResults.classList.add('d-none');
-    }
-
-    // Show/hide the clear (X) button
-    clearSearchBtn.style.display = query ? '' : 'none';
-}
-
-// Search input: filter on every keystroke
-searchInput.addEventListener('input', applySearch);
-
-// Clear button: reset search and re-show all rows
-clearSearchBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    applySearch();
-    searchInput.focus();
-});
+//================================================================================
+// 4. DATA FETCHING & TABLE RENDERING
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
@@ -181,6 +219,10 @@ function fetchRegistrationQueue() {
             if (statCompCount && data.clientsProcessed !== undefined) {
                 statCompCount.innerText = data.clientsProcessed;
             }
+            // Update service progress bars based on API data
+            if (data.services && Array.isArray(data.services)) {
+                updateServiceProgressBars(data.services);
+            }
         })
         .catch(error => {
             console.error('Error fetching queue:', error);
@@ -192,7 +234,6 @@ function fetchRegistrationQueue() {
 // SORTING: Orders by Last Name (A-Z), then First Name (A-Z).
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
-    noSearchResults.classList.add('d-none');
 
     // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
@@ -256,12 +297,10 @@ function populateRegistrationTable(patientsData) {
         `;
         tableBody.insertAdjacentHTML('beforeend', rowHTML);
     });
-
-    // Re-apply any active search filter after table repopulates
-    if (searchInput.value.trim()) {
-        applySearch();
-    }
 }
+
+//================================================================================
+// 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
 
 // Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
@@ -330,6 +369,9 @@ tableBody.addEventListener('click', function (event) {
         modal.classList.add('d-flex');
     }
 });
+
+//================================================================================
+// 6. CHECK-IN MODAL SUBMISSION
 
 // When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
 // and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
@@ -412,6 +454,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                
                 // Close check-in modal
                 closeModalAnimated();
 
@@ -431,11 +474,6 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 } else if (statCompCount) {
                     // Fallback: increment locally if API didn't return updated count
                     statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
-                }
-
-                // Re-apply search in case the removed row affected the "no results" message
-                if (searchInput.value.trim()) {
-                    applySearch();
                 }
 
                 // Show QR modal
@@ -504,6 +542,9 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         });
 });
 
+//================================================================================
+// 7. PRINT QR CODE
+
 // When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
@@ -560,13 +601,16 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     fetchRegistrationQueue();
 });
 
+//================================================================================
+// 8. INITIALIZATION
 fetchRegistrationQueue();
 
-// Auto-refresh every 30 seconds (unless checkIn modal is open)
+// Auto-refresh every 3 minutes (unless checkIn modal is open)
 setInterval(() => {
     const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
     const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
     if (!checkInOpen && !qrOpen) {
         fetchRegistrationQueue();
     }
-}, 30000);
+    console.log("Fetching registered clients....")
+}, 180000); 
