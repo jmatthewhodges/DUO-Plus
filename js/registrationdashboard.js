@@ -36,6 +36,12 @@ let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
 
+// Search elements
+const searchInput = document.getElementById('registrationSearch');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const noSearchResults = document.getElementById('noSearchResults');
+const noSearchTerm = document.getElementById('noSearchTerm');
+
 //================================================================================
 // 2. DOM REFERENCES
 
@@ -194,6 +200,45 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
+// Filters the visible table rows based on the current search query.
+// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
+// Shows a "no results" message when nothing matches.
+function applySearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = tableBody.querySelectorAll('tr[data-client-id]');
+    let visibleCount = 0;
+ 
+    rows.forEach(row => {
+        const nameEl = row.querySelector('.fw-bold.text-dark');
+        if (!nameEl) return;
+        const name = nameEl.innerText.toLowerCase();
+        const matches = name.includes(query);
+        row.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+    });
+ 
+    // Toggle "no results" message
+    if (query && visibleCount === 0) {
+        noSearchResults.classList.remove('d-none');
+        noSearchTerm.textContent = searchInput.value.trim();
+    } else {
+        noSearchResults.classList.add('d-none');
+    }
+ 
+    // Show/hide the clear (X) button
+    clearSearchBtn.style.display = query ? '' : 'none';
+}
+ 
+// Search input: filter on every keystroke
+searchInput.addEventListener('input', applySearch);
+ 
+// Clear button: reset search and re-show all rows
+clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    applySearch();
+    searchInput.focus();
+});
+
 //================================================================================
 // 4. DATA FETCHING & TABLE RENDERING
 
@@ -297,6 +342,11 @@ function populateRegistrationTable(patientsData) {
         `;
         tableBody.insertAdjacentHTML('beforeend', rowHTML);
     });
+
+    // Re-apply any active search filter after table repopulates
+    if (searchInput.value.trim()) {
+        applySearch();
+    }
 }
 
 //================================================================================

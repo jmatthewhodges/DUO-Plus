@@ -43,6 +43,18 @@
                             <div class="divider"></div>
                             <button id="btn-checked-in" class="toggle-btn p-0">Checked In</button>
                         </div>
+                        <div class="input-group input-group-sm" style="max-width: 280px;">
+                            <span class="input-group-text bg-white border-0 rounded-start-pill">
+                                <i class="bi bi-search text-secondary"></i>
+                            </span>
+                            <input type="text" id="registrationSearch" class="form-control border-0"
+                                placeholder="Search by name..." autocomplete="off"
+                                style="box-shadow: none; outline: none;">
+                            <button class="btn btn-sm bg-white border-0 px-2 rounded-end-pill" id="clearSearchBtn"
+                                style="display:none;" title="Clear search">
+                                <i class="bi bi-x-lg text-secondary" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="card-body p-0" style="max-height: calc(100vh - 200px); overflow-y: auto;">
@@ -57,6 +69,11 @@
                             <tbody>
                             </tbody>
                         </table>
+                        <!-- Empty search state message (hidden by default) -->
+                        <div id="noSearchResults" class="text-center p-4 text-muted d-none">
+                            <i class="bi bi-search" style="font-size: 1.5rem; opacity: 0.4;"></i>
+                            <p class="mt-2 mb-0">No patients match "<span id="noSearchTerm"></span>"</p>
+                        </div>
                     </div>
                 </div>
             </div>
