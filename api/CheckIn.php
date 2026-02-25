@@ -5,8 +5,9 @@
  *  Purpose:     Update client info and check them into waiting room
  * 
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:38 PM
- *  Changes Made:      Code cleanup
+ *  Last Modified On:  Feb 24 @ 7:53 PM
+ *  Changes Made:      Renamed CheckInTime -> EnteredWaitingRoom (updates every check-in)
+ *                     Added FirstCheckedIn (one-time insert, never overwritten)
  * ============================================================
 */
 
@@ -44,8 +45,8 @@ require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
 // Validate required fields
-$clientID        = trim($body['clientID'] ?? '');
-$services        = $body['services'] ?? [];
+$clientID         = trim($body['clientID'] ?? '');
+$services         = $body['services'] ?? [];
 $needsInterpreter = !empty($body['needsInterpreter']) ? 1 : 0;
 
 if (empty($clientID)) {
@@ -60,7 +61,7 @@ if (empty($services) || !is_array($services)) {
     exit;
 }
 
-// Hardcoded EventID for now (same pattern as GrabQueue.php)
+// Hardcoded EventID for now
 $eventID = '4cbde538985861b9';
 
 // Update TranslatorNeeded on tblClients
@@ -81,7 +82,7 @@ $updateClient->close();
 
 // Fetch the VisitID for this client + event
 $visitStmt = $mysqli->prepare(
-    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1"
+    "SELECT VisitID, FirstCheckedIn FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1"
 );
 
 if (!$visitStmt) {
@@ -101,22 +102,37 @@ if (!$visitRow) {
     echo json_encode(['success' => false, 'message' => 'No visit record found for this client and event.']);
     exit;
 }
-$visitID = $visitRow['VisitID'];
 
-// Update tblVisits — set status to Registered and CheckInTime
-$now = date('Y-m-d H:i:s');
+$visitID       = $visitRow['VisitID'];
+$alreadyCheckedIn = !empty($visitRow['FirstCheckedIn']); // true if they've checked in before
+$now           = date('Y-m-d H:i:s');
 
-$updateVisit = $mysqli->prepare(
-    "UPDATE tblVisits SET RegistrationStatus = 'CheckedIn', CheckInTime = ? WHERE VisitID = ?"
-);
-
-if (!$updateVisit) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
-    exit;
+// Update tblVisits:
+//   - EnteredWaitingRoom: always updated (tracks most recent entry)
+//   - FirstCheckedIn: only set if it's null (one-time, never overwritten)
+if ($alreadyCheckedIn) {
+    // Only update EnteredWaitingRoom
+    $updateVisit = $mysqli->prepare(
+        "UPDATE tblVisits SET RegistrationStatus = 'CheckedIn', EnteredWaitingRoom = ? WHERE VisitID = ?"
+    );
+    if (!$updateVisit) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+        exit;
+    }
+    $updateVisit->bind_param('ss', $now, $visitID);
+} else {
+    // First time — set both EnteredWaitingRoom and FirstCheckedIn
+    $updateVisit = $mysqli->prepare(
+        "UPDATE tblVisits SET RegistrationStatus = 'CheckedIn', EnteredWaitingRoom = ?, FirstCheckedIn = ? WHERE VisitID = ?"
+    );
+    if (!$updateVisit) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+        exit;
+    }
+    $updateVisit->bind_param('sss', $now, $now, $visitID);
 }
-
-$updateVisit->bind_param('ss', $now, $visitID);
 
 if (!$updateVisit->execute()) {
     http_response_code(500);
@@ -124,7 +140,6 @@ if (!$updateVisit->execute()) {
     $updateVisit->close();
     exit;
 }
-
 $updateVisit->close();
 
 // Insert rows into tblVisitServices for each service
@@ -149,16 +164,13 @@ foreach ($services as $serviceID) {
 
     $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
     if (!$insertService->execute()) {
-        // Log but don't hard-fail — attempt remaining services
         error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
     }
 }
 
 $insertService->close();
 
-// ---------------------------------------------------------------
-// 5. Update clientsProcessed stat in tblAnalytics
-// ---------------------------------------------------------------
+// Update clientsProcessed stat in tblAnalytics
 $statKey = 'clientsProcessed';
 $updateStat = $mysqli->prepare(
     "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
@@ -179,13 +191,12 @@ if ($statFetch && $statRow = $statFetch->fetch_assoc()) {
     $clientsProcessed = (int)$statRow['StatValue'];
 }
 
-// ---------------------------------------------------------------
-// 6. Success
-// ---------------------------------------------------------------
+// Success
 http_response_code(200);
 echo json_encode([
     'success'          => true,
     'message'          => 'Client checked in successfully.',
     'visitID'          => $visitID,
+    'firstCheckIn'     => !$alreadyCheckedIn, // lets frontend know if this was their first time
     'clientsProcessed' => $clientsProcessed
 ]);

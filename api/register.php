@@ -529,11 +529,11 @@ if ($clientID) {
     // Insert visit record to put client in registration queue
     $visitID = bin2hex(random_bytes(8));
     $registrationStatus = 'Registered';
-    $checkInTime = null;
+    $FirstCheckedIn = null;
     $qrCodeData = null;
-    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, FirstCheckedIn, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
     if ($visitInsert) {
-        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $FirstCheckedIn, $qrCodeData);
         $visitInsert->execute();
     }
 
