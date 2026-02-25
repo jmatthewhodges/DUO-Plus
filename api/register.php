@@ -2,17 +2,18 @@
 /**
  * ============================================================
  *  File:        Register.php
- *  Description: Handles client registration. Supports both
+ *  Purpose:     Handles client registration. Supports both
  *               new user creation and existing user updates
  *               including address, emergency contacts, and
  *               service selections.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 9:26 PM
- *  Changes Made:      Updated for new DB structure
+ *  Last Modified On:  Feb 24 @ 6:46 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
@@ -44,9 +45,6 @@ if (!is_array($_POST)) {
 // Database connection
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
-
-// Defaults
-$queue = "registration";
 
 // Check if existing user or new user
 $clientID = $_POST['clientID'] ?? null;
@@ -241,7 +239,7 @@ if ($clientID) {
         }
     }
 
-    // (Optional) Remove previous selections for this client/event
+    // Remove previous selections for this client/event
     $deleteOld = $mysqli->prepare("DELETE FROM tblVisitServiceSelections WHERE ClientID = ? AND EventID = ?");
     if (!$deleteOld) {
         $mysqli->rollback();
@@ -531,11 +529,11 @@ if ($clientID) {
     // Insert visit record to put client in registration queue
     $visitID = bin2hex(random_bytes(8));
     $registrationStatus = 'Registered';
-    $checkInTime = null;
+    $FirstCheckedIn = null;
     $qrCodeData = null;
-    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, FirstCheckedIn, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
     if ($visitInsert) {
-        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $FirstCheckedIn, $qrCodeData);
         $visitInsert->execute();
     }
 

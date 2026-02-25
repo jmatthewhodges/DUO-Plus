@@ -2,14 +2,15 @@
 /**
  * ============================================================
  *  File:        AddEventService.php
- *  Description: Handles adding a service to an event.
+ *  Purpose:     Handles adding a service to an event.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 19 @ 8:15 PM
- *  Changes Made:      Initial creation & update for portal
+ *  Last Modified On:  Feb 24 @ 6:38 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
