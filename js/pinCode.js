@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ *  File:        pinCode.js
+ *  Purpose:     Handles user authentication via a PIN modal.
+ * 
+ *  Last Modified By:  Matthew
+ *  Last Modified On:  Feb 24 @ 6:51 PM
+ *  Changes Made:      Code cleanup
+ * ============================================================
+*/
+
 // PIN Modal - Fully modular component
 // Add to any page: <script src="../js/pinCode.js"></script>
 

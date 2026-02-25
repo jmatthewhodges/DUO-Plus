@@ -5,11 +5,12 @@
  *  Purpose:     Update client info and check them into waiting room
  * 
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 21 @ 12:41 PM
- *  Changes Made:      Initial creation and update for portal
+ *  Last Modified On:  Feb 24 @ 6:38 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
- */
+*/
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
@@ -62,9 +63,7 @@ if (empty($services) || !is_array($services)) {
 // Hardcoded EventID for now (same pattern as GrabQueue.php)
 $eventID = '4cbde538985861b9';
 
-// ---------------------------------------------------------------
-// 1. Update TranslatorNeeded on tblClients
-// ---------------------------------------------------------------
+// Update TranslatorNeeded on tblClients
 $updateClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
 if (!$updateClient) {
     http_response_code(500);
@@ -80,17 +79,17 @@ if (!$updateClient->execute()) {
 }
 $updateClient->close();
 
-// ---------------------------------------------------------------
-// 2. Fetch the VisitID for this client + event
-// ---------------------------------------------------------------
+// Fetch the VisitID for this client + event
 $visitStmt = $mysqli->prepare(
     "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1"
 );
+
 if (!$visitStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
     exit;
 }
+
 $visitStmt->bind_param('ss', $clientID, $eventID);
 $visitStmt->execute();
 $visitResult = $visitStmt->get_result();
@@ -104,34 +103,36 @@ if (!$visitRow) {
 }
 $visitID = $visitRow['VisitID'];
 
-// ---------------------------------------------------------------
-// 3. Update tblVisits — set status to Registered and CheckInTime
-// ---------------------------------------------------------------
+// Update tblVisits — set status to Registered and CheckInTime
 $now = date('Y-m-d H:i:s');
+
 $updateVisit = $mysqli->prepare(
     "UPDATE tblVisits SET RegistrationStatus = 'CheckedIn', CheckInTime = ? WHERE VisitID = ?"
 );
+
 if (!$updateVisit) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
     exit;
 }
+
 $updateVisit->bind_param('ss', $now, $visitID);
+
 if (!$updateVisit->execute()) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Failed to update visit: ' . $updateVisit->error]);
     $updateVisit->close();
     exit;
 }
+
 $updateVisit->close();
 
-// ---------------------------------------------------------------
-// 4. Insert rows into tblVisitServices for each service
-// ---------------------------------------------------------------
+// Insert rows into tblVisitServices for each service
 $insertService = $mysqli->prepare(
     "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
      VALUES (?, ?, ?, 'Pending', ?)"
 );
+
 if (!$insertService) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
@@ -152,6 +153,7 @@ foreach ($services as $serviceID) {
         error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
     }
 }
+
 $insertService->close();
 
 // ---------------------------------------------------------------

@@ -9,8 +9,6 @@
  * ============================================================
 */
 
-// 1. GLOBAL SETTINGS & STATE
-
 // Service availability. Will likely be attached to API response in the future, but hardcoded for now
 const serviceAvailability = {
     medical: true,
@@ -24,15 +22,9 @@ let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
 
-//================================================================================
-// 2. DOM REFERENCES
-
 const tableBody = document.querySelector('tbody');      // Link to the Table Body
 const statRegCount = document.getElementById('stat-reg-count'); // Link to "Registration" Number
 const statCompCount = document.getElementById('stat-comp-count'); // Link to "Processed" Number
-
-//================================================================================
-// 3. HELPERS
 
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
@@ -71,7 +63,7 @@ function closeQrModal() {
 }
 
 // Creates the HTML for a service button based on the service type, current state, and availability. 
-//State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
+// State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
 function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     let colorClass = '';
     let iconColor = '';
@@ -100,9 +92,6 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
         </button>
     `;
 }
-
-//================================================================================
-// 4. DATA FETCHING & TABLE RENDERING
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
@@ -202,9 +191,6 @@ function populateRegistrationTable(patientsData) {
     });
 }
 
-//================================================================================
-// 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
-
 // Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
 
@@ -272,9 +258,6 @@ tableBody.addEventListener('click', function (event) {
         modal.classList.add('d-flex');
     }
 });
-
-//================================================================================
-// 6. CHECK-IN MODAL SUBMISSION
 
 // When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
 // and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
@@ -357,8 +340,6 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Success! Now it is safe to remove the row and show QR.
-                
                 // Close check-in modal
                 closeModalAnimated();
 
@@ -446,9 +427,6 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         });
 });
 
-//================================================================================
-// 7. PRINT QR CODE
-
 // When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
@@ -505,8 +483,6 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     fetchRegistrationQueue();
 });
 
-//================================================================================
-// 8. INITIALIZATION
 fetchRegistrationQueue();
 
 // Auto-refresh every 30 seconds (unless checkIn modal is open)
