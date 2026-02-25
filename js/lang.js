@@ -1,13 +1,13 @@
 /**
  * ============================================================
  *  File:        lang.js
- *  Description: Language translation system. Stores English
+ *  Purpose:     Language translation system. Stores English
  *               and Spanish translations and applies them
  *               based on the user's language selection.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:44 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 24 @ 6:44 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 

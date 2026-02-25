@@ -1,13 +1,13 @@
 /**
  * ============================================================
  *  File:        login.js
- *  Description: Handles login form validation, authentication
+ *  Purpose:     Handles login form validation, authentication
  *               via the login API, and password visibility
  *               toggle functionality.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:48 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 24 @ 6:50 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
