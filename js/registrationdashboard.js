@@ -26,6 +26,12 @@ const tableBody = document.querySelector('tbody');      // Link to the Table Bod
 const statRegCount = document.getElementById('stat-reg-count'); // Link to "Registration" Number
 const statCompCount = document.getElementById('stat-comp-count'); // Link to "Processed" Number
 
+// Search elements
+const searchInput = document.getElementById('registrationSearch');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const noSearchResults = document.getElementById('noSearchResults');
+const noSearchTerm = document.getElementById('noSearchTerm');
+
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
@@ -93,6 +99,45 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
+// Filters the visible table rows based on the current search query.
+// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
+// Shows a "no results" message when nothing matches.
+function applySearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = tableBody.querySelectorAll('tr[data-client-id]');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const nameEl = row.querySelector('.fw-bold.text-dark');
+        if (!nameEl) return;
+        const name = nameEl.innerText.toLowerCase();
+        const matches = name.includes(query);
+        row.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+    });
+
+    // Toggle "no results" message
+    if (query && visibleCount === 0) {
+        noSearchResults.classList.remove('d-none');
+        noSearchTerm.textContent = searchInput.value.trim();
+    } else {
+        noSearchResults.classList.add('d-none');
+    }
+
+    // Show/hide the clear (X) button
+    clearSearchBtn.style.display = query ? '' : 'none';
+}
+
+// Search input: filter on every keystroke
+searchInput.addEventListener('input', applySearch);
+
+// Clear button: reset search and re-show all rows
+clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    applySearch();
+    searchInput.focus();
+});
+
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
@@ -126,6 +171,7 @@ function fetchRegistrationQueue() {
 // SORTING: Orders by Last Name (A-Z), then First Name (A-Z).
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
+    noSearchResults.classList.add('d-none');
 
     // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
@@ -189,6 +235,11 @@ function populateRegistrationTable(patientsData) {
         `;
         tableBody.insertAdjacentHTML('beforeend', rowHTML);
     });
+
+    // Re-apply any active search filter after table repopulates
+    if (searchInput.value.trim()) {
+        applySearch();
+    }
 }
 
 // Using event delegation to handle clicks on service buttons and check-in buttons within the table body
@@ -359,6 +410,11 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 } else if (statCompCount) {
                     // Fallback: increment locally if API didn't return updated count
                     statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                }
+
+                // Re-apply search in case the removed row affected the "no results" message
+                if (searchInput.value.trim()) {
+                    applySearch();
                 }
 
                 // Show QR modal
