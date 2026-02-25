@@ -22,10 +22,9 @@ const serviceAvailability = {
 // Service configuration mapping ServiceID to display info
 // This maps possible service ID patterns to container IDs and display names
 const serviceMapping = {
-    'medical': { containerId: 'service-medical', displayName: 'Medical' },
-    'dental-hygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
+    'medicalExam': { containerId: 'service-medical-exam', displayName: 'Medical - Exam' },
+    'medicalFollowUp': { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
     'dentalHygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
-    'dental-extraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
     'dentalExtraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
     'optical': { containerId: 'service-optical', displayName: 'Optical' },
     'haircut': { containerId: 'service-haircut', displayName: 'Haircut' },
