@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 21 @ 5:05 PM
- * Changes Made:      Updated for new DB structure.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Feb 24 @ 9:00 PM
+ * Changes Made:      Added dynamic service progress bars and added dynamic color
  * ============================================================
 */
 
@@ -17,6 +17,19 @@ const serviceAvailability = {
     dental: true,
     optical: true,
     haircut: true
+};
+
+// Service configuration mapping ServiceID to display info
+// This maps possible service ID patterns to container IDs and display names
+const serviceMapping = {
+    'medical': { containerId: 'service-medical', displayName: 'Medical' },
+    'dental-hygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
+    'dentalHygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
+    'dental-extraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
+    'dentalExtraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
+    'optical': { containerId: 'service-optical', displayName: 'Optical' },
+    'haircut': { containerId: 'service-haircut', displayName: 'Haircut' },
+    'hair': { containerId: 'service-haircut', displayName: 'Haircut' }
 };
 
 // Active check-in state
@@ -39,6 +52,66 @@ function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+//updates the service progress bars based on availability data from API
+function updateServiceProgressBars(servicesData) {
+    if (!servicesData || !Array.isArray(servicesData)) return;
+
+    // Initialize all service containers first (optional - for services not in API response)
+    Object.values(serviceMapping).forEach(mapping => {
+        const container = document.getElementById(mapping.containerId);
+        if (container) {
+            const countSpan = container.querySelector('.service-count');
+            const progressBar = container.querySelector('.progress-bar');
+            if (countSpan) countSpan.textContent = '(0/0)';
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+        }
+    });
+
+    // Update services based on API data
+    servicesData.forEach(service => {
+        const serviceID = service.serviceID || '';
+        const mapping = serviceMapping[serviceID];
+        
+        if (!mapping) return; // Skip if we don't have a mapping for this service
+        
+        const container = document.getElementById(mapping.containerId);
+        if (!container) return;
+
+        const countSpan = container.querySelector('.service-count');
+        const progressBar = container.querySelector('.progress-bar');
+        
+        const maxCapacity = service.maxCapacity || 0;
+        const currentAssigned = service.currentAssigned || 0;
+        
+        // Calculate percentage (avoid division by zero)
+        const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+        
+        // Update display text
+        if (countSpan) {
+            countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
+        }
+        
+        // Update progress bar width and color based on capacity
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+            
+            // Remove all color classes
+            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            
+            // Add color based on percentage
+            if (percentage <= 50) {
+                progressBar.classList.add('bg-success');  // Green: under 50%
+            } else if (percentage < 80) {
+                progressBar.classList.add('bg-warning');  // Yellow: 50-80%
+            } else {
+                progressBar.classList.add('bg-danger');   // Red: 80%+
+            }
+        }
+    });
 }
 
 //updates the stats in the dashboard header. Type can be 'registration' or 'completed'. Value is the number to update.
@@ -125,6 +198,10 @@ function fetchRegistrationQueue() {
             // Always update processed count if it came back
             if (statCompCount && data.clientsProcessed !== undefined) {
                 statCompCount.innerText = data.clientsProcessed;
+            }
+            // Update service progress bars based on API data
+            if (data.services && Array.isArray(data.services)) {
+                updateServiceProgressBars(data.services);
             }
         })
         .catch(error => {
