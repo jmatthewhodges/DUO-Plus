@@ -415,6 +415,35 @@ body.v-center-page {
 }
 
 .custom-scroll {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+/* --- Dashboard Header Toggles --- */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6); /* Dimmed white for inactive */
+    font-size: 1.25rem; /* Matches your h4 sizing */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.divider {
+    width: 1px;
+    height: 22px;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin: 0 12px;
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;
