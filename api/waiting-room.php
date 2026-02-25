@@ -45,10 +45,9 @@ $QueueScoreSelect = $mysqli->prepare(
     c.DOB, 
     v.FirstCheckedIn, 
     v.EnteredWaitingRoom, 
-    s.ServiceID,
-    TIMESTAMPDIFF(MINUTE, NOW(), e.EventDate) AS TotalEventTime,
-	TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom, v.FirstCheckedIn) AS CurrentTimeSpent,
-	TIMESTAMPDIFF(SECOND, v.FirstCheckedIn, v.EnteredWaitingRoom) + (0.5 * TIMESTAMPDIFF(SECOND, NOW(), e.EventDate)) AS QueueScore
+    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
+	TIMEDIFF(NOW(), v.EnteredWaitingRoom) AS CurrentTimeSpent,
+	TIMESTAMPDIFF(SECOND, NOW(),v.FirstCheckedIn) + (0.5 * TIMESTAMPDIFF(SECOND, NOW(), v.EnteredWaitingRoom)) AS QueueScore
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
