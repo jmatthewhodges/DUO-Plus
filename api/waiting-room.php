@@ -7,8 +7,10 @@
  *               scnarios such as registration dashboard.
  *
  *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 24 @ 3:31 PM
- *  Changes Made:      added steps 2 and 3
+ *  Last Modified On:  Feb 24 @ 10:12 PM
+ *  Changes Made:      redone code to add requested queries for
+ *                     getting a operation & seeing which services
+ *                     are full
  * ============================================================
 */
 
@@ -33,6 +35,8 @@ The Operation Query
 ----------------------------------
 */
 
+//make sure to return all variables as Minutes (not integers)
+//compartmentalize things 
 $QueueScoreSelect = $mysqli->prepare(
     "SELECT 
     c.ClientID, 
@@ -54,12 +58,58 @@ $QueueScoreSelect = $mysqli->prepare(
 $QueueScoreSelect->execute();
 $QueueQuery = $QueueScoreSelect->get_result()->fetch_all(MYSQLI_ASSOC);
 $QueueScoreSelect->close();
+//display query on json
 echo json_encode([
     "QueueScore"      => $QueueQuery
 ]);
 
 /*
 ---------------------------------
-         PART 3
-Check for if service is full
+         PART 2
+Check for if services are
 ----------------------------------
+*/
+
+// Fetch all 4 services
+$serviceSelect = $mysqli->prepare("
+    SELECT *
+    FROM tblEventServices
+    WHERE ServiceID IN ('Medical', 'Optical', 'Haircut', 'Dental')
+");
+$serviceSelect->execute();
+$result = $serviceSelect->get_result();
+$serviceSelect->close();
+
+$services = [];
+
+while ($service = $result->fetch_assoc()) {
+
+    $serviceID = $service['ServiceID'];
+    $isFull = $service['CurrentAssigned'] >= $service['MaxCapacity'];
+
+    // check for if service is full 
+    if ($isFull && $service['IsClosed'] == 1) {
+        $update = $mysqli->prepare("
+            UPDATE tblEventServices i
+            SET IsClosed = 1
+            WHERE ServiceID = ?
+        ");
+        $update->bind_param("i", $serviceID);
+        $update->execute();
+        $update->close();
+    }
+
+    // Add to output array
+    $services[$service['ServiceID']] = [
+        "ServiceID"       => $serviceID,
+        "MaxCapacity"     => $service['MaxCapacity'],
+        "CurrentAssigned" => $service['CurrentAssigned'],
+        "IsFull"          => $isFull,
+        "CanAssign"       => !$isFull
+    ];
+}
+
+// Return JSON for all services
+echo json_encode([
+    "Services" => $services
+]);
