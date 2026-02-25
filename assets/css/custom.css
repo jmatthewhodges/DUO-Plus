@@ -70,6 +70,28 @@ hr {
     opacity: 0.25;
 }
 
+/* Base state: Protected from Bootstrap's default focus overrides */
+    .btn-outline-navy {
+        color: #174593 !important;
+        background-color: transparent !important;
+        border: 2px solid #174593 !important;
+        border-radius: 12px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Hover and Checked states */
+    .btn-outline-navy:hover, 
+    .btn-check:checked + .btn-outline-navy {
+        color: #ffffff !important;
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+    }
+
+    /* Focus state: Adds a custom soft navy ring when clicked/tabbed */
+    .btn-check:focus + .btn-outline-navy {
+        box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
+    }
+
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
@@ -343,15 +365,6 @@ body.v-center-page {
    REGISTRATION DASHBOARD
    ========================================== */
 
-/* Hide scrollbar but keep scroll functionality */
-.card-body::-webkit-scrollbar {
-    display: none;
-}
-.card-body {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
 /* Check-in button hover */
 .check-in-btn {
     transition: all 0.2s ease;
@@ -360,4 +373,18 @@ body.v-center-page {
     background-color: #10326e !important; /* Darker shade of new color */
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================
+   WAITING ROOM & GENERAL SCROLLING
+   ========================================== */
+
+/* Hide scrollbar while keeping functionality */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scroll {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
 }

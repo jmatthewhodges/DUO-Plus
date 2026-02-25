@@ -11,196 +11,107 @@
     <link href="../assets/css/custom.css" rel="stylesheet">
     <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
 </head>
-    <body class="d-flex align-items-center justify-content-center py-5">
+<body class="d-flex align-items-center justify-content-center py-5">
 
-        <div class="container" style="max-width: 600px;">
-            
-            <!-- Logo -->
-            <div class="row mb-4">
-                <div class="col-12 text-center">
-                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 100px;">
-                </div>
+    <div class="container" style="max-width: 600px;">
+        
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 100px;">
             </div>
-
-            <!-- Queue Title -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
-                    <h5 class="text-white mb-0 fw-bold">Queue</h5>
-                    <span class="status-dot"></span>
-                </div>
-                
-                <div class="card-body position-relative p-4">
-                    <div class="custom-scroll-indicator" style="height: 60%; top: 20%;"></div>
-
-                    <!-- Now Serving -->
-                    <div class="mb-4 border-bottom pb-3">
-                        <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Now Serving</h6>
-                        <div class="d-flex justify-content-between align-items-center pe-4">
-                            <div class="queue-name text-primary" style="font-size: 1.5rem;">Edward D. Poe</div>
-                            <div class="service-icon-box">
-                                <i class="bi bi-shield-shaded" style="font-size: 2rem;"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Coming Up -->
-                    <div>
-                        <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Coming Up</h6>
-                        <div class="d-flex justify-content-between align-items-center pe-4">
-                            <div class="queue-name text-primary opacity-75"style="font-size: 1.5rem;">Todd F. Howard</div>
-                            <div class="service-icon-box">
-                                <i class="bi bi-heart-pulse"style="font-size: 2rem;"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Wait Room List -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
-                    <h5 class="text-white mb-0 fw-bold">Wait List - 24</h5>
-                    <input type="text" class="form-control form-control-sm w-50" placeholder="Search">
-                </div>
-                
-                <div class="card-body p-0 position-relative">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;">
-                        <table class="table table-borderless align-middle mb-0">
-                            <thead class="d-none d-md-table-header-group">
-                                <tr class="border-bottom">
-                                    <th scope="col" class="ps-3" style="width: 50%;">Name</th>
-                                    
-                                    <th scope="col" style="width: 30%;">DOB</th>
-                                    
-                                    <th scope="col" class="text-end pe-3" style="width: 20%;"></th> 
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-bottom">
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">John A. Doe</span>
-                                                <span class="text-muted small d-md-none">DOB: 11/01/1978</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">11/01/1978</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-
-                                <tr class="border-bottom">
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">Jane D. Rett</span>
-                                                <span class="text-muted small d-md-none">DOB: 08/23/1989</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">08/23/1989</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-
-                                <tr class="border-bottom">
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">Michael S. Johnson</span>
-                                                <span class="text-muted small d-md-none">DOB: 03/15/1985</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">03/15/1985</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-
-                                <tr class="border-bottom">
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">Sarah M. Williams</span>
-                                                <span class="text-muted small d-md-none">DOB: 09/28/1992</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">09/28/1992</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-
-                                <tr class="border-bottom">
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">Robert T. Brown</span>
-                                                <span class="text-muted small d-md-none">DOB: 12/10/1975</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">12/10/1975</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-dark">Amanda C. Davis</span>
-                                                <span class="text-muted small d-md-none">DOB: 05/17/1988</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="fw-medium d-none d-md-table-cell">05/17/1988</td>
-                                    
-                                    <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                                        <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;">Update</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </body>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                <h5 class="text-white mb-0 fw-bold">Queue</h5>
+                <span class="status-dot"></span>
+            </div>
+            
+            <div class="card-body position-relative p-4">
+                <div class="custom-scroll-indicator" style="height: 60%; top: 20%;"></div>
+
+                <div class="mb-4 border-bottom pb-3">
+                    <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Now Serving</h6>
+                    <div class="d-flex justify-content-between align-items-center pe-4">
+                        <div class="queue-name text-primary" style="font-size: 1.5rem;">Edward D. Poe</div>
+                        <div class="service-icon-box">
+                            <i class="bi bi-shield-shaded" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem;">Coming Up</h6>
+                    <div class="d-flex justify-content-between align-items-center pe-4">
+                        <div class="queue-name text-primary opacity-75" style="font-size: 1.5rem;">Todd F. Howard</div>
+                        <div class="service-icon-box">
+                            <i class="bi bi-heart-pulse" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
+                <h5 class="text-white mb-0 fw-bold" id="waitlist-header-count">Wait List - 0</h5>
+                <input type="text" class="form-control form-control-sm w-50" placeholder="Search" id="waitlist-search">
+            </div>
+            
+            <div class="card-body p-0 position-relative">
+                <div class="table-responsive custom-scroll" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead class="d-none d-md-table-header-group sticky-top bg-white" style="z-index: 1;">
+                            <tr class="border-bottom">
+                                <th scope="col" class="ps-3" style="width: 50%;">Name</th>
+                                <th scope="col" style="width: 30%;">DOB</th>
+                                <th scope="col" class="text-end pe-3" style="width: 20%;"></th> 
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="updateStatusModal" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none justify-content-center align-items-center" style="z-index: 1050;">
+        <div class="card shadow-lg" style="width: 450px; max-width: 90vw;">
+            <div class="card-header bg-primary text-white p-3">
+                <h5 class="mb-0 text-white fw-bold">Update Patient Status</h5>
+            </div>
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-dark border-bottom pb-2" id="modalPatientName">Patient Name</h5>
+                
+                <div class="mb-4">
+                    <label class="fw-bold mb-2 text-primary small uppercase">Current Requested Services</label>
+                    <div id="modalServiceStatus" class="d-flex gap-3 p-2 border rounded bg-light justify-content-center">
+                        </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="fw-bold mb-2 text-dark">Move to Service:</label>
+                    <select class="form-select" id="moveServiceSelect">
+                        <option value="" selected disabled>Select a department...</option>
+                        <option value="medical">Medical</option>
+                        <option value="dental">Dental</option>
+                        <option value="optical">Optical</option>
+                        <option value="haircut">Haircut</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-2">
+                    <button type="button" class="btn btn-outline-primary" id="cancelUpdateBtn">Cancel</button>
+                    <button type="button" class="btn bg-primary text-white" id="movePatientBtn">Move to Service</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/waitroom-dashboard.js"></script>
+    <script src="../assets/js/hope-ui.js"></script>
+    <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../js/pinCode.js"></script>
+</body>
 </html>
