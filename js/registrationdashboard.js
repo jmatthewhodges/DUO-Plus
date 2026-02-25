@@ -584,7 +584,7 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 // 8. INITIALIZATION
 fetchRegistrationQueue();
 
-// Auto-refresh every 30 seconds (unless checkIn modal is open)
+// Auto-refresh every 3 minutes (unless checkIn modal is open)
 setInterval(() => {
     const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
     const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
@@ -592,4 +592,4 @@ setInterval(() => {
         fetchRegistrationQueue();
     }
     console.log("Fetching registered clients....")
-}, 30000);
+}, 180000); 
