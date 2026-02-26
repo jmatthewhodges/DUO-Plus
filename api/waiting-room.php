@@ -7,7 +7,7 @@
  *               scnarios such as registration dashboard.
  *
  *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 25 @ 6:55 PM
+ *  Last Modified On:  Feb 25 @ 7:35 PM
  *  Changes Made:      edited SQL query so that it has:
  *                     An Algorithm
  *                     A Conditonal Statement
@@ -66,10 +66,16 @@ $NowServingSelect->execute();
 $NowServing = $NowServingSelect->get_result()->fetch_all(MYSQLI_ASSOC);
 $NowServingSelect->close();
 
-//display endpoint
-echo json_encode([
-    "NowServing"          => $NowServing,
-]);
+// Checks for if the connection to mysql is a success
+if (!$NowServingSelect) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
+
+
 
 /*
 ---------------------------------
@@ -99,7 +105,6 @@ $WaitListSelect = $mysqli->prepare(
     -- Conditional statement: Service at Maximum Work Capacity
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
     WHERE i.IsClosed = 0
-    -- Skips the first two entires (as they are "Now Serving"), 
     -- limit 1000 as a placeholder (can be changed later if somehow is exceeded in practice)
     order by QueueScore ASC
     LIMIT 1000 OFFSET 2"
@@ -108,8 +113,22 @@ $WaitListSelect->execute();
 $WaitList = $WaitListSelect->get_result()->fetch_all(MYSQLI_ASSOC);
 $WaitListSelect->close();
 
-//display endpoint
-echo json_encode([
-    "WaitList"          => $WaitList,
-]);
+// Checks for if the connection to mysql is a success
+if (!$WaitListSelect) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
 
+
+//display endpoint
+http_response_code(200);
+$msg = json_encode([
+    'success' => true,
+    "NowServing" => $NowServing,
+    "WaitList" => $WaitList
+]);
+echo $msg;
+error_log($msg);
