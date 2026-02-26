@@ -7,10 +7,13 @@
  *               scnarios such as registration dashboard.
  *
  *  Last Modified By:  Miguel
- *  Last Modified On:  Feb 24 @ 10:12 PM
- *  Changes Made:      redone code to add requested queries for
- *                     getting a operation & seeing which services
- *                     are full
+ *  Last Modified On:  Feb 25 @ 6:55 PM
+ *  Changes Made:      edited SQL query so that it has:
+ *                     An Algorithm
+ *                     A Conditonal Statement
+ *                     Limits to 1 entry and sorts by ascending
+ *                     this also means anything related to a
+ *                     seprate query to do the Cond. Stmt is gone 
  * ============================================================
 */
 
@@ -26,89 +29,44 @@ $mysqli = $GLOBALS['mysqli'];
 
 // https://www.notion.so/Queue-Algorithm-Logic-312f042b2de18052a8d6e7eff2c4b3bf?source=copy_link
 //notion link for skyler's request
-/*
 
 /*
 ---------------------------------
-         PART 1
 The Operation Query
 ----------------------------------
 */
 
-//make sure to return all variables as Minutes (not integers)
-//compartmentalize things 
 $QueueScoreSelect = $mysqli->prepare(
     "SELECT 
     c.ClientID, 
-    c.FirstName, 
-    c.LastName, 
-    c.DOB, 
-    v.FirstCheckedIn, 
+    c.FirstName,
+    c.LastName,
+    c.DOB,
+    v.FirstCheckedIn,
     v.EnteredWaitingRoom, 
+    s.ServiceID,
+    -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
     TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
+    -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
 	TIMEDIFF(NOW(), v.EnteredWaitingRoom) AS CurrentTimeSpent,
+    -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(SECOND, NOW(),v.FirstCheckedIn) + (0.5 * TIMESTAMPDIFF(SECOND, NOW(), v.EnteredWaitingRoom)) AS QueueScore
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
     JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    order by QueueScore ASC"
+    -- Conditional statement: Service at Maximum Work Capacity
+    JOIN tblEventServices i on i.ServiceID = s.ServiceID
+    WHERE i.IsClosed = 0
+    -- Gets the most RECENT entry only
+    order by QueueScore ASC
+    LIMIT 1"
 );
 $QueueScoreSelect->execute();
 $QueueQuery = $QueueScoreSelect->get_result()->fetch_all(MYSQLI_ASSOC);
 $QueueScoreSelect->close();
-//display query on json
+
+//display endpoint
 echo json_encode([
-    "QueueScore"      => $QueueQuery
-]);
-
-/*
----------------------------------
-         PART 2
-Check for if services are
-----------------------------------
-*/
-
-// Fetch all 4 services
-$serviceSelect = $mysqli->prepare("
-    SELECT *
-    FROM tblEventServices
-    WHERE ServiceID IN ('Medical', 'Optical', 'Haircut', 'Dental')
-");
-$serviceSelect->execute();
-$result = $serviceSelect->get_result();
-$serviceSelect->close();
-
-$services = [];
-
-while ($service = $result->fetch_assoc()) {
-
-    $serviceID = $service['ServiceID'];
-    $isFull = $service['CurrentAssigned'] >= $service['MaxCapacity'];
-
-    // check for if service is full 
-    if ($isFull && $service['IsClosed'] == 1) {
-        $update = $mysqli->prepare("
-            UPDATE tblEventServices i
-            SET IsClosed = 1
-            WHERE ServiceID = ?
-        ");
-        $update->bind_param("i", $serviceID);
-        $update->execute();
-        $update->close();
-    }
-
-    // Add to output array
-    $services[$service['ServiceID']] = [
-        "ServiceID"       => $serviceID,
-        "MaxCapacity"     => $service['MaxCapacity'],
-        "CurrentAssigned" => $service['CurrentAssigned'],
-        "IsFull"          => $isFull,
-        "CanAssign"       => !$isFull
-    ];
-}
-
-// Return JSON for all services
-echo json_encode([
-    "Services" => $services
+    "QueueScore"          => $QueueQuery,
 ]);
