@@ -23,7 +23,7 @@
     <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
 </head>
 
-<body class="d-flex align-items-center bg-light">
+<body class="d-flex align-items-center bg-light no-scroll">
 
     <div class="container-fluid h-100 p-4">
 
@@ -37,9 +37,23 @@
 
             <div class="col-lg-8 col-md-12 mb-4 mb-lg-0 p-4">
                 <div class="card h-100">
-                    <div class="card-header d-flex align-items-center bg-primary p-3">
-                        <div class="header-title">
-                            <h4 class="card-title text-white mb-0">Registration</h4>
+                    <div class="card-header d-flex align-items-center justify-content-between bg-primary p-3 gap-3">
+                        <div class="header-title flex-shrink-0 d-flex align-items-center">
+                            <button id="btn-registration" class="toggle-btn active p-0">Registration</button>
+                            <div class="divider"></div>
+                            <button id="btn-checked-in" class="toggle-btn p-0">Checked In</button>
+                        </div>
+                        <div class="input-group input-group-sm" style="max-width: 280px;">
+                            <span class="input-group-text bg-white border-0 rounded-start-pill">
+                                <i class="bi bi-search text-secondary"></i>
+                            </span>
+                            <input type="text" id="registrationSearch" class="form-control border-0"
+                                placeholder="Search by name..." autocomplete="off"
+                                style="box-shadow: none; outline: none;">
+                            <button class="btn btn-sm bg-white border-0 px-2 rounded-end-pill" id="clearSearchBtn"
+                                style="display:none;" title="Clear search">
+                                <i class="bi bi-x-lg text-secondary" style="font-size: 0.75rem;"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -55,6 +69,11 @@
                             <tbody>
                             </tbody>
                         </table>
+                        <!-- Empty search state message (hidden by default) -->
+                        <div id="noSearchResults" class="text-center p-4 text-muted d-none">
+                            <i class="bi bi-search" style="font-size: 1.5rem; opacity: 0.4;"></i>
+                            <p class="mt-2 mb-0">No patients match "<span id="noSearchTerm"></span>"</p>
+                        </div>
                     </div>
                 </div>
             </div>

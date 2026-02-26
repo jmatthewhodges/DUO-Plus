@@ -402,7 +402,7 @@ body.v-center-page {
     background-color: #10326e !important;
     /* Darker shade of new color */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(236, 192, 192, 0.15);
 }
 
 /* ==========================================
@@ -415,6 +415,35 @@ body.v-center-page {
 }
 
 .custom-scroll {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+/* --- Dashboard Header Toggles --- */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6); /* Dimmed white for inactive */
+    font-size: 1.25rem; /* Matches your h4 sizing */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.divider {
+    width: 1px;
+    height: 22px;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin: 0 12px;
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;
@@ -480,4 +509,25 @@ body.v-center-page {
 .dev-step-btn:hover {
     background: rgba(23, 69, 147, 0.18);
     color: #174593;
+}
+
+/* Lock scroll on dashboard page only */
+body.no-scroll {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Hide scrollbar on the table card-body while keeping it scrollable */
+body.no-scroll .card-body[style*="overflow-y"]::-webkit-scrollbar {
+    display: none;
+}
+
+body.no-scroll .card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
