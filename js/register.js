@@ -12,6 +12,8 @@
  * ============================================================
 */
 
+let dobMask;
+
 // Config
 const TRANSITION_DURATION = 500; // ms for step fade animation
 
@@ -81,13 +83,6 @@ function formatPhoneNumber(value) {
     }
 }
 
-// DOB 18+
-const dobInput = document.getElementById('clientDOB');
-const today = new Date();
-const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-dobInput.max = minAgeDate.toISOString().split('T')[0];
-
-
 // Progress bar
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
@@ -100,7 +95,65 @@ function updateProgressBar(step) {
     progressBar.setAttribute('aria-label', `Registration progress, step ${step} of 5`);
 }
 
+// Create or recreate DOB mask based on language
+// EN = MM/DD/YYYY, ES = DD/MM/YYYY
+function createDobMask(lang) {
+    const dobInput = document.getElementById('clientDOB');
+    const isSpanish = (lang === 'es');
+
+    // Preserve current value before destroying
+    const currentValue = dobMask ? dobMask.value : '';
+    if (dobMask) dobMask.destroy();
+
+    dobMask = IMask(dobInput, {
+        mask: Date,
+        pattern: isSpanish ? 'd/`m/`Y' : 'm/`d/`Y',
+        blocks: {
+            d: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
+            m: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
+            Y: { mask: IMask.MaskedRange, from: 1900, to: new Date().getFullYear() }
+        },
+        format: (date) => {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return isSpanish ? `${d}/${m}/${y}` : `${m}/${d}/${y}`;
+        },
+        parse: (str) => {
+            const parts = str.split('/');
+            if (isSpanish) {
+                const [d, m, y] = parts;
+                return new Date(y, m - 1, d);
+            } else {
+                const [m, d, y] = parts;
+                return new Date(y, m - 1, d);
+            }
+        },
+        min: new Date(1900, 0, 1),
+        max: new Date(),
+        lazy: true,
+        autofix: true,
+    });
+
+    // Update placeholder to match format
+    dobInput.placeholder = isSpanish ? 'DD/MM/AAAA' : 'MM/DD/YYYY';
+
+    // Restore value if switching language mid-form
+    if (currentValue) {
+        try { dobMask.value = currentValue; } catch (e) { /* clear if incompatible */ dobMask.value = ''; }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize DOB mask with saved language (or default to English)
+    const savedLang = sessionStorage.getItem('lang') || 'en';
+    createDobMask(savedLang);
+
+    // Re-create mask when language changes
+    document.getElementById('selLanguageSwitch').addEventListener('change', function () {
+        createDobMask(this.value);
+    });
+
     const userData = JSON.parse(sessionStorage.getItem('userData'));
 
     // Only prefill if user is logged in
@@ -171,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         goToStepTwo();
     }
-
 });
 
 //  Step 1 - Login Info
@@ -258,10 +310,17 @@ function stepTwoSubmit() {
     }
 
     // DOB 18+ validation
-    if (!dob.value) {
+    if (!dob.value || !dobMask.masked.isComplete) {
         errors.push('Please enter your date of birth.');
     } else {
-        const enteredDate = new Date(dob.value);
+        const parts = dob.value.split('/');
+        const currentLang = sessionStorage.getItem('lang') || 'en';
+        let enteredDate;
+        if (currentLang === 'es') {
+            enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
+        } else {
+            enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
+        }
         const today = new Date();
         const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         if (enteredDate > minAgeDate) {
@@ -353,43 +412,39 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
         return;
     }
 
-    let isValid = true;
+    const errors = [];
 
     const address1 = document.getElementById('clientAddress1');
-    if (!address1.value.trim()) {
-        setFieldValidation(address1, false);
-        isValid = false;
-    } else {
-        setFieldValidation(address1, true);
+    if (!address1.value.trim() || address1.value.trim().length < 5) {
+        errors.push('Please enter a street address (at least 5 characters).');
     }
 
     const city = document.getElementById('clientCity');
-    if (!city.value.trim()) {
-        setFieldValidation(city, false);
-        isValid = false;
-    } else {
-        setFieldValidation(city, true);
+    if (!city.value.trim() || city.value.trim().length < 2) {
+        errors.push('Please enter a city (at least 2 characters).');
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        setFieldValidation(state, false);
-        isValid = false;
-    } else {
-        setFieldValidation(state, true);
+        errors.push('Please select a state.');
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        setFieldValidation(zipCode, false);
-        isValid = false;
-    } else {
-        setFieldValidation(zipCode, true);
+        errors.push('Please enter a valid 5-digit zip code.');
     }
 
-    if (isValid) {
-        goToStepFour();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepFour();
 });
 
 document.getElementById('btnRegisterBack3').addEventListener('click', function () {
@@ -444,36 +499,34 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
         return;
     }
 
-    let isValid = true;
+    const errors = [];
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        setFieldValidation(firstName, false);
-        isValid = false;
-    } else {
-        setFieldValidation(firstName, true);
+        errors.push('Please enter a first name for your contact.');
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        setFieldValidation(lastName, false);
-        isValid = false;
-    } else {
-        setFieldValidation(lastName, true);
+        errors.push('Please enter a last name for your contact.');
     }
 
     const phone = document.getElementById('emergencyContactPhone');
-    // Phone is required and must be full and formatted
     if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-        setFieldValidation(phone, false);
-        isValid = false;
-    } else {
-        setFieldValidation(phone, true);
+        errors.push('Please enter a valid 10-digit phone number — (123) 456-7890.');
     }
 
-    if (isValid) {
-        goToStepFive();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepFive();
 });
 
 document.getElementById('btnRegisterBack4').addEventListener('click', function () {
@@ -492,14 +545,16 @@ document.getElementById('clientRegisterFormStep4').addEventListener('keydown', f
 // Step 5 - Service Selection
 document.getElementById('btnRegisterNext5').addEventListener('click', function () {
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
-    const serviceError = document.getElementById('serviceError');
 
     if (services.length === 0) {
-        serviceError.style.display = 'block';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: '• Please select at least one service.',
+            confirmButtonColor: '#174593'
+        });
         return;
     }
-
-    serviceError.style.display = 'none';
 
     // Show waiver modal
     const modal = new bootstrap.Modal(document.getElementById('registrationCompleteModal'));
@@ -544,6 +599,14 @@ document.getElementById('clientFirstName').addEventListener('blur', function () 
     this.classList.remove('is-invalid');
 });
 
+document.getElementById('clientMiddleInitial').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
 document.getElementById('clientLastName').addEventListener('blur', function () {
     if (this.value.trim()) {
         this.classList.add('is-valid');
@@ -554,11 +617,18 @@ document.getElementById('clientLastName').addEventListener('blur', function () {
 });
 
 document.getElementById('clientDOB').addEventListener('blur', function () {
-    if (!this.value) {
+    if (!this.value || !dobMask.masked.isComplete) {
         this.classList.remove('is-valid', 'is-invalid');
         return;
     }
-    const enteredDate = new Date(this.value);
+    const parts = this.value.split('/');
+    const currentLang = sessionStorage.getItem('lang') || 'en';
+    let enteredDate;
+    if (currentLang === 'es') {
+        enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else {
+        enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
+    }
     const today = new Date();
     const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
     if (enteredDate <= minAgeDate) {
@@ -572,12 +642,11 @@ document.getElementById('clientDOB').addEventListener('blur', function () {
 document.getElementById('clientPhone').addEventListener('blur', function () {
     if (this.value.length === 0) {
         this.classList.remove('is-valid', 'is-invalid');
-        return;
-    }
-    if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
+    } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
     } else {
+        // Partially filled — just go neutral, don't punish them yet
         this.classList.remove('is-valid', 'is-invalid');
     }
 });
@@ -621,6 +690,51 @@ document.getElementById('clientAddress2').addEventListener('input', function () 
     this.value = this.value.replace(INPUT_FILTERS.address, '');
 });
 
+// Step 3 blur handlers — green checkmark on valid input
+document.getElementById('clientAddress1').addEventListener('blur', function () {
+    if (this.value.trim().length >= 5) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientAddress2').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientCity').addEventListener('blur', function () {
+    if (this.value.trim().length >= 2) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('selectState').addEventListener('change', function () {
+    if (this.value) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientZipCode').addEventListener('blur', function () {
+    if (this.value.match(VALIDATION_PATTERNS.zipCode)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
 // Emergency contact names
 document.getElementById('emergencyContactFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
@@ -628,6 +742,36 @@ document.getElementById('emergencyContactFirstName').addEventListener('input', f
 
 document.getElementById('emergencyContactLastName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
+});
+
+// Step 4 blur handlers — green checkmark on valid input
+document.getElementById('emergencyContactFirstName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('emergencyContactLastName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('emergencyContactPhone').addEventListener('blur', function () {
+    if (this.value.length === 0) {
+        this.classList.remove('is-valid', 'is-invalid');
+    } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
 });
 
 

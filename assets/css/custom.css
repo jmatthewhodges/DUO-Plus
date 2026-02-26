@@ -92,6 +92,7 @@ hr {
     box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
 }
 
+
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
@@ -168,14 +169,26 @@ body.v-center-page {
 
 /* Form label color */
 .form-label {
-    color: #174593;
+    color: #212529;
     /* New Color */
 }
 
+/* Placeholder styling */
+.form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+    font-style: italic;
+}
+
 /* Card title style */
+/* Step card header */
 .card-title {
-    font-weight: bold;
-    font-size: x-large;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #174593;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid #174593;
+    margin-bottom: 1.25rem;
 }
 
 /* Update the existing icon style to support "slots" */
@@ -410,16 +423,20 @@ body.v-center-page {
 }
 
 .custom-scroll {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 /* --- Dashboard Header Toggles --- */
 .toggle-btn {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.6); /* Dimmed white for inactive */
-    font-size: 1.25rem; /* Matches your h4 sizing */
+    color: rgba(255, 255, 255, 0.6);
+    /* Dimmed white for inactive */
+    font-size: 1.25rem;
+    /* Matches your h4 sizing */
     font-weight: 500;
     cursor: pointer;
     transition: color 0.3s ease;

@@ -41,9 +41,9 @@
             <div class="col-12 col-sm-10 col-md-10 col-lg-6">
 
                 <!-- Logo -->
-                <div class="text-center">
+                <!-- <div class="text-center">
                     <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 200px;">
-                </div>
+                </div> -->
 
                 <!-- QR Code Card -->
                 <div id="divQRCode" class="d-none d-flex justify-content-center">
@@ -67,11 +67,11 @@
                 </div>
 
                 <!-- Subtitle -->
-                <div id="divStepOneSubtitle" class="text-center">
+                <!-- <div id="divStepOneSubtitle" class="text-center">
                     <h5 id="progressTitle" class="subtitle-text fw-medium mb-3" style="color: #174593;">
                         Progress through registration
                     </h5>
-                </div>
+                </div> -->
 
                 <!-- Registration Card -->
                 <div class="card shadow-lg border-0 rounded-4">
@@ -106,7 +106,8 @@
                             <!-- Buttons -->
                             <button id="btnRegisterNext1" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack1" type="button" class="btn btn-primary w-100 rounded-2">Back to
+                            <button id="btnRegisterBack1" type="button"
+                                class="btn btn-outline-primary w-100 rounded-2">Back to
                                 Login</button>
                         </form>
                     </div>
@@ -121,7 +122,8 @@
                                 <label id="clientFirstNameLabel" for="clientFirstName"
                                     class="form-label fw-semibold">First Name <span class="text-danger"
                                         aria-hidden="true">*</span></label>
-                                <input type="text" id="clientFirstName" class="form-control input-black" required>
+                                <input type="text" id="clientFirstName" class="form-control input-black" required
+                                    maxlength="50">
                             </div>
 
                             <!-- Middle Initial (optional) -->
@@ -137,7 +139,8 @@
                             <div class="mb-3 text-start">
                                 <label id="clientLastNameLabel" for="clientLastName" class="form-label fw-semibold">Last
                                     Name <span class="text-danger" aria-hidden="true">*</span></label>
-                                <input type="text" id="clientLastName" class="form-control input-black" required>
+                                <input type="text" id="clientLastName" class="form-control input-black" required
+                                    maxlength="50">
                             </div>
 
                             <!-- Sex -->
@@ -167,20 +170,23 @@
                             <div class="mb-3 text-start">
                                 <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of Birth
                                     <span class="text-danger" aria-hidden="true">*</span></label>
-                                <input type="date" id="clientDOB" class="form-control input-black" required>
+                                <input type="text" id="clientDOB" class="form-control input-black" required
+                                    placeholder="MM/DD/YYYY">
                             </div>
 
                             <!-- Phone (optional) -->
                             <div class="mb-3 text-start">
                                 <label id="clientPhoneLabel" for="clientPhone" class="form-label fw-semibold">Phone
                                     <span class="text-muted fw-normal small">(optional)</span></label>
-                                <input type="tel" id="clientPhone" class="form-control input-black">
+                                <input type="tel" id="clientPhone" class="form-control input-black"
+                                    placeholder="(999) 999-9999">
                             </div>
 
                             <!-- Buttons -->
                             <button id="btnRegisterNext2" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack2" type="button" class="btn btn-primary w-100 rounded-2">Go
+                            <button id="btnRegisterBack2" type="button"
+                                class="btn btn-outline-primary w-100 rounded-2">Go
                                 Back</button>
                         </form>
                     </div>
@@ -191,14 +197,18 @@
                         <h5 id="titleStepThree" class="card-title text-center mb-3">Address Information</h5>
                         <form id="clientRegisterFormStep3" novalidate>
 
-                            <!-- No Address Checkbox -->
-                            <div class="mb-3 text-start form-check d-flex align-items-center">
-                                <input class="form-check-input align-checkbox" type="checkbox" style="cursor: pointer;"
-                                    value="" id="noAddress">
-                                <label class="form-check-label fs-5 ms-2" style="color: black; cursor: pointer;"
+                            <!-- No Address Toggle -->
+                            <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
+                                style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
+                                onclick="document.getElementById('noAddress').click();">
+                                <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
                                     id="noAddressLabel" for="noAddress">
                                     No current address
                                 </label>
+                                <div class="form-check form-switch mb-0" onclick="event.stopPropagation();">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        style="cursor: pointer; width: 3em; height: 1.5em;" id="noAddress">
+                                </div>
                             </div>
 
                             <!-- Street Address 1 -->
@@ -206,27 +216,22 @@
                                 <label for="clientAddress1" id="clientAddress1Label"
                                     class="form-label fw-semibold">Street Address 1</label>
                                 <input type="text" id="clientAddress1" class="form-control input-black" required
-                                    aria-describedby="address1Error">
-                                <div class="invalid-feedback" id="address1Error" aria-live="polite">
-                                    Please enter an address.
-                                </div>
+                                    aria-label="Street Address 1" placeholder="123 Main St">
                             </div>
 
                             <!-- Street Address 2 (optional) -->
                             <div class="mb-3 text-start">
                                 <label id="clientAddress2Label" for="clientAddress2"
                                     class="form-label fw-semibold">Street Address 2</label>
-                                <input type="text" id="clientAddress2" class="form-control input-black">
+                                <input type="text" id="clientAddress2" class="form-control input-black"
+                                    aria-label="Street Address 2" placeholder="Apt, Suite, Unit">
                             </div>
 
                             <!-- City -->
                             <div class="mb-3 text-start">
                                 <label id="clientCityLabel" for="clientCity" class="form-label fw-semibold">City</label>
                                 <input type="text" id="clientCity" class="form-control input-black" required
-                                    aria-describedby="cityError">
-                                <div class="invalid-feedback" id="cityError" aria-live="polite">
-                                    Please enter a city.
-                                </div>
+                                    aria-label="City">
                             </div>
 
                             <!-- State -->
@@ -285,10 +290,17 @@
                                     <option value="WV">West Virginia</option>
                                     <option value="WI">Wisconsin</option>
                                     <option value="WY">Wyoming</option>
+                                    <option disabled>──────────</option>
+                                    <option value="DC">District of Columbia</option>
+                                    <option value="PR">Puerto Rico</option>
+                                    <option value="GU">Guam</option>
+                                    <option value="VI">U.S. Virgin Islands</option>
+                                    <option value="AS">American Samoa</option>
+                                    <option value="MP">Northern Mariana Islands</option>
+                                    <option value="AE">Military (AE)</option>
+                                    <option value="AP">Military (AP)</option>
+                                    <option value="AA">Military (AA)</option>
                                 </select>
-                                <div class="invalid-feedback" id="stateError" aria-live="polite">
-                                    Please select a state.
-                                </div>
                             </div>
 
                             <!-- Zip Code -->
@@ -296,17 +308,14 @@
                                 <label id="clientZipCodeLabel" for="clientZipCode" class="form-label fw-semibold">Zip
                                     Code</label>
                                 <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
-                                    id="clientZipCode" class="form-control input-black" required
-                                    aria-describedby="zipCode">
-                                <div class="invalid-feedback" id="zipCode" aria-live="polite">
-                                    Please enter a 5-digit zip code.
-                                </div>
+                                    id="clientZipCode" class="form-control input-black" required aria-label="Zip Code">
                             </div>
 
                             <!-- Buttons -->
                             <button id="btnRegisterNext3" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack3" type="button" class="btn btn-primary w-100 rounded-2">Go
+                            <button id="btnRegisterBack3" type="button"
+                                class="btn btn-outline-primary w-100 rounded-2">Go
                                 Back</button>
                         </form>
                     </div>
@@ -317,14 +326,18 @@
                         <h5 id="titleStepFour" class="card-title text-center mb-3">Emergency Contact</h5>
                         <form id="clientRegisterFormStep4" novalidate>
 
-                            <!-- No Emergency Contact Checkbox -->
-                            <div class="mb-3 text-start form-check d-flex align-items-center">
-                                <input class="form-check-input align-checkbox" style="cursor: pointer" type="checkbox"
-                                    value="" id="noEmergencyContact">
-                                <label id="noEmergencyContactLabel" class="form-check-label fs-5 ms-2"
-                                    style="color: black; cursor: pointer" for="noEmergencyContact">
+                            <!-- No Emergency Contact Toggle -->
+                            <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
+                                style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
+                                onclick="document.getElementById('noEmergencyContact').click();">
+                                <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
+                                    id="noEmergencyContactLabel" for="noEmergencyContact">
                                     No emergency contact
                                 </label>
+                                <div class="form-check form-switch mb-0" onclick="event.stopPropagation();">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        style="cursor: pointer; width: 3em; height: 1.5em;" id="noEmergencyContact">
+                                </div>
                             </div>
 
                             <!-- Contact First Name -->
@@ -333,10 +346,7 @@
                                     class="form-label fw-semibold">Contact First
                                     Name</label>
                                 <input type="text" id="emergencyContactFirstName" class="form-control input-black"
-                                    required aria-describedby="contactFirstName">
-                                <div class="invalid-feedback" id="contactFirstName" aria-live="polite">
-                                    Please enter a first name for your contact.
-                                </div>
+                                    required aria-label="Emergency Contact First Name">
                             </div>
 
                             <!-- Contact Last Name -->
@@ -345,10 +355,7 @@
                                     class="form-label fw-semibold">Contact Last
                                     Name</label>
                                 <input type="text" id="emergencyContactLastName" class="form-control input-black"
-                                    required aria-describedby="contactLastName">
-                                <div class="invalid-feedback" id="contactLastName" aria-live="polite">
-                                    Please enter a last name for your contact.
-                                </div>
+                                    required aria-label="Emergency Contact Last Name">
                             </div>
 
                             <!-- Contact Phone -->
@@ -356,16 +363,14 @@
                                 <label id="emergencyContactPhoneLabel" for="emergencyContactPhone"
                                     class="form-label fw-semibold">Contact Phone</label>
                                 <input type="tel" id="emergencyContactPhone" class="form-control input-black" required
-                                    aria-describedby="contactPhone">
-                                <div class="invalid-feedback" id="contactPhone" aria-live="polite">
-                                    Please enter a phone for your contact.
-                                </div>
+                                    aria-label="Emergency Contact Phone" placeholder="(999) 999-9999">
                             </div>
 
                             <!-- Buttons -->
                             <button id="btnRegisterNext4" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack4" type="button" class="btn btn-primary w-100 rounded-2">Go
+                            <button id="btnRegisterBack4" type="button"
+                                class="btn btn-outline-primary w-100 rounded-2">Go
                                 Back</button>
                         </form>
                     </div>
@@ -375,12 +380,13 @@
                     <div id="divStepFive" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 id="titleStepFive" class="card-title text-center mb-3">Service Selection</h5>
                         <form id="clientRegisterFormStep5" novalidate>
-                            <!-- Services Grid (TODO: Move to cards and make bigger)-->
-                            <div class="row mb-3">
+                            <!-- Services Grid -->
+                            <div class="row mb-3" role="group" aria-label="Select services">
                                 <div class="col-6">
                                     <div class="mb-3">
                                         <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceMedical" value="medical" autocomplete="off">
+                                            id="btnServiceMedical" value="medical" autocomplete="off"
+                                            aria-label="Medical">
                                         <label class="btn btn-outline-navy w-100 text-start p-3"
                                             style="font-size: 20px;" for="btnServiceMedical">
                                             <i class="bi bi-heart-pulse me-2"></i> Medical
@@ -388,7 +394,8 @@
                                     </div>
                                     <div class="mb-3">
                                         <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceOptical" value="optical" autocomplete="off">
+                                            id="btnServiceOptical" value="optical" autocomplete="off"
+                                            aria-label="Optical">
                                         <label class="btn btn-outline-navy w-100 text-start p-3"
                                             style="font-size: 20px;" for="btnServiceOptical">
                                             <i class="bi bi-eye me-2"></i> Optical
@@ -398,7 +405,7 @@
                                 <div class="col-6">
                                     <div class="mb-3">
                                         <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceDental" value="dental" autocomplete="off">
+                                            id="btnServiceDental" value="dental" autocomplete="off" aria-label="Dental">
                                         <label class="btn btn-outline-navy w-100 text-start p-3"
                                             style="font-size: 20px;" for="btnServiceDental">
                                             <i class="bi bi-shield-shaded me-2"></i> Dental
@@ -406,7 +413,8 @@
                                     </div>
                                     <div class="mb-3">
                                         <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceHaircut" value="haircut" autocomplete="off">
+                                            id="btnServiceHaircut" value="haircut" autocomplete="off"
+                                            aria-label="Haircut">
                                         <label class="btn btn-outline-navy w-100 text-start p-3"
                                             style="font-size: 20px;" for="btnServiceHaircut">
                                             <i class="bi bi-scissors me-2"></i> Haircut
@@ -415,14 +423,11 @@
                                 </div>
                             </div>
 
-                            <div class="text-danger text-center mb-3" id="serviceError" style="display: none;">
-                                Please select at least one service.
-                            </div>
-
                             <!-- Buttons -->
                             <button id="btnRegisterNext5" type="button"
                                 class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack5" type="button" class="btn btn-primary w-100 rounded-2">Go
+                            <button id="btnRegisterBack5" type="button"
+                                class="btn btn-outline-primary w-100 rounded-2">Go
                                 Back</button>
                         </form>
                     </div>
@@ -507,6 +512,7 @@
     <script src="../assets/js/hope-ui.js"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/js/qrious.min.js"></script>
+    <script src="../assets/js/imask.js"></script>
     <script src="../js/register.js"></script>
     <script src="../js/lang.js"></script>
 </body>
