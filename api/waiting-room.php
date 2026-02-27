@@ -55,7 +55,7 @@ $NowServingSelect = $mysqli->prepare(
     JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
     -- Conditional statement: Service at Maximum Work Capacity
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    WHERE i.IsClosed = 0
+    WHERE i.CurrentAssigned < 20
     -- Gets the most RECENT entry only
     group by c.ClientID
     order by QueueScore desc
@@ -102,6 +102,7 @@ $WaitListSelect = $mysqli->prepare(
     JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
     -- Conditional statement: Service at Maximum Work Capacity (not included here to contain ALL users)
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
+    WHERE i.CurrentAssigned < 20
     -- limit 1000 as a placeholder (can be changed later if somehow is exceeded in practice)
     group by c.ClientID
     order by QueueScore desc
