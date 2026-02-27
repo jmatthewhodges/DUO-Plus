@@ -48,7 +48,7 @@ $NowServingSelect = $mysqli->prepare(
     -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
     TIMEDIFF(v.FirstCheckedIn,NOW()) AS TotalEventTime,
     -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(N v.EnteredWaitingRoom,NOW()) AS CurrentTimeSpent,
+	TIMEDIFF(v.EnteredWaitingRoom,NOW()) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(SECOND, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(SECOND, v.EnteredWaitingRoom,NOW(),)) AS QueueScore
     FROM tblVisits v
