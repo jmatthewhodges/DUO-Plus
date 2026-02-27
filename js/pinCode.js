@@ -1,12 +1,12 @@
-/**
+/*
  * ============================================================
  *  File:        pinCode.js
  *  Description: modular script for handling PIN code verification.
  *               Hides content until PIN is verified.
  *
  *  Last Modified By:  Cameron
- *  Last Modified On:  Feb 26 @ 10:00 PM
- *  Changes Made:      Added pin code verification for security purposes
+ *  Last Modified On:  Feb 27 @ 9:00 aM
+ *  Changes Made:      added foreced page reload, it fixes an error
  * ============================================================
 */
 // PIN Modal - Fully modular component
@@ -165,6 +165,8 @@ function initializePINModal() {
             // User already verified - show content
             pinVerified = true;
             document.body.classList.add('pin-verified');
+            // Notify other JS files that PIN is verified
+            document.dispatchEvent(new CustomEvent('pinVerified'));
         } else {
             // User not verified - show modal
             pinModal.show();
@@ -251,6 +253,12 @@ function initializePINModal() {
                 backdrop.remove();
             }
             document.body.classList.remove('modal-open');
+            
+            // Refresh page to load all data with authenticated session
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+
         } catch (err) {
             // FAILURE: Display error message
             showError(err.message, errorMsg);

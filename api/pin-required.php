@@ -6,8 +6,8 @@
  *
  * Last Modified By:  Cameron
  * Last Modified On:  Feb 26 11:00 PM
- * Changes Made:      Added pin verification requirement for API endpoints to enhance security. 
- *                    !!!!!!!!!This file should be included at the top of any API endpoint that needs to be 
+ * Changes Made:      Added exit statements so this file works properly 
+ * Comments:          !!!!!!!!!This file should be included at the top of any API endpoint that needs to be 
  *                    protected by PIN verification.!!!!!!!!!!!
  * ============================================================
  */
@@ -23,8 +23,10 @@ if (!isset($_SESSION['pin_verified']) || $_SESSION['pin_verified'] !== true) {
         header('Content-Type: application/json');
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Unauthorized - PIN verification required']);
+        exit;
     } else {
         // HTML page - redirect to login
         header('Location: /index.html');
+        exit;
     }
 }
