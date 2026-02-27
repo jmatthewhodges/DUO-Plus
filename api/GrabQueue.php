@@ -4,16 +4,19 @@
  *  File:        GrabQueue.php
  *  Description: Simple PHP endpoint that gets needed users
  *               from inputted "servicestatus". for use in 
- *               scnarios such as registration dashboard.
+ *               scenarios such as registration dashboard.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 21 @ 11:05 AM
- *  Changes Made:      Modified for new DB structure
+ *  Last Modified By:  Cameron
+ *  Last Modified On:  Feb 26 @ 11:00 PM
+ *  Changes Made:      added pin-required.php to ensure this endpoint is protected by PIN verification
  * ============================================================
 */
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
+
+// PIN verification required
+require_once __DIR__ . '/pin-required.php';
 
 // Get header type, set POST request type for JSON data (Array merges GET with jsonData)
 if ($_SERVER['CONTENT_TYPE'] === 'application/json') {

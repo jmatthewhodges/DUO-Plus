@@ -4,11 +4,9 @@
  * File:          VerifyPin.php
  * Description:   API endpoint for PIN code access restriction.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 22 11:00 AM
- * Changes Made:      Added structured error handling, rate limit
- *                    check before processing, input sanitization,
- *                    DB connection validation, and error logging.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Feb 26 11:00 PM
+ * Changes Made:      Added session creation and validation
  * ============================================================
  */
 
@@ -37,8 +35,14 @@ function logError(string $context, string $detail): void {
 // ---------------------------------------------------------------
 session_start();
 
+// Handle GET request: Check if user has valid session
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $verified = isset($_SESSION['pin_verified']) && $_SESSION['pin_verified'] === true;
+    respond(200, ['verified' => $verified]);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST.']);
+    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST or GET.']);
 }
 
 // ---------------------------------------------------------------
@@ -153,7 +157,16 @@ if ($pin !== $correctPin) {
 $_SESSION[$rateLimitKey]['count'] = 0;
 
 // ---------------------------------------------------------------
-// 7. Log successful access to tblPinCodeLogs
+// 7. Set secure session flag
+// ---------------------------------------------------------------
+$_SESSION['pin_verified'] = true;
+session_write_close();  // Ensure session is saved before responding
+
+// Debug: Log what we just set
+error_log("PIN verified for $name. Session ID: " . session_id());
+
+// ---------------------------------------------------------------
+// 8. Log successful access to tblPinCodeLogs
 // ---------------------------------------------------------------
 $pinCodeLogID = bin2hex(random_bytes(8)); // 16-char hex, consistent with rest of codebase
 $currentTime  = date('Y-m-d H:i:s');
@@ -175,6 +188,6 @@ if (!$logStmt) {
 }
 
 // ---------------------------------------------------------------
-// 8. Success
+// 9. Success
 // ---------------------------------------------------------------
 respond(200, ['success' => true, 'message' => 'PIN verified successfully.']);
