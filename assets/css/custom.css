@@ -92,6 +92,7 @@ hr {
     box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
 }
 
+
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
@@ -168,14 +169,26 @@ body.v-center-page {
 
 /* Form label color */
 .form-label {
-    color: #174593;
+    color: #212529;
     /* New Color */
 }
 
+/* Placeholder styling */
+.form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+    font-style: italic;
+}
+
 /* Card title style */
+/* Step card header */
 .card-title {
-    font-weight: bold;
-    font-size: x-large;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #174593;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid #174593;
+    margin-bottom: 1.25rem;
 }
 
 /* Update the existing icon style to support "slots" */
@@ -290,15 +303,10 @@ body.v-center-page {
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Make warning progress more yellow and remove orange gradient */
-.progress-bar.bg-warning,
-.bg-warning {
-    background-color: #e2b212 !important;
-    /* lighter/more yellow */
+/* Basic progress bar styling */
+#wholeProgressBar .progress-bar {
+    background-color: #174593 !important;
     background-image: none !important;
-    /* remove any orange gradient */
-    color: #212529;
-    border-color: rgba(0, 0, 0, 0.04);
 }
 
 /* Language Select */
@@ -415,16 +423,20 @@ body.v-center-page {
 }
 
 .custom-scroll {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 /* --- Dashboard Header Toggles --- */
 .toggle-btn {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.6); /* Dimmed white for inactive */
-    font-size: 1.25rem; /* Matches your h4 sizing */
+    color: rgba(255, 255, 255, 0.6);
+    /* Dimmed white for inactive */
+    font-size: 1.25rem;
+    /* Matches your h4 sizing */
     font-weight: 500;
     cursor: pointer;
     transition: color 0.3s ease;
