@@ -60,7 +60,7 @@ $NowServingSelect = $mysqli->prepare(
     WHERE i.IsClosed = 0
     -- Gets the most RECENT entry only
     order by QueueScore ASC
-    LIMIT 2"
+    LIMIT 1"
 );
 $NowServingSelect->execute();
 $NowServing = $NowServingSelect->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -75,6 +75,50 @@ if (!$NowServingSelect) {
     exit;
 }
 
+/*
+---------------------------------
+The "Coming Up" Query
+----------------------------------
+*/
+
+$ComingUpSelect = $mysqli->prepare(
+    "SELECT 
+    c.ClientID, 
+    c.FirstName,
+    c.LastName,
+    c.DOB,
+    v.FirstCheckedIn,
+    v.EnteredWaitingRoom, 
+    s.ServiceID,
+    -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
+    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
+    -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
+	TIMEDIFF(NOW(), v.EnteredWaitingRoom) AS CurrentTimeSpent,
+    -- W + (x * T) = Priority Score (shown as integer instead of a date)
+	TIMESTAMPDIFF(SECOND, NOW(),v.FirstCheckedIn) + (0.5 * TIMESTAMPDIFF(SECOND, NOW(), v.EnteredWaitingRoom)) AS QueueScore
+    FROM tblVisits v
+    JOIN tblClients c ON v.ClientID = c.ClientID
+    JOIN tblEvents e ON e.EventID = v.EventID
+    JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
+    -- Conditional statement: Service at Maximum Work Capacity
+    JOIN tblEventServices i on i.ServiceID = s.ServiceID
+    WHERE i.IsClosed = 0
+    -- Gets the 2nd most RECENT entry only
+    order by QueueScore ASC
+    LIMIT 1 OFFSET 1"
+);
+$ComingUpSelect->execute();
+$ComingUp = $ComingUpSelect->get_result()->fetch_all(MYSQLI_ASSOC);
+$ComingUpSelect->close();
+
+// Checks for if the connection to mysql is a success
+if (!$ComingUpSelect) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
 
 
 /*
@@ -102,9 +146,8 @@ $WaitListSelect = $mysqli->prepare(
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
     JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    -- Conditional statement: Service at Maximum Work Capacity
+    -- Conditional statement: Service at Maximum Work Capacity (not included here to contain ALL users)
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    WHERE i.IsClosed = 0
     -- limit 1000 as a placeholder (can be changed later if somehow is exceeded in practice)
     order by QueueScore ASC
     LIMIT 1000 OFFSET 2"
@@ -128,6 +171,7 @@ http_response_code(200);
 $msg = json_encode([
     'success' => true,
     "NowServing" => $NowServing,
+    "ComingUp" => $ComingUp,
     "WaitList" => $WaitList
 ]);
 echo $msg;
