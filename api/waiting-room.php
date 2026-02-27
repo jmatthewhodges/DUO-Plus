@@ -43,15 +43,10 @@ $NowServingSelect = $mysqli->prepare(
     "SELECT 
     c.ClientID, 
     c.FirstName,
+    c.MiddleInitial,
     c.LastName,
     c.DOB,
-    v.FirstCheckedIn,
-    v.EnteredWaitingRoom, 
     GROUP_CONCAT(s.ServiceID) AS ServiceSelections,
-    -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
-    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
-    -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(NOW(),v.EnteredWaitingRoom) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom,NOW())) AS QueueScore
     FROM tblVisits v
@@ -63,7 +58,7 @@ $NowServingSelect = $mysqli->prepare(
     WHERE i.IsClosed = 0
     -- Gets the most RECENT entry only
     group by c.ClientID
-    order by QueueScore ASC
+    order by QueueScore desc
     LIMIT 1"
 );
 $NowServingSelect->execute();
@@ -95,15 +90,10 @@ $WaitListSelect = $mysqli->prepare(
     "SELECT 
     c.ClientID, 
     c.FirstName,
+    c.MiddleInitial,
     c.LastName,
     c.DOB,
-    v.FirstCheckedIn,
-    v.EnteredWaitingRoom, 
     GROUP_CONCAT(s.ServiceID) AS ServiceSelections,
-    -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
-    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
-    -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(NOW(),v.EnteredWaitingRoom) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom,NOW())) AS QueueScore
     FROM tblVisits v
@@ -114,7 +104,7 @@ $WaitListSelect = $mysqli->prepare(
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
     -- limit 1000 as a placeholder (can be changed later if somehow is exceeded in practice)
     group by c.ClientID
-    order by QueueScore ASC
+    order by QueueScore desc
     LIMIT 1000 OFFSET 1"
 );
 $WaitListSelect->execute();
