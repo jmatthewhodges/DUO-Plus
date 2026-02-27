@@ -8,8 +8,8 @@
  *               service selections.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:46 PM
- *  Changes Made:      Code cleanup
+ *  Last Modified On:  Feb 26 @ 9:28 PM
+ *  Changes Made:      Remove pre-fill on login
  * ============================================================
 */
 
@@ -53,27 +53,30 @@ if ($clientID) {
     $mysqli->begin_transaction();
     // EXISTING USER - UPDATE
     
-    $firstName = isset($_POST['firstName']) ? ucfirst(strtolower(trim($_POST['firstName']))) : null;
-    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
-    $lastName = isset($_POST['lastName']) ? ucfirst(strtolower(trim($_POST['lastName']))) : null;
-    $dob = $_POST['dob'] ?? null;
-    $sex = strtolower(trim($_POST['sex']));
-    $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
+    // Only update personal info if fields were actually submitted (logged-in users doing
+    // service-only re-registration won't send these, so we skip to avoid blanking their record)
+    if (!empty($_POST['firstName']) && !empty($_POST['lastName'])) {
+        $firstName = ucfirst(strtolower(trim($_POST['firstName'])));
+        $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
+        $lastName = ucfirst(strtolower(trim($_POST['lastName'])));
+        $dob = $_POST['dob'] ?? null;
+        $sex = strtolower(trim($_POST['sex'] ?? ''));
+        $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
-    // Update client info
-    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
-    if (!$clientUpdate) {
-        $mysqli->rollback();
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
-        exit;
-    }
-    $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
-    if (!$clientUpdate->execute()) {
-        $mysqli->rollback();
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $clientUpdate->error]);
-        exit;
+        $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
+        if (!$clientUpdate) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
+        $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
+        if (!$clientUpdate->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $clientUpdate->error]);
+            exit;
+        }
     }
 
     $noAddress = $_POST['noAddress'] ?? true;
@@ -303,8 +306,22 @@ if ($clientID) {
     }
 
     $mysqli->commit();
+
+    // Fetch name for QR card display
+    $nameQuery = $mysqli->prepare("SELECT FirstName, LastName FROM tblClients WHERE ClientID = ?");
+    $nameQuery->bind_param("s", $clientID);
+    $nameQuery->execute();
+    $nameResult = $nameQuery->get_result()->fetch_assoc();
+
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'message' => 'Information and services updated successfully.']);
+    $msg = json_encode([
+        'success' => true,
+        'message' => 'Information and services updated successfully.',
+        'clientID' => $clientID,
+        'firstName' => $nameResult['FirstName'] ?? '',
+        'lastName' => $nameResult['LastName'] ?? '',
+        'services' => $services
+    ]);
     echo $msg;
     error_log($msg);
 
@@ -539,7 +556,14 @@ if ($clientID) {
 
     $mysqli->commit();
     http_response_code(201);
-    $msg = json_encode(['success' => true, 'message' => 'New client created and services selected.']);
+    $msg = json_encode([
+        'success' => true,
+        'message' => 'New client created and services selected.',
+        'clientID' => $clientID,
+        'firstName' => $firstName,
+        'lastName' => $lastName,
+        'services' => $services
+    ]);
     echo $msg;
     error_log($msg);
 }
