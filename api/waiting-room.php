@@ -46,9 +46,9 @@ $NowServingSelect = $mysqli->prepare(
     v.EnteredWaitingRoom, 
     s.ServiceID,
     -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
-    TIMEDIFF(v.FirstCheckedIn,NOW()) AS TotalEventTime,
+    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
     -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(v.EnteredWaitingRoom,NOW()) AS CurrentTimeSpent,
+	TIMEDIFF(NOW(),v.EnteredWaitingRoom) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(SECOND, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(SECOND, v.EnteredWaitingRoom,NOW())) AS QueueScore
     FROM tblVisits v
@@ -91,9 +91,9 @@ $ComingUpSelect = $mysqli->prepare(
     v.EnteredWaitingRoom, 
     s.ServiceID,
     -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
-    TIMEDIFF(v.FirstCheckedIn,NOW()) AS TotalEventTime,
+    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
     -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(v.EnteredWaitingRoom,NOW()) AS CurrentTimeSpent,
+	TIMEDIFF(NOW(),v.EnteredWaitingRoom) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(SECOND, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(SECOND, v.EnteredWaitingRoom,NOW())) AS QueueScore
     FROM tblVisits v
@@ -137,9 +137,9 @@ $WaitListSelect = $mysqli->prepare(
     v.EnteredWaitingRoom, 
     s.ServiceID,
     -- Algorithm: Current Time minus Time Registered = Total Event Time (T)
-    TIMEDIFF(v.FirstCheckedIn,NOW()) AS TotalEventTime,
+    TIMEDIFF(NOW(),v.FirstCheckedIn) AS TotalEventTime,
     -- Current Time minus Time in Wait Room = Current Time Spent in Wait Room (W)
-	TIMEDIFF(v.EnteredWaitingRoom,NOW()) AS CurrentTimeSpent,
+	TIMEDIFF(NOW(),v.EnteredWaitingRoom) AS CurrentTimeSpent,
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	TIMESTAMPDIFF(SECOND, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(SECOND, v.EnteredWaitingRoom,NOW())) AS QueueScore
     FROM tblVisits v
