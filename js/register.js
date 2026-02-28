@@ -765,6 +765,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             services: Array.from(
                 document.querySelectorAll('input[name="clientServices"]:checked')
             ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
         };
     } else {
         // New user: send full registration payload
@@ -801,6 +802,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             services: Array.from(
                 document.querySelectorAll('input[name="clientServices"]:checked')
             ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
         };
     }
 

@@ -79,6 +79,15 @@ if ($clientID) {
         }
     }
 
+    // Set TranslatorNeeded based on registration language
+    $language = $_POST['language'] ?? 'en';
+    $translatorNeeded = ($language === 'es') ? 1 : 0;
+    $translatorUpdate = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
+    if ($translatorUpdate) {
+        $translatorUpdate->bind_param("is", $translatorNeeded, $clientID);
+        $translatorUpdate->execute();
+    }
+
     $noAddress = $_POST['noAddress'] ?? true;
 
     // Address
@@ -370,17 +379,19 @@ if ($clientID) {
     $dob = $_POST['dob'];
     $sex = strtolower(trim($_POST['sex']));
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
+    $language = $_POST['language'] ?? 'en';
+    $translatorNeeded = ($language === 'es') ? 1 : 0;
 
     // Insert client
     $mysqli->begin_transaction();
-    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated, TranslatorNeeded) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$clientCreation) {
         $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
         exit;
     }
-    $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $dateCreated);
+    $clientCreation->bind_param("ssssssssi", $clientID, $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $dateCreated, $translatorNeeded);
     if (!$clientCreation->execute()) {
         $mysqli->rollback();
         http_response_code(500);

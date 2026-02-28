@@ -45,12 +45,13 @@ $clientDataStmt = $mysqli->prepare(
         c.MiddleInitial, 
         c.LastName, 
         c.DOB, 
+        c.TranslatorNeeded,
         GROUP_CONCAT(s.ServiceID) AS ServiceSelections
     FROM tblClients c
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
     LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
     WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
 );
 
 // Checks for if the connection to mysql is a success
