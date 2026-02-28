@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  Feb 24 @ 9:00 PM
- * Changes Made:      Added dynamic service progress bars and added dynamic color
+ * Last Modified By:  Matthew
+ * Last Modified On:  Feb 28 @ 12:12 PM
+ * Changes Made:      Removed automatic refresh
  * ============================================================
 */
 
@@ -656,13 +656,3 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 //================================================================================
 // 8. INITIALIZATION
 fetchRegistrationQueue();
-
-// Auto-refresh every 3 minutes (unless checkIn modal is open)
-setInterval(() => {
-    const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
-    const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
-    if (!checkInOpen && !qrOpen) {
-        fetchRegistrationQueue();
-    }
-    console.log("Fetching registered clients....")
-}, 180000); 
