@@ -8,40 +8,149 @@
  *  Changes Made:      Created file
  * ============================================================
 */
+ 
 
 (function () {
 
-    function updateCounter(valueId, plusId, minusId) {
-        var valueCounter = document.getElementById(valueId);
-        var plusCounter = document.getElementById(plusId);
-        var minusCounter = document.getElementById(minusId);
+    // References for counter displays
+    var clientsServed = document.getElementById('clientsServed');
+    var volunteersServed = document.getElementById('volunteersServed');
 
-        if (!valueCounter || !plusCounter || !minusCounter) {
-            return;
+    // References for control buttons
+    var clientsPlus = document.getElementById('clientsPlus');
+    var clientsMinus = document.getElementById('clientsMinus');
+
+    var volunteersPlus = document.getElementById('volunteersPlus');
+    var volunteersMinus = document.getElementById('volunteersMinus');
+
+    // References for status text
+    var statusText = document.getElementById('foodTruckStatus');
+
+    // Sends us eventid, every save should go to the same eventid    
+    var currentEventID = null;
+
+
+    // Show status message under the buttons
+    function setStatus(message, isError) {
+        if (!statusText) return;
+
+        statusText.textContent = message;
+
+        // If something failed, make it red
+        if (isError) {
+            statusText.classList.add('text-danger');
+            statusText.classList.remove('text-muted');
+        } else {
+            statusText.classList.remove('text-danger');
+            statusText.classList.add('text-muted');
         }
+    }
 
-        // Read current display value
-        function getValue() {
-            return Number.parseInt(valueCounter.textContent, 10) || 0;
-        }
+    // Read number from counter
+    function getCounterValue(element) {
+        return Number.parseInt(element.textContent, 10) || 0;
+    }
 
-        // Update value, make sure it doesnt go below 0
-        function updateValue(nextValue) {
-            valueCounter.textContent = String(Math.max(0, nextValue));
-        }
+    // Write number to counter
+    function setCounterValue(element, value) {
+        element.textContent = String(Math.max(0, Number.parseInt(value, 10) || 0));
+    }
 
-        // Plus control on right sides
-        plusCounter.addEventListener('click', function () {
-            updateValue(getValue() + 1);
+    // Pull values from backend when reloading
+    function loadStats() {
+        setStatus('Loading latest food truck stats.');
+
+        fetch('../api/food-truck-stats.php', { method: 'GET' })
+
+            .then(function (response) {
+                return response.json();
+            })
+
+            .then(function (result) {
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Could not load stats.');
+                }
+
+                // Save event ID in case backend just created it
+                currentEventID = result.eventID || currentEventID;
+
+                // Update what the user sees
+                setCounterValue(clientsServed, result.stats.clientsServed);
+                setCounterValue(volunteersServed, result.stats.volunteersServed);
+
+                setStatus('Updated from database.');
+            })
+
+            .catch(function (error) {
+                setStatus('Load failed: ' + error.message, true);
+            });
+    }
+
+
+    // Add or subtract counter in the database after each +/- click
+    function saveCounter(counterName, value) {
+        return fetch('../api/food-truck-stats.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                EventID: currentEventID,
+                counterName: counterName,
+                value: value
+            })
+        })
+
+            .then(function (response) {
+                return response.json();
+            })
+
+            .then(function (result) {
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Save failed.');
+                }
+
+                currentEventID = result.eventID || currentEventID;
+
+                setStatus('Saved.');
+            })
+
+            .catch(function (error) {
+                setStatus('Save failed: ' + error.message, true);
+
+                // If something went wrong, reload real values
+                loadStats();
+            });
+    }
+
+
+
+   // Handles click events for + and - buttons per counter
+    function setupCounter(element, plusBtn, minusBtn, key) {
+
+        if (!element || !plusBtn || !minusBtn) return;
+
+        plusBtn.addEventListener('click', function () {
+            var next = getCounterValue(element) + 1;
+            setCounterValue(element, next);
+            saveCounter(key, next);
         });
 
-        // Minus control on left sides
-        minusCounter.addEventListener('click', function () {
-            updateValue(getValue() - 1);
+        minusBtn.addEventListener('click', function () {
+            var next = getCounterValue(element) - 1;
+            setCounterValue(element, next);
+            saveCounter(key, next);
         });
     }
 
-    // Call functions for both counters
-    updateCounter('clientsServed', 'clientsPlus', 'clientsMinus');
-    updateCounter('volunteersServed', 'volunteersPlus', 'volunteersMinus');
+    // Set up both counters
+    setupCounter(clientsServed, clientsPlus, clientsMinus, 'clientsServed');
+    setupCounter(volunteersServed, volunteersPlus, volunteersMinus, 'volunteersServed');
+
+    // Initial database load + every minute refresh
+    loadStats();
+    setInterval(loadStats, 40000);
+
 })();
