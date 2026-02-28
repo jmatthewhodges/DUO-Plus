@@ -247,7 +247,7 @@ function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
 
     //fetch queue data from API
-    fetch('../api/GrabQueue.php?RegistrationStatus=Registered', {
+    fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
