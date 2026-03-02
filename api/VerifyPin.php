@@ -1,12 +1,12 @@
 <?php
 /**
  * ============================================================
- *  File:        VerifyPin.php
- *  Purpose:     API endpoint for verifying PIN code for access restriction
- * 
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:48 PM
- *  Changes Made:      Code cleanup
+ * File:          VerifyPin.php
+ * Description:   API endpoint for PIN code access restriction.
+ *
+ * Last Modified By:  Cameron
+ * Last Modified On:  Mar 1 9:00 PM
+ * Changes Made:      Changed error handling to support sweetalrts JS side
  * ============================================================
 */
 
@@ -29,8 +29,14 @@ function logError(string $context, string $detail): void {
 // Session & method guard
 session_start();
 
+// Handle GET request: Check if user has valid session
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $verified = isset($_SESSION['pin_verified']) && $_SESSION['pin_verified'] === true;
+    respond(200, ['verified' => $verified]);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST.']);
+    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST or GET.']);
 }
 
 // Parse & validate JSON body BEFORE rate limit check
@@ -45,14 +51,14 @@ $pin      = $input['pin']      ?? null;
 $name     = trim($input['name']     ?? '');
 $pageName = trim($input['pageName'] ?? '');
 
+// Validate PIN format (must be exactly 6 digits)
+if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
+    respond(400, ['success' => false, 'error' => 'Invalid PIN']);
+}
+
 // Validate name
 if (empty($name) || !is_string($name)) {
     respond(400, ['success' => false, 'error' => 'Please enter your name.']);
-}
-
-// Validate PIN format (must be exactly 6 digits)
-if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
-    respond(400, ['success' => false, 'error' => 'PIN must be exactly 6 digits.']);
 }
 
 // Sanitize pageName — allow only alphanumeric, dashes, underscores
@@ -71,11 +77,6 @@ if (!isset($_SESSION[$rateLimitKey])) {
 } elseif (time() - $_SESSION[$rateLimitKey]['time'] >= $windowSecs) {
     // Window expired — reset
     $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
-}
-
-// Block before even hitting the DB if already locked out
-if ($_SESSION[$rateLimitKey]['count'] >= $maxAttempts) {
-    respond(429, ['success' => false, 'error' => 'Too many failed attempts. Please ask for the code before continuing.']);
 }
 
 // Database connection
@@ -134,7 +135,18 @@ if ($pin !== $correctPin) {
 // PIN correct — reset rate limit counter
 $_SESSION[$rateLimitKey]['count'] = 0;
 
-// Log successful access to tblPinCodeLogs
+// ---------------------------------------------------------------
+// 7. Set secure session flag
+// ---------------------------------------------------------------
+$_SESSION['pin_verified'] = true;
+session_write_close();  // Ensure session is saved before responding
+
+// Debug: Log what we just set
+error_log("PIN verified for $name. Session ID: " . session_id());
+
+// ---------------------------------------------------------------
+// 8. Log successful access to tblPinCodeLogs
+// ---------------------------------------------------------------
 $pinCodeLogID = bin2hex(random_bytes(8)); // 16-char hex, consistent with rest of codebase
 $currentTime  = date('Y-m-d H:i:s');
 
@@ -154,5 +166,7 @@ if (!$logStmt) {
     $logStmt->close();
 }
 
-// Success
+// ---------------------------------------------------------------
+// 9. Success
+// ---------------------------------------------------------------
 respond(200, ['success' => true, 'message' => 'PIN verified successfully.']);

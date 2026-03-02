@@ -1,23 +1,52 @@
-/**
+/*
  * ============================================================
  *  File:        pinCode.js
- *  Purpose:     Handles user authentication via a PIN modal.
- * 
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:51 PM
- *  Changes Made:      Code cleanup
+ *  Description: modular script for handling PIN code verification.
+ *               Hides content until PIN is verified.
+ *
+ *  Last Modified By:  Cameron
+ *  Last Modified On:  Mar 1 @ 9:00 aM
+ *  Changes Made:      Replaced custom error boxes with sweetalerts
  * ============================================================
 */
-
 // PIN Modal - Fully modular component
-// Add to any page: <script src="../js/pinCode.js"></script>
+//
+// SECURITY SETUP:
+// ===============
+// 1. Frontend: This script hides content until PIN verified
+// 2. IMPORTANT!!!! Backend: Protect any API endpoints by adding this line to 
+//    each API file that fetches protected data:
+//    Add to top any page: <script src="../js/pinCode.js"></script>
+//    Add to top any API file: require_once __DIR__ . '/pin-required.php';
+
+//
+// Example: In /api/GrabQueue.php, add after other requires:
+//    require_once __DIR__ . '/pin-required.php';
+//
+// This will:
+// - Return 403 JSON error if API request lacks valid PIN session
+// - Redirect to /index.html if HTML page request lacks valid session
+
+// Hide page content immediately (before it renders)
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .container-fluid {
+            display: none !important;
+        }
+        body.pin-verified .container-fluid {
+            display: block !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
 
 function initializePINModal() {
     // HTML INJECTION: Create and inject modal into page if not already present
     // Modal includes PIN input fields, name input, error message display, and verify button
     if (!document.getElementById('pinCodeModal')) {
         const modalHTML = `
-        <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header border-0 pb-0 bg-primary">
@@ -39,7 +68,6 @@ function initializePINModal() {
                             <div class="d-flex justify-content-center gap-3 mb-4">
                                 <input type="text" maxlength="30" class="form-control" placeholder="Enter Name" aria-label="Enter Name">
                             </div>
-                            <div id="pinErrorMessage" class="alert alert-danger d-none" role="alert" style="font-size: 0.75rem; padding: 0.375rem 0.5rem; margin-bottom: 0.75rem;"></div>
                             <button type="submit" id="submitPinBtn" aria-label="Verify PIN button" class="btn btn-primary w-100">Verify PIN</button>
                         </form>
                     </div>
@@ -51,16 +79,24 @@ function initializePINModal() {
     }
 
     const clearInputs = (inputs) => inputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
-    const showError = (msg, err) => err.textContent = msg;
-    const hideError = (err) => err.classList.add('d-none');
 
-    // PERSISTENCE: Check if user already verified PIN in this browser
-    let pinVerified = localStorage.getItem('pinVerified') === 'true' ? true : false;
+    // Track PIN verification in this session (frontend only - real verification is server-side)
+    let pinVerified = false;
+
+    // Check if user already has a valid server session
+    async function checkServerSession() {
+        try {
+            const response = await fetch('/api/VerifyPin.php');
+            const data = await response.json();
+            return data.verified === true;
+        } catch (e) {
+            return false;
+        }
+    }
 
     // DOM element references
     const inputs = document.querySelectorAll('.pin-input');
     const form = document.getElementById('pinCodeForm');
-    const errorMsg = document.getElementById('pinErrorMessage');
     const modal = document.getElementById('pinCodeModal');
     const submitBtn = document.getElementById('submitPinBtn');
     const nameEntry = document.getElementById('nameEntry');
@@ -116,17 +152,25 @@ function initializePINModal() {
     const closeButtons = modal.querySelectorAll('.btn-close');
     closeButtons.forEach(btn => btn.style.display = 'none');
 
-    // INITIALIZATION: If already verified in session, skip modal
-    // Otherwise apply blur and show modal
-    const blurTarget = document.querySelector('.container-fluid') || document.body;
+    // INITIALIZATION: Check server session, show content if verified
+    const pinModal = new bootstrap.Modal(modal, { backdrop: 'static', keyboard: false });
     
-    if (pinVerified) {
-        blurTarget.classList.add('pin-verified');
-    } else {
-        // Apply blur while waiting for PIN
-        blurTarget.style.filter = 'blur(4px)';
-        setTimeout(() => new bootstrap.Modal(modal, { backdrop: 'static', keyboard: false }).show(), 500);
-    }
+    // Check if user has valid session
+    checkServerSession().then(isVerified => {
+        if (isVerified) {
+            // User already verified - show content
+            pinVerified = true;
+            document.body.classList.add('pin-verified');
+            // Notify other JS files that PIN is verified
+            document.dispatchEvent(new CustomEvent('pinVerified'));
+        } else {
+            // User not verified - show modal
+            pinModal.show();
+        }
+    }).catch(() => {
+        // On error, show modal to be safe
+        pinModal.show();
+    });
 
     // PIN INPUT HANDLING: Setup event listeners for each PIN digit input
     inputs.forEach((input, i) => {
@@ -190,38 +234,55 @@ function initializePINModal() {
                 throw new Error(data.error || 'Verification failed');
             }
 
-            // SUCCESS: Set session, unblur screen, close modal
+            // SUCCESS: Show content, close modal
             pinVerified = true;
-            localStorage.setItem('pinVerified', 'true');
-            document.body.setAttribute('data-pin-verified', 'true');
-            hideError(errorMsg);
-            const blurTarget = document.querySelector('.container-fluid') || document.body;
-            blurTarget.style.filter = '';  // Remove inline blur
-            blurTarget.classList.add('pin-verified');
-            bootstrap.Modal.getInstance(modal).hide();
-        } catch (err) {
-            // FAILURE: Display error message
-            showError(err.message, errorMsg);
-            errorMsg.classList.remove('d-none');
+            document.body.classList.add('pin-verified');
             
-            // Clear only the invalid field - keep the valid one
-            if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
-                // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
-                clearInputs(inputs);
-                inputs[0].focus();
-            } else if (err.message === 'Please enter your name') {
-                // Name is missing, keep PIN, clear name and refocus on name
-                nameInput.value = '';
-                nameInput.focus();
-            } else {
-                // Other errors (rate limit, etc) - clear name only
-                nameInput.value = '';
-                nameInput.focus();
+            // Close modal and remove backdrop
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            modalInstance.hide();
+            
+            // Remove the modal backdrop if it exists
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
             }
+            document.body.classList.remove('modal-open');
+            
+            // Refresh page to load all data with authenticated session
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+
+        } catch (err) {
+            // FAILURE: Display error using SweetAlert
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message,
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                // Clear only the invalid field - keep the valid one
+                if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
+                    // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
+                    clearInputs(inputs);
+                    inputs[0].focus();
+                } else if (err.message === 'Please enter your name') {
+                    // Name is missing, keep PIN, clear name and refocus on name
+                    nameInput.value = '';
+                    nameInput.focus();
+                } else {
+                    // Other errors (rate limit, etc) - clear name only
+                    nameInput.value = '';
+                    nameInput.focus();
+                }
+                // Re-enable button after alert is dismissed
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Verify PIN';
+                isSubmitting = false; // Allow new submissions
+            });
         } finally {
-            // RESTORE UI: Re-enable button after response
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Verify PIN';
         }
     });
 
@@ -232,7 +293,6 @@ function initializePINModal() {
         }
         inputs[0].focus();
         clearInputs(inputs);
-        hideError(errorMsg);
     });
 }
 
