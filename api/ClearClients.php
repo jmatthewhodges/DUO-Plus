@@ -5,11 +5,12 @@
  *  Purpose:     Clear all test/client-related data from the db
  * 
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 9:33 PM
- *  Changes Made:      Updated to only clear test data
+ *  Last Modified On:  Feb 24 @ 6:39 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
- */
+*/
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
@@ -40,6 +41,7 @@ $tables = [
 ];
 
 $errors = [];
+
 foreach ($tables as $table) {
     if (!$mysqli->query("TRUNCATE TABLE `$table`")) {
         $errors[] = "Failed to truncate $table: " . $mysqli->error;

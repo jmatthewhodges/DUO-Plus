@@ -2,17 +2,18 @@
 /**
  * ============================================================
  *  File:        Register.php
- *  Description: Handles client registration. Supports both
+ *  Purpose:     Handles client registration. Supports both
  *               new user creation and existing user updates
  *               including address, emergency contacts, and
  *               service selections.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 9:26 PM
- *  Changes Made:      Updated for new DB structure
+ *  Last Modified On:  Feb 26 @ 9:28 PM
+ *  Changes Made:      Remove pre-fill on login
  * ============================================================
 */
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
@@ -45,9 +46,6 @@ if (!is_array($_POST)) {
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
-// Defaults
-$queue = "registration";
-
 // Check if existing user or new user
 $clientID = $_POST['clientID'] ?? null;
 
@@ -55,27 +53,39 @@ if ($clientID) {
     $mysqli->begin_transaction();
     // EXISTING USER - UPDATE
     
-    $firstName = isset($_POST['firstName']) ? ucfirst(strtolower(trim($_POST['firstName']))) : null;
-    $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
-    $lastName = isset($_POST['lastName']) ? ucfirst(strtolower(trim($_POST['lastName']))) : null;
-    $dob = $_POST['dob'] ?? null;
-    $sex = strtolower(trim($_POST['sex']));
-    $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
+    // Only update personal info if fields were actually submitted (logged-in users doing
+    // service-only re-registration won't send these, so we skip to avoid blanking their record)
+    if (!empty($_POST['firstName']) && !empty($_POST['lastName'])) {
+        $firstName = ucfirst(strtolower(trim($_POST['firstName'])));
+        $middleInitial = isset($_POST['middleInitial']) && $_POST['middleInitial'] !== '' ? strtoupper(trim($_POST['middleInitial'])) : null;
+        $lastName = ucfirst(strtolower(trim($_POST['lastName'])));
+        $dob = $_POST['dob'] ?? null;
+        $sex = strtolower(trim($_POST['sex'] ?? ''));
+        $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
 
-    // Update client info
-    $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
-    if (!$clientUpdate) {
-        $mysqli->rollback();
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
-        exit;
+        $clientUpdate = $mysqli->prepare("UPDATE tblClients SET FirstName = ?, MiddleInitial = ?, LastName = ?, DOB = ?, Sex = ?, Phone = ? WHERE ClientID = ?");
+        if (!$clientUpdate) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
+        $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
+        if (!$clientUpdate->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $clientUpdate->error]);
+            exit;
+        }
     }
-    $clientUpdate->bind_param("sssssss", $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $clientID);
-    if (!$clientUpdate->execute()) {
-        $mysqli->rollback();
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $clientUpdate->error]);
-        exit;
+
+    // Set TranslatorNeeded based on registration language
+    $language = $_POST['language'] ?? 'en';
+    $translatorNeeded = ($language === 'es') ? 1 : 0;
+    $translatorUpdate = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
+    if ($translatorUpdate) {
+        $translatorUpdate->bind_param("is", $translatorNeeded, $clientID);
+        $translatorUpdate->execute();
     }
 
     $noAddress = $_POST['noAddress'] ?? true;
@@ -241,7 +251,7 @@ if ($clientID) {
         }
     }
 
-    // (Optional) Remove previous selections for this client/event
+    // Remove previous selections for this client/event
     $deleteOld = $mysqli->prepare("DELETE FROM tblVisitServiceSelections WHERE ClientID = ? AND EventID = ?");
     if (!$deleteOld) {
         $mysqli->rollback();
@@ -305,8 +315,22 @@ if ($clientID) {
     }
 
     $mysqli->commit();
+
+    // Fetch name for QR card display
+    $nameQuery = $mysqli->prepare("SELECT FirstName, LastName FROM tblClients WHERE ClientID = ?");
+    $nameQuery->bind_param("s", $clientID);
+    $nameQuery->execute();
+    $nameResult = $nameQuery->get_result()->fetch_assoc();
+
     http_response_code(200);
-    $msg = json_encode(['success' => true, 'message' => 'Information and services updated successfully.']);
+    $msg = json_encode([
+        'success' => true,
+        'message' => 'Information and services updated successfully.',
+        'clientID' => $clientID,
+        'firstName' => $nameResult['FirstName'] ?? '',
+        'lastName' => $nameResult['LastName'] ?? '',
+        'services' => $services
+    ]);
     echo $msg;
     error_log($msg);
 
@@ -355,17 +379,19 @@ if ($clientID) {
     $dob = $_POST['dob'];
     $sex = strtolower(trim($_POST['sex']));
     $phone = isset($_POST['phone']) && $_POST['phone'] !== '' ? $_POST['phone'] : null;
+    $language = $_POST['language'] ?? 'en';
+    $translatorNeeded = ($language === 'es') ? 1 : 0;
 
     // Insert client
     $mysqli->begin_transaction();
-    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated, TranslatorNeeded) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$clientCreation) {
         $mysqli->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
         exit;
     }
-    $clientCreation->bind_param("ssssssss", $clientID, $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $dateCreated);
+    $clientCreation->bind_param("ssssssssi", $clientID, $firstName, $middleInitial, $lastName, $dob, $sex, $phone, $dateCreated, $translatorNeeded);
     if (!$clientCreation->execute()) {
         $mysqli->rollback();
         http_response_code(500);
@@ -531,17 +557,24 @@ if ($clientID) {
     // Insert visit record to put client in registration queue
     $visitID = bin2hex(random_bytes(8));
     $registrationStatus = 'Registered';
-    $checkInTime = null;
+    $FirstCheckedIn = null;
     $qrCodeData = null;
-    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
+    $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, FirstCheckedIn, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
     if ($visitInsert) {
-        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
+        $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $FirstCheckedIn, $qrCodeData);
         $visitInsert->execute();
     }
 
     $mysqli->commit();
     http_response_code(201);
-    $msg = json_encode(['success' => true, 'message' => 'New client created and services selected.']);
+    $msg = json_encode([
+        'success' => true,
+        'message' => 'New client created and services selected.',
+        'clientID' => $clientID,
+        'firstName' => $firstName,
+        'lastName' => $lastName,
+        'services' => $services
+    ]);
     echo $msg;
     error_log($msg);
 }

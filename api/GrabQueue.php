@@ -48,12 +48,13 @@ $clientDataStmt = $mysqli->prepare(
         c.MiddleInitial, 
         c.LastName, 
         c.DOB, 
+        c.TranslatorNeeded,
         GROUP_CONCAT(s.ServiceID) AS ServiceSelections
     FROM tblClients c
     LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
     LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
     WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB"
+    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
 );
 
 // Checks for if the connection to mysql is a success
@@ -96,12 +97,40 @@ if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];
 }
 
+// Fetch service availability data from tblEventServices
+$serviceAvailability = [];
+$serviceQuery = $mysqli->prepare(
+    "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed,
+            s.ServiceName
+     FROM tblEventServices es
+     LEFT JOIN tblServices s ON es.ServiceID = s.ServiceID
+     WHERE es.EventID = ?"
+);
+
+if ($serviceQuery) {
+    $serviceQuery->bind_param('s', $EventID);
+    $serviceQuery->execute();
+    $serviceResult = $serviceQuery->get_result();
+    
+    while ($serviceRow = $serviceResult->fetch_assoc()) {
+        $serviceAvailability[] = [
+            'serviceID' => $serviceRow['ServiceID'],
+            'serviceName' => $serviceRow['ServiceName'],
+            'maxCapacity' => (int)$serviceRow['MaxCapacity'],
+            'currentAssigned' => (int)$serviceRow['CurrentAssigned'],
+            'isClosed' => (int)$serviceRow['IsClosed']
+        ];
+    }
+    $serviceQuery->close();
+}
+
 http_response_code(200);
 $msg = json_encode([
     'success' => true,
     'count' => count($rows),
     'data' => $rows,
-    'clientsProcessed' => $clientsProcessed
+    'clientsProcessed' => $clientsProcessed,
+    'services' => $serviceAvailability
 ]);
 echo $msg;
 error_log($msg);
