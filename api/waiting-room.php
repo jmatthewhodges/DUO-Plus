@@ -50,7 +50,7 @@ $NowServingSelect = $mysqli->prepare(
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	-- TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom,NOW())) AS QueueScore
     -- FIFO (simple algo)
-	TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom) AS QueueScore
+	TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) AS QueueScore
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
@@ -99,7 +99,7 @@ $WaitListSelect = $mysqli->prepare(
     -- W + (x * T) = Priority Score (shown as integer instead of a date)
 	-- TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) + (0.5 * TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom,NOW())) AS QueueScore
     -- FIFO (simple algo)
-	TIMESTAMPDIFF(MINUTE, v.EnteredWaitingRoom) AS QueueScore
+	TIMESTAMPDIFF(MINUTE, v.FirstCheckedIn,NOW()) AS QueueScore
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
