@@ -109,7 +109,7 @@ var translations = {
   es: {
     // Login
     subtitle: "Conectando pacientes con atención<br>gratuita a través de DUO",
-    lblClientEmail: "Email",
+    lblClientEmail: "Correo electrónico",
     lblClientPassword: "Contraseña",
     lblShowPassword: "Mostrar contraseña",
     btnClientLogin: "Iniciar sesión",
@@ -121,7 +121,7 @@ var translations = {
 
     // Step 1 - Login Info
     titleStepOne: 'Información de Acceso',
-    clientRegisterEmailLabel: 'Email <span class="text-danger" aria-hidden="true">*</span>',
+    clientRegisterEmailLabel: 'Correo electrónico <span class="text-danger" aria-hidden="true">*</span>',
     emailError: 'Por favor, ingrese una dirección de correo electrónico válida.',
     clientRegisterPassLabel: 'Contraseña <span class="text-danger" aria-hidden="true">*</span>',
     passwordError: 'La contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',

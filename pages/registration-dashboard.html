@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  Feb 24 @ 9:00 PM
- * Changes Made:      Changed for new DB structure and added dynamic service progress bars.
+ * Last Modified By:  Matthew
+ * Last Modified On:  Feb 28 @ 12:14 PM
+ * Changes Made:      Added manual refresh option.
  * ============================================================
 !-->
 <!DOCTYPE html>
@@ -43,16 +43,22 @@
                             <div class="divider"></div>
                             <button id="btn-checked-in" class="toggle-btn p-0">Checked In</button>
                         </div>
-                        <div class="input-group input-group-sm" style="max-width: 280px;">
-                            <span class="input-group-text bg-white border-0 rounded-start-pill">
-                                <i class="bi bi-search text-secondary"></i>
-                            </span>
-                            <input type="text" id="registrationSearch" class="form-control border-0"
-                                placeholder="Search by name..." autocomplete="off"
-                                style="box-shadow: none; outline: none;">
-                            <button class="btn btn-sm bg-white border-0 px-2 rounded-end-pill" id="clearSearchBtn"
-                                style="display:none;" title="Clear search">
-                                <i class="bi bi-x-lg text-secondary" style="font-size: 0.75rem;"></i>
+                        <div class="d-flex align-items-center ms-auto gap-2" style="min-width: 0;">
+                            <div class="input-group input-group-sm" style="max-width: 280px;">
+                                <span class="input-group-text bg-white border-0 rounded-start-pill">
+                                    <i class="bi bi-search text-secondary"></i>
+                                </span>
+                                <input type="text" id="registrationSearch" class="form-control border-0"
+                                    placeholder="Search by name..." autocomplete="off"
+                                    style="box-shadow: none; outline: none;">
+                                <button class="btn btn-sm bg-white border-0 px-2 rounded-end-pill" id="clearSearchBtn"
+                                    style="display:none;" title="Clear search">
+                                    <i class="bi bi-x-lg text-secondary" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-sm text-white border-0 p-1 ms-2" id="refreshQueueBtn"
+                                onclick="fetchRegistrationQueue()" title="Refresh queue">
+                                <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
                             </button>
                         </div>
                     </div>
@@ -92,8 +98,8 @@
                     <div class="card-body p-3">
                         <div class="row">
                             <div class="col-6 pe-3 border-end">
-                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Currently in
-                                    Registration</h6>
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Pre-registered Clients
+                                </h6>
                                 <div
                                     class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
                                     <i class="bi bi-person-lines-fill h4 mb-0 text-dark"></i>
@@ -102,7 +108,7 @@
                             </div>
 
                             <div class="col-6 ps-3">
-                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Processed Patients</h6>
+                                <h6 class="text-primary fw-bold mb-2" style="font-size: 0.9rem;">Registered Clients</h6>
                                 <div
                                     class="bg-white rounded-pill border shadow-sm p-2 px-3 d-flex justify-content-between align-items-center">
                                     <i class="bi bi-person-check-fill h4 mb-0 text-dark"></i>
@@ -117,7 +123,7 @@
                     <div class="card-header bg-primary p-3">
                         <h5 class="text-white mb-0 fw-bold">Availability</h5>
                     </div>
-                        <div class="card-body d-flex flex-column gap-3 p-3">
+                    <div class="card-body d-flex flex-column gap-3 p-3">
 
                         <div id="service-medical-exam">
                             <div class="d-flex justify-content-between mb-1">
@@ -131,7 +137,8 @@
 
                         <div id="service-medical-follow-up">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Follow Up</span>
+                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Follow
+                                    Up</span>
                                 <span class="fw-bold service-count" style="color:black;">(0/0)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
@@ -202,7 +209,8 @@
                 <!-- Medical Section -->
                 <div id="modalMedicalSection" class="mb-4 d-none p-3 border rounded bg-light">
                     <label class="fw-bold mb-2 text-primary">Select Medical Service:</label>
-                    <p class="text-muted small mb-2">Patient may only select one medical service per visit.</p>
+                    <p class="text-muted small mb-2">Choose Exam if this is the patient's first time, Follow Up if
+                        they've been here before.</p>
                     <div class="d-flex gap-4">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="medicalChoice" id="medicalExam"
@@ -220,7 +228,8 @@
                 <!-- Dental Section -->
                 <div id="modalDentalSection" class="mb-4 d-none p-3 border rounded bg-light">
                     <label class="fw-bold mb-2 text-primary">Select Dental Service:</label>
-                    <p class="text-muted small mb-2">Patient may only select one dental service per visit.</p>
+                    <p class="text-muted small mb-2">Extraction is surgical pulling of teeth, Hygiene is everything
+                        else.</p>
                     <div class="d-flex gap-4">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="dentalChoice" id="dentalHygiene"
@@ -265,10 +274,14 @@
             <h1 class="mb-2" style="color:black;" id="qrCardTitle"></h1>
             <canvas class="p-3" id="qr"></canvas>
             <div class="d-flex justify-content-center gap-3 mt-3">
-                <i class="bi bi-heart-pulse qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;" id="qrCardMedicalIcon"></i>
-                <i class="bi bi-shield-shaded qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
-                <i class="bi bi-eye qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;" id="qrCardOpticalIcon"></i>
-                <i class="bi bi-scissors qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
+                <i class="bi bi-heart-pulse qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;"
+                    id="qrCardMedicalIcon"></i>
+                <i class="bi bi-shield-shaded qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;"
+                    id="qrCardDentalIcon"></i>
+                <i class="bi bi-eye qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;"
+                    id="qrCardOpticalIcon"></i>
+                <i class="bi bi-scissors qr-icon-border" style="visibility: hidden; font-size: 3rem; color:black;"
+                    id="qrCardHaircutIcon"></i>
             </div>
             <div class="d-flex justify-content-center gap-2 mt-3">
                 <button type="button" class="btn bg-primary text-white btn-sm" id="printQrBtn">

@@ -505,6 +505,17 @@ body.v-center-page {
     color: #174593;
 }
 
+/* Register link hover */
+#btn2Register {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2Register:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
 /* Button chip (used in register.html step-jumper) */
 .dev-step-btn {
     font-size: 0.7rem;
