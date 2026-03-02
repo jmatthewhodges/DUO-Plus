@@ -5,8 +5,8 @@
  *               Hides content until PIN is verified.
  *
  *  Last Modified By:  Cameron
- *  Last Modified On:  Feb 27 @ 9:00 aM
- *  Changes Made:      added foreced page reload, it fixes an error
+ *  Last Modified On:  Mar 1 @ 9:00 aM
+ *  Changes Made:      Replaced custom error boxes with sweetalerts
  * ============================================================
 */
 // PIN Modal - Fully modular component
@@ -46,7 +46,7 @@ function initializePINModal() {
     // Modal includes PIN input fields, name input, error message display, and verify button
     if (!document.getElementById('pinCodeModal')) {
         const modalHTML = `
-        <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal fade" id="pinCodeModal" tabindex="-1" aria-labelledby="pinCodeModalLabel" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header border-0 pb-0 bg-primary">
@@ -68,7 +68,6 @@ function initializePINModal() {
                             <div class="d-flex justify-content-center gap-3 mb-4">
                                 <input type="text" maxlength="30" class="form-control" placeholder="Enter Name" aria-label="Enter Name">
                             </div>
-                            <div id="pinErrorMessage" class="alert alert-danger d-none" role="alert" style="font-size: 0.75rem; padding: 0.375rem 0.5rem; margin-bottom: 0.75rem;"></div>
                             <button type="submit" id="submitPinBtn" aria-label="Verify PIN button" class="btn btn-primary w-100">Verify PIN</button>
                         </form>
                     </div>
@@ -80,8 +79,6 @@ function initializePINModal() {
     }
 
     const clearInputs = (inputs) => inputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
-    const showError = (msg, err) => err.textContent = msg;
-    const hideError = (err) => err.classList.add('d-none');
 
     // Track PIN verification in this session (frontend only - real verification is server-side)
     let pinVerified = false;
@@ -100,7 +97,6 @@ function initializePINModal() {
     // DOM element references
     const inputs = document.querySelectorAll('.pin-input');
     const form = document.getElementById('pinCodeForm');
-    const errorMsg = document.getElementById('pinErrorMessage');
     const modal = document.getElementById('pinCodeModal');
     const submitBtn = document.getElementById('submitPinBtn');
     const nameEntry = document.getElementById('nameEntry');
@@ -240,7 +236,6 @@ function initializePINModal() {
 
             // SUCCESS: Show content, close modal
             pinVerified = true;
-            hideError(errorMsg);
             document.body.classList.add('pin-verified');
             
             // Close modal and remove backdrop
@@ -260,28 +255,34 @@ function initializePINModal() {
             }, 500);
 
         } catch (err) {
-            // FAILURE: Display error message
-            showError(err.message, errorMsg);
-            errorMsg.classList.remove('d-none');
-            
-            // Clear only the invalid field - keep the valid one
-            if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
-                // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
-                clearInputs(inputs);
-                inputs[0].focus();
-            } else if (err.message === 'Please enter your name') {
-                // Name is missing, keep PIN, clear name and refocus on name
-                nameInput.value = '';
-                nameInput.focus();
-            } else {
-                // Other errors (rate limit, etc) - clear name only
-                nameInput.value = '';
-                nameInput.focus();
-            }
+            // FAILURE: Display error using SweetAlert
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message,
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                // Clear only the invalid field - keep the valid one
+                if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
+                    // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
+                    clearInputs(inputs);
+                    inputs[0].focus();
+                } else if (err.message === 'Please enter your name') {
+                    // Name is missing, keep PIN, clear name and refocus on name
+                    nameInput.value = '';
+                    nameInput.focus();
+                } else {
+                    // Other errors (rate limit, etc) - clear name only
+                    nameInput.value = '';
+                    nameInput.focus();
+                }
+                // Re-enable button after alert is dismissed
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Verify PIN';
+                isSubmitting = false; // Allow new submissions
+            });
         } finally {
-            // RESTORE UI: Re-enable button after response
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Verify PIN';
         }
     });
 
@@ -292,7 +293,6 @@ function initializePINModal() {
         }
         inputs[0].focus();
         clearInputs(inputs);
-        hideError(errorMsg);
     });
 }
 

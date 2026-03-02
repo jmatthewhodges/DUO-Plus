@@ -5,8 +5,8 @@
  * Description:   API endpoint for PIN code access restriction.
  *
  * Last Modified By:  Cameron
- * Last Modified On:  Feb 26 11:00 PM
- * Changes Made:      Added session creation and validation
+ * Last Modified On:  Mar 1 9:00 PM
+ * Changes Made:      Changed error handling to support sweetalrts JS side
  * ============================================================
 */
 
@@ -51,14 +51,14 @@ $pin      = $input['pin']      ?? null;
 $name     = trim($input['name']     ?? '');
 $pageName = trim($input['pageName'] ?? '');
 
+// Validate PIN format (must be exactly 6 digits)
+if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
+    respond(400, ['success' => false, 'error' => 'Invalid PIN']);
+}
+
 // Validate name
 if (empty($name) || !is_string($name)) {
     respond(400, ['success' => false, 'error' => 'Please enter your name.']);
-}
-
-// Validate PIN format (must be exactly 6 digits)
-if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
-    respond(400, ['success' => false, 'error' => 'PIN must be exactly 6 digits.']);
 }
 
 // Sanitize pageName — allow only alphanumeric, dashes, underscores
@@ -77,11 +77,6 @@ if (!isset($_SESSION[$rateLimitKey])) {
 } elseif (time() - $_SESSION[$rateLimitKey]['time'] >= $windowSecs) {
     // Window expired — reset
     $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
-}
-
-// Block before even hitting the DB if already locked out
-if ($_SESSION[$rateLimitKey]['count'] >= $maxAttempts) {
-    respond(429, ['success' => false, 'error' => 'Too many failed attempts. Please ask for the code before continuing.']);
 }
 
 // Database connection
