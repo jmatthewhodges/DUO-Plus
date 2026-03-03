@@ -536,22 +536,31 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 const firstName = nameParts[0].toUpperCase();
                 const lastName = nameParts.slice(1).join(' ');
 
-                // 1. Get the elements
+                // Get the name elements
                 const firstNameEl = document.getElementById('qrCardFirstName');
                 const lastNameEl = document.getElementById('qrCardLastName');
 
-                // 2. Set the text and reset the font size back to default (2.5rem)
-                firstNameEl.innerText = firstName;
-                firstNameEl.style.fontSize = '2.5rem';
-                lastNameEl.innerText = lastName;
-
-                // 3. Auto-Shrink Logic for First Name
-                // If the text is physically wider than its container, shrink it by 0.1rem until it fits
-                let currentFontSize = 2.5;
-                while (firstNameEl.scrollWidth > firstNameEl.clientWidth && currentFontSize > 0.5) {
-                    currentFontSize -= 0.1;
-                    firstNameEl.style.fontSize = currentFontSize + 'rem';
+                // Scale font size down based on character length so name always fits on one line.
+                // Truncate with ellipsis only as a last resort if over 16 chars.
+                function scaledName(name, maxSize, minSize) {
+                    const len = name.length;
+                    if (len <= 6)  return { text: name, size: maxSize };
+                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
+                    if (len <= 10) return { text: name, size: maxSize * 0.70 };
+                    if (len <= 12) return { text: name, size: maxSize * 0.58 };
+                    if (len <= 14) return { text: name, size: maxSize * 0.50 };
+                    // Beyond 14 chars: truncate and use minimum size
+                    return { text: name.slice(0, 14) + '…', size: minSize };
                 }
+
+                const first = scaledName(firstName, 2.5, 1.1);
+                const last  = scaledName(lastName,  1.5, 0.8);
+
+                firstNameEl.innerText = first.text;
+                firstNameEl.style.fontSize = first.size + 'rem';
+
+                lastNameEl.innerText = last.text;
+                lastNameEl.style.fontSize = last.size + 'rem';
 
                 // Generate QR Code (QRious library)
                 new QRious({
@@ -575,7 +584,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
                 if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
-                // Translator badge
+                // Translator badge: show the icon pinned to top-right of the name area
                 if (isInterpreterNeeded) {
                     document.getElementById('qrCardTranslator').style.display = 'block';
                 }
@@ -718,4 +727,4 @@ setInterval(() => {
         fetchRegistrationQueue();
     }
     console.log("Fetching registered clients....")
-}, 180000); 
+}, 180000);
