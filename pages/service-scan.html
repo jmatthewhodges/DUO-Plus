@@ -4,8 +4,8 @@
  * Description:    Handles the service scan page.
  *
  * Last Modified By:  Cameron
- * Last Modified On:  Mar 1 @ 9:00 PM
- * Changes Made:      Added sweetalrts for pinCode pop ups whenever it's eventually added
+ * Last Modified On:  Mar 3 @ 3:00 AM
+ * Changes Made:      Added QR scanning functionality
  * ============================================================
 !-->
 <!DOCTYPE html>
@@ -31,6 +31,9 @@
                     <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 100px;">
                 </div>
             </div>
+
+            <!-- Service Content (hidden until QR is scanned) -->
+            <div id="serviceContent" style="display: none;">
 
             <!-- Stats Card -->
             <div class="card mb-4">
@@ -226,8 +229,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../assets/js/jsQR.js"></script>
+    <script src="../js/Service.js"></script>
     </body>
 </html>
