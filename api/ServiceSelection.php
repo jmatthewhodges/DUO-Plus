@@ -47,21 +47,17 @@ if (!$queue) {
     exit;
 }
 
-//query that gets the TOTAL number of users in the queue
-$TotalCountStmt = $mysqli->prepare(
-    "SELECT count(c.ClientID)
-    FROM tblVisits v
-    JOIN tblClients c ON v.ClientID = c.ClientID
-    JOIN tblEvents e ON e.EventID = v.EventID
-    JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    JOIN tblVisitServices t on t.ServiceID = s.ServiceID
-    WHERE s.ServiceID = ?"
-);
+
+
 
 //query that gets the TOTAL number of  IN PROGRESS users in the queue
 $inProgressCountStmt = $mysqli->prepare(
-    "SELECT count(c.ClientID)
+    "SELECT 
+    c.ClientID, 
+    c.FirstName,
+    c.MiddleInitial,
+    c.LastName,
+    c.DOB
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
@@ -73,9 +69,40 @@ $inProgressCountStmt = $mysqli->prepare(
     AND t.ServiceStatus = 2"
 );
 
+
+// Checks for if the connection to mysql is a success
+if (!$inProgressCountStmt) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
+
+// Executes prepared query akin to the mysql connection
+$inProgressCountStmt->bind_param('s', $queue);
+if (!$inProgressCountStmt->execute()) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $inProgressCountStmt->error]);
+    echo $msg;
+    error_log($msg);
+    $inProgressCountStmt->close();
+    exit;
+}
+
+// Gets result, fetches all rows, closes statement
+$result = $inProgressCountStmt->get_result();
+$inProgressRows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+$inProgressCountStmt->close();
+
 //query that gets the TOTAL number of COMPLETED users in the queue
 $completedCountStmt = $mysqli->prepare(
-    "SELECT count(c.ClientID)
+    "SELECT 
+    c.ClientID, 
+    c.FirstName,
+    c.MiddleInitial,
+    c.LastName,
+    c.DOB
     FROM tblVisits v
     JOIN tblClients c ON v.ClientID = c.ClientID
     JOIN tblEvents e ON e.EventID = v.EventID
@@ -86,6 +113,31 @@ $completedCountStmt = $mysqli->prepare(
     -- 3 = complete in the DB
     AND t.ServiceStatus = 3"
 );
+
+// Checks for if the connection to mysql is a success
+if (!$completedCountStmt) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
+
+// Executes prepared query akin to the mysql connection
+$completedCountStmt->bind_param('s', $queue);
+if (!$completedCountStmt->execute()) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $completedCountStmt->error]);
+    echo $msg;
+    error_log($msg);
+    $completedCountStmt->close();
+    exit;
+}
+
+// Gets result, fetches all rows, closes statement
+$result = $completedCountStmt->get_result();
+$completedRows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+$completedCountStmt->close();
 
 // Query to get all client data related to the  service scan
 $clientDataStmt = $mysqli->prepare(
@@ -125,7 +177,7 @@ if (!$clientDataStmt->execute()) {
 
 // Gets result, fetches all rows, closes statement
 $result = $clientDataStmt->get_result();
-$rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+$clientDatarows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $clientDataStmt->close();
 
 
@@ -134,12 +186,11 @@ $clientDataStmt->close();
 
 http_response_code(200);
 $msg = json_encode([ 
-   'TotalCount' => $TotalCount,
-    'completedCount' => $completedCount,
-    'inProgressCount' => $inProgressCount,
+    'completedCount' => count($completedRows),
+    'inProgressCount' => count($inProgressRows),
     'success' => true,
-    'count' => count($rows),
-    'data' => $rows
+    'Totalcount' => count($clientDatarows),
+    'data' => $clientDatarows
 
 ]);
 echo $msg;
