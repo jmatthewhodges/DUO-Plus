@@ -9,6 +9,7 @@
  *  Changes Made:      Added quieries for in progress and completed users
  * ============================================================
 */
+//TO-DO :  ADD SUPPORT FOR ANOTHER ENTRY IN THE GET PARAMETER, AND FIX THE DB QUERY
 
 // Database connection from other file
 require_once __DIR__ . '/db.php';
