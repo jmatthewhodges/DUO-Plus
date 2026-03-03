@@ -125,13 +125,33 @@ if (!$WaitListSelect) {
     exit;
 }
 
+/*
+---------------------------------
+The "Available Services" Query
+----------------------------------
+*/
+$ServicesSelect = $mysqli->prepare(
+    "SELECT ServiceID, ServiceName, IconTag FROM tblServices"
+);
+$ServicesSelect->execute();
+$EventServices = $ServicesSelect->get_result()->fetch_all(MYSQLI_ASSOC);
+$ServicesSelect->close();
 
-//display endpoint
+if (!$ServicesSelect) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
+
+// Display endpoint
 http_response_code(200);
 $msg = json_encode([
     'success' => true,
     "NowServing" => $NowServing,
-    "WaitList" => $WaitList
+    "WaitList" => $WaitList,
+    "Services" => $EventServices 
 ]);
 echo $msg;
 error_log($msg);
