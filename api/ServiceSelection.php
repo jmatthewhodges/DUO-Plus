@@ -133,13 +133,14 @@ $clientDataStmt->close();
 
 
 http_response_code(200);
-$msg = json_encode([
+$msg = json_encode([ 
+   'TotalCount' => $TotalCount,
+    'completedCount' => $completedCount,
+    'inProgressCount' => $inProgressCount,
     'success' => true,
     'count' => count($rows),
-    'data' => $rows,
-    'TotalCount' => $TotalCount,
-    'completedCount' => $completedCount,
-    'inProgressCount' => $inProgressCount
+    'data' => $rows
+
 ]);
 echo $msg;
 error_log($msg);
