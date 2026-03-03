@@ -52,21 +52,11 @@ if (!$queue) {
 
 //query that gets the TOTAL number of  IN PROGRESS users in the queue
 $inProgressCountStmt = $mysqli->prepare(
-    "SELECT 
-    c.ClientID, 
-    c.FirstName,
-    c.MiddleInitial,
-    c.LastName,
-    c.DOB
-    FROM tblVisits v
-    JOIN tblClients c ON v.ClientID = c.ClientID
-    JOIN tblEvents e ON e.EventID = v.EventID
-    JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    JOIN tblVisitServices t on t.ServiceID = s.ServiceID
-    WHERE s.ServiceID = ?
+    "SELECT distinct *
+    FROM tblVisitServices
+    WHERE ServiceID = ?
     -- 2 = in progress in the DB
-    AND t.ServiceStatus = 2"
+    AND ServiceStatus = 2"
 );
 
 
@@ -97,21 +87,11 @@ $inProgressCountStmt->close();
 
 //query that gets the TOTAL number of COMPLETED users in the queue
 $completedCountStmt = $mysqli->prepare(
-    "SELECT 
-    c.ClientID, 
-    c.FirstName,
-    c.MiddleInitial,
-    c.LastName,
-    c.DOB
-    FROM tblVisits v
-    JOIN tblClients c ON v.ClientID = c.ClientID
-    JOIN tblEvents e ON e.EventID = v.EventID
-    JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    JOIN tblVisitServices t on t.ServiceID = s.ServiceID
-    WHERE s.ServiceID = ?
+    "SELECT distinct *
+    FROM tblVisitServices
+    WHERE ServiceID = ?
     -- 3 = complete in the DB
-    AND t.ServiceStatus = 3"
+    AND ServiceStatus = 3"
 );
 
 // Checks for if the connection to mysql is a success
@@ -152,7 +132,10 @@ $clientDataStmt = $mysqli->prepare(
     JOIN tblEvents e ON e.EventID = v.EventID
     JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
-    WHERE s.ServiceID = ?"
+    JOIN tblVisitServices t on t.ServiceID = s.ServiceID
+    WHERE s.ServiceID = ?
+    -- 1 = pending in DB
+    AND t.ServiceStatus = 1"
 );
 
 // Checks for if the connection to mysql is a success
@@ -186,9 +169,9 @@ $clientDataStmt->close();
 
 http_response_code(200);
 $msg = json_encode([ 
+    'success' => true,
     'completedCount' => count($completedRows),
     'inProgressCount' => count($inProgressRows),
-    'success' => true,
     'Totalcount' => count($clientDatarows),
     'data' => $clientDatarows
 
