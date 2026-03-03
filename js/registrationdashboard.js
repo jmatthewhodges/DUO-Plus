@@ -533,11 +533,36 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
-                // Split name and convert First Name to BOLD and ALL CAPS
+                // Split name and convert First Name to ALL CAPS
                 const nameParts = currentClientName.split(' ');
                 const firstName = nameParts[0].toUpperCase();
                 const lastName = nameParts.slice(1).join(' ');
-                document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
+
+                // Get the name elements
+                const firstNameEl = document.getElementById('qrCardFirstName');
+                const lastNameEl = document.getElementById('qrCardLastName');
+
+                // Scale font size down based on character length so name always fits on one line.
+                // Truncate with ellipsis only as a last resort if over 16 chars.
+                function scaledName(name, maxSize, minSize) {
+                    const len = name.length;
+                    if (len <= 6)  return { text: name, size: maxSize };
+                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
+                    if (len <= 10) return { text: name, size: maxSize * 0.70 };
+                    if (len <= 12) return { text: name, size: maxSize * 0.58 };
+                    if (len <= 14) return { text: name, size: maxSize * 0.50 };
+                    // Beyond 14 chars: truncate and use minimum size
+                    return { text: name.slice(0, 14) + '…', size: minSize };
+                }
+
+                const first = scaledName(firstName, 2.5, 1.1);
+                const last  = scaledName(lastName,  1.5, 0.8);
+
+                firstNameEl.innerText = first.text;
+                firstNameEl.style.fontSize = first.size + 'rem';
+
+                lastNameEl.innerText = last.text;
+                lastNameEl.style.fontSize = last.size + 'rem';
 
                 // Generate QR Code (QRious library)
                 new QRious({
@@ -561,7 +586,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
                 if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
-                // Translator badge
+                // Translator badge: show the icon pinned to top-right of the name area
                 if (isInterpreterNeeded) {
                     document.getElementById('qrCardTranslator').style.display = 'block';
                 }
@@ -602,39 +627,78 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
     style.textContent = `
         @media print {
-            @page { margin: 0; size: auto; }
-            html, body { 
-                width: 100%; 
-                height: 100%; 
+            @page {
+                size: 2.3125in 4in; /* Width x Height */
                 margin: 0; 
-                padding: 0; 
-                overflow: hidden;
-                background: white;
             }
-            body > *:not(#qrCodeModal) {
-                display: none !important;
-            }
-            #qrCodeModal {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                background: white !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+
+            /* LOCK the document height so invisible elements don't create blank pages */
+            html, body {
+                height: 4in !important;
+                overflow: hidden !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            #qrCodeModal .card {
-                width: 450px;
-                margin: auto;
-                box-shadow: none;
+
+            body * {
+                visibility: hidden;
             }
-            #printQrBtn,
-            #closeQrBtn { 
+            
+            #qrCodeModal, #qrCodeModal * {
+                visibility: visible;
+            }
+
+            #qrCodeModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 2.3125in !important;
+                height: 4in !important;
+                background: white !important;
+                padding: 0.1in !important;
+                display: flex !important;
+                align-items: flex-start !important;
+                margin: 0 !important;
+            }
+
+            #qrCodeModal .card {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #printQrBtn, #closeQrBtn {
                 display: none !important;
+            }
+
+            /* --- UPDATED: Icon Sizing & Borders --- */
+            
+            #qrCodeModal .qr-icon-border {
+                flex-shrink: 0 !important; 
+                font-size: 2rem !important; /* Icon size inside the box */
+                width: 46px !important;  /* Increased from 40px */
+                height: 46px !important; /* Increased from 40px */
+                border-width: 2px !important; /* Forces a thinner, cleaner border */
+                border-style: solid !important;
+                border-color: black !important;
+                border-radius: 8px !important; /* Optional: adds a slight rounding to the border */
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            /* Tighten the gap even more so the larger icons don't overflow the label */
+            #qrCodeModal .gap-3 {
+                gap: 0.25rem !important; 
+            }
+            
+            #qrCodeModal canvas {
+                max-width: 1.8in !important;
+                height: auto !important;
             }
         }
     `;
