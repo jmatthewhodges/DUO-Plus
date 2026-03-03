@@ -87,18 +87,6 @@ $completedCountStmt = $mysqli->prepare(
     AND t.ServiceStatus = 3"
 );
 
-function fetchCount($stmt, $queue) {
-    $stmt->bind_param('s', $queue);
-    $stmt->execute();
-    $stmt->bind_result($count);
-    $stmt->fetch();
-    return $count ?? 0;
-}
-
-$TotalCount = fetchCount($TotalCountStmt, $queue);
-$completedCount = fetchCount($completedCountStmt, $queue);
-$inProgressCount = fetchCount($inProgressCountStmt, $queue);
-
 // Query to get all client data related to the  service scan
 $clientDataStmt = $mysqli->prepare(
     "SELECT 
