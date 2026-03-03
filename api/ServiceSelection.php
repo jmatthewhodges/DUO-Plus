@@ -2,11 +2,11 @@
 /**
  * ============================================================
  *  File:        ServiceSelection.php
- *  Purpose:     API endpoint for verifying PIN code for access restriction
+ *  Purpose:     API endpoint for querying all clients checked in to a certain service.
  * 
  *  Last Modified By:  Miguel
- *  Last Modified On:  Mar 2 @ 12:45 PM
- *  Changes Made:      Created
+ *  Last Modified On:  Mar 2 @ 7:00 PM
+ *  Changes Made:      Added quieries for in progress and completed users
  * ============================================================
 */
 
