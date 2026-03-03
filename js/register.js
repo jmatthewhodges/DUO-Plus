@@ -7,8 +7,8 @@
  *               both new and returning users.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:58 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 26 @ 9:47 PM
+ *  Changes Made:      Increased SweetAlert timer from 1000ms to 1500ms
  * ============================================================
 */
 
@@ -154,75 +154,27 @@ document.addEventListener('DOMContentLoaded', function () {
         createDobMask(this.value);
     });
 
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    // Check if returning user via URL param (e.g. ?clientID=abc123)
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientIDFromUrl = urlParams.get('clientID');
 
-    // Only prefill if user is logged in
-    if (userData) {
-        // Step 1 - Login Info
-        const emailInput = document.getElementById('clientRegisterEmail');
-        const passInput = document.getElementById('clientRegisterPass');
-
-        console.log(userData);
-
-        emailInput.value = userData.Email || '';
-        emailInput.disabled = true;
-
-        passInput.value = userData.Password || '';
-        passInput.disabled = true;
-
-        // Disable back button on step 2 for logged in users
-        document.getElementById('btnRegisterBack2').disabled = true;
-
-        // Step 2 - Personal Info
-        document.getElementById('clientFirstName').value = userData.FirstName || '';
-        document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
-        document.getElementById('clientLastName').value = userData.LastName || '';
-        document.getElementById('clientDOB').value = userData.DOB || '';
-
-        // Format phone if exists
-        if (userData.Phone) {
-            const digits = userData.Phone.replace(/\D/g, '');
-            document.getElementById('clientPhone').value = formatPhoneNumber(digits);
-        }
-
-        // Set sex radio button
-        if (userData.Sex) {
-            const normalizedSex = userData.Sex.trim().toLowerCase();
-            const sexRadio = document.querySelector(`input[name="clientSex"][value="${normalizedSex}"]`);
-            if (sexRadio) sexRadio.checked = true;
-        }
-
-        // Step 3 - Address Info
-        if (userData.Street1) {
-            document.getElementById('noAddress').checked = false;
-            document.getElementById('clientAddress1').value = userData.Street1 || '';
-            document.getElementById('clientAddress2').value = userData.Street2 || '';
-            document.getElementById('clientCity').value = userData.City || '';
-            document.getElementById('selectState').value = userData.State || '';
-            document.getElementById('clientZipCode').value = userData.ZIP || '';
-        } else {
-            document.getElementById('noAddress').checked = true;
-            document.getElementById('noAddress').dispatchEvent(new Event('change'));
-        }
-
-        // Step 4 - Emergency Contact
-        if (userData.EmergencyName) {
-            document.getElementById('noEmergencyContact').checked = false;
-            // Split emergency name into first and last
-            const nameParts = userData.EmergencyName.split(' ');
-            document.getElementById('emergencyContactFirstName').value = nameParts[0] || '';
-            document.getElementById('emergencyContactLastName').value = nameParts.slice(1).join(' ') || '';
-
-            if (userData.EmergencyPhone) {
-                const emergencyDigits = userData.EmergencyPhone.replace(/\D/g, '');
-                document.getElementById('emergencyContactPhone').value = formatPhoneNumber(emergencyDigits);
+    // If already logged in, jump instantly to Step 5 (service selection only)
+    // Use direct show/hide instead of the animated transition so Step 1 never flickers
+    if (clientIDFromUrl) {
+        document.getElementById('btnRegisterBack5').style.display = 'none';
+        ['divStepOne', 'divStepTwo', 'divStepThree', 'divStepFour', 'divStepFive'].forEach((id, i) => {
+            const step = document.getElementById(id);
+            if (i === 4) {
+                step.classList.remove('step-hidden');
+                step.classList.add('step-visible');
+                step.style.opacity = '1';
+            } else {
+                step.classList.remove('step-visible');
+                step.classList.add('step-hidden');
+                step.style.opacity = '0';
             }
-        } else {
-            document.getElementById('noEmergencyContact').checked = true;
-            document.getElementById('noEmergencyContact').dispatchEvent(new Event('change'));
-        }
-
-        goToStepTwo();
+        });
+        updateProgressBar(5);
     }
 });
 
@@ -230,17 +182,10 @@ document.addEventListener('DOMContentLoaded', function () {
 function goToStepTwo() {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
-    document.getElementById('sexError').style.display = 'none';
     transitionToStep(stepOne, stepTwo, 2);
 }
 
 function stepOneSubmit() {
-    // Skip validation if user is already logged in
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
-    if (userData) {
-        goToStepTwo();
-        return;
-    }
 
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
@@ -803,53 +748,62 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     waiverError.style.display = 'none';
 
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    // Check if returning user via URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientIDFromUrl = urlParams.get('clientID');
 
-    // Collect all form data
-    const formData = {
-        // If we have ClientID, send it
-        clientID: userData?.ClientID || null,
+    // Collect form data — logged-in users only update services, new users send full registration
+    let formData;
 
-        // Step 1
-        // email: document.getElementById('clientRegisterEmail').value,
-        // password: document.getElementById('clientRegisterPass').value,
-
-        // Step 2
-        firstName: document.getElementById('clientFirstName').value,
-        middleInitial: document.getElementById('clientMiddleInitial').value,
-        lastName: document.getElementById('clientLastName').value,
-        dob: document.getElementById('clientDOB').value,
-        // Remove phone input mask before sending
-        phone: document.getElementById('clientPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
-        sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
-
-        // Step 3
-        noAddress: document.getElementById('noAddress').checked,
-        address1: document.getElementById('clientAddress1').value,
-        address2: document.getElementById('clientAddress2').value,
-        city: document.getElementById('clientCity').value,
-        state: document.getElementById('selectState').value,
-        zipCode: document.getElementById('clientZipCode').value,
-
-        // Step 4
-        noEmergencyContact: document.getElementById('noEmergencyContact').checked,
-        emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
-        emergencyLastName: document.getElementById('emergencyContactLastName').value,
-        // Remove phone input mask before sending
-        emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
-
-        // Hard code event ID (for now)
-        EventID: "4cbde538985861b9",
-
-        // Step 5
-        services: Array.from(
-            document.querySelectorAll('input[name="clientServices"]:checked')
-        ).map(s => s.value),
-    };
-
-    if (!userData?.ClientID) {
-        formData.email = document.getElementById('clientRegisterEmail').value;
-        formData.password = document.getElementById('clientRegisterPass').value;
+    if (clientIDFromUrl) {
+        // Existing user: only send what's needed for service selection
+        formData = {
+            clientID: clientIDFromUrl,
+            noAddress: true,
+            noEmergencyContact: true,
+            EventID: "4cbde538985861b9",
+            services: Array.from(
+                document.querySelectorAll('input[name="clientServices"]:checked')
+            ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
+        };
+    } else {
+        // New user: send full registration payload
+        formData = {
+            clientID: null,
+            email: document.getElementById('clientRegisterEmail').value,
+            password: document.getElementById('clientRegisterPass').value,
+            firstName: document.getElementById('clientFirstName').value,
+            middleInitial: document.getElementById('clientMiddleInitial').value,
+            lastName: document.getElementById('clientLastName').value,
+            dob: (() => {
+                const maskedDate = dobMask?.typedValue;
+                if (maskedDate instanceof Date && !isNaN(maskedDate)) {
+                    const y = maskedDate.getFullYear();
+                    const m = String(maskedDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(maskedDate.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return document.getElementById('clientDOB').value;
+            })(),
+            phone: document.getElementById('clientPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+            sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
+            noAddress: document.getElementById('noAddress').checked,
+            address1: document.getElementById('clientAddress1').value,
+            address2: document.getElementById('clientAddress2').value,
+            city: document.getElementById('clientCity').value,
+            state: document.getElementById('selectState').value,
+            zipCode: document.getElementById('clientZipCode').value,
+            noEmergencyContact: document.getElementById('noEmergencyContact').checked,
+            emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
+            emergencyLastName: document.getElementById('emergencyContactLastName').value,
+            emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+            EventID: "4cbde538985861b9",
+            services: Array.from(
+                document.querySelectorAll('input[name="clientServices"]:checked')
+            ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
+        };
     }
 
     // Send to API
@@ -863,17 +817,63 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
             modal.hide();
 
-            // Clear userData after successful registration/update
-            sessionStorage.removeItem('userData');
-
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
                     title: t.registrationSuccessTitle,
                     text: t.registrationSuccessText,
-                    confirmButtonColor: '#174593',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
                 }).then(() => {
-                    window.location.href = '../index.html';
+                    // Hide the registration card and progress bar
+                    document.getElementById('divStepOne').closest('.card').style.display = 'none';
+                    document.getElementById('wholeProgressBar').style.display = 'none';
+                    const devBar = document.querySelector('.dev-bar');
+                    if (devBar) devBar.closest('.text-center').style.display = 'none';
+
+                    // Show QR code card
+                    const qrContainer = document.getElementById('divQRCode');
+                    qrContainer.classList.remove('d-none');
+                    qrContainer.classList.add('d-flex');
+
+                    // Set name — FIRST NAME in bold uppercase, last name normal
+                    const firstName = (data.firstName || '').toUpperCase();
+                    const lastName = data.lastName || '';
+                    document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
+
+                    // Generate QR Code from clientID
+                    new QRious({
+                        element: document.getElementById('qr'),
+                        value: data.clientID,
+                        size: 200,
+                    });
+
+                    // Show service icons (use visibility like dashboard)
+                    const serviceIcons = {
+                        medical: 'qrCardMedicalIcon',
+                        dental: 'qrCardDentalIcon',
+                        optical: 'qrCardOpticalIcon',
+                        haircut: 'qrCardHaircutIcon'
+                    };
+                    const selectedServices = data.services || [];
+
+                    Object.values(serviceIcons).forEach(id => {
+                        const icon = document.getElementById(id);
+                        if (icon) {
+                            icon.style.display = 'inline-flex';
+                            icon.style.visibility = 'hidden';
+                        }
+                    });
+
+                    selectedServices.forEach(key => {
+                        const id = serviceIcons[key];
+                        if (id) {
+                            const icon = document.getElementById(id);
+                            if (icon) icon.style.visibility = 'visible';
+                        }
+                    });
                 });
             } else {
                 Swal.fire({
