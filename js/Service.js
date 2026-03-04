@@ -1,11 +1,14 @@
 /*
  ============================================================
- File:           service.js
- Description:    Handles the JS of the service scan page.
+ File:           Service.js
+ Description:    Handles service-specific content display
+                 based on stationId from QR code URL params.
+                 stationId values: medical, optical, dental, haircut
+                 Works with pinCode.js security layer.
  
  Last Modified By:  Cameron
- Last Modified On:  Mar 4 @ 10:00 PM
- Changes Made:      Created File and added QR Scanned logic
+ Last Modified On:  Mar 4 @ 11:00 PM
+ Changes Made:      Updated to use station names as stationId values
  ============================================================
 */
 
@@ -33,181 +36,154 @@ const SERVICES = {
     }
 };
 
-// Station ID to Service mapping - maps specific stations to their service type
-const STATION_TO_SERVICE = {
-    'station1': 'medical',
-    'station2': 'optical',
-    'station3': 'dental',
-    'station4': 'haircut'
-};
+// Valid station names: medical, optical, dental, haircut
 
-// Base URL configuration for deployed environments
-// Test:
-const BASE_URL = 'http://localhost:8000/pages/service-scan.html';
-// Production:
-// const BASE_URL = 'https://duotest.swollenhippo.com/pages/service-scan.html';
-
-// Tracking state
-let currentService = 'medical'; // Default service
 let videoStream = null;
 let isScanning = false;
+let currentOverlay = null;
 
-
-// LocalStorage management for scanned service
-const ServiceStorage = {
-    key: 'duo_service_scan',
+/**
+ * Show a specific service's content section
+ */
+function showService(serviceKey) {
+    console.log(`showService called with: ${serviceKey}`);
     
-    save: function(serviceType, stationId = null) {
-        const data = {
-            service: serviceType,
-            stationId: stationId,
-            timestamp: new Date().getTime()
-        };
-        localStorage.setItem(this.key, JSON.stringify(data));
-    },
-    
-    get: function() {
-        const data = localStorage.getItem(this.key);
-        return data ? JSON.parse(data) : null;
-    },
-    
-    clear: function() {
-        localStorage.removeItem(this.key);
-    }
-};
-
-// Parse QR code data to extract service and station info
-// Expected format: "/service-scan.html?pin=111111&stationId=station1"
-function parseQRData(qrData) {
-    const result = {
-        service: null,
-        stationId: null,
-        pin: null,
-        raw: qrData
+    // Service data configuration
+    const serviceData = {
+        medical: {
+            title: 'Medical',
+            color: 'primary',
+            stat1: { label: 'Waitlist', value: '23' },
+            stat2: { label: 'In Progress', value: '4' },
+            stat3: { label: 'Completed', value: '15' },
+            avgTime: '20 minutes',
+            pastAvgTime: '34 minutes'
+        },
+        optical: {
+            title: 'Optical',
+            color: 'primary',
+            stat1: { label: 'Waitlist', value: '12' },
+            stat2: { label: 'In Progress', value: '2' },
+            stat3: { label: 'Completed', value: '8' },
+            avgTime: '15 minutes',
+            pastAvgTime: '18 minutes'
+        },
+        dental: {
+            title: 'Dental',
+            color: 'primary',
+            stat1: { label: 'Waitlist', value: '18' },
+            stat2: { label: 'In Progress', value: '3' },
+            stat3: { label: 'Completed', value: '22' },
+            avgTime: '45 minutes',
+            pastAvgTime: '52 minutes'
+        },
+        haircut: {
+            title: 'Haircut',
+            color: 'primary',
+            stat1: { label: 'Waitlist', value: '9' },
+            stat2: { label: 'In Progress', value: '1' },
+            stat3: { label: 'Completed', value: '11' },
+            avgTime: '20 minutes',
+            pastAvgTime: '22 minutes'
+        }
     };
 
-    // Try URL format first: "?pin=111111&stationId=station1"
-    try {
-        const url = new URL(qrData, BASE_URL);
-        
-        // Validate that this QR is for service-scan page
-        const pathname = url.pathname.toLowerCase();
-        if (!pathname.includes('service-scan')) {
-            console.error('QR code is for a different page:', pathname);
-            result.error = 'This QR code is not for the service scan page';
-            return result;
-        }
-        
-        result.pin = url.searchParams.get('pin');
-        // Check both 'stationId' and 'stationid' for compatibility with PHP generator
-        result.stationId = url.searchParams.get('stationId') || url.searchParams.get('stationid');
-        
-        // Map stationId to service if it exists in our mapping
-        if (result.stationId) {
-            const mappedService = STATION_TO_SERVICE[result.stationId.toLowerCase()];
-            if (mappedService) {
-                result.service = mappedService;
-            }
-        }
-    } catch (e) {
-        // Not a full URL, try other formats
-        
-        // Try URL parameter format: "pin=111111&stationId=station1"
-        if (qrData.includes('=')) {
-            const params = new URLSearchParams(qrData);
-            result.pin = params.get('pin');
-            // Check both 'stationId' and 'stationid' for compatibility with PHP generator
-            result.stationId = params.get('stationId') || params.get('stationid');
-            
-            if (result.stationId) {
-                const mappedService = STATION_TO_SERVICE[result.stationId.toLowerCase()];
-                if (mappedService) {
-                    result.service = mappedService;
-                }
-            }
-        }
-    }
-    
-    return result;
-}
-
-
-// Show a specific service section and hide others
-function showService(serviceType) {
-    if (!SERVICES[serviceType]) {
-        console.error(`Unknown service type: ${serviceType}`);
-        Swal.fire('Error', `Unknown service: ${serviceType}`, 'error');
+    const data = serviceData[serviceKey];
+    if (!data) {
+        console.error('Invalid service:', serviceKey);
         return;
     }
 
-    currentService = serviceType;
+    // Update the service title
+    const titleEl = document.getElementById('serviceTitle');
+    if (titleEl) titleEl.textContent = data.title;
 
-    // Show the service content container
+    // Update the service header background color
+    const headerEl = document.getElementById('serviceHeader');
+    if (headerEl) {
+        headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${data.color} p-3`;
+    }
+
+    // Update stats
+    const stat1LabelEl = document.getElementById('stat1Label');
+    const stat1ValueEl = document.getElementById('stat1Value');
+    if (stat1LabelEl) stat1LabelEl.textContent = data.stat1.label;
+    if (stat1ValueEl) stat1ValueEl.textContent = data.stat1.value;
+
+    const stat2LabelEl = document.getElementById('stat2Label');
+    const stat2ValueEl = document.getElementById('stat2Value');
+    if (stat2LabelEl) stat2LabelEl.textContent = data.stat2.label;
+    if (stat2ValueEl) stat2ValueEl.textContent = data.stat2.value;
+
+    const stat3LabelEl = document.getElementById('stat3Label');
+    const stat3ValueEl = document.getElementById('stat3Value');
+    if (stat3LabelEl) stat3LabelEl.textContent = data.stat3.label;
+    if (stat3ValueEl) stat3ValueEl.textContent = data.stat3.value;
+
+    // Update times
+    const avgTimeEl = document.getElementById('avgTime');
+    const pastAvgTimeEl = document.getElementById('pastAvgTime');
+    if (avgTimeEl) avgTimeEl.textContent = data.avgTime;
+    if (pastAvgTimeEl) pastAvgTimeEl.textContent = data.pastAvgTime;
+
+    // Update waitlist title
+    const waitlistTitleEl = document.getElementById('waitlistTitle');
+    if (waitlistTitleEl) waitlistTitleEl.textContent = `${data.title} - Waitlist`;
+
+    // Show the service content if it's hidden
     const serviceContent = document.getElementById('serviceContent');
-    if (serviceContent) {
+    if (serviceContent && serviceContent.style.display === 'none') {
         serviceContent.style.display = 'block';
     }
 
-    console.log(`Switching to service: ${serviceType}`);
-}
+    // Scroll to top so user can see the service
+    window.scrollTo(0, 0);
 
-// Hide all service sections (for when no QR has been scanned)
-function hideAllServices() {
-    const serviceContent = document.getElementById('serviceContent');
-    if (serviceContent) {
-        serviceContent.style.display = 'none';
-    }
-    console.log('All services hidden');
-}
-
-// Update the header with current service info
-// Once HTML is modular, this will update the service name and icon
-function updateServiceHeader(serviceType) {
-    const service = SERVICES[serviceType];
-    if (!service) return;
-
-    console.log(`Header updated for: ${service.name}`);
-    
-    // Example of what this will do:
-    // document.querySelector('.service-header-name').textContent = service.name;
-    // document.querySelector('.service-header').className = `card-header d-flex justify-content-between align-items-center bg-${service.color} p-3`;
+    console.log(`Service displayed: ${serviceKey}`);
 }
 
 
-// Handle successful QR code scan
-function handleQRScan(qrData) {
-    const parsed = parseQRData(qrData);
-    
-    // Check if QR code is for a different page
-    if (parsed.error) {
-        console.error('QR validation failed:', parsed.error);
-        Swal.fire('Wrong QR Code', parsed.error, 'error');
-        return;
-    }
-    
-    if (!parsed.service) {
-        console.error('No service mapped from QR code');
-        Swal.fire('Invalid QR', 'Could not identify service from QR code', 'warning');
-        return;
-    }
 
-    // Save to localStorage for page reload
-    ServiceStorage.save(parsed.service, parsed.stationId);
+
+// Show service selection dropdown for manual entry
+function showServiceSelectionDropdown() {
+    // Stop QR scanning first
+    stopQRScanning();
     
-    showService(parsed.service);
-    updateServiceHeader(parsed.service);
+    let html = '<div class="d-grid gap-2">';
+    Object.entries(SERVICES).forEach(([serviceKey, serviceData]) => {
+        html += `<button class="btn btn-outline-primary service-select-btn" data-service="${serviceKey}">${serviceData.name}</button>`;
+    });
+    html += '</div>';
 
     Swal.fire({
-        title: 'Service Selected',
-        text: `${SERVICES[parsed.service].name}${parsed.stationId ? ` - ${parsed.stationId}` : ''}`,
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
+        title: 'Select Service',
+        html: html,
+        showConfirmButton: false,
+        allowOutsideClick: true,
+        allowEscapeKey: true,
+        didOpen: (modal) => {
+            // Add click handlers to buttons
+            modal.querySelectorAll('.service-select-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const serviceKey = this.getAttribute('data-service');
+                    Swal.close();
+                    selectServiceManual(serviceKey);
+                });
+            });
+        }
     });
 }
 
+// Select service from manual dropdown
+function selectServiceManual(serviceKey) {
+    console.log('selectServiceManual called for:', serviceKey);
+    Swal.close();
+    showService(serviceKey);
+}
 
-// Start camera for QR scanning
+
+// Start QR code camera scanning
 function startQRScanning() {
     if (isScanning) return;
     
@@ -224,7 +200,7 @@ function startQRScanning() {
         video.srcObject = stream;
         video.play();
 
-        // Create a full-screen overlay for camera
+        // Create full-screen overlay for camera
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed;
@@ -233,7 +209,6 @@ function startQRScanning() {
             width: 100%;
             height: 100%;
             background: black;
-            z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -243,13 +218,33 @@ function startQRScanning() {
         const closeBtn = document.createElement('button');
         closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
         closeBtn.className = 'btn btn-light position-absolute top-0 end-0 m-3';
-        closeBtn.title = 'Stop scanning and return to main screen';
-        closeBtn.onclick = stopQRScanning;
+        closeBtn.title = 'Stop scanning';
+        closeBtn.style.pointerEvents = 'auto';
+        closeBtn.type = 'button';
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Close button clicked');
+            stopQRScanning();
+        };
+
+        const manualBtn = document.createElement('button');
+        manualBtn.innerHTML = 'Manual Entry';
+        manualBtn.className = 'btn btn-secondary position-absolute bottom-0 start-0 m-3';
+        manualBtn.title = 'Select service manually';
+        manualBtn.style.pointerEvents = 'auto';
+        manualBtn.type = 'button';
+        manualBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Manual Entry button clicked');
+            showServiceSelectionDropdown();
+        };
 
         const hint = document.createElement('div');
         hint.style.cssText = `
             position: absolute;
-            bottom: 40px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             max-width: 90%;
@@ -259,10 +254,7 @@ function startQRScanning() {
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             text-align: center;
-            z-index: 10001;
         `;
-        hint.setAttribute('role', 'status');
-        hint.setAttribute('aria-live', 'polite');
         hint.innerHTML = `
             <div style="margin-bottom: 12px;">
                 <i class="bi bi-qr-code-scan" style="font-size: 32px; color: #174593;"></i>
@@ -279,8 +271,12 @@ function startQRScanning() {
 
         overlay.appendChild(video);
         overlay.appendChild(closeBtn);
+        overlay.appendChild(manualBtn);
         overlay.appendChild(hint);
         container.appendChild(overlay);
+        
+        // Store reference so we can reliably remove it later
+        currentOverlay = overlay;
 
         // Scanning loop
         const scanLoop = setInterval(() => {
@@ -321,40 +317,121 @@ function stopQRScanning() {
         videoStream = null;
     }
 
-    const overlay = document.querySelector('div[style*="position: fixed"]');
-    if (overlay && overlay.querySelector('video')) {
+    // Remove overlay using stored reference
+    if (currentOverlay) {
+        console.log('Removing overlay');
+        currentOverlay.remove();
+        currentOverlay = null;
+    }
+
+    // Fallback if overlay wasn't stored for some reason
+    const overlay = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
+    if (overlay) {
+        console.log('Removing overlay via selector');
         overlay.remove();
     }
 }
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    const scanAgainBtn = document.getElementById('btnScan');
+// Handle QR code scan
+function handleQRScan(qrData) {
+    console.log('QR scanned:', qrData);
     
-    if (scanAgainBtn) {
-        scanAgainBtn.addEventListener('click', function() {
-            // Clear localStorage when scanning again
-            ServiceStorage.clear();
+    try {
+        // Try to parse as URL
+        const url = new URL(qrData, window.location.href);
+        
+        // Get stationId from URL parameters
+        const stationId = url.searchParams.get('stationId') || url.searchParams.get('stationid');
+        const pathname = url.pathname.toLowerCase();
+        
+        // Check if URL is for service-scan page
+        if (!pathname.includes('service-scan')) {
+            console.error('Not a service-scan URL');
+            Swal.fire('Invalid QR', 'QR code is not for service selection', 'warning');
             startQRScanning();
-        });
-    }
+            return;
+        }
+        
+        // Check if stationId is present
+        if (!stationId) {
+            console.error('Missing stationId in QR');
+            Swal.fire('Invalid QR', 'QR code missing station information', 'warning');
+            startQRScanning();
+            return;
+        }
 
-    // Check if a service was previously scanned
-    const savedData = ServiceStorage.get();
+        // Check if station exists in SERVICES config
+        if (!SERVICES[stationId.toLowerCase()]) {
+            console.error('Unknown station:', stationId);
+            Swal.fire('Invalid QR', 'Unknown station: ' + stationId, 'warning');
+            startQRScanning();
+            return;
+        }
+
+        // Use stationId directly as service key
+        const serviceKey = stationId.toLowerCase();
+
+        showService(serviceKey);
+
+    } catch (e) {
+        console.error('QR parse error:', e);
+        Swal.fire('Invalid QR', 'Could not parse QR code', 'warning');
+        startQRScanning();
+    }
+}
+
+// Start scanning after PIN verification
+document.addEventListener('pinVerified', function() {
+    console.log('PIN verified - checking for stationId');
     
-    if (savedData && SERVICES[savedData.service]) {
-        // Service was previously scanned, show it without scanning
-        console.log('Showing previously scanned service:', savedData.service);
-        showService(savedData.service);
-        updateServiceHeader(savedData.service);
+    // Get stationId from URL if it exists
+    const urlParams = new URLSearchParams(window.location.search);
+    const stationId = urlParams.get('stationId') || urlParams.get('stationid');
+    
+    if (stationId) {
+        // Direct to service based on URL parameter
+        console.log('StationId found in URL:', stationId);
+        handleServiceSelection(stationId);
     } else {
-        // No previous service, hide content and start scanning
-        hideAllServices();
+        // No stationId, start QR scanner
+        console.log('No stationId - starting QR scanner');
         startQRScanning();
     }
 });
 
-// Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { parseQRData, showService, handleQRScan };
+
+// Handle service selection from stationId
+function handleServiceSelection(stationId) {
+    const serviceKey = stationId.toLowerCase();
+
+    // Check if station exists in SERVICES config
+    if (!SERVICES[serviceKey]) {
+        console.error('Unknown station:', stationId);
+        Swal.fire('Invalid Station', 'Unknown station: ' + stationId, 'warning');
+        startQRScanning();
+        return;
+    }
+
+    // Show the service directly
+    showService(serviceKey);
 }
+
+
+// If page reloads after PIN verification, check for stationId
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Service.js loaded');
+    
+    if (document.body.classList.contains('pin-verified')) {
+        console.log('Already pin-verified, checking for stationId');
+        const urlParams = new URLSearchParams(window.location.search);
+        const stationId = urlParams.get('stationId') || urlParams.get('stationid');
+        
+        if (stationId) {
+            setTimeout(() => handleServiceSelection(stationId), 100);
+        } else {
+            setTimeout(startQRScanning, 100);
+        }
+    }
+});
+
+
