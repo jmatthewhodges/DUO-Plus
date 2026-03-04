@@ -15,12 +15,14 @@ var translations = {
   en: {
     // Login
     subtitle: "Connecting patients with free<br>care through DUO",
+    forgetpasssubtitle: "Reset your DUO password",
     lblClientEmail: "Email",
     lblClientPassword: "Password",
     lblShowPassword: "Show password",
     btnClientLogin: "Login",
     orText: "Or",
     btn2Register: "Register",
+    btn2ForgetPass: "Forgot Password",
 
     // Registration
     progressTitle: "Progress through registration",
@@ -104,17 +106,45 @@ var translations = {
     registrationFailedTitle: "Registration Failed",
     registrationFailedText: "An error occurred. Please try again.",
     registrationConnectionErrorTitle: "Connection Error",
-    registrationConnectionErrorText: "Unable to connect to the server. Please try again later."
+    registrationConnectionErrorText: "Unable to connect to the server. Please try again later.",
+
+  
+    //  Forget Password Translations
+    forgetEmailLabel: "Email <span class=\"text-danger\" aria-hidden=\"true\">*</span>",
+    forgetDOBLabel: 'Date of Birth <span class="text-danger" aria-hidden="true">*</span>',
+    forgetPasswordLabel: "New Password",
+    forgetPasswordConfirmLabel: "Confirm New Password",
+    btnVerifyAccount: "Verify Account",
+    btnResetPassword: "Reset Password",
+    btnBackToLogin: "Back to Login",
+    loginCheckInfoTitle: "Check your info",
+    accountFoundTitle: "Account Found",
+    accountFoundText: "Identity verified. Please create a new password.",
+    accountNotFoundTitle: "Account Not Found",
+    accountNotFoundText: "Account not found.",
+    verifyFirstTitle: "Verify First",
+    verifyFirstText: "Please verify your email and date of birth first.",
+    confirmPasswordError: "Password confirmation does not match.",
+    passwordResetSuccessTitle: "Password Reset Successful",
+    passwordResetSuccessText: "Your password has been updated. You will be redirected to login.",
+    passwordResetFailedTitle: "Reset Failed",
+    passwordResetFailedText: "Unable to reset password.",
+    okText: "OK",
+    continueText: "Continue",
+    verifyingText: "Verifying...",
+    resettingText: "Resetting..."
   },
   es: {
     // Login
     subtitle: "Conectando pacientes con atención<br>gratuita a través de DUO",
+    forgetpasssubtitle: "Restablece la contraseña de DUO",
     lblClientEmail: "Correo electrónico",
     lblClientPassword: "Contraseña",
     lblShowPassword: "Mostrar contraseña",
     btnClientLogin: "Iniciar sesión",
     orText: "O",
     btn2Register: "Registrarse",
+    btn2ForgetPass: "Olvidé mi contraseña",
 
     // Registration
     progressTitle: "Progreso a través del registro",
@@ -198,7 +228,34 @@ var translations = {
     registrationFailedTitle: "Registro fallido",
     registrationFailedText: "Se ha producido un error. Inténtelo de nuevo.",
     registrationConnectionErrorTitle: "Error de conexión",
-    registrationConnectionErrorText: "No se puede conectar al servidor. Inténtelo más tarde."
+    registrationConnectionErrorText: "No se puede conectar al servidor. Inténtelo más tarde.",
+
+    // Forget Password Translations 
+    // Note: TEMPORARY!! I NEED TO FIX THE TRANSLATION
+    forgetEmailLabel: "Correo electrónico <span class=\"text-danger\" aria-hidden=\"true\">*</span>",
+    forgetDOBLabel: 'Fecha de nacimiento <span class="text-danger" aria-hidden="true">*</span>',
+    forgetPasswordLabel: "Nueva contraseña",
+    forgetPasswordConfirmLabel: "Confirmar nueva contraseña",
+    btnVerifyAccount: "Verificar cuenta",
+    btnResetPassword: "Restablecer contraseña",
+    btnBackToLogin: "Volver al inicio de sesión",
+    loginCheckInfoTitle: "Revise su información",
+    accountFoundTitle: "Cuenta encontrada",
+    accountFoundText: "Identidad verificada. Cree su nueva contraseña.",
+    accountNotFoundTitle: "Cuenta no encontrada",
+    accountNotFoundText: "Cuenta no encontrada.",
+    verifyFirstTitle: "Verifique primero",
+    verifyFirstText: "Primero verifique su correo electrónico y fecha de nacimiento.",
+    confirmPasswordError: "La confirmación de contraseña no coincide.",
+    passwordResetSuccessTitle: "Contraseña restablecida",
+    passwordResetSuccessText: "Su contraseña fue actualizada. Será redirigido al inicio de sesión.",
+    passwordResetFailedTitle: "Error al restablecer",
+    passwordResetFailedText: "No se pudo restablecer la contraseña.",
+    okText: "Aceptar",
+    continueText: "Continuar",
+    verifyingText: "Verificando...",
+    resettingText: "Restableciendo..."
+    // Seriously, these need to be cleaned up later.
   }
 };
 
