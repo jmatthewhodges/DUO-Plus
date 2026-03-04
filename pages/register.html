@@ -6,8 +6,8 @@
                contact, service selection, and waiver agreement.
 
   Last Modified By:  Matthew
-  Last Modified On:  Feb 26 @ 10:08 PM
-  Changes Made:      Form changes
+  Last Modified On:  March 4 @ 11:30 AM
+  Changes Made:      Updated overall accessibility and waiver information
  ============================================================
 -->
 <!DOCTYPE html>
@@ -29,7 +29,7 @@
     <div class="container">
 
         <div id="divLanguageSwitch">
-            <select name="" id="selLanguageSwitch" class="btn-primary">
+            <select name="languageSwitch" id="selLanguageSwitch" class="btn-primary" aria-label="Select language">
                 <option value="en">EN</option>
                 <option value="es">ES</option>
             </select>
@@ -52,16 +52,16 @@
                         <!--Note: Translator icon is currently not in nodeJS script so it will not appear.-->
                         <i class="bi bi-chat-dots" style="display: none; font-size: 1rem; color:black;"
                             id="qrCardTranslator"></i>
-                        <canvas class="p-3" id="qr"></canvas>
+                        <canvas class="p-3" id="qr" role="img" aria-label="Your registration QR code"></canvas>
                         <div class="d-flex justify-content-center gap-3 mt-3">
                             <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;"
-                                id="qrCardMedicalIcon"></i>
+                                id="qrCardMedicalIcon" aria-hidden="true"></i>
                             <i class="bi bi-shield-shaded qr-icon-border"
-                                style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon"></i>
+                                style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon" aria-hidden="true"></i>
                             <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;"
-                                id="qrCardOpticalIcon"></i>
+                                id="qrCardOpticalIcon" aria-hidden="true"></i>
                             <i class="bi bi-scissors qr-icon-border"
-                                style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon"></i>
+                                style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon" aria-hidden="true"></i>
                         </div>
                         <div class="mt-3">
                             <a href="../index.html" class="btn btn-outline-primary w-100 rounded-2">Back to Login</a>
@@ -150,7 +150,7 @@
                             <div class="mb-3 text-start">
                                 <label class="form-label fw-semibold d-block" id="sexLabel">Sex <span
                                         class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="btn-group" role="group" aria-label="Select your sex.">
+                                <div class="btn-group" role="radiogroup" aria-label="Select your sex." aria-required="true">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
                                     <label class="btn btn-outline-primary" id="btnSexMaleLabel"
@@ -203,7 +203,9 @@
                             <!-- No Address Toggle -->
                             <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
                                 style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
-                                onclick="document.getElementById('noAddress').click();">
+                                role="button" tabindex="0"
+                                onclick="document.getElementById('noAddress').click();"
+                                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('noAddress').click();}">
                                 <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
                                     id="noAddressLabel" for="noAddress">
                                     No current address
@@ -241,7 +243,7 @@
                             <div class="mb-3 text-start">
                                 <label id="selectStateLabel" for="selectState"
                                     class="form-label fw-semibold">State</label>
-                                <select class="form-select" id="selectState" required aria-describedby="stateError">
+                                <select class="form-select" id="selectState" required>
                                     <option selected disabled value="">Choose...</option>
                                     <option value="AL">Alabama</option>
                                     <option value="AK">Alaska</option>
@@ -332,7 +334,9 @@
                             <!-- No Emergency Contact Toggle -->
                             <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
                                 style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
-                                onclick="document.getElementById('noEmergencyContact').click();">
+                                role="button" tabindex="0"
+                                onclick="document.getElementById('noEmergencyContact').click();"
+                                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('noEmergencyContact').click();}">
                                 <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
                                     id="noEmergencyContactLabel" for="noEmergencyContact">
                                     No emergency contact
@@ -384,7 +388,8 @@
                         <h5 id="titleStepFive" class="card-title text-center mb-3">Service Selection</h5>
                         <form id="clientRegisterFormStep5" novalidate>
                             <!-- Services Grid -->
-                            <div class="row mb-3" role="group" aria-label="Select services">
+                            <fieldset class="row mb-3" aria-label="Select services">
+                                <legend class="visually-hidden">Select the services you need</legend>
                                 <div class="col-6">
                                     <div class="mb-3">
                                         <input type="checkbox" class="btn-check" name="clientServices"
@@ -424,7 +429,7 @@
                                         </label>
                                     </div>
                                 </div>
-                            </div>
+                            </fieldset>
 
                             <!-- Buttons -->
                             <button id="btnRegisterNext5" type="button"
@@ -444,7 +449,7 @@
                                 aria-label="Registration progress, step 1 of 5"></div>
                         </div>
                         <div class="d-flex justify-content-between mt-1" id="progressStepLabels"
-                            style="font-size: 0.65rem; color: #aaa;" aria-hidden="true">
+                            style="font-size: 0.65rem; color: #777;" aria-hidden="true">
                             <span>Login</span>
                             <span>Personal</span>
                             <span>Address</span>
@@ -458,11 +463,11 @@
                 <div class="text-center mt-2 mb-1">
                     <div class="dev-bar">
                         <span class="dev-bar-label">Dev</span>
-                        <button id="skipStep1" class="dev-step-btn">Step 1</button>
-                        <button id="skipStep2" class="dev-step-btn">Step 2</button>
-                        <button id="skipStep3" class="dev-step-btn">Step 3</button>
-                        <button id="skipStep4" class="dev-step-btn">Step 4</button>
-                        <button id="skipStep5" class="dev-step-btn">Step 5</button>
+                        <button id="skipStep1" type="button" class="dev-step-btn">Step 1</button>
+                        <button id="skipStep2" type="button" class="dev-step-btn">Step 2</button>
+                        <button id="skipStep3" type="button" class="dev-step-btn">Step 3</button>
+                        <button id="skipStep4" type="button" class="dev-step-btn">Step 4</button>
+                        <button id="skipStep5" type="button" class="dev-step-btn">Step 5</button>
                     </div>
                 </div>
 
@@ -473,21 +478,44 @@
 
     <!-- Waiver Modal -->
     <div class="modal fade" id="registrationCompleteModal" tabindex="-1"
-        aria-labelledby="registrationCompleteModalLabel" aria-hidden="true">
+        aria-labelledby="waiverLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title" id="waiverLabel">Waiver Agreement Required</h5>
+                    <h5 class="modal-title" id="waiverLabel">Waiver Acknowledgement</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body text-start">
-                    <div class="collapse show" id="collapseExample">
-                        <div class="card card-body">
-                            DUO is not entitled to anything that happens to you. You accept full responsiblity at this
-                            event.
-                        </div>
+                    <div style="height:35vh;overflow:scroll;">
+                        <p class="mb-2 fw-bold">DUO WAIVER</p>
+                        <p>ACKNOWLEDGMENT OF RECEIPT OF NOTICE OF PRIVACY PRACTICES</p>
+                        <p class="fw-bold">MEDICAL</p>
+                        <p class="fs-6">By agreeing below, I hereby acknowledge that I have received a copy of the Practice's Notice of Privacy Practices. </p>
+                        <p>CONSENT TO TREATMENT: </p>
+                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by optometrists of Doing Unto Others (DUO) for an eye exam and to any related diagnostic procedures and treatments as necessary in the judgment of the optometrist. I acknowledge that the practice of optometry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments. </p>
+                        <p>CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION: </p>
+                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to disclose my medical information so that Doing Unto Others may treat me and generally carry on the health care operations of Doing Unto Others (e.g., quality assurance). I also authorize Doing Unto Others to disclose my medical information to insurers and providers outside of Doing Unto Others when necessary for purposes of my treatment and for their health care operations. By agreeing below, I also authorize Doing Unto Others to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives.</p>
+                        <p class="fs-6">Doing Unto Others does not charge for any services and is a registered Volunteer Health Program in Tennessee (Registration #41). By signing below, I understand the Optometric services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free. Free care does not necessarily extended to referral sources.</p>
+                        <p class="fs-6">Release of Likeness/Image: </p>
+                        <p class="fs-6">By agreeing to this consent, you release DUO to publish your image or likeness in formats such as paper, virtual presentation, video, and the like.</p>
+                        <p class="fs-6">By agreeing below, I agree to all of the above while I am a patient of the Practice.</p>
+                        <p class="fw-bold">DENTAL</p>
+                        <p class="fs-6">By agreeing below, I hereby acknowledge that I have received a copy of the Practice&rsquo;s Notice of Privacy Practices.</p>
+                        <p class="fs-6">CONSENT TO TREATMENT:</p>
+                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by dentists and other dental professionals of Doing Unto others for dental care and to any related diagnostic procedures and treatments as necessary in the judgment of the dentist. I acknowledge that the practice of dentistry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments.&nbsp;</p>
+                        <p class="fs-6">CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:</p>
+                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to disclose my medical information so that the practice may treat me and generally carry on the health care operations of the Practice (e.g., quality assurance). I also authorize the Practice to disclose my medical information to providers outside of the Practice when necessary for purposes of my treatment and for their health care operations. By agreeing below, I also authorize the Practice to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives.</p>
+                        <p class="fs-6">CONSENT FOR RADIOLOGIC IMAGING</p>
+                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to use low-dose x-ray imaging for dental procedure purposes and to store the images for future appointment uses.</p>
+                        <p class="fs-6">Doing Unto Others does not charge for any services. By signing below, I understand the Dental services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free.</p>
+                        <p class="fw-bold">OPTICAL</p>
+                        <p class="fs-6">CONSENT TO TREATMENT: </p>
+                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by optometrists of the Practice for an eye exam and to any related diagnostic procedures and treatments as necessary in the judgment of the optometrist. I acknowledge that the practice of optometry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments.  </p>
+                        <p class="fs-6">CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:  </p>
+                        <p class="fs-6">By agreeing below, I hereby authorize the Practice to disclose my medical information so that the Practice may treat me, seek payment from third parties for such treatment, and generally carry on the health care operations of the Practice (e.g., quality assurance). I also authorize the Practice to disclose my medical information to insurers and providers outside of the Practice when necessary for purposes of my treatment, payment for that treatment, and for their health care operations. By agreeing below, I also authorize the Practice to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives. </p>
+                        <p class="fs-6">Doing Unto Others does not charge for any services. By signing below, I understand the Optometric services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free. </p>
                     </div>
 
                     <div class="form-check mt-3">
@@ -497,9 +525,7 @@
                         </label>
                     </div>
 
-                    <div class="text-danger mt-2" id="waiverError" style="display: none;">
-                        You must agree to the waiver to continue.
-                    </div>
+
                 </div>
 
                 <div class="modal-footer">

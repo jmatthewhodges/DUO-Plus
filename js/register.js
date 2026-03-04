@@ -7,8 +7,8 @@
  *               both new and returning users.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 26 @ 9:47 PM
- *  Changes Made:      Increased SweetAlert timer from 1000ms to 1500ms
+ *  Last Modified On:  March 4 @ 11:30 AM
+ *  Changes Made:      Updated wavier modal to use SweetAlert for validation
  * ============================================================
 */
 
@@ -737,16 +737,18 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
 
     const waiverCheckbox = document.getElementById('waiverAgree');
-    const waiverError = document.getElementById('waiverError');
 
     if (!waiverCheckbox.checked) {
-        waiverError.style.display = 'block';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Waiver Required',
+            text: 'You must agree to the waiver to continue.',
+            confirmButtonColor: '#174593'
+        });
         btn.disabled = false;
         btn.innerHTML = originalContent;
         return;
     }
-
-    waiverError.style.display = 'none';
 
     // Check if returning user via URL param
     const urlParams = new URLSearchParams(window.location.search);
