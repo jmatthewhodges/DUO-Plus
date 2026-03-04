@@ -1,17 +1,16 @@
 <?php
 /**
  * ============================================================
- *  File:        Reprint.php
+ *  File:        reprint.php
  *  Description: Updates service selections for a checked-in
  *               patient and allows badge reprinting.
  *               Deletes existing tblVisitServices records for
  *               the active visit and inserts updated ones.
  *               Also updates TranslatorNeeded on tblClients.
  *
- *  Last Modified By:  Claude
+ *  Last Modified By:  Skyler
  *  Last Modified On:  Mar 4
- *  Changes Made:      Removed movement log insert (Action column
- *                     type mismatch in live DB). Core reprint works.
+ *  Changes Made:      Reprint functionality
  * ============================================================
 */
 

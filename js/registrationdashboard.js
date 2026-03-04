@@ -3,7 +3,7 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Claude
+ * Last Modified By:  Skyler
  * Last Modified On:  Mar 4
  * Changes Made:      Added Checked In tab with Edit/Reprint flow
  * ============================================================
