@@ -5,13 +5,13 @@
  *
  * Last Modified By:  Skyler
  * Last Modified On:  Mar 4
- * Changes Made:      Icon updates
+ * Changes Made:      Icon updates, code simplification
  * ============================================================
 */
 
-// 1. GLOBAL SETTINGS & STATE
+// -- Global Settings & State ---------------------------------
 
-// Service availability. Will likely be attached to API response in the future, but hardcoded for now
+// Service availability — will likely come from the API in the future
 const serviceAvailability = {
     medical: true,
     dental: true,
@@ -19,18 +19,20 @@ const serviceAvailability = {
     haircut: true
 };
 
-// Service configuration mapping ServiceID to display info
+// Maps a serviceID to its container element ID and display name
 const serviceMapping = {
-    'medicalExam': { containerId: 'service-medical-exam', displayName: 'Medical - Exam' },
-    'medicalFollowUp': { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
-    'dentalHygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
+    'medicalExam':      { containerId: 'service-medical-exam',      displayName: 'Medical - Exam' },
+    'medicalFollowUp':  { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
+    'dentalHygiene':    { containerId: 'service-dental-hygiene',    displayName: 'Dental - Hygiene' },
     'dentalExtraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
-    'optical': { containerId: 'service-optical', displayName: 'Optical' },
-    'haircut': { containerId: 'service-haircut', displayName: 'Haircut' },
-    'hair': { containerId: 'service-haircut', displayName: 'Haircut' }
+    'optical':          { containerId: 'service-optical',           displayName: 'Optical' },
+    'haircut':          { containerId: 'service-haircut',           displayName: 'Haircut' },
+    'hair':             { containerId: 'service-haircut',           displayName: 'Haircut' }
 };
 
-// Inline SVG icons for service buttons and QR badge card.
+// Inline SVG icons used on the service toggle buttons in the table.
+// Uses currentColor so they inherit text-white when a button is selected.
+// Haircut uses a Bootstrap icon (bi-scissors) and stays null here.
 const serviceIcons = {
     medical: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
                 <path d="M21.9994 21.9998L21.9998 14.9999L25.9998 15.0001L25.9994 21.9998H32.9998V25.9998H25.9992L25.9988 32.9996L21.9988 32.9994L21.9992 25.9998H14.9998V21.9998H21.9994Z" fill="currentColor"/>
@@ -42,11 +44,12 @@ const serviceIcons = {
     optical: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M6.69497 22.1883C8.57391 20.0613 11.4255 17.6246 15.086 15.9661C13.1678 18.0932 12 20.9102 12 24C12 27.0898 13.1678 29.9068 15.086 32.0339C11.4255 30.3754 8.57391 27.9387 6.69497 25.8117C5.76834 24.7628 5.76834 23.2372 6.69497 22.1883ZM5.19605 20.8642C8.60396 17.0063 15.0813 12.0927 23.8218 12.0013C23.8811 12.0004 23.9405 12 24 12L24.0291 12L24.0697 12C32.9356 12 39.5032 16.97 42.9433 20.8642C44.538 22.6695 44.538 25.3305 42.9433 27.1358C39.5032 31.03 32.9356 36 24.0697 36L24.0291 36L24 36C23.9405 36 23.8811 35.9996 23.8218 35.9987C15.0813 35.9073 8.60396 30.9937 5.19606 27.1358C3.60132 25.3305 3.60131 22.6695 5.19605 20.8642ZM24.0284 14C23.9677 14.0002 23.9071 14.0005 23.8466 14.0012C18.3945 14.0831 14 18.5284 14 24C14 29.4716 18.3945 33.9169 23.8466 33.9988C23.9071 33.9995 23.9677 33.9998 24.0284 34C29.5382 33.9847 34 29.5134 34 24C34 18.4866 29.5382 14.0153 24.0284 14ZM36 24C36 27.1409 34.7933 29.9999 32.8182 32.1388C36.5918 30.4794 39.5254 27.984 41.4443 25.8117C42.371 24.7628 42.371 23.2372 41.4443 22.1883C39.5254 20.016 36.5918 17.5206 32.8182 15.8612C34.7933 18.0001 36 20.8591 36 24ZM24.0696 30C27.3833 30 30.0696 27.3137 30.0696 24C30.0696 23.0737 29.8597 22.1965 29.4849 21.4132C29.1229 21.7757 28.6225 22 28.0697 22C26.9651 22 26.0697 21.1046 26.0697 20C26.0697 19.4472 26.294 18.9468 26.6565 18.5848C25.8732 18.2099 24.9959 18 24.0696 18C20.7559 18 18.0696 20.6863 18.0696 24C18.0696 27.3137 20.7559 30 24.0696 30Z" fill="currentColor"/>
               </svg>`,
-    haircut: null  // No healthicons equivalent — keeps Bootstrap bi-scissors
+    haircut: null  // Uses Bootstrap bi-scissors instead
 };
 
-// Badge-specific icons for the QR card — each sub-service gets its own distinct icon.
-// These are only used on the printed badge, not on the service toggle buttons.
+// Inline SVG icons used specifically on the printed QR badge.
+// Each medical/dental sub-service gets its own icon here.
+// Haircut stays null and uses Bootstrap bi-scissors.
 const badgeIcons = {
     medicalExam: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
         <path d="M20 15C20 14.4477 20.4477 14 21 14H29C29.5523 14 30 14.4477 30 15C30 15.5523 29.5523 16 29 16H21C20.4477 16 20 15.5523 20 15Z" fill="currentColor"/>
@@ -73,29 +76,30 @@ const badgeIcons = {
         <path d="M17.0131 40.8353L32.5603 35.2383L32.0886 37.2824L19.0397 41.98C18.2259 41.8858 17.4995 41.4638 17.0131 40.8353Z" fill="currentColor"/>
         <path d="M31.5536 39.6007L24.8888 42H28.6134C30.0104 42 31.2225 41.0358 31.5366 39.6746L31.5536 39.6007Z" fill="currentColor"/>
     </svg>`,
-    haircut: null  // Keeps Bootstrap bi-scissors on the badge too
+    haircut: null  // Uses Bootstrap bi-scissors on the badge too
 };
 
-// Active check-in / reprint state
+// Tracks which row is being processed and in which mode
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
 let currentMode = 'checkin'; // 'checkin' or 'reprint'
 
-// Search elements
-const searchInput = document.getElementById('registrationSearch');
+// -- DOM Element References ----------------------------------
+
+const searchInput    = document.getElementById('registrationSearch');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
 const noSearchResults = document.getElementById('noSearchResults');
-const noSearchTerm = document.getElementById('noSearchTerm');
-
-const tableBody = document.querySelector('tbody');
-const statRegCount = document.getElementById('stat-reg-count');
-const statCompCount = document.getElementById('stat-comp-count');
-
-// --- Tab State & Elements ---
-let currentTab = 'registration';
+const noSearchTerm   = document.getElementById('noSearchTerm');
+const tableBody      = document.querySelector('tbody');
+const statRegCount   = document.getElementById('stat-reg-count');
+const statCompCount  = document.getElementById('stat-comp-count');
 const btnRegistration = document.getElementById('btn-registration');
-const btnCheckedIn = document.getElementById('btn-checked-in');
+const btnCheckedIn   = document.getElementById('btn-checked-in');
+
+let currentTab = 'registration';
+
+// -- Tab Switching -------------------------------------------
 
 btnRegistration.addEventListener('click', () => {
     if (currentTab === 'registration') return;
@@ -115,71 +119,37 @@ btnCheckedIn.addEventListener('click', () => {
     fetchRegistrationQueue();
 });
 
-// Formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
+// -- Utility Functions ---------------------------------------
+
+// Converts "YYYY-MM-DD" to "MM/DD/YYYY". Returns "N/A" for empty input.
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
 }
 
-// Updates the service progress bars based on availability data from API
-function updateServiceProgressBars(servicesData) {
-    if (!servicesData || !Array.isArray(servicesData)) return;
+// Scales a name string down if it's long, to fit on the QR badge.
+// Returns an object with the (possibly truncated) text and a font size in rem.
+function scaledName(name, maxSize, minSize) {
+    const breakpoints = [
+        { maxLen: 6,  scale: 1.00 },
+        { maxLen: 8,  scale: 0.85 },
+        { maxLen: 10, scale: 0.70 },
+        { maxLen: 12, scale: 0.58 },
+        { maxLen: 14, scale: 0.50 },
+    ];
 
-    Object.values(serviceMapping).forEach(mapping => {
-        const container = document.getElementById(mapping.containerId);
-        if (container) {
-            const countSpan = container.querySelector('.service-count');
-            const progressBar = container.querySelector('.progress-bar');
-            if (countSpan) countSpan.textContent = '(0/0)';
-            if (progressBar) progressBar.style.width = '0%';
-        }
-    });
-
-    servicesData.forEach(service => {
-        const serviceID = service.serviceID || '';
-        const mapping = serviceMapping[serviceID];
-        if (!mapping) return;
-
-        const container = document.getElementById(mapping.containerId);
-        if (!container) return;
-
-        const countSpan = container.querySelector('.service-count');
-        const progressBar = container.querySelector('.progress-bar');
-
-        const maxCapacity = service.maxCapacity || 0;
-        const currentAssigned = service.currentAssigned || 0;
-        const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
-
-        if (countSpan) countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
-
-        if (progressBar) {
-            progressBar.style.width = percentage + '%';
-            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
-            if (percentage <= 50) {
-                progressBar.classList.add('bg-success');
-            } else if (percentage < 80) {
-                progressBar.classList.add('bg-warning');
-            } else {
-                progressBar.classList.add('bg-danger');
-            }
-        }
-    });
-}
-
-// Updates the stats in the dashboard header
-function updateStats(type, value) {
-    if (type === 'registration') {
-        if (statRegCount) statRegCount.innerText = value;
-    } else if (type === 'completed') {
-        if (statCompCount) {
-            let current = parseInt(statCompCount.innerText) || 0;
-            statCompCount.innerText = current + value;
+    for (const bp of breakpoints) {
+        if (name.length <= bp.maxLen) {
+            return { text: name, size: maxSize * bp.scale };
         }
     }
+
+    // Name is too long — truncate it
+    return { text: name.slice(0, 14) + '…', size: minSize };
 }
 
-// Closes the check-in/reprint modal with a fade-out animation
+// Closes the check-in/reprint modal with a short fade-out animation
 function closeModalAnimated() {
     const modal = document.getElementById('checkInModal');
     modal.classList.add('closing');
@@ -189,71 +159,74 @@ function closeModalAnimated() {
     }, 250);
 }
 
-// Closes the QR code modal
+// Hides the QR code modal
 function closeQrModal() {
     const qrModal = document.getElementById('qrCodeModal');
     qrModal.classList.add('d-none');
     qrModal.classList.remove('d-flex');
 }
 
-// Creates the HTML for a service button
-function buildServiceButton(serviceType, state, iconClass, serviceKey) {
-    let colorClass = '';
-    let iconColor = '';
-    let disabledAttr = '';
-    const isAvailable = serviceAvailability[serviceKey];
-    state = parseInt(state);
+// -- Service Progress Bars -----------------------------------
 
-    if (state === 1 && !isAvailable) { state = -1; }
+// Updates all service progress bars based on the availability data from the API
+function updateServiceProgressBars(servicesData) {
+    if (!servicesData || !Array.isArray(servicesData)) return;
 
-    if (state === 1) {
-        colorClass = 'btn-success';
-        iconColor = 'text-white';
-    } else if (state === 0) {
-        colorClass = isAvailable ? 'btn-grey' : 'btn-grey locked-btn';
-    } else if (state === -1) {
-        colorClass = 'btn-danger';
-        disabledAttr = 'disabled';
-    }
+    // Reset all bars to 0 first
+    Object.values(serviceMapping).forEach(({ containerId }) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const countSpan   = container.querySelector('.service-count');
+        const progressBar = container.querySelector('.progress-bar');
+        if (countSpan)   countSpan.textContent = '(0/0)';
+        if (progressBar) progressBar.style.width = '0%';
+    });
 
-    // Use inline SVG if available for this service, otherwise fall back to Bootstrap icon.
-    // SVGs use currentColor so they inherit text-white correctly when selected.
-    const iconHTML = serviceIcons[serviceKey]
-        ? `<span class="${iconColor}" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${serviceIcons[serviceKey]}</span>`
-        : `<i class="bi ${iconClass} ${iconColor}"></i>`;
+    servicesData.forEach(service => {
+        const mapping = serviceMapping[service.serviceID];
+        if (!mapping) return;
 
-    return `
-        <button class="btn ${colorClass} btn-sm rounded-2 service-btn" 
-                data-state="${state}" ${disabledAttr} title="${serviceType}" 
-                style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-            ${iconHTML}
-        </button>
-    `;
+        const container = document.getElementById(mapping.containerId);
+        if (!container) return;
+
+        const countSpan   = container.querySelector('.service-count');
+        const progressBar = container.querySelector('.progress-bar');
+
+        const max        = service.maxCapacity    || 0;
+        const assigned   = service.currentAssigned || 0;
+        const percentage = max > 0 ? Math.round((assigned / max) * 100) : 0;
+
+        if (countSpan)   countSpan.textContent = `(${assigned}/${max})`;
+
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            if      (percentage <= 50) progressBar.classList.add('bg-success');
+            else if (percentage <  80) progressBar.classList.add('bg-warning');
+            else                       progressBar.classList.add('bg-danger');
+        }
+    });
 }
 
-// Filters visible rows based on the current search query
+// -- Search --------------------------------------------------
+
+// Filters table rows based on what's typed in the search box
 function applySearch() {
     const query = searchInput.value.trim().toLowerCase();
-    const rows = tableBody.querySelectorAll('tr[data-client-id]');
     let visibleCount = 0;
 
-    rows.forEach(row => {
+    tableBody.querySelectorAll('tr[data-client-id]').forEach(row => {
         const nameEl = row.querySelector('.fw-bold.text-dark');
         if (!nameEl) return;
-        const name = nameEl.innerText.toLowerCase();
-        const matches = name.includes(query);
+        const matches = nameEl.innerText.toLowerCase().includes(query);
         row.style.display = matches ? '' : 'none';
         if (matches) visibleCount++;
     });
 
-    if (query && visibleCount === 0) {
-        noSearchResults.classList.remove('d-none');
-        noSearchTerm.textContent = searchInput.value.trim();
-    } else {
-        noSearchResults.classList.add('d-none');
-    }
-
-    clearSearchBtn.style.display = query ? '' : 'none';
+    const hasQuery = query.length > 0;
+    noSearchResults.classList.toggle('d-none', !hasQuery || visibleCount > 0);
+    if (hasQuery && visibleCount === 0) noSearchTerm.textContent = searchInput.value.trim();
+    clearSearchBtn.style.display = hasQuery ? '' : 'none';
 }
 
 searchInput.addEventListener('input', applySearch);
@@ -264,7 +237,163 @@ clearSearchBtn.addEventListener('click', () => {
     searchInput.focus();
 });
 
-// Fetches queue data from the API and populates the table.
+// -- Table Rendering -----------------------------------------
+
+// Builds the HTML for a single service toggle button
+function buildServiceButton(serviceType, state, iconClass, serviceKey) {
+    const isAvailable = serviceAvailability[serviceKey];
+    state = parseInt(state);
+
+    // If the patient has this service but it's not available today, force the "unavailable" state
+    if (state === 1 && !isAvailable) state = -1;
+
+    const colorClass = state === 1 ? 'btn-success'
+                     : state === 0 ? (isAvailable ? 'btn-grey' : 'btn-grey locked-btn')
+                     : 'btn-danger';
+
+    const iconColor   = state === 1 ? 'text-white' : '';
+    const disabledAttr = state === -1 ? 'disabled' : '';
+
+    // Use inline SVG if available; otherwise fall back to a Bootstrap icon class
+    const iconHTML = serviceIcons[serviceKey]
+        ? `<span class="${iconColor}" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${serviceIcons[serviceKey]}</span>`
+        : `<i class="bi ${iconClass} ${iconColor}"></i>`;
+
+    return `
+        <button class="btn ${colorClass} btn-sm rounded-2 service-btn"
+                data-state="${state}" ${disabledAttr} title="${serviceType}"
+                style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;">
+            ${iconHTML}
+        </button>
+    `;
+}
+
+// Builds a full name string from patient data (includes middle initial if present)
+function buildFullName(patient) {
+    if (patient.MiddleInitial) {
+        return `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
+    }
+    return `${patient.FirstName} ${patient.LastName}`;
+}
+
+// Shared avatar + name cell used in both table views
+function buildNameCell(fullName) {
+    return `
+        <td class="ps-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width:40px;height:40px;">
+                    <i class="bi bi-person-circle" style="font-size:1.5rem"></i>
+                </div>
+                <span class="fw-bold text-dark">${fullName}</span>
+            </div>
+        </td>
+    `;
+}
+
+// Sorts an array of patient objects alphabetically by last name, then first name
+function sortPatients(patients) {
+    return patients.sort((a, b) => {
+        const last = a.LastName.localeCompare(b.LastName);
+        return last !== 0 ? last : a.FirstName.localeCompare(b.FirstName);
+    });
+}
+
+// Populates the Registration tab (patients not yet checked in)
+function populateRegistrationTable(patientsData) {
+    tableBody.innerHTML = '';
+
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
+        return;
+    }
+
+    sortPatients(patientsData).forEach(patient => {
+        const fullName  = buildFullName(patient);
+        const serviceSet = new Set(patient.services || []);
+
+        const hasMedical = serviceSet.has('medical') ? 1 : 0;
+        const hasDental  = serviceSet.has('dental')  ? 1 : 0;
+        const hasOptical = serviceSet.has('optical') ? 1 : 0;
+        const hasHair    = serviceSet.has('haircut') ? 1 : 0;
+
+        tableBody.insertAdjacentHTML('beforeend', `
+            <tr class="align-middle" data-client-id="${patient.ClientID}" data-translator="${patient.TranslatorNeeded || 0}">
+                ${buildNameCell(fullName)}
+                <td class="fw-medium text-secondary">${formatDOB(patient.DOB)}</td>
+                <td>
+                    <div class="d-flex justify-content-between align-items-center pe-3">
+                        <div class="d-flex gap-3">
+                            ${buildServiceButton('Medical', hasMedical, 'bi-heart-pulse', 'medical')}
+                            ${buildServiceButton('Dental',  hasDental,  'bi-shield-shaded', 'dental')}
+                            ${buildServiceButton('Optical', hasOptical, 'bi-eye', 'optical')}
+                            ${buildServiceButton('Haircut', hasHair,    'bi-scissors', 'haircut')}
+                        </div>
+                        <button class="btn bg-primary text-white btn-sm check-in-btn">Check In</button>
+                    </div>
+                </td>
+            </tr>
+        `);
+    });
+
+    if (searchInput.value.trim()) applySearch();
+}
+
+// Populates the Checked In tab (services pulled from tblVisitServices)
+function populateCheckedInTable(patientsData) {
+    tableBody.innerHTML = '';
+
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No checked-in patients found.</td></tr>';
+        return;
+    }
+
+    sortPatients(patientsData).forEach(patient => {
+        const fullName   = buildFullName(patient);
+        const serviceSet = new Set(patient.services || []);
+
+        // Show medical/dental buttons as selected if either sub-type is present
+        const hasMedical = (serviceSet.has('medicalExam') || serviceSet.has('medicalFollowUp')) ? 1 : 0;
+        const hasDental  = (serviceSet.has('dentalHygiene') || serviceSet.has('dentalExtraction')) ? 1 : 0;
+        const hasOptical = serviceSet.has('optical') ? 1 : 0;
+        const hasHaircut = (serviceSet.has('haircut') || serviceSet.has('hair')) ? 1 : 0;
+
+        // Store the exact sub-service for pre-populating the modal on reprint
+        const medicalSub = serviceSet.has('medicalExam') ? 'MedicalExam'
+                         : serviceSet.has('medicalFollowUp') ? 'MedicalFollowUp' : '';
+        const dentalSub  = serviceSet.has('dentalHygiene') ? 'dentalHygiene'
+                         : serviceSet.has('dentalExtraction') ? 'dentalExtraction' : '';
+
+        tableBody.insertAdjacentHTML('beforeend', `
+            <tr class="align-middle"
+                data-client-id="${patient.ClientID}"
+                data-translator="${patient.TranslatorNeeded || 0}"
+                data-medical-sub="${medicalSub}"
+                data-dental-sub="${dentalSub}">
+                ${buildNameCell(fullName)}
+                <td class="fw-medium text-secondary">${formatDOB(patient.DOB)}</td>
+                <td>
+                    <div class="d-flex justify-content-between align-items-center pe-3">
+                        <div class="d-flex gap-3">
+                            ${buildServiceButton('Medical', hasMedical, 'bi-heart-pulse', 'medical')}
+                            ${buildServiceButton('Dental',  hasDental,  'bi-shield-shaded', 'dental')}
+                            ${buildServiceButton('Optical', hasOptical, 'bi-eye', 'optical')}
+                            ${buildServiceButton('Haircut', hasHaircut, 'bi-scissors', 'haircut')}
+                        </div>
+                        <button class="btn btn-primary btn-sm reprint-btn">
+                            <i class="bi bi-printer me-1"></i>Reprint
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `);
+    });
+
+    if (searchInput.value.trim()) applySearch();
+}
+
+// -- Data Fetching -------------------------------------------
+
+// Fetches queue data from the API and populates the appropriate table
 function fetchRegistrationQueue() {
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading...</td></tr>';
 
@@ -274,35 +403,33 @@ function fetchRegistrationQueue() {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                const clients = (data.data || []).filter(item => item.ClientID);
+            const clients = data.success ? (data.data || []).filter(c => c.ClientID) : [];
 
-                if (currentTab === 'checked-in') {
-                    populateCheckedInTable(clients);
-                    // Update the checked-in count in the "Registered Clients" stat
-                    if (statCompCount) statCompCount.innerText = clients.length;
-                } else {
-                    populateRegistrationTable(clients);
-                    updateStats('registration', clients.length);
-                }
+            if (currentTab === 'checked-in') {
+                populateCheckedInTable(clients);
+                if (statCompCount) statCompCount.innerText = clients.length;
             } else {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
-            }
+                populateRegistrationTable(clients);
+                if (statRegCount) statRegCount.innerText = clients.length;
 
-            if (currentTab !== 'checked-in') {
+                // Also fetch the checked-in count to keep that stat up to date
                 fetch('../api/registration-dashboard.php?RegistrationStatus=CheckedIn', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 })
-                .then(r => r.json())
-                .then(checkedInData => {
-                    if (statCompCount) {
-                        const checkedInClients = (checkedInData.data || []).filter(item => item.ClientID);
-                        statCompCount.innerText = checkedInClients.length;
-                    }
-                });
+                    .then(r => r.json())
+                    .then(checkedInData => {
+                        if (statCompCount) {
+                            const checkedInClients = (checkedInData.data || []).filter(c => c.ClientID);
+                            statCompCount.innerText = checkedInClients.length;
+                        }
+                    });
+            }
+
+            if (!data.success) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
             }
 
             if (data.services && Array.isArray(data.services)) {
@@ -315,160 +442,31 @@ function fetchRegistrationQueue() {
         });
 }
 
-// Populates the registration (pre-check-in) table
-function populateRegistrationTable(patientsData) {
-    tableBody.innerHTML = '';
-
-    if (patientsData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
-        return;
-    }
-
-    patientsData.sort((a, b) => {
-        const lastNameComparison = a.LastName.localeCompare(b.LastName);
-        if (lastNameComparison !== 0) return lastNameComparison;
-        return a.FirstName.localeCompare(b.FirstName);
-    });
-
-    patientsData.forEach(patient => {
-        let fullName = `${patient.FirstName} ${patient.LastName}`;
-        if (patient.MiddleInitial) {
-            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
-        }
-        const formattedDOB = formatDOB(patient.DOB);
-
-        const serviceSet = new Set(patient.services || []);
-        patient.Medical = serviceSet.has('medical') ? 1 : 0;
-        patient.Dental = serviceSet.has('dental') ? 1 : 0;
-        patient.Optical = serviceSet.has('optical') ? 1 : 0;
-        patient.Hair = serviceSet.has('haircut') ? 1 : 0;
-
-        const rowHTML = `
-            <tr class="align-middle" data-client-id="${patient.ClientID}" data-translator="${patient.TranslatorNeeded || 0}">
-                <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
-                            <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
-                        </div>
-                        <span class="fw-bold text-dark">${fullName}</span>
-                    </div>
-                </td>
-                <td class="fw-medium text-secondary">${formattedDOB}</td>
-                <td>
-                    <div class="d-flex justify-content-between align-items-center pe-3">
-                        <div class="d-flex gap-3">
-                            ${buildServiceButton('Medical', patient.Medical, 'bi-heart-pulse', 'medical')}
-                            ${buildServiceButton('Dental', patient.Dental, 'bi-shield-shaded', 'dental')}
-                            ${buildServiceButton('Optical', patient.Optical, 'bi-eye', 'optical')}
-                            ${buildServiceButton('Haircut', patient.Hair, 'bi-scissors', 'haircut')}
-                        </div>
-                        <button class="btn bg-primary text-white btn-sm check-in-btn">Check In</button>
-                    </div>
-                </td>
-            </tr>
-        `;
-        tableBody.insertAdjacentHTML('beforeend', rowHTML);
-    });
-
-    if (searchInput.value.trim()) applySearch();
-}
-
-// Populates the checked-in table. Services come from tblVisitServices (actual assigned services).
-function populateCheckedInTable(patientsData) {
-    tableBody.innerHTML = '';
-
-    if (patientsData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No checked-in patients found.</td></tr>';
-        return;
-    }
-
-    patientsData.sort((a, b) => {
-        const lastNameComparison = a.LastName.localeCompare(b.LastName);
-        if (lastNameComparison !== 0) return lastNameComparison;
-        return a.FirstName.localeCompare(b.FirstName);
-    });
-
-    patientsData.forEach(patient => {
-        let fullName = `${patient.FirstName} ${patient.LastName}`;
-        if (patient.MiddleInitial) {
-            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
-        }
-        const formattedDOB = formatDOB(patient.DOB);
-
-        // For checked-in patients, services are specific IDs from tblVisitServices
-        const serviceSet = new Set(patient.services || []);
-
-        // Medical: shown as selected if they have either medical sub-type
-        const hasMedical = serviceSet.has('medicalExam') || serviceSet.has('medicalFollowUp') ? 1 : 0;
-        // Dental: shown as selected if they have either dental sub-type
-        const hasDental = serviceSet.has('dentalHygiene') || serviceSet.has('dentalExtraction') ? 1 : 0;
-        const hasOptical = serviceSet.has('optical') ? 1 : 0;
-        const hasHaircut = serviceSet.has('haircut') || serviceSet.has('hair') ? 1 : 0;
-
-        // Store the specific sub-service IDs on the row for pre-populating the modal
-        const medicalSubService = serviceSet.has('medicalExam') ? 'MedicalExam'
-            : serviceSet.has('medicalFollowUp') ? 'MedicalFollowUp' : '';
-        const dentalSubService = serviceSet.has('dentalHygiene') ? 'dentalHygiene'
-            : serviceSet.has('dentalExtraction') ? 'dentalExtraction' : '';
-
-        const rowHTML = `
-            <tr class="align-middle" 
-                data-client-id="${patient.ClientID}" 
-                data-translator="${patient.TranslatorNeeded || 0}"
-                data-medical-sub="${medicalSubService}"
-                data-dental-sub="${dentalSubService}">
-                <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
-                            <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
-                        </div>
-                        <span class="fw-bold text-dark">${fullName}</span>
-                    </div>
-                </td>
-                <td class="fw-medium text-secondary">${formattedDOB}</td>
-                <td>
-                    <div class="d-flex justify-content-between align-items-center pe-3">
-                        <div class="d-flex gap-3">
-                            ${buildServiceButton('Medical', hasMedical, 'bi-heart-pulse', 'medical')}
-                            ${buildServiceButton('Dental', hasDental, 'bi-shield-shaded', 'dental')}
-                            ${buildServiceButton('Optical', hasOptical, 'bi-eye', 'optical')}
-                            ${buildServiceButton('Haircut', hasHaircut, 'bi-scissors', 'haircut')}
-                        </div>
-                        <button class="btn btn-primary btn-sm reprint-btn">
-                            <i class="bi bi-printer me-1"></i>Reprint</button>
-                    </div>
-                </td>
-            </tr>
-        `;
-        tableBody.insertAdjacentHTML('beforeend', rowHTML);
-    });
-
-    if (searchInput.value.trim()) applySearch();
-}
+// -- Table Click Handler -------------------------------------
 
 tableBody.addEventListener('click', function (event) {
 
-    // --- Service toggle buttons (same for both tabs) ---
+    // Service toggle buttons (both tabs)
     const serviceBtn = event.target.closest('.service-btn');
     if (serviceBtn) {
         if (serviceBtn.hasAttribute('disabled') || serviceBtn.classList.contains('locked-btn')) return;
 
-        let currentState = parseInt(serviceBtn.getAttribute('data-state'));
-        const icon = serviceBtn.querySelector('i');
+        const state = parseInt(serviceBtn.getAttribute('data-state'));
+        const icon  = serviceBtn.querySelector('i');
 
-        if (currentState === 1) {
+        if (state === 1) {
             serviceBtn.setAttribute('data-state', '0');
             serviceBtn.classList.replace('btn-success', 'btn-grey');
-            icon.classList.remove('text-white');
-        } else if (currentState === 0) {
+            icon?.classList.remove('text-white');
+        } else if (state === 0) {
             serviceBtn.setAttribute('data-state', '1');
             serviceBtn.classList.replace('btn-grey', 'btn-success');
-            icon.classList.add('text-white');
+            icon?.classList.add('text-white');
         }
         return;
     }
 
-    // --- Check-In button (Registration tab) ---
+    // Check In button (Registration tab)
     const checkInBtn = event.target.closest('.check-in-btn');
     if (checkInBtn) {
         currentMode = 'checkin';
@@ -476,7 +474,7 @@ tableBody.addEventListener('click', function (event) {
         return;
     }
 
-    // --- Edit / Reprint button (Checked In tab) ---
+    // Reprint button (Checked In tab)
     const reprintBtn = event.target.closest('.reprint-btn');
     if (reprintBtn) {
         currentMode = 'reprint';
@@ -485,341 +483,236 @@ tableBody.addEventListener('click', function (event) {
     }
 });
 
-// Opens the check-in/reprint modal and populates it based on the current row and mode.
+// -- Modal ---------------------------------------------------
+
+// Opens the check-in / reprint modal and pre-populates it from the clicked row
 function openServiceModal(row) {
     currentRowToUpdate = row;
-    currentClientName = row.querySelector('.fw-bold.text-dark').innerText;
-    currentClientId = row.getAttribute('data-client-id');
+    currentClientName  = row.querySelector('.fw-bold.text-dark').innerText;
+    currentClientId    = row.getAttribute('data-client-id');
 
-    // Update modal header and button label based on mode
-    const modalHeader = document.querySelector('#checkInModal .card-header h5');
-    const finalizeBtn = document.getElementById('finalizeCheckInBtn');
+    const isReprint = currentMode === 'reprint';
 
-    if (currentMode === 'reprint') {
-        modalHeader.textContent = 'Edit & Reprint Badge';
-        finalizeBtn.innerHTML = '<i class="bi bi-printer me-1"></i>Save & Reprint';
-    } else {
-        modalHeader.textContent = 'Finalize Check-In';
-        finalizeBtn.innerHTML = 'Finalize Check-In';
-    }
+    // Update header and button label for the current mode
+    document.querySelector('#checkInModal .card-header h5').textContent =
+        isReprint ? 'Edit & Reprint Badge' : 'Finalize Check-In';
+    document.getElementById('finalizeCheckInBtn').innerHTML =
+        isReprint ? '<i class="bi bi-printer me-1"></i>Save & Reprint' : 'Finalize Check-In';
 
-    // --- Translator toggle ---
-    const translatorNeeded = row.getAttribute('data-translator');
-    document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
+    // Translator toggle
+    document.getElementById('translatorCheck').checked =
+        row.getAttribute('data-translator') === '1';
 
-    // --- Dental section ---
-    const dentalBtn = row.querySelector('[title="Dental"]');
-    const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
-
-    document.getElementById('dentalHygiene').checked = false;
-    document.getElementById('dentalExtraction').checked = false;
-
-    const dentalSection = document.getElementById('modalDentalSection');
-    if (dentalState === 1 && serviceAvailability.dental) {
-        dentalSection.classList.remove('d-none');
-
-        // Pre-select existing dental sub-service for reprint mode
-        if (currentMode === 'reprint') {
-            const dentalSub = row.getAttribute('data-dental-sub');
-            if (dentalSub === 'dentalHygiene') document.getElementById('dentalHygiene').checked = true;
-            else if (dentalSub === 'dentalExtraction') document.getElementById('dentalExtraction').checked = true;
-        }
-    } else {
-        dentalSection.classList.add('d-none');
-    }
-
-    // --- Medical section ---
-    const medicalBtn = row.querySelector('[title="Medical"]');
-    const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
-
-    document.getElementById('medicalExam').checked = false;
+    // Medical section
+    document.getElementById('medicalExam').checked    = false;
     document.getElementById('medicalFollowUp').checked = false;
-
     const medicalSection = document.getElementById('modalMedicalSection');
+    const medicalState   = parseInt(row.querySelector('[title="Medical"]').getAttribute('data-state'));
+
     if (medicalState === 1 && serviceAvailability.medical) {
         medicalSection.classList.remove('d-none');
-
-        // Pre-select existing medical sub-service for reprint mode
-        if (currentMode === 'reprint') {
-            const medicalSub = row.getAttribute('data-medical-sub');
-            if (medicalSub === 'MedicalExam') document.getElementById('medicalExam').checked = true;
-            else if (medicalSub === 'MedicalFollowUp') document.getElementById('medicalFollowUp').checked = true;
+        if (isReprint) {
+            const sub = row.getAttribute('data-medical-sub');
+            if (sub === 'MedicalExam')    document.getElementById('medicalExam').checked    = true;
+            if (sub === 'MedicalFollowUp') document.getElementById('medicalFollowUp').checked = true;
         }
     } else {
         medicalSection.classList.add('d-none');
     }
 
-    document.getElementById('modalPatientName').innerText = currentClientName;
+    // Dental section
+    document.getElementById('dentalHygiene').checked    = false;
+    document.getElementById('dentalExtraction').checked = false;
+    const dentalSection = document.getElementById('modalDentalSection');
+    const dentalState   = parseInt(row.querySelector('[title="Dental"]').getAttribute('data-state'));
 
+    if (dentalState === 1 && serviceAvailability.dental) {
+        dentalSection.classList.remove('d-none');
+        if (isReprint) {
+            const sub = row.getAttribute('data-dental-sub');
+            if (sub === 'dentalHygiene')    document.getElementById('dentalHygiene').checked    = true;
+            if (sub === 'dentalExtraction') document.getElementById('dentalExtraction').checked = true;
+        }
+    } else {
+        dentalSection.classList.add('d-none');
+    }
+
+    document.getElementById('modalPatientName').innerText = currentClientName;
     const modal = document.getElementById('checkInModal');
     modal.classList.remove('d-none');
     modal.classList.add('d-flex');
 }
 
-document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
-    closeModalAnimated();
-});
+document.getElementById('cancelCheckInBtn').addEventListener('click', closeModalAnimated);
 
 document.getElementById('finalizeCheckInBtn').addEventListener('click', function () {
     const btn = this;
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
-
     const services = [];
 
-    // --- Medical ---
+    // Medical
     const medicalSection = document.getElementById('modalMedicalSection');
     const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
-
     if (!medicalSection.classList.contains('d-none')) {
         if (!selectedMedical) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Exam or Follow Up to proceed.',
-                confirmButtonColor: '#174593'
-            });
+            Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select either Exam or Follow Up to proceed.', confirmButtonColor: '#174593' });
             return;
         }
         services.push(selectedMedical.value);
     }
 
-    // --- Optical ---
+    // Optical & Haircut (no sub-service needed)
     const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
+    const hairBtn    = currentRowToUpdate.querySelector('[title="Haircut"]');
     if (parseInt(opticalBtn.getAttribute('data-state')) === 1) services.push('optical');
+    if (parseInt(hairBtn.getAttribute('data-state'))    === 1) services.push('haircut');
 
-    // --- Haircut ---
-    const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
-    if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
-
-    // --- Dental ---
+    // Dental
     const dentalSection = document.getElementById('modalDentalSection');
     const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
-
     if (!dentalSection.classList.contains('d-none')) {
         if (!selectedDental) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Hygiene or Extraction to proceed.',
-                confirmButtonColor: '#174593'
-            });
+            Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select either Hygiene or Extraction to proceed.', confirmButtonColor: '#174593' });
             return;
         }
         services.push(selectedDental.value);
     }
 
-    // Capture service states for QR card before DOM changes
-    const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
+    // Snapshot service states now, before any DOM changes happen
+    const dentalBtn  = currentRowToUpdate.querySelector('[title="Dental"]');
     const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-    const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
-    const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
-    const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
-    const hasHaircut = hairBtn && hairBtn.getAttribute('data-state') === '1';
+    const hasMedical = medicalBtn?.getAttribute('data-state') === '1';
+    const hasDental  = dentalBtn?.getAttribute('data-state')  === '1';
+    const hasOptical = opticalBtn?.getAttribute('data-state') === '1';
+    const hasHaircut = hairBtn?.getAttribute('data-state')    === '1';
 
-    // Loading state
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.disabled  = true;
     btn.innerHTML = 'Processing...';
 
-    // Choose API endpoint based on mode
     const endpoint = currentMode === 'reprint' ? '../api/Reprint.php' : '../api/CheckIn.php';
 
     fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            clientID: currentClientId,
-            services: services,
-            needsInterpreter: isInterpreterNeeded
-        })
+        body: JSON.stringify({ clientID: currentClientId, services, needsInterpreter: isInterpreterNeeded })
     })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                closeModalAnimated();
-
-                // For check-in: remove the row from the table (they move to checked-in)
-                // For reprint: keep the row, but update its stored sub-service data attributes
-                if (currentMode === 'checkin') {
-                    if (currentRowToUpdate) currentRowToUpdate.remove();
-
-                    let currentReg = parseInt(statRegCount.innerText) || 0;
-                    statRegCount.innerText = Math.max(0, currentReg - 1);
-
-                    if (statCompCount && data.clientsProcessed !== undefined) {
-                        statCompCount.innerText = data.clientsProcessed;
-                    } else if (statCompCount) {
-                        statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
-                    }
-                } else {
-                    // Update the row's data attributes so the next reprint pre-populates correctly
-                    if (currentRowToUpdate) {
-                        const newMedicalSub = selectedMedical ? selectedMedical.value : '';
-                        const newDentalSub = selectedDental ? selectedDental.value : '';
-                        currentRowToUpdate.setAttribute('data-medical-sub', newMedicalSub);
-                        currentRowToUpdate.setAttribute('data-dental-sub', newDentalSub);
-                        currentRowToUpdate.setAttribute('data-translator', isInterpreterNeeded ? '1' : '0');
-                    }
-                }
-
-                // Show QR modal
-                const qrModal = document.getElementById('qrCodeModal');
-                qrModal.classList.remove('d-none');
-                qrModal.classList.add('d-flex');
-
-                const nameParts = currentClientName.split(' ');
-                const firstName = nameParts[0].toUpperCase();
-                const lastName = nameParts.slice(1).join(' ');
-
-                const firstNameEl = document.getElementById('qrCardFirstName');
-                const lastNameEl = document.getElementById('qrCardLastName');
-
-                function scaledName(name, maxSize, minSize) {
-                    const len = name.length;
-                    if (len <= 6)  return { text: name, size: maxSize };
-                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
-                    if (len <= 10) return { text: name, size: maxSize * 0.70 };
-                    if (len <= 12) return { text: name, size: maxSize * 0.58 };
-                    if (len <= 14) return { text: name, size: maxSize * 0.50 };
-                    return { text: name.slice(0, 14) + '…', size: minSize };
-                }
-
-                const first = scaledName(firstName, 2.5, 1.1);
-                const last  = scaledName(lastName, 1.5, 0.8);
-
-                firstNameEl.innerText = first.text;
-                firstNameEl.style.fontSize = first.size + 'rem';
-                lastNameEl.innerText = last.text;
-                lastNameEl.style.fontSize = last.size + 'rem';
-
-                new QRious({
-                    element: document.getElementById('qr'),
-                    value: currentClientId,
-                    size: 200,
-                });
-
-                // Reset all QR badge icons to hidden
-                const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
-                qrIcons.forEach(id => {
-                    const iconEl = document.getElementById(id);
-                    iconEl.style.visibility = 'hidden';
-                    iconEl.style.display = 'inline-flex';
-                });
-                document.getElementById('qrCardTranslator').style.display = 'none';
-
-                const medicalSectionHidden = document.getElementById('modalMedicalSection').classList.contains('d-none');
-                const dentalSectionHidden  = document.getElementById('modalDentalSection').classList.contains('d-none');
-                const medicalSubKey = (!medicalSectionHidden && selectedMedical) ? selectedMedical.value : null;
-                const dentalSubKey  = (!dentalSectionHidden  && selectedDental)  ? selectedDental.value  : null;
-
-                function setBadgeIcon(slotId, iconKey) {
-                    const el = document.getElementById(slotId);
-                    if (!el) return;
-                    
-                    const normalized = iconKey.charAt(0).toLowerCase() + iconKey.slice(1);
-                    const svg = badgeIcons[normalized];
-                    if (svg) {
-                        el.innerHTML = svg;
-                    }
-                    el.style.visibility = 'visible';
-                }
-
-                // Medical — show slot with sub-service icon if selected
-                if (hasMedical && medicalSubKey) setBadgeIcon('qrCardMedicalIcon', medicalSubKey);
-                else if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
-
-                // Dental — show slot with sub-service icon if selected
-                if (hasDental && dentalSubKey) setBadgeIcon('qrCardDentalIcon', dentalSubKey);
-                else if (hasDental) document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
-
-                // Optical and Haircut — single icon each, no sub-services
-                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
-                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
-                if (isInterpreterNeeded) document.getElementById('qrCardTranslator').style.display = 'block';
-
-            } else {
+            if (!data.success) {
                 closeQrModal();
-                console.error('Operation failed:', data.message);
                 Swal.fire({
                     icon: 'error',
                     title: currentMode === 'reprint' ? 'Reprint Failed' : 'Check-In Failed',
                     text: data.message || 'Unable to process this patient.',
                     confirmButtonColor: '#174593'
                 });
+                return;
             }
+
+            closeModalAnimated();
+
+            if (currentMode === 'checkin') {
+                // Remove the row — the patient has moved to the Checked In tab
+                currentRowToUpdate?.remove();
+                if (statRegCount)  statRegCount.innerText  = Math.max(0, (parseInt(statRegCount.innerText)  || 0) - 1);
+                if (statCompCount) statCompCount.innerText = data.clientsProcessed !== undefined
+                    ? data.clientsProcessed
+                    : (parseInt(statCompCount.innerText) || 0) + 1;
+            } else {
+                // Reprint: keep the row but update its data attributes for the next reprint
+                currentRowToUpdate?.setAttribute('data-medical-sub', selectedMedical?.value || '');
+                currentRowToUpdate?.setAttribute('data-dental-sub',  selectedDental?.value  || '');
+                currentRowToUpdate?.setAttribute('data-translator',  isInterpreterNeeded ? '1' : '0');
+            }
+
+            // Show the QR badge modal
+            const qrModal = document.getElementById('qrCodeModal');
+            qrModal.classList.remove('d-none');
+            qrModal.classList.add('d-flex');
+
+            // Scale the patient name to fit on the badge
+            const nameParts = currentClientName.split(' ');
+            const first = scaledName(nameParts[0].toUpperCase(), 2.5, 1.1);
+            const last  = scaledName(nameParts.slice(1).join(' '), 1.5, 0.8);
+
+            const firstNameEl = document.getElementById('qrCardFirstName');
+            const lastNameEl  = document.getElementById('qrCardLastName');
+            firstNameEl.innerText    = first.text;
+            firstNameEl.style.fontSize = first.size + 'rem';
+            lastNameEl.innerText     = last.text;
+            lastNameEl.style.fontSize  = last.size + 'rem';
+
+            new QRious({ element: document.getElementById('qr'), value: currentClientId, size: 200 });
+
+            // Reset all badge icons to hidden
+            ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'].forEach(id => {
+                const el = document.getElementById(id);
+                el.style.visibility = 'hidden';
+                el.style.display    = 'inline-flex';
+            });
+            document.getElementById('qrCardTranslator').style.display = 'none';
+
+            // Helper: inject an SVG into a badge slot, or just make it visible if no SVG exists
+            function showBadgeIcon(slotId, iconKey) {
+                const el  = document.getElementById(slotId);
+                const key = iconKey.charAt(0).toLowerCase() + iconKey.slice(1);
+                const svg = badgeIcons[key];
+                if (svg) el.innerHTML = svg;
+                el.style.visibility = 'visible';
+            }
+
+            const medSectionHidden    = document.getElementById('modalMedicalSection').classList.contains('d-none');
+            const dentalSectionHidden = document.getElementById('modalDentalSection').classList.contains('d-none');
+            const medSubKey    = (!medSectionHidden    && selectedMedical) ? selectedMedical.value : null;
+            const dentalSubKey = (!dentalSectionHidden && selectedDental)  ? selectedDental.value  : null;
+
+            if (hasMedical && medSubKey)    showBadgeIcon('qrCardMedicalIcon', medSubKey);
+            else if (hasMedical)            document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
+
+            if (hasDental && dentalSubKey)  showBadgeIcon('qrCardDentalIcon', dentalSubKey);
+            else if (hasDental)             document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
+            if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
+            if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
+            if (isInterpreterNeeded) document.getElementById('qrCardTranslator').style.display = 'block';
         })
         .catch(error => {
             closeQrModal();
             console.error('API Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server. Please try again.',
-                confirmButtonColor: '#174593'
-            });
+            Swal.fire({ icon: 'error', title: 'Connection Error', text: 'Unable to connect to the server. Please try again.', confirmButtonColor: '#174593' });
         })
         .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.disabled  = false;
+            btn.innerHTML = originalHTML;
         });
 });
+
+// -- QR Modal Actions ----------------------------------------
 
 document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
     style.textContent = `
         @media print {
-            @page {
-                size: 2.3125in 4in;
-                margin: 0; 
-            }
-            html, body {
-                height: 4in !important;
-                overflow: hidden !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+            @page { size: 2.3125in 4in; margin: 0; }
+            html, body { height: 4in !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
             body * { visibility: hidden; }
             #qrCodeModal, #qrCodeModal * { visibility: visible; }
             #qrCodeModal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 2.3125in !important;
-                height: 4in !important;
-                background: white !important;
-                padding: 0.1in !important;
-                display: flex !important;
-                align-items: flex-start !important;
-                margin: 0 !important;
+                position: absolute; left: 0; top: 0;
+                width: 2.3125in !important; height: 4in !important;
+                background: white !important; padding: 0.1in !important;
+                display: flex !important; align-items: flex-start !important; margin: 0 !important;
             }
-            #qrCodeModal .card {
-                width: 100% !important;
-                height: 100% !important;
-                max-width: none !important;
-                border: none !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
+            #qrCodeModal .card { width: 100% !important; height: 100% !important; max-width: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
             #printQrBtn, #closeQrBtn { display: none !important; }
             #qrCodeModal .qr-icon-border {
-                flex-shrink: 0 !important; 
-                font-size: 2rem !important;
-                width: 46px !important;
-                height: 46px !important;
-                border-width: 2px !important;
-                border-style: solid !important;
-                border-color: black !important;
-                border-radius: 8px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+                flex-shrink: 0 !important; font-size: 2rem !important;
+                width: 46px !important; height: 46px !important;
+                border: 2px solid black !important; border-radius: 8px !important;
+                display: flex !important; align-items: center !important; justify-content: center !important;
             }
             #qrCodeModal .gap-3 { gap: 0.25rem !important; }
-            #qrCodeModal canvas {
-                max-width: 1.8in !important;
-                height: auto !important;
-            }
+            #qrCodeModal canvas { max-width: 1.8in !important; height: auto !important; }
         }
     `;
     document.head.appendChild(style);
@@ -829,10 +722,10 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
 
 document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
-    // Only refresh the full queue on check-in close; reprint stays in place
-    if (currentMode === 'checkin') {
-        fetchRegistrationQueue();
-    }
+    // On check-in close, refresh the queue so the moved patient no longer shows
+    if (currentMode === 'checkin') fetchRegistrationQueue();
 });
+
+// -- Init ----------------------------------------------------
 
 fetchRegistrationQueue();
