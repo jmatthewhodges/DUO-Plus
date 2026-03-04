@@ -2,23 +2,12 @@
  * ============================================================
  * File:            waitroom-dashboard.js
  * Description:     Handles managing the waiting room dashboard.
- * * Last Modified By: Skyler E.
- * Last Modified On: Feb 23 @ 7:02 PM
  * ============================================================
 */
 
 // 1. GLOBAL SETTINGS & STATE
-const mockWaitListData = [
-    { ClientID: 101, FirstName: "John", LastName: "Doe", DOB: "1978-11-01", Medical: 1, Dental: 0, Optical: 1, Hair: 0, ServiceIcon: "bi-heart-pulse" },
-    { ClientID: 102, FirstName: "Jane", LastName: "Smith", DOB: "1985-05-22", Medical: 0, Dental: 1, Optical: 0, Hair: 0, ServiceIcon: "bi-shield-shaded" },
-    { ClientID: 103, FirstName: "Michael", LastName: "Brown", DOB: "1992-08-15", Medical: 0, Dental: 0, Optical: 1, Hair: 0, ServiceIcon: "bi-eye" },
-    { ClientID: 104, FirstName: "Emily", LastName: "Davis", DOB: "2001-12-30", Medical: 0, Dental: 0, Optical: 0, Hair: 1, ServiceIcon: "bi-scissors" },
-    { ClientID: 105, FirstName: "Robert", LastName: "Wilson", DOB: "1965-03-12", Medical: 1, Dental: 1, Optical: 0, Hair: 0, ServiceIcon: "bi-heart-pulse" },
-    { ClientID: 106, FirstName: "Sarah", LastName: "Miller", DOB: "1988-07-19", Medical: 0, Dental: 1, Optical: 1, Hair: 0, ServiceIcon: "bi-shield-shaded" },
-    { ClientID: 107, FirstName: "David", LastName: "Garcia", DOB: "1970-01-05", Medical: 1, Dental: 0, Optical: 0, Hair: 0, ServiceIcon: "bi-heart-pulse" },
-    { ClientID: 108, FirstName: "Linda", LastName: "Martinez", DOB: "1995-11-20", Medical: 0, Dental: 0, Optical: 1, Hair: 1, ServiceIcon: "bi-eye" }
-];
-
+let waitListData = [];
+let availableServices = []; 
 let currentRowToUpdate = null;
 let currentClientId = null;
 
@@ -27,26 +16,33 @@ let currentClientId = null;
 const tableBody = document.querySelector('tbody');
 const updateModal = document.getElementById('updateStatusModal');
 const waitListCountLabel = document.getElementById('waitlist-header-count');
+const moveServiceSelect = document.getElementById('moveServiceSelect');
+
+// Grab the single element for Now Serving
+const nowServingNameEl = document.querySelector('.queue-name');
+const nowServingIconEl = document.querySelector('.service-icon-box i'); 
 
 //================================================================================
 // 3. HELPERS
 
-// Formats "YYYY-MM-DD" to "MM/DD/YYYY"
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
-    const [year, month, day] = dateString.split('-');
-    return `${month}/${day}/${year}`;
+    const parts = dateString.split(/[- ]/); 
+    if(parts.length >= 3) {
+        return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    }
+    return dateString; 
 }
 
-// Mimics the Registration Dashboard service button style
-function buildServiceButton(state, iconClass) {
-    let colorClass = state === 1 ? 'btn-success' : 'btn-grey';
-    let iconColor = state === 1 ? 'text-white' : '';
+function buildServiceButton(state, iconTag, serviceName) {
+    let colorClass = state ? 'btn-success' : 'btn-secondary bg-secondary bg-opacity-25 border-0';
+    let iconColor = state ? 'text-white' : 'text-muted opacity-50';
+    let safeIcon = iconTag || 'bi-gear'; 
     
     return `
-        <button class="btn ${colorClass} btn-sm rounded-2 shadow-sm" disabled 
+        <button class="btn ${colorClass} btn-sm rounded-2 shadow-sm" disabled title="${serviceName}"
                 style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-            <i class="bi ${iconClass} ${iconColor}" style="font-size: 1.2rem;"></i>
+            <i class="bi ${safeIcon} ${iconColor}" style="font-size: 1.2rem;"></i>
         </button>
     `;
 }
@@ -56,18 +52,75 @@ function closeUpdateModal() {
     updateModal.classList.remove('d-flex');
 }
 
+function hasService(serviceSelections, serviceId) {
+    if (!serviceSelections) return false;
+    const services = serviceSelections.toString().split(',');
+    return services.includes(serviceId.toString());
+}
+
+function populateServiceDropdown() {
+    moveServiceSelect.innerHTML = '<option value="" selected disabled>Select a department...</option>';
+    availableServices.forEach(service => {
+        const optionHTML = `<option value="${service.ServiceID}">${service.ServiceName}</option>`;
+        moveServiceSelect.insertAdjacentHTML('beforeend', optionHTML);
+    });
+}
+
 //================================================================================
-// 4. DATA RENDERING
+// 4. DATA FETCHING & RENDERING
+
+async function fetchQueueData() {
+    try {
+        const response = await fetch('../api/waiting-room.php');
+        const data = await response.json();
+
+        if (data.success) {
+            waitListData = data.WaitList;
+            availableServices = data.Services || []; 
+            
+            populateServiceDropdown();
+
+            // 1. Update Now Serving safely
+            if (nowServingNameEl) {
+                if (data.NowServing && data.NowServing.length > 0) {
+                    const serving = data.NowServing[0];
+                    nowServingNameEl.innerText = `${serving.FirstName} ${serving.LastName}`;
+                    
+                    // Dynamically change the icon based on their requested service
+                    if (nowServingIconEl && serving.ServiceSelections) {
+                        const firstServiceId = serving.ServiceSelections.split(',')[0];
+                        const matchedService = availableServices.find(s => s.ServiceID == firstServiceId);
+                        if (matchedService && matchedService.IconTag) {
+                            nowServingIconEl.className = `bi ${matchedService.IconTag}`;
+                        }
+                    }
+                } else {
+                    nowServingNameEl.innerText = "No one currently";
+                    if (nowServingIconEl) nowServingIconEl.className = "bi bi-person-x"; 
+                }
+            }
+
+            // 2. Populate the table
+            populateWaitListTable(waitListData);
+        } else {
+            console.error("Database Error:", data.error);
+            Swal.fire({ icon: 'error', title: 'Data Error', text: 'Could not load waiting room data.'});
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+    }
+}
 
 function populateWaitListTable(patients) {
     tableBody.innerHTML = '';
 
-    if (patients.length === 0) {
+    if (!patients || patients.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients in the waiting room.</td></tr>';
+        if (waitListCountLabel) waitListCountLabel.innerText = `Wait List - 0`;
         return;
     }
 
-    patients.forEach(patient => {
+    patients.forEach((patient) => {
         const formattedDOB = formatDOB(patient.DOB);
         const rowHTML = `
             <tr class="border-bottom" data-client-id="${patient.ClientID}">
@@ -105,17 +158,16 @@ tableBody.addEventListener('click', (event) => {
         currentRowToUpdate = updateBtn.closest('tr');
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
         
-        const patient = mockWaitListData.find(p => p.ClientID == currentClientId);
-        
+        const patient = waitListData.find(p => p.ClientID == currentClientId);
         document.getElementById('modalPatientName').innerText = `${patient.FirstName} ${patient.LastName}`;
         
         const statusContainer = document.getElementById('modalServiceStatus');
-        statusContainer.innerHTML = `
-            ${buildServiceButton(patient.Medical, 'bi-heart-pulse')}
-            ${buildServiceButton(patient.Dental, 'bi-shield-shaded')}
-            ${buildServiceButton(patient.Optical, 'bi-eye')}
-            ${buildServiceButton(patient.Hair, 'bi-scissors')}
-        `;
+        statusContainer.innerHTML = ''; 
+        
+        availableServices.forEach(service => {
+            const isSelected = hasService(patient.ServiceSelections, service.ServiceID);
+            statusContainer.innerHTML += buildServiceButton(isSelected, service.IconTag, service.ServiceName);
+        });
 
         updateModal.classList.remove('d-none');
         updateModal.classList.add('d-flex');
@@ -125,29 +177,31 @@ tableBody.addEventListener('click', (event) => {
 document.getElementById('cancelUpdateBtn').addEventListener('click', closeUpdateModal);
 
 document.getElementById('movePatientBtn').addEventListener('click', function() {
-    const selectedService = document.getElementById('moveServiceSelect').value;
+    const selectedServiceId = moveServiceSelect.value;
+    const selectedServiceName = moveServiceSelect.options[moveServiceSelect.selectedIndex].text;
     
-    if (!selectedService) {
+    if (!selectedServiceId) {
         Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select a service destination.', confirmButtonColor: '#174593' });
         return;
     }
 
     Swal.fire({
         title: 'Moving Patient...',
-        text: `Patient is being moved to ${selectedService.toUpperCase()}`,
+        text: `Patient is being manually moved to ${selectedServiceName.toUpperCase()}`,
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
+    }).then(() => {
+        closeUpdateModal();
+        fetchQueueData(); 
     });
-
-    closeUpdateModal();
 });
 
 //================================================================================
 // 6. INITIALIZATION
 
 function init() {
-    populateWaitListTable(mockWaitListData);
+    fetchQueueData();
 }
 
 init();
