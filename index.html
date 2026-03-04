@@ -27,7 +27,7 @@
 <body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
   <div id="divLanguageSwitch">
-    <select name="" id="selLanguageSwitch" class="btn-primary">
+    <select name="languageSwitch" id="selLanguageSwitch" class="btn-primary" aria-label="Select language">
       <option value="en">EN</option>
       <option value="es">ES</option>
     </select>
@@ -36,11 +36,11 @@
   <div class="container text-center login-container">
     <!-- Logo Section -->
     <div class="logo-section mb-3">
-      <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-1" style="width: 200px;">
+      <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Plus - Home" class="mb-1" style="width: 200px;">
     </div>
 
     <!-- Subtitle -->
-    <h5 id="subtitle" class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
+    <h5 id="subtitle" class="subtitle-text fw-medium mb-4" style="color: #174593;">
       Connecting patients with free<br>care through DUO
     </h5>
 
@@ -50,14 +50,12 @@
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="txtClientEmail" class="form-control" required
-              aria-label="Email address">
+            <input type="email" name="email" id="txtClientEmail" class="form-control" required>
           </div>
 
           <div class="mb-3 text-start">
             <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" id="txtClientPassword" class="form-control" required
-              aria-label="Password">
+            <input type="password" name="password" id="txtClientPassword" class="form-control" required>
           </div>
 
           <!-- Main Login Button -->
@@ -68,7 +66,7 @@
 
     <!-- Register Section -->
     <div class="register-section">
-      <div class="d-flex align-items-center justify-content-center mb-2">
+      <div class="d-flex align-items-center justify-content-center mb-2" aria-hidden="true">
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
         <span class="mx-2 text-muted fw-semibold">Or</span>
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
@@ -78,7 +76,7 @@
         class="fw-semibold d-block mb-3 text-decoration-none">Register</a>
 
       <div class="d-flex flex-column align-items-center">
-        <img src="assets/images/lifeChurchLogo.webp" alt="Life Church Logo" class="mb-3" style="width: 200px;">
+        <img src="assets/images/lifeChurchLogo.webp" alt="Life Church - Partner Organization" class="mb-3" style="width: 200px;">
       </div>
     </div>
 
