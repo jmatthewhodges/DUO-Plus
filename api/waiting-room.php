@@ -58,6 +58,7 @@ $NowServingSelect = $mysqli->prepare(
     -- Conditional statement: Service at Maximum Work Capacity
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
     WHERE i.CurrentAssigned < 20
+    AND v.RegistrationStatus = 'CheckedIn'
     -- Gets the most RECENT entry only
     group by c.ClientID
     order by QueueScore desc
@@ -107,10 +108,11 @@ $WaitListSelect = $mysqli->prepare(
     -- Conditional statement: Service at Maximum Work Capacity (not included here to contain ALL users)
     JOIN tblEventServices i on i.ServiceID = s.ServiceID
     WHERE i.CurrentAssigned < 20
+    AND v.RegistrationStatus = 'CheckedIn'
     -- limit 1000 as a placeholder (can be changed later if somehow is exceeded in practice)
     group by c.ClientID
     order by QueueScore desc
-    LIMIT 1000 OFFSET 1"
+    LIMIT 1000 OFFSET 0"
 );
 $WaitListSelect->execute();
 $WaitList = $WaitListSelect->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -125,13 +127,33 @@ if (!$WaitListSelect) {
     exit;
 }
 
+/*
+---------------------------------
+The "Available Services" Query
+----------------------------------
+*/
+$ServicesSelect = $mysqli->prepare(
+    "SELECT ServiceID, ServiceName, IconTag FROM tblServices"
+);
+$ServicesSelect->execute();
+$EventServices = $ServicesSelect->get_result()->fetch_all(MYSQLI_ASSOC);
+$ServicesSelect->close();
 
-//display endpoint
+if (!$ServicesSelect) {
+    http_response_code(500);
+    $msg = json_encode(['success' => false, 'error' => $mysqli->error]);
+    echo $msg;
+    error_log($msg);
+    exit;
+}
+
+// Display endpoint
 http_response_code(200);
 $msg = json_encode([
     'success' => true,
     "NowServing" => $NowServing,
-    "WaitList" => $WaitList
+    "WaitList" => $WaitList,
+    "Services" => $EventServices 
 ]);
 echo $msg;
 error_log($msg);
