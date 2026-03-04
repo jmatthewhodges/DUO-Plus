@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 28 @ 12:12 PM
- * Changes Made:      Removed automatic refresh
+ * Last Modified By:  Claude
+ * Last Modified On:  Mar 4
+ * Changes Made:      Added Checked In tab with Edit/Reprint flow
  * ============================================================
 */
 
@@ -20,7 +20,6 @@ const serviceAvailability = {
 };
 
 // Service configuration mapping ServiceID to display info
-// This maps possible service ID patterns to container IDs and display names
 const serviceMapping = {
     'medicalExam': { containerId: 'service-medical-exam', displayName: 'Medical - Exam' },
     'medicalFollowUp': { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
@@ -31,10 +30,11 @@ const serviceMapping = {
     'hair': { containerId: 'service-haircut', displayName: 'Haircut' }
 };
 
-// Active check-in state
+// Active check-in / reprint state
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
+let currentMode = 'checkin'; // 'checkin' or 'reprint'
 
 // Search elements
 const searchInput = document.getElementById('registrationSearch');
@@ -45,64 +45,61 @@ const noSearchTerm = document.getElementById('noSearchTerm');
 //================================================================================
 // 2. DOM REFERENCES
 
-const tableBody = document.querySelector('tbody');      // Link to the Table Body
-const statRegCount = document.getElementById('stat-reg-count'); // Link to "Registration" Number
-const statCompCount = document.getElementById('stat-comp-count'); // Link to "Processed" Number
+const tableBody = document.querySelector('tbody');
+const statRegCount = document.getElementById('stat-reg-count');
+const statCompCount = document.getElementById('stat-comp-count');
 
 //================================================================================
 // 3. HELPERS
 
 // --- Tab State & Elements ---
-let currentTab = 'registration'; // Tracks if we are viewing 'registration' or 'checked-in'
+let currentTab = 'registration';
 const btnRegistration = document.getElementById('btn-registration');
 const btnCheckedIn = document.getElementById('btn-checked-in');
 
 btnRegistration.addEventListener('click', () => {
     if (currentTab === 'registration') return;
     currentTab = 'registration';
+    currentMode = 'checkin';
     btnRegistration.classList.add('active');
     btnCheckedIn.classList.remove('active');
-    fetchRegistrationQueue(); // Re-fetch for registration queue
+    fetchRegistrationQueue();
 });
 
 btnCheckedIn.addEventListener('click', () => {
     if (currentTab === 'checked-in') return;
     currentTab = 'checked-in';
+    currentMode = 'reprint';
     btnCheckedIn.classList.add('active');
     btnRegistration.classList.remove('active');
-    fetchRegistrationQueue(); // Re-fetch for checked-in queue
+    fetchRegistrationQueue();
 });
 
-//formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
+// Formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
 }
 
-//updates the service progress bars based on availability data from API
+// Updates the service progress bars based on availability data from API
 function updateServiceProgressBars(servicesData) {
     if (!servicesData || !Array.isArray(servicesData)) return;
 
-    // Initialize all service containers first (optional - for services not in API response)
     Object.values(serviceMapping).forEach(mapping => {
         const container = document.getElementById(mapping.containerId);
         if (container) {
             const countSpan = container.querySelector('.service-count');
             const progressBar = container.querySelector('.progress-bar');
             if (countSpan) countSpan.textContent = '(0/0)';
-            if (progressBar) {
-                progressBar.style.width = '0%';
-            }
+            if (progressBar) progressBar.style.width = '0%';
         }
     });
 
-    // Update services based on API data
     servicesData.forEach(service => {
         const serviceID = service.serviceID || '';
         const mapping = serviceMapping[serviceID];
-
-        if (!mapping) return; // Skip if we don't have a mapping for this service
+        if (!mapping) return;
 
         const container = document.getElementById(mapping.containerId);
         if (!container) return;
@@ -112,35 +109,25 @@ function updateServiceProgressBars(servicesData) {
 
         const maxCapacity = service.maxCapacity || 0;
         const currentAssigned = service.currentAssigned || 0;
-
-        // Calculate percentage (avoid division by zero)
         const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
 
-        // Update display text
-        if (countSpan) {
-            countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
-        }
+        if (countSpan) countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
 
-        // Update progress bar width and color based on capacity
         if (progressBar) {
             progressBar.style.width = percentage + '%';
-
-            // Remove all color classes
             progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
-
-            // Add color based on percentage
             if (percentage <= 50) {
-                progressBar.classList.add('bg-success');  // Green: under 50%
+                progressBar.classList.add('bg-success');
             } else if (percentage < 80) {
-                progressBar.classList.add('bg-warning');  // Yellow: 50-80%
+                progressBar.classList.add('bg-warning');
             } else {
-                progressBar.classList.add('bg-danger');   // Red: 80%+
+                progressBar.classList.add('bg-danger');
             }
         }
     });
 }
 
-//updates the stats in the dashboard header. Type can be 'registration' or 'completed'. Value is the number to update.
+// Updates the stats in the dashboard header
 function updateStats(type, value) {
     if (type === 'registration') {
         if (statRegCount) statRegCount.innerText = value;
@@ -152,7 +139,7 @@ function updateStats(type, value) {
     }
 }
 
-// Closes the check-in modal with a fade-out animation
+// Closes the check-in/reprint modal with a fade-out animation
 function closeModalAnimated() {
     const modal = document.getElementById('checkInModal');
     modal.classList.add('closing');
@@ -162,15 +149,14 @@ function closeModalAnimated() {
     }, 250);
 }
 
-// Closes the QR code modal card
+// Closes the QR code modal
 function closeQrModal() {
     const qrModal = document.getElementById('qrCodeModal');
     qrModal.classList.add('d-none');
     qrModal.classList.remove('d-flex');
 }
 
-// Creates the HTML for a service button based on the service type, current state, and availability. 
-//State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
+// Creates the HTML for a service button
 function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     let colorClass = '';
     let iconColor = '';
@@ -178,7 +164,6 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     const isAvailable = serviceAvailability[serviceKey];
     state = parseInt(state);
 
-    // If the patient wanted it but the service is unavailable, lock it and show as unavailable (red)
     if (state === 1 && !isAvailable) { state = -1; }
 
     if (state === 1) {
@@ -200,9 +185,7 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
     `;
 }
 
-// Filters the visible table rows based on the current search query.
-// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
-// Shows a "no results" message when nothing matches.
+// Filters visible rows based on the current search query
 function applySearch() {
     const query = searchInput.value.trim().toLowerCase();
     const rows = tableBody.querySelectorAll('tr[data-client-id]');
@@ -217,7 +200,6 @@ function applySearch() {
         if (matches) visibleCount++;
     });
 
-    // Toggle "no results" message
     if (query && visibleCount === 0) {
         noSearchResults.classList.remove('d-none');
         noSearchTerm.textContent = searchInput.value.trim();
@@ -225,14 +207,11 @@ function applySearch() {
         noSearchResults.classList.add('d-none');
     }
 
-    // Show/hide the clear (X) button
     clearSearchBtn.style.display = query ? '' : 'none';
 }
 
-// Search input: filter on every keystroke
 searchInput.addEventListener('input', applySearch);
 
-// Clear button: reset search and re-show all rows
 clearSearchBtn.addEventListener('click', () => {
     searchInput.value = '';
     applySearch();
@@ -242,12 +221,15 @@ clearSearchBtn.addEventListener('click', () => {
 //================================================================================
 // 4. DATA FETCHING & TABLE RENDERING
 
-// Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
+// Fetches queue data from the API and populates the table.
+// Uses RegistrationStatus=Registered for the Registration tab,
+// and RegistrationStatus=CheckedIn for the Checked In tab.
 function fetchRegistrationQueue() {
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading...</td></tr>';
 
-    //fetch queue data from API
-    fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
+    const status = currentTab === 'checked-in' ? 'CheckedIn' : 'Registered';
+
+    fetch(`../api/registration-dashboard.php?RegistrationStatus=${status}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -255,16 +237,23 @@ function fetchRegistrationQueue() {
         .then(data => {
             if (data.success) {
                 const clients = (data.data || []).filter(item => item.ClientID);
-                populateRegistrationTable(clients);
-                updateStats('registration', clients.length);
+
+                if (currentTab === 'checked-in') {
+                    populateCheckedInTable(clients);
+                    // Update the checked-in count in the "Registered Clients" stat
+                    if (statCompCount) statCompCount.innerText = clients.length;
+                } else {
+                    populateRegistrationTable(clients);
+                    updateStats('registration', clients.length);
+                }
             } else {
-                tableBody.innerHTML = 'No patients currently in queue.';
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
             }
-            // Always update processed count if it came back
-            if (statCompCount && data.clientsProcessed !== undefined) {
+
+            if (statCompCount && data.clientsProcessed !== undefined && currentTab !== 'checked-in') {
                 statCompCount.innerText = data.clientsProcessed;
             }
-            // Update service progress bars based on API data
+
             if (data.services && Array.isArray(data.services)) {
                 updateServiceProgressBars(data.services);
             }
@@ -275,33 +264,21 @@ function fetchRegistrationQueue() {
         });
 }
 
-// Populates the registration table with patient data. 
-// SORTING: Orders by Last Name (A-Z), then First Name (A-Z).
+// Populates the registration (pre-check-in) table
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
-    // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
         return;
     }
 
-    // Sort patients by Last Name, then First Name (both case-insensitive)
     patientsData.sort((a, b) => {
-
-        //Compare Last Names (Case-insensitive)
         const lastNameComparison = a.LastName.localeCompare(b.LastName);
-
-        // If Last Names are different, use that order
-        if (lastNameComparison !== 0) {
-            return lastNameComparison;
-        }
-
-        // If Last Names are identical (e.g., two "Smiths"), sort by First Name
+        if (lastNameComparison !== 0) return lastNameComparison;
         return a.FirstName.localeCompare(b.FirstName);
     });
 
-    //properly format each patient's name and DOB, then create a table row with their info and requested services
     patientsData.forEach(patient => {
         let fullName = `${patient.FirstName} ${patient.LastName}`;
         if (patient.MiddleInitial) {
@@ -309,7 +286,6 @@ function populateRegistrationTable(patientsData) {
         }
         const formattedDOB = formatDOB(patient.DOB);
 
-        // Map services array to individual fields
         const serviceSet = new Set(patient.services || []);
         patient.Medical = serviceSet.has('medical') ? 1 : 0;
         patient.Dental = serviceSet.has('dental') ? 1 : 0;
@@ -343,27 +319,96 @@ function populateRegistrationTable(patientsData) {
         tableBody.insertAdjacentHTML('beforeend', rowHTML);
     });
 
-    // Re-apply any active search filter after table repopulates
-    if (searchInput.value.trim()) {
-        applySearch();
+    if (searchInput.value.trim()) applySearch();
+}
+
+// Populates the checked-in table. Services come from tblVisitServices (actual assigned services).
+// The "services" array from the API for CheckedIn patients contains their specific service IDs
+// (e.g. 'medicalExam', 'dentalHygiene') rather than broad categories.
+function populateCheckedInTable(patientsData) {
+    tableBody.innerHTML = '';
+
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No checked-in patients found.</td></tr>';
+        return;
     }
+
+    patientsData.sort((a, b) => {
+        const lastNameComparison = a.LastName.localeCompare(b.LastName);
+        if (lastNameComparison !== 0) return lastNameComparison;
+        return a.FirstName.localeCompare(b.FirstName);
+    });
+
+    patientsData.forEach(patient => {
+        let fullName = `${patient.FirstName} ${patient.LastName}`;
+        if (patient.MiddleInitial) {
+            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
+        }
+        const formattedDOB = formatDOB(patient.DOB);
+
+        // For checked-in patients, services are specific IDs from tblVisitServices
+        const serviceSet = new Set(patient.services || []);
+
+        // Medical: shown as selected if they have either medical sub-type
+        const hasMedical = serviceSet.has('medicalExam') || serviceSet.has('medicalFollowUp') ? 1 : 0;
+        // Dental: shown as selected if they have either dental sub-type
+        const hasDental = serviceSet.has('dentalHygiene') || serviceSet.has('dentalExtraction') ? 1 : 0;
+        const hasOptical = serviceSet.has('optical') ? 1 : 0;
+        const hasHaircut = serviceSet.has('haircut') || serviceSet.has('hair') ? 1 : 0;
+
+        // Store the specific sub-service IDs on the row for pre-populating the modal
+        const medicalSubService = serviceSet.has('medicalExam') ? 'MedicalExam'
+            : serviceSet.has('medicalFollowUp') ? 'MedicalFollowUp' : '';
+        const dentalSubService = serviceSet.has('dentalHygiene') ? 'dentalHygiene'
+            : serviceSet.has('dentalExtraction') ? 'dentalExtraction' : '';
+
+        const rowHTML = `
+            <tr class="align-middle" 
+                data-client-id="${patient.ClientID}" 
+                data-translator="${patient.TranslatorNeeded || 0}"
+                data-medical-sub="${medicalSubService}"
+                data-dental-sub="${dentalSubService}">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                            <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
+                        </div>
+                        <span class="fw-bold text-dark">${fullName}</span>
+                    </div>
+                </td>
+                <td class="fw-medium text-secondary">${formattedDOB}</td>
+                <td>
+                    <div class="d-flex justify-content-between align-items-center pe-3">
+                        <div class="d-flex gap-3">
+                            ${buildServiceButton('Medical', hasMedical, 'bi-heart-pulse', 'medical')}
+                            ${buildServiceButton('Dental', hasDental, 'bi-shield-shaded', 'dental')}
+                            ${buildServiceButton('Optical', hasOptical, 'bi-eye', 'optical')}
+                            ${buildServiceButton('Haircut', hasHaircut, 'bi-scissors', 'haircut')}
+                        </div>
+                        <button class="btn btn-primary btn-sm reprint-btn">Reprint</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tableBody.insertAdjacentHTML('beforeend', rowHTML);
+    });
+
+    if (searchInput.value.trim()) applySearch();
 }
 
 //================================================================================
-// 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
+// 5. TABLE EVENT LISTENERS (Service Toggles, Check-In, and Reprint)
 
-// Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
 
+    // --- Service toggle buttons (same for both tabs) ---
     const serviceBtn = event.target.closest('.service-btn');
     if (serviceBtn) {
         if (serviceBtn.hasAttribute('disabled') || serviceBtn.classList.contains('locked-btn')) return;
 
-        // Toggle service state between 1 (selected) and 0 (not selected)
         let currentState = parseInt(serviceBtn.getAttribute('data-state'));
         const icon = serviceBtn.querySelector('i');
 
-        // If the service is currently selected, deselect it. If it's not selected, select it. Update button styles accordingly.
         if (currentState === 1) {
             serviceBtn.setAttribute('data-state', '0');
             serviceBtn.classList.replace('btn-success', 'btn-grey');
@@ -376,57 +421,97 @@ tableBody.addEventListener('click', function (event) {
         return;
     }
 
-    // If a check-in button was clicked, open the check-in modal and populate it with the patient's info and requested services
+    // --- Check-In button (Registration tab) ---
     const checkInBtn = event.target.closest('.check-in-btn');
     if (checkInBtn) {
-        currentRowToUpdate = checkInBtn.closest('tr');
-        currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
-        currentClientId = currentRowToUpdate.getAttribute('data-client-id');
+        currentMode = 'checkin';
+        openServiceModal(checkInBtn.closest('tr'));
+        return;
+    }
 
-        // --- Dental section ---
-        const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-        const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
-
-        // Auto-toggle translator checkbox if client was flagged as needing one (e.g. registered in Spanish)
-        const translatorNeeded = currentRowToUpdate.getAttribute('data-translator');
-        document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
-        document.getElementById('dentalHygiene').checked = false;
-        document.getElementById('dentalExtraction').checked = false;
-
-        const dentalSection = document.getElementById('modalDentalSection');
-        if (dentalState === 1 && serviceAvailability.dental) {
-            dentalSection.classList.remove('d-none');
-        } else {
-            dentalSection.classList.add('d-none');
-        }
-
-        // --- Medical section ---
-        const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-        const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
-
-        document.getElementById('medicalExam').checked = false;
-        document.getElementById('medicalFollowUp').checked = false;
-
-        const medicalSection = document.getElementById('modalMedicalSection');
-        if (medicalState === 1 && serviceAvailability.medical) {
-            medicalSection.classList.remove('d-none');
-        } else {
-            medicalSection.classList.add('d-none');
-        }
-
-        document.getElementById('modalPatientName').innerText = currentClientName;
-
-        const modal = document.getElementById('checkInModal');
-        modal.classList.remove('d-none');
-        modal.classList.add('d-flex');
+    // --- Edit / Reprint button (Checked In tab) ---
+    const reprintBtn = event.target.closest('.reprint-btn');
+    if (reprintBtn) {
+        currentMode = 'reprint';
+        openServiceModal(reprintBtn.closest('tr'));
+        return;
     }
 });
 
-//================================================================================
-// 6. CHECK-IN MODAL SUBMISSION
+// Opens the check-in/reprint modal and populates it based on the current row and mode.
+function openServiceModal(row) {
+    currentRowToUpdate = row;
+    currentClientName = row.querySelector('.fw-bold.text-dark').innerText;
+    currentClientId = row.getAttribute('data-client-id');
 
-// When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
-// and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
+    // Update modal header and button label based on mode
+    const modalHeader = document.querySelector('#checkInModal .card-header h5');
+    const finalizeBtn = document.getElementById('finalizeCheckInBtn');
+
+    if (currentMode === 'reprint') {
+        modalHeader.textContent = 'Edit & Reprint Badge';
+        finalizeBtn.innerHTML = '<i class="bi bi-printer me-1"></i>Save & Reprint';
+    } else {
+        modalHeader.textContent = 'Finalize Check-In';
+        finalizeBtn.innerHTML = 'Finalize Check-In';
+    }
+
+    // --- Translator toggle ---
+    const translatorNeeded = row.getAttribute('data-translator');
+    document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
+
+    // --- Dental section ---
+    const dentalBtn = row.querySelector('[title="Dental"]');
+    const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
+
+    document.getElementById('dentalHygiene').checked = false;
+    document.getElementById('dentalExtraction').checked = false;
+
+    const dentalSection = document.getElementById('modalDentalSection');
+    if (dentalState === 1 && serviceAvailability.dental) {
+        dentalSection.classList.remove('d-none');
+
+        // Pre-select existing dental sub-service for reprint mode
+        if (currentMode === 'reprint') {
+            const dentalSub = row.getAttribute('data-dental-sub');
+            if (dentalSub === 'dentalHygiene') document.getElementById('dentalHygiene').checked = true;
+            else if (dentalSub === 'dentalExtraction') document.getElementById('dentalExtraction').checked = true;
+        }
+    } else {
+        dentalSection.classList.add('d-none');
+    }
+
+    // --- Medical section ---
+    const medicalBtn = row.querySelector('[title="Medical"]');
+    const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
+
+    document.getElementById('medicalExam').checked = false;
+    document.getElementById('medicalFollowUp').checked = false;
+
+    const medicalSection = document.getElementById('modalMedicalSection');
+    if (medicalState === 1 && serviceAvailability.medical) {
+        medicalSection.classList.remove('d-none');
+
+        // Pre-select existing medical sub-service for reprint mode
+        if (currentMode === 'reprint') {
+            const medicalSub = row.getAttribute('data-medical-sub');
+            if (medicalSub === 'MedicalExam') document.getElementById('medicalExam').checked = true;
+            else if (medicalSub === 'MedicalFollowUp') document.getElementById('medicalFollowUp').checked = true;
+        }
+    } else {
+        medicalSection.classList.add('d-none');
+    }
+
+    document.getElementById('modalPatientName').innerText = currentClientName;
+
+    const modal = document.getElementById('checkInModal');
+    modal.classList.remove('d-none');
+    modal.classList.add('d-flex');
+}
+
+//================================================================================
+// 6. MODAL SUBMISSION (Check-In & Reprint share this handler, branching by currentMode)
+
 document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
     closeModalAnimated();
 });
@@ -435,10 +520,9 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     const btn = this;
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
 
-    // Build services array from selected buttons
     const services = [];
 
-    // --- Medical: requires sub-selection (Exam or Follow Up) ---
+    // --- Medical ---
     const medicalSection = document.getElementById('modalMedicalSection');
     const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
 
@@ -463,7 +547,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
     if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
 
-    // --- Dental: requires sub-selection (Hygiene or Extraction) ---
+    // --- Dental ---
     const dentalSection = document.getElementById('modalDentalSection');
     const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
 
@@ -480,7 +564,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         services.push(selectedDental.value);
     }
 
-    // Capture service states for QR card NOW (while DOM still exists)
+    // Capture service states for QR card before DOM changes
     const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
     const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
     const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
@@ -493,8 +577,10 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     btn.disabled = true;
     btn.innerHTML = 'Processing...';
 
-    // Send check-in data to API
-    fetch('../api/CheckIn.php', {
+    // Choose API endpoint based on mode
+    const endpoint = currentMode === 'reprint' ? '../api/reprint.php' : '../api/CheckIn.php';
+
+    fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -506,26 +592,30 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-
-                // Close check-in modal
                 closeModalAnimated();
 
-                // Remove patient from queue table
-                if (currentRowToUpdate) {
-                    currentRowToUpdate.remove();
-                }
+                // For check-in: remove the row from the table (they move to checked-in)
+                // For reprint: keep the row, but update its stored sub-service data attributes
+                if (currentMode === 'checkin') {
+                    if (currentRowToUpdate) currentRowToUpdate.remove();
 
-                // Update Stats
-                // Decrement registration count
-                let currentReg = parseInt(statRegCount.innerText) || 0;
-                statRegCount.innerText = Math.max(0, currentReg - 1);
+                    let currentReg = parseInt(statRegCount.innerText) || 0;
+                    statRegCount.innerText = Math.max(0, currentReg - 1);
 
-                // Update processed count from API (source of truth is the DB)
-                if (statCompCount && data.clientsProcessed !== undefined) {
-                    statCompCount.innerText = data.clientsProcessed;
-                } else if (statCompCount) {
-                    // Fallback: increment locally if API didn't return updated count
-                    statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    if (statCompCount && data.clientsProcessed !== undefined) {
+                        statCompCount.innerText = data.clientsProcessed;
+                    } else if (statCompCount) {
+                        statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    }
+                } else {
+                    // Update the row's data attributes so the next reprint pre-populates correctly
+                    if (currentRowToUpdate) {
+                        const newMedicalSub = selectedMedical ? selectedMedical.value : '';
+                        const newDentalSub = selectedDental ? selectedDental.value : '';
+                        currentRowToUpdate.setAttribute('data-medical-sub', newMedicalSub);
+                        currentRowToUpdate.setAttribute('data-dental-sub', newDentalSub);
+                        currentRowToUpdate.setAttribute('data-translator', isInterpreterNeeded ? '1' : '0');
+                    }
                 }
 
                 // Show QR modal
@@ -533,17 +623,13 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
-                // Split name and convert First Name to ALL CAPS
                 const nameParts = currentClientName.split(' ');
                 const firstName = nameParts[0].toUpperCase();
                 const lastName = nameParts.slice(1).join(' ');
 
-                // Get the name elements
                 const firstNameEl = document.getElementById('qrCardFirstName');
                 const lastNameEl = document.getElementById('qrCardLastName');
 
-                // Scale font size down based on character length so name always fits on one line.
-                // Truncate with ellipsis only as a last resort if over 16 chars.
                 function scaledName(name, maxSize, minSize) {
                     const len = name.length;
                     if (len <= 6)  return { text: name, size: maxSize };
@@ -551,27 +637,24 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     if (len <= 10) return { text: name, size: maxSize * 0.70 };
                     if (len <= 12) return { text: name, size: maxSize * 0.58 };
                     if (len <= 14) return { text: name, size: maxSize * 0.50 };
-                    // Beyond 14 chars: truncate and use minimum size
                     return { text: name.slice(0, 14) + '…', size: minSize };
                 }
 
                 const first = scaledName(firstName, 2.5, 1.1);
-                const last  = scaledName(lastName,  1.5, 0.8);
+                const last  = scaledName(lastName, 1.5, 0.8);
 
                 firstNameEl.innerText = first.text;
                 firstNameEl.style.fontSize = first.size + 'rem';
-
                 lastNameEl.innerText = last.text;
                 lastNameEl.style.fontSize = last.size + 'rem';
 
-                // Generate QR Code (QRious library)
                 new QRious({
                     element: document.getElementById('qr'),
                     value: currentClientId,
                     size: 200,
                 });
 
-                // Reset all QR card icons to be invisible but still occupy their "slot" (using visibility)
+                // Reset all QR icons
                 const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
                 qrIcons.forEach(id => {
                     const iconEl = document.getElementById(id);
@@ -580,24 +663,18 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 });
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
-                // Show icons for selected services by making them visible (preserves their fixed positions)
                 if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
                 if (hasDental) document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
                 if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
                 if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
-
-                // Translator badge: show the icon pinned to top-right of the name area
-                if (isInterpreterNeeded) {
-                    document.getElementById('qrCardTranslator').style.display = 'block';
-                }
+                if (isInterpreterNeeded) document.getElementById('qrCardTranslator').style.display = 'block';
 
             } else {
-                // Check-in failed logic
                 closeQrModal();
-                console.error('Check-in failed:', data.message);
+                console.error('Operation failed:', data.message);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Check-In Failed',
+                    title: currentMode === 'reprint' ? 'Reprint Failed' : 'Check-In Failed',
                     text: data.message || 'Unable to process this patient.',
                     confirmButtonColor: '#174593'
                 });
@@ -622,32 +699,22 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 //================================================================================
 // 7. PRINT QR CODE
 
-// When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
     style.textContent = `
         @media print {
             @page {
-                size: 2.3125in 4in; /* Width x Height */
+                size: 2.3125in 4in;
                 margin: 0; 
             }
-
-            /* LOCK the document height so invisible elements don't create blank pages */
             html, body {
                 height: 4in !important;
                 overflow: hidden !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
-
-            body * {
-                visibility: hidden;
-            }
-            
-            #qrCodeModal, #qrCodeModal * {
-                visibility: visible;
-            }
-
+            body * { visibility: hidden; }
+            #qrCodeModal, #qrCodeModal * { visibility: visible; }
             #qrCodeModal {
                 position: absolute;
                 left: 0;
@@ -660,7 +727,6 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
                 align-items: flex-start !important;
                 margin: 0 !important;
             }
-
             #qrCodeModal .card {
                 width: 100% !important;
                 height: 100% !important;
@@ -670,32 +736,21 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
                 padding: 0 !important;
                 margin: 0 !important;
             }
-
-            #printQrBtn, #closeQrBtn {
-                display: none !important;
-            }
-
-            /* --- UPDATED: Icon Sizing & Borders --- */
-            
+            #printQrBtn, #closeQrBtn { display: none !important; }
             #qrCodeModal .qr-icon-border {
                 flex-shrink: 0 !important; 
-                font-size: 2rem !important; /* Icon size inside the box */
-                width: 46px !important;  /* Increased from 40px */
-                height: 46px !important; /* Increased from 40px */
-                border-width: 2px !important; /* Forces a thinner, cleaner border */
+                font-size: 2rem !important;
+                width: 46px !important;
+                height: 46px !important;
+                border-width: 2px !important;
                 border-style: solid !important;
                 border-color: black !important;
-                border-radius: 8px !important; /* Optional: adds a slight rounding to the border */
+                border-radius: 8px !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
             }
-
-            /* Tighten the gap even more so the larger icons don't overflow the label */
-            #qrCodeModal .gap-3 {
-                gap: 0.25rem !important; 
-            }
-            
+            #qrCodeModal .gap-3 { gap: 0.25rem !important; }
             #qrCodeModal canvas {
                 max-width: 1.8in !important;
                 height: auto !important;
@@ -703,18 +758,16 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
         }
     `;
     document.head.appendChild(style);
-
     window.print();
-
-    // Clean up print styles (modal stays open for re-printing)
-    setTimeout(() => {
-        document.head.removeChild(style);
-    }, 100);
+    setTimeout(() => document.head.removeChild(style), 100);
 });
 
 document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
-    fetchRegistrationQueue();
+    // Only refresh the full queue on check-in close; reprint stays in place
+    if (currentMode === 'checkin') {
+        fetchRegistrationQueue();
+    }
 });
 
 //================================================================================
