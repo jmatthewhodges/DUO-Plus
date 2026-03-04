@@ -51,6 +51,8 @@ if (!$queue) {
 // Normalize to array
 $queues = is_array($queue) ? $queue : [$queue];
 
+// Build placeholders (?, ?, ?)
+$placeholders = implode(',', array_fill(0, count($queues), '?'));
 $types = str_repeat('s', count($queues));
 
 //query that gets the TOTAL number of  IN PROGRESS users in the queue
