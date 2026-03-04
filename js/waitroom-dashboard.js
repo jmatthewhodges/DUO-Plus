@@ -20,7 +20,7 @@ const moveServiceSelect = document.getElementById('moveServiceSelect');
 
 // Grab the single element for Now Serving
 const nowServingNameEl = document.querySelector('.queue-name');
-const nowServingIconEl = document.querySelector('.service-icon-box i'); 
+const nowServingServiceEl = document.querySelector('.queue-service');
 
 //================================================================================
 // 3. HELPERS
@@ -86,17 +86,12 @@ async function fetchQueueData() {
                     const serving = data.NowServing[0];
                     nowServingNameEl.innerText = `${serving.FirstName} ${serving.LastName}`;
                     
-                    // Dynamically change the icon based on their requested service
-                    if (nowServingIconEl && serving.ServiceSelections) {
-                        const firstServiceId = serving.ServiceSelections.split(',')[0];
-                        const matchedService = availableServices.find(s => s.ServiceID == firstServiceId);
-                        if (matchedService && matchedService.IconTag) {
-                            nowServingIconEl.className = `bi ${matchedService.IconTag}`;
-                        }
+                    if (nowServingServiceEl) {
+                        nowServingServiceEl.innerText = serving.AssignedServiceName || '';
                     }
                 } else {
                     nowServingNameEl.innerText = "No one currently";
-                    if (nowServingIconEl) nowServingIconEl.className = "bi bi-person-x"; 
+                    if (nowServingServiceEl) nowServingServiceEl.innerText = '';
                 }
             }
 
