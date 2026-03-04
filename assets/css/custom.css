@@ -70,10 +70,32 @@ hr {
     opacity: 0.25;
 }
 
+/* Base state: Protected from Bootstrap's default focus overrides */
+.btn-outline-navy {
+    color: #174593 !important;
+    background-color: transparent !important;
+    border: 2px solid #174593 !important;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover and Checked states */
+.btn-outline-navy:hover,
+.btn-check:checked+.btn-outline-navy {
+    color: #ffffff !important;
+    background-color: #174593 !important;
+    border-color: #174593 !important;
+}
+
+/* Focus state: Adds a custom soft navy ring when clicked/tabbed */
+.btn-check:focus+.btn-outline-navy {
+    box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
+}
+
+
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
-    overflow: hidden;
     height: 100vh;
 }
 
@@ -86,6 +108,7 @@ body.v-center-page {
 
 /* Wider on tablets */
 @media (min-width: 768px) {
+
     .login-container,
     .dashboard-container {
         max-width: 500px;
@@ -94,6 +117,7 @@ body.v-center-page {
 
 /* Even wider on large screens */
 @media (min-width: 1200px) {
+
     .login-container,
     .dashboard-container {
         max-width: 550px;
@@ -105,14 +129,16 @@ body.v-center-page {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    background-color: #174593 !important; /* New Color */
+    background-color: #174593 !important;
+    /* New Color */
     border-color: #174593 !important;
     color: white;
 }
 
 /* Primary button hover effect */
 .btn-primary:hover {
-    background-color: #10326e !important; /* Slightly darker shade of #174593 */
+    background-color: #10326e !important;
+    /* Slightly darker shade of #174593 */
     transform: translateY(-2px);
     box-shadow: 0 6px 20px #10326e !important;
     cursor: pointer;
@@ -125,7 +151,8 @@ body.v-center-page {
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
-    display: none; /* Hide completely */
+    display: none;
+    /* Hide completely */
 }
 
 .step-visible {
@@ -142,32 +169,48 @@ body.v-center-page {
 
 /* Form label color */
 .form-label {
-    color: #174593; /* New Color */
+    color: #212529;
+    /* New Color */
+}
+
+/* Placeholder styling */
+.form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+    font-style: italic;
 }
 
 /* Card title style */
+/* Step card header */
 .card-title {
-    font-weight: bold;
-    font-size: x-large;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #174593;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid #174593;
+    margin-bottom: 1.25rem;
 }
 
 /* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: block !important; /* Changed from inline-flex to block to reserve space */
+    display: block !important;
+    /* Changed from inline-flex to block to reserve space */
     width: 5rem;
     height: 5rem;
     background: #fff;
     border: 3px solid black;
     border-radius: 20%;
     /* Ensure the icon inside is centered even in a block container */
-    line-height: 5rem; 
+    line-height: 5rem;
     text-align: center;
 }
 
 /* Add a wrapper style for the icons in your HTML if you want better spacing control */
 #qrCodeModal .d-flex.justify-content-center.gap-3.mt-3 {
-    min-height: 5.5rem; /* Prevents layout shifting */
+    min-height: 5.5rem;
+    /* Prevents layout shifting */
 }
+
 /* PIN Code Modal Styling */
 .pin-input-group {
     flex-wrap: nowrap;
@@ -181,26 +224,32 @@ body.v-center-page {
     text-align: center;
     font-size: 24px;
     font-weight: bold;
-    color: #174593; /* New Color */
+    color: #174593;
+    /* New Color */
     background-color: #f9f9f9;
     transition: all 0.3s ease;
-    caret-color: #174593; /* New Color */
+    caret-color: #174593;
+    /* New Color */
 }
 
 .pin-input:hover {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #fff;
 }
 
 .pin-input:focus {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(23, 69, 147, 0.1); /* Updated RGB for shadow */
+    box-shadow: 0 0 0 3px rgba(23, 69, 147, 0.1);
+    /* Updated RGB for shadow */
     outline: none;
 }
 
 .pin-input.filled {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #f0f7ff;
 }
 
@@ -224,13 +273,12 @@ body.v-center-page {
 .btn-grey {
     /* lighter base so stripes show more clearly */
     background-color: #adb5bd;
-    color: white; /* darker text for better contrast on lighter bg */
+    color: white;
+    /* darker text for better contrast on lighter bg */
     /* clearer diagonal stripes (lighter stripe + subtle darker band) */
-    background-image: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.28) 0 6px,
-        rgba(0, 0, 0, 0.04) 6px 12px
-    );
+    background-image: repeating-linear-gradient(135deg,
+            rgba(255, 255, 255, 0.28) 0 6px,
+            rgba(0, 0, 0, 0.04) 6px 12px);
 
     background-blend-mode: normal;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -239,13 +287,12 @@ body.v-center-page {
 
 .btn-grey:hover,
 .btn-grey:focus {
-    background-color: #98a3ab; /* slightly darker on hover */
+    background-color: #98a3ab;
+    /* slightly darker on hover */
     border-color: rgba(255, 255, 255, 1);
-    background-image: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.32) 0 6px,
-        rgba(0, 0, 0, 0.06) 6px 12px
-    );
+    background-image: repeating-linear-gradient(135deg,
+            rgba(255, 255, 255, 0.32) 0 6px,
+            rgba(0, 0, 0, 0.06) 6px 12px);
     box-shadow: 0 2px 8px rgba(11, 36, 48, 0.06);
     color: white;
     transform: translateY(-1px);
@@ -256,13 +303,10 @@ body.v-center-page {
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Make warning progress more yellow and remove orange gradient */
-.progress-bar.bg-warning,
-.bg-warning {
-    background-color: #e2b212 !important; /* lighter/more yellow */
-    background-image: none !important; /* remove any orange gradient */
-    color: #212529;
-    border-color: rgba(0, 0, 0, 0.04);
+/* Basic progress bar styling */
+#wholeProgressBar .progress-bar {
+    background-color: #174593 !important;
+    background-image: none !important;
 }
 
 /* Language Select */
@@ -279,8 +323,13 @@ body.v-center-page {
 
 /* 1. Fade in the dark background overlay */
 @keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* 2. Scale and drop the card in with a slight "spring" bounce */
@@ -289,6 +338,7 @@ body.v-center-page {
         opacity: 0;
         transform: scale(0.85) translateY(-30px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -306,7 +356,8 @@ body.v-center-page {
 
 /* Custom locked state to preserve btn-grey styling */
 .locked-btn {
-    pointer-events: none; /* Prevents all mouse clicks */
+    pointer-events: none;
+    /* Prevents all mouse clicks */
 }
 
 /* ==========================================
@@ -315,8 +366,13 @@ body.v-center-page {
 
 /* Fade out the dark background */
 @keyframes modalFadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* Shrink and fade the card out */
@@ -325,6 +381,7 @@ body.v-center-page {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+
     to {
         opacity: 0;
         transform: scale(0.85) translateY(-30px);
@@ -344,21 +401,156 @@ body.v-center-page {
    REGISTRATION DASHBOARD
    ========================================== */
 
-/* Hide scrollbar but keep scroll functionality */
-.card-body::-webkit-scrollbar {
-    display: none;
-}
-.card-body {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
 /* Check-in button hover */
 .check-in-btn {
     transition: all 0.2s ease;
 }
+
 .check-in-btn:hover {
-    background-color: #10326e !important; /* Darker shade of new color */
+    background-color: #10326e !important;
+    /* Darker shade of new color */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(236, 192, 192, 0.15);
+}
+
+/* ==========================================
+   WAITING ROOM & GENERAL SCROLLING
+   ========================================== */
+
+/* Hide scrollbar while keeping functionality */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scroll {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* --- Dashboard Header Toggles --- */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    /* Dimmed white for inactive */
+    font-size: 1.25rem;
+    /* Matches your h4 sizing */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.divider {
+    width: 1px;
+    height: 22px;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin: 0 12px;
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* ==========================================
+   DEV NAVIGATION BAR (testing only)
+   ========================================== */
+
+/* Shared pill wrapper used on index.html and register.html */
+.dev-bar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    background: rgba(23, 69, 147, 0.06);
+    border: 1px solid rgba(23, 69, 147, 0.12);
+    border-radius: 20px;
+    padding: 6px 12px;
+}
+
+/* "Dev" label inside the bar */
+.dev-bar-label {
+    font-size: 0.65rem;
+    color: #aaa;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Anchor chip (used in index.html) */
+.dev-link {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4a72b8;
+    text-decoration: none;
+    background: rgba(23, 69, 147, 0.08);
+    border-radius: 10px;
+    padding: 2px 9px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dev-link:hover {
+    background: rgba(23, 69, 147, 0.18);
+    color: #174593;
+}
+
+/* Register link hover */
+#btn2Register {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2Register:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
+/* Button chip (used in register.html step-jumper) */
+.dev-step-btn {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4a72b8;
+    background: rgba(23, 69, 147, 0.08);
+    border: none;
+    border-radius: 10px;
+    padding: 2px 9px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dev-step-btn:hover {
+    background: rgba(23, 69, 147, 0.18);
+    color: #174593;
+}
+
+/* Lock scroll on dashboard page only */
+body.no-scroll {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Hide scrollbar on the table card-body while keeping it scrollable */
+body.no-scroll .card-body[style*="overflow-y"]::-webkit-scrollbar {
+    display: none;
+}
+
+body.no-scroll .card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

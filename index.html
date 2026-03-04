@@ -1,3 +1,14 @@
+<!--
+ ============================================================
+  File:        index.html
+  Description: Client login page.
+
+  Last Modified By:  Matthew
+  Last Modified On:  Feb 26 @ 10:07 PM
+  Changes Made:      Form changes
+ ============================================================
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +27,7 @@
 <body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
 
   <div id="divLanguageSwitch">
-    <select name="" id="selLanguageSwitch" class="btn-primary">
+    <select name="languageSwitch" id="selLanguageSwitch" class="btn-primary" aria-label="Select language">
       <option value="en">EN</option>
       <option value="es">ES</option>
     </select>
@@ -25,11 +36,11 @@
   <div class="container text-center login-container">
     <!-- Logo Section -->
     <div class="logo-section mb-3">
-      <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-1" style="width: 200px;">
+      <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Plus - Home" class="mb-1" style="width: 200px;">
     </div>
 
     <!-- Subtitle -->
-    <h5 id="subtitle" class="subtitle-text" style="color: #174593;" class="fw-medium mb-4">
+    <h5 id="subtitle" class="subtitle-text fw-medium mb-4" style="color: #174593;">
       Connecting patients with free<br>care through DUO
     </h5>
 
@@ -39,37 +50,23 @@
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="txtClientEmail" class="form-control" placeholder="ex: johndoe@gmail.com" required
-              aria-describedby="emailError">
-            <div class="invalid-feedback" id="emailError" aria-live="polite">
-              Please enter an email address.
-            </div>
+            <input type="email" name="email" id="txtClientEmail" class="form-control" required>
           </div>
 
           <div class="mb-3 text-start">
             <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" id="txtClientPassword" class="form-control" placeholder="ex: password123" required
-              aria-describedby="passwordError">
-            <div class="invalid-feedback" id="passwordError" aria-live="polite">
-              Please enter a password.
-            </div>
-          </div>
-
-          <div class="form-check form-switch text-start mb-3">
-            <input class="form-check-input" type="checkbox" id="toggleClientPassword" aria-label="Show password">
-            <label id="lblShowPassword" class="form-check-label" for="toggleClientPassword">Show password</label>
+            <input type="password" name="password" id="txtClientPassword" class="form-control" required>
           </div>
 
           <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button"
-            class="btn btn-primary w-100 rounded-2 ">Login</button>
+          <button id="btnClientLogin" type="button" class="btn btn-primary w-100 rounded-2 ">Login</button>
         </form>
       </div>
     </div>
 
     <!-- Register Section -->
     <div class="register-section">
-      <div class="d-flex align-items-center justify-content-center mb-2">
+      <div class="d-flex align-items-center justify-content-center mb-2" aria-hidden="true">
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
         <span class="mx-2 text-muted fw-semibold">Or</span>
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
@@ -79,7 +76,19 @@
         class="fw-semibold d-block mb-3 text-decoration-none">Register</a>
 
       <div class="d-flex flex-column align-items-center">
-        <img src="assets/images/lifeChurchLogo.webp" alt="Life Church Logo" class="mb-3" style="width: 200px;">
+        <img src="assets/images/lifeChurchLogo.webp" alt="Life Church - Partner Organization" class="mb-3" style="width: 200px;">
+      </div>
+    </div>
+
+    <!-- Dev Links -->
+    <div class="text-center mt-2 mb-1">
+      <div class="dev-bar">
+        <span class="dev-bar-label">Dev</span>
+        <a href="/portal/" class="dev-link">API Portal</a>
+        <a href="pages/registration-dashboard.html" class="dev-link">Reg. Dashboard</a>
+        <a href="pages/waitingroom.html" class="dev-link">Waiting Room</a>
+        <a href="pages/service-scan.html" class="dev-link">Service Scan</a>
+        <a href="pages/food-truck.html" class="dev-link">Food Truck</a>
       </div>
     </div>
   </div>

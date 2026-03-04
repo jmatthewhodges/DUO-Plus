@@ -1,13 +1,13 @@
 /**
  * ============================================================
  *  File:        lang.js
- *  Description: Language translation system. Stores English
+ *  Purpose:     Language translation system. Stores English
  *               and Spanish translations and applies them
  *               based on the user's language selection.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:44 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 24 @ 6:44 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
@@ -27,9 +27,9 @@ var translations = {
 
     // Step 1 - Login Info
     titleStepOne: 'Login Information',
-    clientRegisterEmailLabel: 'Email',
+    clientRegisterEmailLabel: 'Email <span class="text-danger" aria-hidden="true">*</span>',
     emailError: 'Please enter a valid email address.',
-    clientRegisterPassLabel: 'Password',
+    clientRegisterPassLabel: 'Password <span class="text-danger" aria-hidden="true">*</span>',
     passwordError: 'Password must include at least 8 characters, 1 uppercase letter, 1 lowercase letter, and 1 number.',
     toggleClientRegisterPassLabel: 'Show password',
     btnRegisterNext1: 'Next',
@@ -37,19 +37,19 @@ var translations = {
 
     // Step 2 - Personal Info
     titleStepTwo: 'Personal Information',
-    clientFirstNameLabel: 'First Name',
+    clientFirstNameLabel: 'First Name <span class="text-danger" aria-hidden="true">*</span>',
     firstNameError: 'Please enter your first name.',
-    clientMiddleInitialLabel: 'Middle Initial',
-    clientLastNameLabel: 'Last Name',
+    clientMiddleInitialLabel: 'Middle Initial <span class="text-muted fw-normal small">(optional)</span>',
+    clientLastNameLabel: 'Last Name <span class="text-danger" aria-hidden="true">*</span>',
     lastNameError: 'Please enter your last name.',
-    sexLabel: 'Sex',
+    sexLabel: 'Sex <span class="text-danger" aria-hidden="true">*</span>',
     btnSexMaleLabel: 'Male',
     btnSexFemaleLabel: 'Female',
     btnSexIntersexLabel: 'Intersex',
     sexError: 'Please select your sex.',
-    clientDOBLabel: 'Date of Birth',
+    clientDOBLabel: 'Date of Birth <span class="text-danger" aria-hidden="true">*</span>',
     dobError: 'Please enter your date of birth.',
-    clientPhoneLabel: 'Phone',
+    clientPhoneLabel: 'Phone <span class="text-muted fw-normal small">(optional)</span>',
     phoneError: 'Phone number format is invalid.',
     btnRegisterNext2: 'Next',
     btnRegisterBack2: 'Go back',
@@ -57,14 +57,14 @@ var translations = {
     // Step 3 - Address Info
     titleStepThree: 'Address Information',
     noAddressLabel: 'No current address',
-    clientAddress1Label: 'Street Address 1',
-    clientAddress2Label: 'Street Address 2',
+    clientAddress1Label: 'Street Address 1 <span class="text-danger" aria-hidden="true">*</span>',
+    clientAddress2Label: 'Street Address 2 <span class="text-muted fw-normal small">(optional)</span>',
     address1Error: 'Please enter an address.',
-    clientCityLabel: 'City',
+    clientCityLabel: 'City <span class="text-danger" aria-hidden="true">*</span>',
     cityError: 'Please enter a city.',
-    selectStateLabel: 'State',
+    selectStateLabel: 'State <span class="text-danger" aria-hidden="true">*</span>',
     stateError: 'Please select a state.',
-    clientZipCodeLabel: 'Zip Code',
+    clientZipCodeLabel: 'Zip Code <span class="text-danger" aria-hidden="true">*</span>',
     zipCode: 'Please enter a 5-digit zip code.',
     btnRegisterNext3: 'Next',
     btnRegisterBack3: 'Go back',
@@ -72,11 +72,11 @@ var translations = {
     // Step 4 - Emergency Contact
     titleStepFour: 'Emergency Contact',
     noEmergencyContactLabel: 'No Emergency Contact',
-    emergencyContactFirstNameLabel: 'Contact First Name',
+    emergencyContactFirstNameLabel: 'Contact First Name <span class="text-danger" aria-hidden="true">*</span>',
     contactFirstName: 'Please enter a first name for your contact.',
-    emergencyContactLastNameLabel: 'Contact Last Name',
+    emergencyContactLastNameLabel: 'Contact Last Name <span class="text-danger" aria-hidden="true">*</span>',
     contactLastName: 'Please enter a last name for your contact.',
-    emergencyContactPhoneLabel: 'Contact Phone',
+    emergencyContactPhoneLabel: 'Contact Phone <span class="text-danger" aria-hidden="true">*</span>',
     contactPhone: 'Please enter a phone number for your contact.',
     btnRegisterNext4: 'Next',
     btnRegisterBack4: 'Go back',
@@ -109,7 +109,7 @@ var translations = {
   es: {
     // Login
     subtitle: "Conectando pacientes con atención<br>gratuita a través de DUO",
-    lblClientEmail: "Email",
+    lblClientEmail: "Correo electrónico",
     lblClientPassword: "Contraseña",
     lblShowPassword: "Mostrar contraseña",
     btnClientLogin: "Iniciar sesión",
@@ -121,9 +121,9 @@ var translations = {
 
     // Step 1 - Login Info
     titleStepOne: 'Información de Acceso',
-    clientRegisterEmailLabel: 'Email',
+    clientRegisterEmailLabel: 'Correo electrónico <span class="text-danger" aria-hidden="true">*</span>',
     emailError: 'Por favor, ingrese una dirección de correo electrónico válida.',
-    clientRegisterPassLabel: 'Contraseña',
+    clientRegisterPassLabel: 'Contraseña <span class="text-danger" aria-hidden="true">*</span>',
     passwordError: 'La contraseña debe incluir mínimo 8 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.',
     toggleClientRegisterPassLabel: 'Ver contraseña',
     btnRegisterNext1: 'Siguiente',
@@ -131,19 +131,19 @@ var translations = {
 
     // Step 2 - Personal Info
     titleStepTwo: 'Información personal',
-    clientFirstNameLabel: 'Primer nombre',
+    clientFirstNameLabel: 'Primer nombre <span class="text-danger" aria-hidden="true">*</span>',
     firstNameError: 'Por favor, ingrese su primer nombre.',
-    clientMiddleInitialLabel: 'Inicial del segundo nombre',
-    clientLastNameLabel: 'Apellido',
+    clientMiddleInitialLabel: 'Inicial del segundo nombre <span class="text-muted fw-normal small">(opcional)</span>',
+    clientLastNameLabel: 'Apellido <span class="text-danger" aria-hidden="true">*</span>',
     lastNameError: 'Por favor, ingrese su apellido.',
-    sexLabel: 'Sexo',
+    sexLabel: 'Sexo <span class="text-danger" aria-hidden="true">*</span>',
     btnSexMaleLabel: 'Masculino',
     btnSexFemaleLabel: 'Femenino',
     btnSexIntersexLabel: 'Intersexual',
     sexError: 'Por favor, seleccione su sexo.',
-    clientDOBLabel: 'Fecha de nacimiento',
+    clientDOBLabel: 'Fecha de nacimiento <span class="text-danger" aria-hidden="true">*</span>',
     dobError: 'Por favor, ingrese su fecha de nacimiento.',
-    clientPhoneLabel: 'Teléfono',
+    clientPhoneLabel: 'Teléfono <span class="text-muted fw-normal small">(opcional)</span>',
     phoneError: 'El formato del teléfono no es válido.',
     btnRegisterNext2: 'Siguiente',
     btnRegisterBack2: 'Regresar',
@@ -151,14 +151,14 @@ var translations = {
     // Step 3 - Address Info
     titleStepThree: 'Información de residencia',
     noAddressLabel: 'Sin dirección actual',
-    clientAddress1Label: 'Dirección de residencia 1',
-    clientAddress2Label: 'Dirección de residencia 2',
+    clientAddress1Label: 'Dirección de residencia 1 <span class="text-danger" aria-hidden="true">*</span>',
+    clientAddress2Label: 'Dirección de residencia 2 <span class="text-muted fw-normal small">(opcional)</span>',
     address1Error: 'Por favor, ingrese una dirección.',
-    clientCityLabel: 'Ciudad',
+    clientCityLabel: 'Ciudad <span class="text-danger" aria-hidden="true">*</span>',
     cityError: 'Por favor, ingrese una ciudad.',
-    selectStateLabel: 'Estado',
+    selectStateLabel: 'Estado <span class="text-danger" aria-hidden="true">*</span>',
     stateError: 'Por favor, seleccione un estado.',
-    clientZipCodeLabel: 'Código postal',
+    clientZipCodeLabel: 'Código postal <span class="text-danger" aria-hidden="true">*</span>',
     zipCode: 'Por favor, ingrese un código postal de 5 dígitos.',
     btnRegisterNext3: 'Siguiente',
     btnRegisterBack3: 'Regresar',
@@ -166,11 +166,11 @@ var translations = {
     // Step 4 - Emergency Contact
     titleStepFour: 'Contacto de emergencia',
     noEmergencyContactLabel: 'Sin contacto de emergencia',
-    emergencyContactFirstNameLabel: 'Primer nombre del contacto de emergencia',
+    emergencyContactFirstNameLabel: 'Primer nombre del contacto de emergencia <span class="text-danger" aria-hidden="true">*</span>',
     contactFirstName: 'Por favor, ingrese el primer nombre de su contacto.',
-    emergencyContactLastNameLabel: 'Apellido del contacto de emergencia',
+    emergencyContactLastNameLabel: 'Apellido del contacto de emergencia <span class="text-danger" aria-hidden="true">*</span>',
     contactLastName: 'Por favor, ingrese el apellido de su contacto.',
-    emergencyContactPhoneLabel: 'Teléfono del contacto de emergencia',
+    emergencyContactPhoneLabel: 'Teléfono del contacto de emergencia <span class="text-danger" aria-hidden="true">*</span>',
     contactPhone: 'Por favor, ingrese el teléfono de su contacto.',
     btnRegisterNext4: 'Siguiente',
     btnRegisterBack4: 'Regresar',

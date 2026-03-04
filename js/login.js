@@ -1,15 +1,15 @@
 /**
  * ============================================================
  *  File:        login.js
- *  Description: Handles login form validation, authentication
+ *  Purpose:     Handles login form validation, authentication
  *               via the login API, and password visibility
  *               toggle functionality.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:48 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  Feb 26 @ 9:51 PM
+ *  Changes Made:      Changed input validation to use SweetAlert
  * ============================================================
-*/
+ */
 
 // Config
 const VALIDATION_PATTERNS = {
@@ -17,60 +17,62 @@ const VALIDATION_PATTERNS = {
     password: /.+/ // login just checks presence (not strength)
 };
 
-// Adds or removes Bootstrap validation classes
-function setFieldValidation(field, isValid) {
-    if (isValid) {
-        field.classList.remove('is-invalid');
-        field.classList.add('is-valid');
-    } else {
-        field.classList.remove('is-valid');
-        field.classList.add('is-invalid');
-    }
-}
-
-// Login validation
-function validateLoginForm() {
-    const emailInput = document.getElementById('txtClientEmail');
-    const passInput = document.getElementById('txtClientPassword');
-
-    let isValid = true;
-
-    // Email
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
-        setFieldValidation(emailInput, false);
-        isValid = false;
-    } else {
-        setFieldValidation(emailInput, true);
-    }
-
-    // Password
-    if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
-        setFieldValidation(passInput, false);
-        isValid = false;
-    } else {
-        setFieldValidation(passInput, true);
-    }
-
-    return isValid;
-}
-
 // Events
+
+// Blur handlers — green checkmark on valid input
+document.getElementById('txtClientEmail').addEventListener('blur', function () {
+    if (VALIDATION_PATTERNS.email.test(this.value.trim())) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
+
+document.getElementById('txtClientPassword').addEventListener('blur', function () {
+    if (VALIDATION_PATTERNS.password.test(this.value.trim())) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
 
 // Login button click
 document.getElementById('btnClientLogin').addEventListener('click', function (e) {
     e.preventDefault();
 
-    if (!validateLoginForm()) {
+    const emailInput = document.getElementById('txtClientEmail');
+    const passInput = document.getElementById('txtClientPassword');
+    const errors = [];
+
+    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
+        errors.push('Please enter a valid email address.');
+    }
+
+    if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
+        errors.push('Please enter your password.');
+    }
+
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Check your info',
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
         return;
     }
 
     // Loading state
-    const btn = document.getElementById('btnClientLogin');
+    const btn = this;
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...`;
 
-    const email = document.getElementById('txtClientEmail').value;
-    const password = document.getElementById('txtClientPassword').value;
+    const email = emailInput.value;
+    const password = passInput.value;
 
     // Send login request to API
     fetch('../api/Login.php', {
@@ -81,23 +83,20 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Save user data and redirect
-                sessionStorage.setItem('userData', JSON.stringify(data.data));
-
                 Swal.fire({
                     icon: 'success',
                     title: 'Welcome Back!',
                     html: `Hello, <strong>${data.data.FirstName}</strong>! Redirecting you now...`,
-                    timer: 2000,
+                    timer: 1500,
                     timerProgressBar: true,
                     showConfirmButton: false,
                     allowOutsideClick: false
                 }).then(() => {
-                    window.location.href = 'pages/register.html';
+                    // Pass clientID via URL — no session storage needed
+                    window.location.href = `pages/register.html?clientID=${data.data.ClientID}`;
                 });
             } else {
                 // Failed - clear password and show error
-                const passInput = document.getElementById('txtClientPassword');
                 passInput.value = '';
                 passInput.classList.remove('is-valid', 'is-invalid');
 
@@ -124,12 +123,6 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             btn.disabled = false;
             btn.innerHTML = 'Login';
         })
-});
-
-// Show/hide password checkbox
-document.getElementById('toggleClientPassword').addEventListener('change', function () {
-    const passwordInput = document.getElementById('txtClientPassword');
-    passwordInput.type = this.checked ? 'text' : 'password';
 });
 
 // Enter key on email field triggers login

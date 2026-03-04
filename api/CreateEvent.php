@@ -2,14 +2,15 @@
 /**
  * ============================================================
  *  File:        CreateEvent.php
- *  Description: Handles creating a new event.
+ *  Purpose:     Handles creating a new event.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 19 @ 7:36 PM
- *  Changes Made:      Initial creation & update for portal
+ *  Last Modified On:  Feb 24 @ 6:40 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 

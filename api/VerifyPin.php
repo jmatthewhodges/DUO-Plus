@@ -4,47 +4,43 @@
  * File:          VerifyPin.php
  * Description:   API endpoint for PIN code access restriction.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 22 11:00 AM
- * Changes Made:      Added structured error handling, rate limit
- *                    check before processing, input sanitization,
- *                    DB connection validation, and error logging.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Mar 1 9:00 PM
+ * Changes Made:      Changed error handling to support sweetalrts JS side
  * ============================================================
- */
+*/
 
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json');
 
-// ---------------------------------------------------------------
-// Helper: send a JSON response and exit
-// ---------------------------------------------------------------
+// Send a JSON response and exit
 function respond(int $code, array $payload): void {
     http_response_code($code);
     echo json_encode($payload);
     exit;
 }
 
-// ---------------------------------------------------------------
-// Helper: log errors without exposing internals to client
-// ---------------------------------------------------------------
+// Log errors without exposing internals to client
 function logError(string $context, string $detail): void {
     error_log("[Verify-Pin] $context: $detail");
 }
 
-// ---------------------------------------------------------------
-// 1. Session & method guard
-// ---------------------------------------------------------------
+// Session & method guard
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST.']);
+// Handle GET request: Check if user has valid session
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $verified = isset($_SESSION['pin_verified']) && $_SESSION['pin_verified'] === true;
+    respond(200, ['verified' => $verified]);
 }
 
-// ---------------------------------------------------------------
-// 2. Parse & validate JSON body BEFORE rate limit check
-//    (avoids burning attempts on malformed requests)
-// ---------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    respond(405, ['success' => false, 'error' => 'Method not allowed. Use POST or GET.']);
+}
+
+// Parse & validate JSON body BEFORE rate limit check
+// (avoids burning attempts on malformed requests)
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!is_array($input)) {
@@ -55,14 +51,14 @@ $pin      = $input['pin']      ?? null;
 $name     = trim($input['name']     ?? '');
 $pageName = trim($input['pageName'] ?? '');
 
+// Validate PIN format (must be exactly 6 digits)
+if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
+    respond(400, ['success' => false, 'error' => 'Invalid PIN']);
+}
+
 // Validate name
 if (empty($name) || !is_string($name)) {
     respond(400, ['success' => false, 'error' => 'Please enter your name.']);
-}
-
-// Validate PIN format (must be exactly 6 digits)
-if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
-    respond(400, ['success' => false, 'error' => 'PIN must be exactly 6 digits.']);
 }
 
 // Sanitize pageName — allow only alphanumeric, dashes, underscores
@@ -70,9 +66,7 @@ if (!empty($pageName) && !preg_match('/^[a-zA-Z0-9_\-]{0,64}$/', $pageName)) {
     respond(400, ['success' => false, 'error' => 'Invalid page name.']);
 }
 
-// ---------------------------------------------------------------
-// 3. Rate limiting — checked AFTER input validation
-// ---------------------------------------------------------------
+// Rate limiting — checked AFTER input validation
 $clientIP     = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $rateLimitKey = 'pin_attempts_' . $clientIP;
 $maxAttempts  = 5;
@@ -85,14 +79,7 @@ if (!isset($_SESSION[$rateLimitKey])) {
     $_SESSION[$rateLimitKey] = ['count' => 0, 'time' => time()];
 }
 
-// Block before even hitting the DB if already locked out
-if ($_SESSION[$rateLimitKey]['count'] >= $maxAttempts) {
-    respond(429, ['success' => false, 'error' => 'Too many failed attempts. Please ask for the code before continuing.']);
-}
-
-// ---------------------------------------------------------------
-// 4. Database connection
-// ---------------------------------------------------------------
+// Database connection
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'] ?? null;
 
@@ -101,9 +88,7 @@ if (!$mysqli || mysqli_connect_error()) {
     respond(503, ['success' => false, 'error' => 'Service temporarily unavailable. Please try again.']);
 }
 
-// ---------------------------------------------------------------
-// 5. Fetch PIN from database
-// ---------------------------------------------------------------
+// Fetch PIN from database
 $correctPin = null;
 $pinId      = null;
 
@@ -131,9 +116,7 @@ if (empty($correctPin)) {
     respond(503, ['success' => false, 'error' => 'Access is not currently available. Please contact an administrator.']);
 }
 
-// ---------------------------------------------------------------
-// 6. Verify PIN
-// ---------------------------------------------------------------
+// Verify PIN
 if ($pin !== $correctPin) {
     $_SESSION[$rateLimitKey]['count']++;
     $remaining = $maxAttempts - $_SESSION[$rateLimitKey]['count'];
@@ -153,7 +136,16 @@ if ($pin !== $correctPin) {
 $_SESSION[$rateLimitKey]['count'] = 0;
 
 // ---------------------------------------------------------------
-// 7. Log successful access to tblPinCodeLogs
+// 7. Set secure session flag
+// ---------------------------------------------------------------
+$_SESSION['pin_verified'] = true;
+session_write_close();  // Ensure session is saved before responding
+
+// Debug: Log what we just set
+error_log("PIN verified for $name. Session ID: " . session_id());
+
+// ---------------------------------------------------------------
+// 8. Log successful access to tblPinCodeLogs
 // ---------------------------------------------------------------
 $pinCodeLogID = bin2hex(random_bytes(8)); // 16-char hex, consistent with rest of codebase
 $currentTime  = date('Y-m-d H:i:s');
@@ -175,6 +167,6 @@ if (!$logStmt) {
 }
 
 // ---------------------------------------------------------------
-// 8. Success
+// 9. Success
 // ---------------------------------------------------------------
 respond(200, ['success' => true, 'message' => 'PIN verified successfully.']);

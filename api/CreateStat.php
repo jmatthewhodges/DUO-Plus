@@ -2,14 +2,15 @@
 /**
  * ============================================================
  *  File:        CreateStat.php
- *  Description: Handles creating a new statistic for tracking at an event.
+ *  Purpose:     Handles creating a new statistic for tracking at an event.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 21 @ 10:55 AM
- *  Changes Made:      Initial creation & update for portal
+ *  Last Modified On:  Feb 24 @ 6:42 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
 */
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
