@@ -57,10 +57,12 @@ $types = str_repeat('s', count($queues));
 
 //query that gets the TOTAL number of  IN PROGRESS users in the queue
 $inProgressSQL = "
-    SELECT DISTINCT *
-    FROM tblVisitServices
-    WHERE ServiceID IN ($placeholders)
-    AND ServiceStatus = 2
+    SELECT *
+    FROM tblClients c
+		JOIN tblVisits v on c.ClientID = v.ClientID
+        JOIN tblVisitServices vs on v.VisitID = vs.visitid
+    WHERE vs.ServiceID IN ($placeholders)
+    AND vs.ServiceStatus = 2
 ";
 
 // Checks for if the connection to mysql is a success
@@ -87,10 +89,12 @@ $inProgressStmt->close();
 
 //query that gets the TOTAL number of COMPLETED users in the queue
 $completedSQL = "
-    SELECT DISTINCT *
-    FROM tblVisitServices
-    WHERE ServiceID IN ($placeholders)
-    AND ServiceStatus = 3
+    SELECT *
+    FROM tblClients c
+		JOIN tblVisits v on c.ClientID = v.ClientID
+        JOIN tblVisitServices vs on v.VisitID = vs.visitid
+    WHERE vs.ServiceID IN ($placeholders)
+    AND vs.ServiceStatus = 3
 ";
 
 // Checks for if the connection to mysql is a success
@@ -123,14 +127,11 @@ $clientSQL = "
         c.MiddleInitial,
         c.LastName,
         c.DOB
-    FROM tblVisits v
-    JOIN tblClients c ON v.ClientID = c.ClientID
-    JOIN tblEvents e ON e.EventID = v.EventID
-    JOIN tblVisitServiceSelections s ON s.ClientID = c.ClientID
-    JOIN tblEventServices i ON i.ServiceID = s.ServiceID
-    JOIN tblVisitServices t ON t.ServiceID = s.ServiceID
-    WHERE s.ServiceID IN ($placeholders)
-    AND t.ServiceStatus = 1
+    FROM tblClients c
+		JOIN tblVisits v on c.ClientID = v.ClientID
+        JOIN tblVisitServices vs on v.VisitID = vs.visitid
+    WHERE vs.ServiceID IN ($placeholders)
+    AND vs.ServiceStatus = 1
 ";
 
 // Checks for if the connection to mysql is a success
