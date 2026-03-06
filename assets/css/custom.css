@@ -1,3 +1,14 @@
+/*
+ ============================================================
+  File:        custom.css
+  Description: Overall page design.
+
+  Last Modified By:  Lauren
+  Last Modified On:  March 5 @ 4:31 PM
+  Changes Made:      Made the language button round
+ ============================================================
+*/
+
 /* ==========================================
    1. GLOBAL VARIABLES & BOOTSTRAP OVERRIDES
    ========================================== */
@@ -317,6 +328,12 @@ body.v-center-page {
     z-index: 1000;
 }
 
+#selLanguageSwitch {
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    min-width: 72px;
+}
+
 /* ==========================================
    MODAL ANIMATIONS
    ========================================== */
@@ -554,3 +571,4 @@ body.no-scroll .card-body[style*="overflow-y"] {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+

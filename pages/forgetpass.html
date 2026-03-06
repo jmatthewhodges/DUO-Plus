@@ -1,0 +1,123 @@
+<!--
+ ============================================================
+  File:        forgetpass.html
+  Description: Forget password page for clients to reset their
+               password by verifying email and date of birth.
+
+  Last Modified By:  Lauren
+  Last Modified On:  March 3 @ 11:17 PM
+  Changes Made:      Added forget password button
+ ============================================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta + Title -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUO+ | Forget Password</title>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <!-- Bootstrap + HopeUI CSS -->
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+</head>
+
+<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+
+    <!-- Language switch-->
+    <div id="divLanguageSwitch">
+        <select id="selLanguageSwitch" class="btn-primary" aria-label="Language switch">
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+        </select>
+    </div>
+
+    <div class="container text-center login-container">
+
+        <!-- Logo section-->
+        <div class="logo-section mb-3">
+            <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-1" style="width: 200px;">
+        </div>
+
+        <!-- Subtitle -->
+        <h5 id="forgetpasssubtitle" class="subtitle-text fw-medium mb-4" style="color: #174593;">
+            Reset your password to get back into DUO+
+        </h5>
+
+        <!-- Main Card Form -->
+        <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4">
+            <div class="card-body p-4">
+                <form id="forgetPasswordForm" novalidate>
+
+                    <!-- Step 1: Account verification. Disappears after it's verified -->
+                    <div id="verifySection">
+                        <div class="mb-3 text-start">
+
+                          <!-- Email -->
+                          <label id="forgetEmailLabel" for="txtForgetEmail" class="form-label fw-semibold">Email <span
+                                  class="text-danger" aria-hidden="true">*</span></label>
+                          <input type="email" id="txtForgetEmail" class="form-control" required aria-label="Email address"
+                              placeholder="john.doe@gmail.com" autocomplete="email">
+                        </div>
+
+
+
+                        <div class="mb-3 text-start">
+                            <!-- Date of Birth -->
+                            <label id="forgetDOBLabel" for="txtForgetDOB" class="form-label fw-semibold">Date of Birth <span
+                                    class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="text" id="txtForgetDOB" class="form-control input-black" required
+                                placeholder="MM/DD/YYYY" aria-label="Date of birth" autocomplete="bday">
+                        </div>
+
+
+                        <button id="btnVerifyAccount" type="button" class="btn btn-primary w-100 rounded-2"
+                            aria-label="Verify account">Verify Account</button>
+                    </div>
+
+                    <!-- Step 2: Reset password. Hidden until verified -->
+                    <div id="resetSection" class="d-none" aria-live="polite">
+                        <div class="mb-3 text-start">
+                            <label id="forgetPasswordLabel" for="txtForgetPassword" class="form-label fw-semibold">New Password</label>
+                            <input type="password" id="txtForgetPassword" class="form-control" required
+                                aria-describedby="forgetPasswordHint" aria-label="New password" autocomplete="new-password">
+                            <div class="form-text text-muted" id="forgetPasswordHint">
+                                8+ characters, 1 uppercase, 1 lowercase, and 1 number.
+                            </div>
+                        </div>
+
+                         <!-- Password Confirmation -->
+                        <div class="mb-3 text-start">
+                            <label id="forgetPasswordConfirmLabel" for="txtForgetPasswordConfirm" class="form-label fw-semibold">Confirm New Password</label>
+                            <input type="password" id="txtForgetPasswordConfirm" class="form-control" required
+                                aria-label="Confirm new password" autocomplete="new-password">
+                        </div>
+
+                        <button id="btnResetPassword" type="button" class="btn btn-primary w-100 rounded-2"
+                            aria-label="Reset password">Reset Password</button>
+                    </div>
+
+                    <!-- Back to Login -->
+                    <a id="btnRegisterBack1" href="../index.html" class="btn btn-outline-primary w-100 rounded-2 mt-3"
+                        aria-label="Back to login">Back to Login</a>
+                </form>
+            </div>
+        </div>
+
+        <!-- Life Church logo -->
+        <div class="d-flex flex-column align-items-center">
+            <img src="../assets/images/lifeChurchLogo.webp" alt="Life Church Logo" class="mb-3" style="width: 200px;">
+        </div>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../assets/js/imask.js"></script>
+    <script src="../js/lang.js"></script>
+    <script src="../js/forgetpass.js"></script>
+</body>
+
+</html>
