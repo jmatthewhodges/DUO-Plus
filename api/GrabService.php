@@ -1,171 +1,119 @@
 <?php
 /**
  * ============================================================
- *  File:        ServiceSelection.php
- *  Purpose:     API endpoint for querying all clients checked in to a certain service.
- * 
- *  Last Modified By:  Miguel
- *  Last Modified On:  Mar 2 @ 7:00 PM
- *  Changes Made:      Added quieries for in progress and completed users
+ *  File:        GrabService.php
+ *  Purpose:     Returns stats and waitlist for one or more services.
+ *               Accepts ServiceID via query string (comma-separated
+ *               or repeated, e.g. ?ServiceID=medicalExam,medicalFollowUp
+ *               or ?ServiceID[]=medicalExam&ServiceID[]=medicalFollowUp).
  * ============================================================
-*/
-//TO-DO :  FIX THE DB QUERY
+ */
 
-// Database connection from other file
 require_once __DIR__ . '/db.php';
 
-// Get header type, set POST request type for JSON data (Array merges GET with jsonData)
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $jsonData = json_decode(file_get_contents('php://input'), true) ?? [];
-    $_GET = array_merge($_GET, $jsonData);
-}
-
-// Set response header to JSON
 header('Content-Type: application/json');
 
-// Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
-// Get the queue parameter from GET request
-$queue = $_GET['ServiceID'] ?? null;
+// --- Parse ServiceID(s) from query string ---
+$raw = $_GET['ServiceID'] ?? null;
 
-/*
-endpoints 
-all clients checked in or in progress for medical
-number of people in waitlist
-number in progress
-completed
-avg wait time
-past avg service time
-
-webpage for all info http://localhost:8000/pages/service-scan.html
-*/
-
-// Validate queue parameter exists
-if (!$queue) {
+if (!$raw) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing queue parameter(s)']);
+    echo json_encode(['success' => false, 'error' => 'Missing ServiceID parameter']);
     exit;
 }
 
-// Normalize to array
-$queues = is_array($queue) ? $queue : [$queue];
+// Support array (?ServiceID[]=a&ServiceID[]=b) or comma-separated (?ServiceID=a,b)
+if (is_array($raw)) {
+    $serviceIDs = array_values(array_filter(array_map('trim', $raw)));
+} else {
+    $serviceIDs = array_values(array_filter(array_map('trim', explode(',', $raw))));
+}
 
-// Build placeholders (?, ?, ?)
-$placeholders = implode(',', array_fill(0, count($queues), '?'));
-$types = str_repeat('s', count($queues));
+if (empty($serviceIDs)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'No valid ServiceID values provided']);
+    exit;
+}
 
-//query that gets the TOTAL number of  IN PROGRESS users in the queue
-$inProgressSQL = "
-    SELECT *
-    FROM tblClients c
-		JOIN tblVisits v on c.ClientID = v.ClientID
-        JOIN tblVisitServices vs on v.VisitID = vs.visitid
-    WHERE vs.ServiceID IN ($placeholders)
-    AND vs.ServiceStatus = 2
-";
+$placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
+$types = str_repeat('s', count($serviceIDs));
 
-// Checks for if the connection to mysql is a success
-$inProgressStmt = $mysqli->prepare($inProgressSQL);
-if (!$inProgressStmt) {
+// --- Counts by status (single query) ---
+$countStmt = $mysqli->prepare(
+    "SELECT vs.ServiceStatus, COUNT(DISTINCT c.ClientID) AS cnt
+     FROM tblVisitServices vs
+     JOIN tblVisits v ON v.VisitID = vs.VisitID
+     JOIN tblClients c ON c.ClientID = v.ClientID
+     WHERE vs.ServiceID IN ($placeholders)
+     GROUP BY vs.ServiceStatus"
+);
+if (!$countStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
+$countStmt->bind_param($types, ...$serviceIDs);
+$countStmt->execute();
+$countRows = $countStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$countStmt->close();
 
-$inProgressStmt->bind_param($types, ...$queues);
-
-if (!$inProgressStmt->execute()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $inProgressStmt->error]);
-    $inProgressStmt->close();
-    exit;
+$counts = ['Pending' => 0, 'In-Progress' => 0, 'Complete' => 0, 'Standby' => 0];
+foreach ($countRows as $row) {
+    $counts[$row['ServiceStatus']] = (int)$row['cnt'];
 }
 
-// Gets result, fetches all rows, closes statement
-$inProgressResult = $inProgressStmt->get_result();
-$inProgressRows = $inProgressResult ? $inProgressResult->fetch_all(MYSQLI_ASSOC) : [];
-$inProgressStmt->close();
-
-//query that gets the TOTAL number of COMPLETED users in the queue
-$completedSQL = "
-    SELECT *
-    FROM tblClients c
-		JOIN tblVisits v on c.ClientID = v.ClientID
-        JOIN tblVisitServices vs on v.VisitID = vs.visitid
-    WHERE vs.ServiceID IN ($placeholders)
-    AND vs.ServiceStatus = 3
-";
-
-// Checks for if the connection to mysql is a success
-$completedStmt = $mysqli->prepare($completedSQL);
-if (!$completedStmt) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $mysqli->error]);
-    exit;
+// --- Average service time from movement logs ---
+// Pairs "Seated" → "Completed" actions per VisitServiceID
+$avgStmt = $mysqli->prepare(
+    "SELECT AVG(TIMESTAMPDIFF(MINUTE, seated.Timestamp, completed.Timestamp)) AS avgMinutes
+     FROM tblMovementLogs seated
+     JOIN tblMovementLogs completed
+       ON completed.VisitServiceID = seated.VisitServiceID
+       AND completed.Action = 'Completed'
+     JOIN tblVisitServices vs ON vs.VisitServiceID = seated.VisitServiceID
+     WHERE seated.Action = 'Seated'
+     AND vs.ServiceID IN ($placeholders)"
+);
+$avgServiceTime = null;
+if ($avgStmt) {
+    $avgStmt->bind_param($types, ...$serviceIDs);
+    $avgStmt->execute();
+    $avgRow = $avgStmt->get_result()->fetch_assoc();
+    $avgStmt->close();
+    if ($avgRow && $avgRow['avgMinutes'] !== 0) {
+        $avgServiceTime = round((float)$avgRow['avgMinutes']);
+    }
 }
 
-$completedStmt->bind_param($types, ...$queues);
-
-if (!$completedStmt->execute()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $completedStmt->error]);
-    $completedStmt->close();
-    exit;
-}
-
-// Gets result, fetches all rows, closes statement
-$completedResult = $completedStmt->get_result();
-$completedRows = $completedResult ? $completedResult->fetch_all(MYSQLI_ASSOC) : [];
-$completedStmt->close();
-
-// main client count 
-$clientSQL = "
-    SELECT 
-        c.ClientID,
-        c.FirstName,
-        c.MiddleInitial,
-        c.LastName,
-        c.DOB
-    FROM tblClients c
-		JOIN tblVisits v on c.ClientID = v.ClientID
-        JOIN tblVisitServices vs on v.VisitID = vs.visitid
-    WHERE vs.ServiceID IN ($placeholders)
-    AND vs.ServiceStatus = 1
-";
-
-// Checks for if the connection to mysql is a success
-$clientStmt = $mysqli->prepare($clientSQL);
-if (!$clientStmt) {
+// --- Waitlist (all clients with Pending status for these services) ---
+$waitStmt = $mysqli->prepare(
+    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
+     FROM tblVisitServices vs
+     JOIN tblVisits v ON v.VisitID = vs.VisitID
+     JOIN tblClients c ON c.ClientID = v.ClientID
+     WHERE vs.ServiceID IN ($placeholders)
+     AND vs.ServiceStatus = 'Pending'
+     ORDER BY vs.QueuePriority ASC"
+);
+if (!$waitStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
+$waitStmt->bind_param($types, ...$serviceIDs);
+$waitStmt->execute();
+$waitList = $waitStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$waitStmt->close();
 
-$clientStmt->bind_param($types, ...$queues);
-
-if (!$clientStmt->execute()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $clientStmt->error]);
-    $clientStmt->close();
-    exit;
-}
-
-// Gets result, fetches all rows, closes statement
-
-$clientResult = $clientStmt->get_result();
-$clientRows = $clientResult ? $clientResult->fetch_all(MYSQLI_ASSOC) : [];
-$clientStmt->close();
-
-
+// --- Response ---
 http_response_code(200);
-$response = [
-    'success' => true,
-    'completedCount' => count($completedRows),
-    'inProgressCount' => count($inProgressRows),
-    'Totalcount' => count($clientRows),
-    'data' => $clientRows
-];
-
-echo json_encode($response);
-error_log(json_encode($response));
+echo json_encode([
+    'success'        => true,
+    'pendingCount'   => $counts['Pending'],
+    'inProgressCount'=> $counts['In-Progress'],
+    'completedCount' => $counts['Complete'],
+    'avgServiceTime' => $avgServiceTime,
+    'waitList'       => $waitList,
+]);
