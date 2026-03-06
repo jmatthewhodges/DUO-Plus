@@ -5,8 +5,9 @@
  *  Purpose:     Backend of forgetpass.html, handles password reset functionality
  *
  *  Last Modified By:  Lauren
- *  Last Modified On:  March 3 @ 
- *  Changes Made:      Created file.
+ *  Last Modified On:  March 5 @ 5:44 PM
+ *  Changes Made:      Updatd error codes according to Burchfield
+ *                     feedback.
  * ============================================================
 */
 
@@ -100,8 +101,8 @@ $row = $result->fetch_assoc();
 $clientLookup->close();
 
 if (!$row || empty($row['ClientID'])) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'Account not found.']);
+    http_response_code(200);
+    echo json_encode(['success' => false, 'message' => 'Email and Date of Birth combination are incorrect']);
     exit;
 }
 
@@ -119,3 +120,5 @@ $updatePassword->execute();
 $updatePassword->close();
 
 echo json_encode(['success' => true, 'message' => 'Password reset successful.']);
+
+

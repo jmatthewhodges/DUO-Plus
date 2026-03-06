@@ -4,8 +4,10 @@
  *  Purpose:     Handles forget password form validation and reset functionality
  *
  *  Last Modified By:  Lauren
- *  Last Modified On:  March 3 @ 11:47 PM
- *  Changes Made:      Created file
+ *  Last Modified On:  March 5 @ 3:47 PM
+ *  Changes Made:      Updated pop-up responses and removed 
+ *                     the success response based on Burchfield
+ *                     feedback. Also made it more flexible.
  * ============================================================
 */
 
@@ -67,11 +69,22 @@ async function postJson(body) {
         body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-        throw new Error('Please re-enter Date of Birth.');
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch (e) {
+        data = null;
     }
 
-    return response.json();
+    if (!response.ok) {
+        const err = new Error(data?.message || 'Request failed.');
+        err.response = response;
+        err.data = data;
+        throw err;
+    }
+
+    return data || {};
 }
 
 
@@ -239,7 +252,7 @@ async function handleVerifyAccount() {
         });
 
         if (!data.success) {
-            throw new Error(data.message || 'Account not found.');
+            throw new Error(getText('emailDobIncorrectText', 'Email and Date of Birth combination are incorrect'));
         }
 
         verifiedIdentity = { email, dob };
@@ -250,19 +263,13 @@ async function handleVerifyAccount() {
         setFieldValidation(elements.emailInput, true);
         setFieldValidation(elements.dobInput, true);
 
-        await showAlert({
-            icon: 'success',
-            title: getText('accountFoundTitle', 'Account Found'),
-            text: getText('accountFoundText', 'Identity verified.')
-        });
-
     } catch (error) {
         verifiedIdentity = null;
 
         showAlert({
             icon: 'error',
-            title: getText('accountNotFoundTitle', 'Account Not Found'),
-            text: error.message
+            title: getText('emailDobIncorrectTitle', 'Incorrect Information'),
+            text: getText('emailDobIncorrectText', 'Email and Date of Birth combination are incorrect')
         });
     } finally {
         setButtonLoading(elements.verifyBtn, false, 'btnVerifyAccount', 'Verify Account');
@@ -325,14 +332,6 @@ async function handleResetPassword() {
         if (!data.success) {
             throw new Error(data.message || 'Reset failed.');
         }
-
-        await Swal.fire({
-            icon: 'success',
-            title: getText('passwordResetSuccessTitle', 'Success'),
-            text: getText('passwordResetSuccessText', 'Redirecting...'),
-            timer: 1500,
-            showConfirmButton: false
-        });
 
         window.location.href = '../index.html';
 
@@ -403,3 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+
+
