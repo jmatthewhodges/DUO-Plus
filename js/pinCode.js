@@ -104,11 +104,11 @@ function initializePINModal() {
     // QR CODE AUTO-FILL: Check for PIN in URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const urlPin = urlParams.get('pin');
-    const stationId = urlParams.get('stationId');
+    const serviceID = urlParams.get('ServiceID');
     
-    // Store stationId globally if provided
-    if (stationId) {
-        window.stationId = stationId;
+    // Store ServiceID globally if provided
+    if (serviceID) {
+        window.serviceID = serviceID;
     }
 
     // ANTI-BYPASS: Prevent modal from closing before PIN verification AND name entry

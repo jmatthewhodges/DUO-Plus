@@ -61,17 +61,35 @@ if (!empty($missingFields)) {
     exit;
 }
 
-// Find the client's VisitService matching the given ServiceID (Pending or In-Progress)
-$stmt = $mysqli->prepare("
-    SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode
+// ServiceID can be comma-separated (e.g. "medicalExam,medicalFollowUp")
+// The query will match the first Pending or In-Progress record for any of them.
+$serviceIDs = array_map('trim', explode(',', $ServiceID));
+$serviceIDs = array_filter($serviceIDs);
+
+if (empty($serviceIDs)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'ServiceID is empty after parsing.']);
+    exit;
+}
+
+// Build parameterized IN clause
+$placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
+$types = 's' . str_repeat('s', count($serviceIDs)); // ClientID + each ServiceID
+$params = array_merge([$ClientID], $serviceIDs);
+
+$sql = "
+    SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode
     FROM tblVisitServices vs
     JOIN tblVisits v ON vs.VisitID = v.VisitID
     WHERE v.ClientID = ?
-      AND vs.ServiceID = ?
+      AND vs.ServiceID IN ($placeholders)
       AND vs.ServiceStatus IN ('Pending', 'In-Progress')
+    ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending')
     LIMIT 1
-");
-$stmt->bind_param('ss', $ClientID, $ServiceID);
+";
+
+$stmt = $mysqli->prepare($sql);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -86,6 +104,7 @@ if ($result->num_rows === 0) {
 
 $visitService = $result->fetch_assoc();
 $stmt->close();
+$ServiceID = $visitService['ServiceID'];
 
 $VisitServiceID = $visitService['VisitServiceID'];
 $currentStatus = $visitService['ServiceStatus'];

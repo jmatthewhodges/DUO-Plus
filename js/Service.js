@@ -2,10 +2,10 @@
  ============================================================
  File:           Service.js
  Description:    Handles service-specific content display based on 
-                 stationId from QR code URL params. Also handles
+                 ServiceID from QR code URL params. Also handles
                  client check-in/check-out via QR code scanning or
                  manual client ID entry through Update buttons.
-                 stationId values: medical, optical, dental, haircut
+                 ServiceID values: medical, optical, dental, haircut
                  Works with pinCode.js security layer.
  
  Last Modified By:  Cameron
@@ -32,10 +32,15 @@
     Expected request: POST with body { clientId, serviceKey }
     Expected returns: { success: true, message: "Client added" }
     
- 4. GET SERVICE STATS (lines ~250)
-    Purpose: Fetch current and past average service times
-    Current temp call path: /api/getServiceStats.php
-    Expected returns: { success: true, currentAvgTime: "XX minutes", pastAvgTime: "XX minutes" }
+ 4. GET SERVICE STATS — IMPLEMENTED via /api/GrabService.php
+    Purpose: Fetch stats (counts + avg time) and waitlist for one or more services
+    Endpoint: /api/GrabService.php?ServiceID=medicalExam,medicalFollowUp
+    Returns: { success, pendingCount, inProgressCount, completedCount, avgServiceTime, waitList }
+    
+ 5. SERVICE SCAN (CHECK-IN / CHECK-OUT) — IMPLEMENTED via /api/ServiceScan.php
+    Purpose: Auto-progress a client's service status (Pending→In-Progress or In-Progress→Complete)
+    Endpoint: POST /api/ServiceScan.php  body: { ClientID, ServiceID }
+    Returns: { success, message, VisitServiceID, newStatus }
     
  NOTE: All endpoint paths above are placeholders.
        Backend developer should implement with preferred naming/structure.
@@ -49,75 +54,30 @@ const SERVICES = {
     medical: {
         name: 'Medical',
         icon: 'bi-heart-pulse',
-        color: 'primary'
+        color: 'primary',
+        serviceIDs: ['medicalExam', 'medicalFollowUp']
     },
     optical: {
         name: 'Optical',
         icon: 'bi-eye',
-        color: 'info'
+        color: 'primary',
+        serviceIDs: ['optical']
     },
     dental: {
         name: 'Dental',
         icon: 'bi-brightness-high',
-        color: 'warning'
+        color: 'primary',
+        serviceIDs: ['dentalHygiene', 'dentalExtraction']
     },
     haircut: {
         name: 'Haircut',
         icon: 'bi-scissors',
-        color: 'success'
+        color: 'primary',
+        serviceIDs: ['haircut']
     }
 };
 
 // Valid station names: medical, optical, dental, haircut
-
-// DEVELOPMENT ONLY: Fake hardcoded client database for testing
-// TODO: When API is ready, replace all FAKE_CLIENTS lookups with API calls to fetch client data
-// This object should be deleted once backend API is available
-const FAKE_CLIENTS = {
-    'gicsxbtqog': {
-        id: 'gicsxbtqog',
-        name: 'John Smith',
-        dob: '05/15/1990',
-        status: 'waiting'  // waiting, in-progress, completed
-    },
-    'client001': {
-        id: 'client001',
-        name: 'John A. Doe',
-        dob: '11/01/1978',
-        status: 'waiting'
-    },
-    'client002': {
-        id: 'client002',
-        name: 'Jane D. Rett',
-        dob: '08/23/1989',
-        status: 'waiting'
-    },
-    'client003': {
-        id: 'client003',
-        name: 'Michael S. Johnson',
-        dob: '03/15/1985',
-        status: 'waiting'
-    },
-    'client004': {
-        id: 'client004',
-        name: 'Sarah M. Williams',
-        dob: '09/28/1992',
-        status: 'waiting'
-    },
-    'client005': {
-        id: 'client005',
-        name: 'Robert T. Brown',
-        dob: '12/10/1975',
-        status: 'waiting'
-    },
-    'client006': {
-        id: 'client006',
-        name: 'Amanda C. Davis',
-        dob: '05/17/1988',
-        status: 'waiting'
-    }
-};
-
 // IMPORTANT: Service waitlist data storage (in-memory during session)
 // Structure: { serviceKey: { clientId: { id, name, dob, status, checkInTime, checkOutTime }, ... }, ... }
 // Status values: 'waiting', 'in-progress', 'completed'
@@ -130,6 +90,14 @@ const SERVICE_WAITLISTS = {
     optical: {},
     dental: {},
     haircut: {}
+};
+
+// Friendly short labels for sub-services (only shown when station has multiple)
+const SUB_SERVICE_LABELS = {
+    medicalExam: 'Exam',
+    medicalFollowUp: 'Follow Up',
+    dentalHygiene: 'Hygiene',
+    dentalExtraction: 'Extraction'
 };
 
 let videoStream = null;
@@ -145,90 +113,36 @@ function showService(serviceKey) {
     // Store current service for client operations
     currentServiceKey = serviceKey;
     
-    // Service data configuration
-    const serviceData = {
-        medical: {
-            title: 'Medical',
-            color: 'primary',
-            stat1: { label: 'Waitlist', value: '23' },
-            stat2: { label: 'In Progress', value: '4' },
-            stat3: { label: 'Completed', value: '15' },
-            avgTime: '20 minutes',
-            pastAvgTime: '34 minutes'
-        },
-        optical: {
-            title: 'Optical',
-            color: 'primary',
-            stat1: { label: 'Waitlist', value: '12' },
-            stat2: { label: 'In Progress', value: '2' },
-            stat3: { label: 'Completed', value: '8' },
-            avgTime: '15 minutes',
-            pastAvgTime: '18 minutes'
-        },
-        dental: {
-            title: 'Dental',
-            color: 'primary',
-            stat1: { label: 'Waitlist', value: '18' },
-            stat2: { label: 'In Progress', value: '3' },
-            stat3: { label: 'Completed', value: '22' },
-            avgTime: '45 minutes',
-            pastAvgTime: '52 minutes'
-        },
-        haircut: {
-            title: 'Haircut',
-            color: 'primary',
-            stat1: { label: 'Waitlist', value: '9' },
-            stat2: { label: 'In Progress', value: '1' },
-            stat3: { label: 'Completed', value: '11' },
-            avgTime: '20 minutes',
-            pastAvgTime: '22 minutes'
-        }
-    };
-
-    const data = serviceData[serviceKey];
-    if (!data) {
+    const service = SERVICES[serviceKey];
+    if (!service) {
         console.error('Invalid service:', serviceKey);
         return;
     }
 
     // Update the service title
     const titleEl = document.getElementById('serviceTitle');
-    if (titleEl) titleEl.textContent = data.title;
+    if (titleEl) titleEl.textContent = service.name;
 
     // Update the service header background color
     const headerEl = document.getElementById('serviceHeader');
     if (headerEl) {
-        headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${data.color} p-3`;
+        headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${service.color} p-3`;
     }
 
-    // Update stats
+    // Set stat labels
     const stat1LabelEl = document.getElementById('stat1Label');
-    const stat1ValueEl = document.getElementById('stat1Value');
-    if (stat1LabelEl) stat1LabelEl.textContent = data.stat1.label;
-    if (stat1ValueEl) stat1ValueEl.textContent = data.stat1.value;
-
     const stat2LabelEl = document.getElementById('stat2Label');
-    const stat2ValueEl = document.getElementById('stat2Value');
-    if (stat2LabelEl) stat2LabelEl.textContent = data.stat2.label;
-    if (stat2ValueEl) stat2ValueEl.textContent = data.stat2.value;
-
     const stat3LabelEl = document.getElementById('stat3Label');
-    const stat3ValueEl = document.getElementById('stat3Value');
-    if (stat3LabelEl) stat3LabelEl.textContent = data.stat3.label;
-    if (stat3ValueEl) stat3ValueEl.textContent = data.stat3.value;
-
-    // Update times from API
-    fetchServiceTimes(serviceKey);
+    if (stat1LabelEl) stat1LabelEl.textContent = 'Waitlist';
+    if (stat2LabelEl) stat2LabelEl.textContent = 'In Progress';
+    if (stat3LabelEl) stat3LabelEl.textContent = 'Completed';
 
     // Update waitlist title
     const waitlistTitleEl = document.getElementById('waitlistTitle');
-    if (waitlistTitleEl) waitlistTitleEl.textContent = `${data.title} - Waitlist`;
+    if (waitlistTitleEl) waitlistTitleEl.textContent = `${service.name} - Waitlist`;
 
-    // Populate the waitlist table with client data
-    populateWaitlist();
-    
-    // Initialize stats display based on current waitlist
-    updateStatsDisplay();
+    // Fetch live stats and waitlist from GrabService API
+    fetchServiceData(serviceKey);
 
     // Show the service content if it's hidden
     const serviceContent = document.getElementById('serviceContent');
@@ -242,36 +156,64 @@ function showService(serviceKey) {
     console.log(`Service displayed: ${serviceKey}`);
 }
 
-// Fetch service time data from API and update display
-// See comments at top of file (line ~16) for endpoint details
-async function fetchServiceTimes(serviceKey) {
+// Fetch live service data (stats + waitlist) from GrabService.php
+async function fetchServiceData(serviceKey) {
+    const service = SERVICES[serviceKey];
+    if (!service || !service.serviceIDs) return;
+
     try {
-        // BACKEND DEVELOPER: Implement endpoint for fetching service stats
-        // Expected response: { success: true, currentAvgTime: "XX minutes", pastAvgTime: "XX minutes" }
-        // TODO: Replace URL with your actual endpoint
-        const response = await fetch(`/api/getServiceStats.php?service=${serviceKey}`);
+        const ids = service.serviceIDs.join(',');
+        const response = await fetch(`/api/GrabService.php?ServiceID=${encodeURIComponent(ids)}`);
         
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-                const avgTimeEl = document.getElementById('avgTime');
-                const pastAvgTimeEl = document.getElementById('pastAvgTime');
-                
-                if (avgTimeEl) avgTimeEl.textContent = data.currentAvgTime || 'N/A';
-                if (pastAvgTimeEl) pastAvgTimeEl.textContent = data.pastAvgTime || 'N/A';
-                
-                console.log(`Service times updated for ${serviceKey}`);
-            }
-        } else {
-            console.error(`Failed to fetch service times: ${response.status}`);
+        if (!response.ok) {
+            console.error(`Failed to fetch service data: ${response.status}`);
+            return;
         }
-    } catch (error) {
-        console.error('Error fetching service times:', error);
-        // Fallback: show N/A if API fails
+
+        const data = await response.json();
+        if (!data.success) {
+            console.error('GrabService API error:', data.error);
+            return;
+        }
+
+        // Update stat values
+        const stat1ValueEl = document.getElementById('stat1Value');
+        const stat2ValueEl = document.getElementById('stat2Value');
+        const stat3ValueEl = document.getElementById('stat3Value');
+        if (stat1ValueEl) stat1ValueEl.textContent = data.pendingCount;
+        if (stat2ValueEl) stat2ValueEl.textContent = data.inProgressCount;
+        if (stat3ValueEl) stat3ValueEl.textContent = data.completedCount;
+
+        // Update average service time
         const avgTimeEl = document.getElementById('avgTime');
-        const pastAvgTimeEl = document.getElementById('pastAvgTime');
+        if (avgTimeEl) {
+            avgTimeEl.textContent = data.avgServiceTime ? `${data.avgServiceTime} minutes` : 'N/A';
+        }
+
+        // Normalize API waitlist into local format and populate table
+        SERVICE_WAITLISTS[serviceKey] = {};
+        (data.waitList || []).forEach(client => {
+            const fullName = [client.FirstName, client.MiddleInitial, client.LastName]
+                .filter(Boolean)
+                .join(' ');
+            // Map API ServiceStatus to local status
+            let status = 'waiting';
+            if (client.ServiceStatus === 'In-Progress') status = 'in-progress';
+            SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
+                id: client.ClientID,
+                name: fullName,
+                dob: client.DOB,
+                status: status,
+                serviceID: client.ServiceID
+            };
+        });
+
+        populateWaitlist();
+        console.log(`Service data updated for ${serviceKey}`);
+    } catch (error) {
+        console.error('Error fetching service data:', error);
+        const avgTimeEl = document.getElementById('avgTime');
         if (avgTimeEl) avgTimeEl.textContent = 'N/A';
-        if (pastAvgTimeEl) pastAvgTimeEl.textContent = 'N/A';
     }
 }
 
@@ -471,8 +413,8 @@ function handleQRScan(qrData) {
         // Try to parse as URL
         const url = new URL(qrData, window.location.href);
         
-        // Get stationId from URL parameters
-        const stationId = url.searchParams.get('stationId') || url.searchParams.get('stationid');
+        // Get ServiceID from URL parameters
+        const serviceID = url.searchParams.get('ServiceID') || url.searchParams.get('serviceid');
         const pathname = url.pathname.toLowerCase();
         
         // Check if URL is for service-scan page
@@ -483,24 +425,24 @@ function handleQRScan(qrData) {
             return;
         }
         
-        // Check if stationId is present
-        if (!stationId) {
-            console.error('Missing stationId in QR');
+        // Check if ServiceID is present
+        if (!serviceID) {
+            console.error('Missing ServiceID in QR');
             Swal.fire('Invalid QR', 'QR code missing station information', 'warning');
             startQRScanning();
             return;
         }
 
         // Check if station exists in SERVICES config
-        if (!SERVICES[stationId.toLowerCase()]) {
-            console.error('Unknown station:', stationId);
-            Swal.fire('Invalid QR', 'Unknown station: ' + stationId, 'warning');
+        if (!SERVICES[serviceID.toLowerCase()]) {
+            console.error('Unknown station:', serviceID);
+            Swal.fire('Invalid QR', 'Unknown station: ' + serviceID, 'warning');
             startQRScanning();
             return;
         }
 
-        // Use stationId directly as service key
-        const serviceKey = stationId.toLowerCase();
+        // Use ServiceID directly as service key
+        const serviceKey = serviceID.toLowerCase();
 
         showService(serviceKey);
 
@@ -513,32 +455,32 @@ function handleQRScan(qrData) {
 
 // Start scanning after PIN verification
 document.addEventListener('pinVerified', function() {
-    console.log('PIN verified - checking for stationId');
+    console.log('PIN verified - checking for ServiceID');
     
-    // Get stationId from URL if it exists
+    // Get ServiceID from URL if it exists
     const urlParams = new URLSearchParams(window.location.search);
-    const stationId = urlParams.get('stationId') || urlParams.get('stationid');
+    const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
     
-    if (stationId) {
+    if (serviceID) {
         // Direct to service based on URL parameter
-        console.log('StationId found in URL:', stationId);
-        handleServiceSelection(stationId);
+        console.log('ServiceID found in URL:', serviceID);
+        handleServiceSelection(serviceID);
     } else {
-        // No stationId, start QR scanner
-        console.log('No stationId - starting QR scanner');
+        // No ServiceID, start QR scanner
+        console.log('No ServiceID - starting QR scanner');
         startQRScanning();
     }
 });
 
 
-// Handle service selection from stationId
-function handleServiceSelection(stationId) {
-    const serviceKey = stationId.toLowerCase();
+// Handle service selection from ServiceID
+function handleServiceSelection(serviceID) {
+    const serviceKey = serviceID.toLowerCase();
 
     // Check if station exists in SERVICES config
     if (!SERVICES[serviceKey]) {
-        console.error('Unknown station:', stationId);
-        Swal.fire('Invalid Station', 'Unknown station: ' + stationId, 'warning');
+        console.error('Unknown station:', serviceID);
+        Swal.fire('Invalid Station', 'Unknown station: ' + serviceID, 'warning');
         startQRScanning();
         return;
     }
@@ -548,17 +490,17 @@ function handleServiceSelection(stationId) {
 }
 
 
-// If page reloads after PIN verification, check for stationId
+// If page reloads after PIN verification, check for ServiceID
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded - Service.js loaded');
     
     if (document.body.classList.contains('pin-verified')) {
-        console.log('Already pin-verified, checking for stationId');
+        console.log('Already pin-verified, checking for ServiceID');
         const urlParams = new URLSearchParams(window.location.search);
-        const stationId = urlParams.get('stationId') || urlParams.get('stationid');
+        const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
         
-        if (stationId) {
-            setTimeout(() => handleServiceSelection(stationId), 100);
+        if (serviceID) {
+            setTimeout(() => handleServiceSelection(serviceID), 100);
         } else {
             setTimeout(startQRScanning, 100);
         }
@@ -725,30 +667,32 @@ function stopClientQRScanning() {
     }
 }
 
-// Handle client QR code scan - AUTO-PROGRESSION WORKFLOW
+// Handle client QR code scan - AUTO-PROGRESSION WORKFLOW via ServiceScan.php
 // This function implements the core scanning workflow:
 //   1. Extract clientId from QR code (URL param or plain text)
-//   2. Find client in database
-//   3. Check client's current status in this service
-//   4. Auto-progress to next status:
-//      - Not in waitlist → Add as 'waiting'
-//      - Status='waiting' → Move to 'in-progress'
-//      - Status='in-progress' → Move to 'completed'
-//      - Status='completed' → Show 'already completed' message
-// TODO: When API is ready, fetch client data from backend instead of FAKE_CLIENTS (see line ~75)
-function handleClientQRScan(qrData) {
-    console.log('Client QR scanned:', qrData);
+//   2. Look up client in the local waitlist (loaded from GrabService)
+//   3. Call ServiceScan.php which auto-progresses:
+//      - Pending → In-Progress  (check-in)
+//      - In-Progress → Complete (check-out)
+//   4. If client is already completed or not found, show appropriate message
+//   5. Refresh data from GrabService after each action
+async function handleClientQRScan(qrData) {
+    console.log('=== CLIENT QR SCAN START ===');
+    console.log('Raw QR data:', JSON.stringify(qrData));
+    console.log('Current service key:', currentServiceKey);
     
     try {
         // Try to parse as URL or extract clientId
         let clientId = null;
         
         try {
-            const url = new URL(qrData, window.location.href);
-            clientId = url.searchParams.get('clientId') || url.searchParams.get('id');
+            const url = new URL(qrData);  // Only absolute URLs
+            clientId = url.searchParams.get('clientId') || url.searchParams.get('id') || url.searchParams.get('ClientID');
+            console.log('Parsed as URL — extracted clientId:', clientId);
         } catch (e) {
-            // Not a URL, try to parse as plain clientId
+            // Not a valid absolute URL — treat full text as the clientId
             clientId = qrData.trim();
+            console.log('Not a URL — using raw text as clientId:', clientId);
         }
         
         if (!clientId) {
@@ -760,117 +704,114 @@ function handleClientQRScan(qrData) {
 
         console.log('Client ID extracted:', clientId);
         
-        // Check if client exists and determine action based on current status
-        const client = FAKE_CLIENTS[clientId];
-        if (!client) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Client Not Found',
-                text: `Client ID "${clientId}" does not exist in the system`,
-                confirmButtonText: 'OK'
-            }).then(() => {
-                startClientQRScanning();
-            });
-            return;
-        }
-        
-        // Check client's current status in this service and determine next action
+        // Check if client is in the current service's waitlist (loaded from GrabService)
         const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
-        let nextAction = null;
-        
-        if (!clientInWaitlist) {
-            // Not in waitlist yet → add as waiting
-            nextAction = 'addwaiting';
-        } else if (clientInWaitlist.status === 'waiting') {
-            // Currently waiting → move to in-progress
-            nextAction = 'inprogress';
-        } else if (clientInWaitlist.status === 'in-progress') {
-            // Currently in-progress → move to completed
-            nextAction = 'checkout';
-        } else if (clientInWaitlist.status === 'completed') {
-            // Already completed → ask what to do
-            nextAction = 'already_completed';
-        }
-        
-        // Execute the appropriate action based on current status
-        if (nextAction === 'addwaiting') {
-            // Add client as waiting
-            addClientToWaitlist(clientId, currentServiceKey);
-            Swal.fire({
-                icon: 'success',
-                title: 'Client Added',
-                html: `
-                    <div style="text-align: left;">
-                        <p><strong>Client:</strong> ${client.name}</p>
-                        <p><strong>ID:</strong> ${client.id}</p>
-                        <p><strong>Status:</strong> Added to waiting list</p>
-                    </div>
-                `,
-                confirmButtonText: 'OK'
-            });
-        } else if (nextAction === 'inprogress') {
-            // Move from waiting to in-progress
-            processClientAction(clientId, 'inprogress');
-        } else if (nextAction === 'checkout') {
-            // Move from in-progress to completed
-            processClientAction(clientId, 'checkout');
-        } else if (nextAction === 'already_completed') {
-            // Client already completed - show status
+        console.log('Client in waitlist:', clientInWaitlist ? JSON.stringify(clientInWaitlist) : 'NOT FOUND');
+        console.log('Waitlist keys for this service:', currentServiceKey ? Object.keys(SERVICE_WAITLISTS[currentServiceKey]) : 'no service');
+
+        if (clientInWaitlist && clientInWaitlist.status === 'completed') {
             Swal.fire({
                 icon: 'info',
                 title: 'Client Already Completed',
                 html: `
                     <div style="text-align: left;">
-                        <p><strong>Client:</strong> ${client.name}</p>
-                        <p><strong>ID:</strong> ${client.id}</p>
+                        <p><strong>Client:</strong> ${clientInWaitlist.name}</p>
+                        <p><strong>ID:</strong> ${clientId}</p>
                         <p><strong>Status:</strong> Already completed for this service</p>
                     </div>
                 `,
                 confirmButtonText: 'OK'
             });
+            return;
         }
 
+        // Determine the ServiceID(s) to pass to the API
+        // Send all serviceIDs for this station — backend auto-detects the correct one
+        const service = SERVICES[currentServiceKey];
+        const serviceID = service ? service.serviceIDs.join(',') : '';
+        console.log('Sending to ServiceScan.php:', { ClientID: clientId, ServiceID: serviceID });
+
+        // Call ServiceScan.php to auto-progress the client's status
+        const response = await fetch('/api/ServiceScan.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
+        });
+
+        console.log('ServiceScan response status:', response.status);
+        const data = await response.json();
+        console.log('ServiceScan response body:', JSON.stringify(data));
+
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Scan Failed',
+                text: data.message || 'Unable to process client scan.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        let statusText = data.newStatus === 'In-Progress' ? 'Checked in — now in service' : 'Completed and checked out';
+        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
+        const clientName = clientInWaitlist ? clientInWaitlist.name : clientId;
+
+        Swal.fire({
+            icon: 'success',
+            title: `${actionLabel} Successful`,
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>ID:</strong> ${clientId}</p>
+                    <p><strong>Service:</strong> ${service ? service.name : 'Service'}</p>
+                    <p><strong>Status:</strong> ${statusText}</p>
+                </div>
+            `,
+            confirmButtonText: 'OK'
+        }).then(() => {
+            // Refresh stats and waitlist from the server
+            fetchServiceData(currentServiceKey);
+        });
+
     } catch (e) {
-        console.error('QR parse error:', e);
-        Swal.fire('Invalid QR', 'Could not parse QR code', 'warning');
+        console.error('QR scan error:', e);
+        Swal.fire('Error', 'Could not process QR code scan', 'warning');
         startClientQRScanning();
     }
 }
 
-// Show modal to choose check-in or check-out action
+// Show modal to choose check-in or check-out action (calls ServiceScan.php)
 function showCheckInOutModal(clientId) {
     const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
     const serviceTitle = service ? service.name : 'Service';
     
-    // Get client from waitlist first, then fallback to FAKE_CLIENTS
+    // Get client from waitlist
     let client = null;
     if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
         client = SERVICE_WAITLISTS[currentServiceKey][clientId];
-    } else {
-        client = FAKE_CLIENTS[clientId];
     }
     const clientName = client ? client.name : 'Unknown Client';
     
+    // Determine which button to show based on client status
+    const isInProgress = client && client.status === 'in-progress';
+    const actionButton = isInProgress
+        ? `<button class="btn btn-success btn-lg" onclick="processClientAction('${clientId}', 'checkout')">
+               <i class="bi bi-person-check me-2"></i>Complete
+           </button>`
+        : `<button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
+               <i class="bi bi-person-plus me-2"></i>Check In
+           </button>`;
+
     Swal.fire({
         title: clientName,
         html: `
             <div style="text-align: left; margin-bottom: 20px;">
                 <p><strong>Client ID:</strong> ${clientId}</p>
                 <p><strong>Service:</strong> ${serviceTitle}</p>
-            </div>
-            <div style="text-align: center; font-weight: 600; margin-bottom: 15px; color: #666;">
-                Update Client Status
+                <p><strong>Status:</strong> ${isInProgress ? 'In Progress' : 'Waiting'}</p>
             </div>
             <div class="d-grid gap-3">
-                <button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
-                    <i class="bi bi-person-plus me-2"></i>Check In
-                </button>
-                <button class="btn btn-primary btn-lg" onclick="processClientAction('${clientId}', 'inprogress')">
-                    <i class="bi bi-hourglass-split me-2"></i>In Progress
-                </button>
-                <button class="btn btn-success btn-lg" onclick="processClientAction('${clientId}', 'checkout')">
-                    <i class="bi bi-person-check me-2"></i>Complete
-                </button>
+                ${actionButton}
             </div>
         `,
         showConfirmButton: false,
@@ -1094,93 +1035,71 @@ async function addClientFromSearch(clientId) {
     }
 }
 
-// Process client action (check-in, in-progress, or check-out)
-function processClientAction(clientId, action) {
-    let actionLabel = 'Update';
-    if (action === 'checkin') {
-        actionLabel = 'Check In';
-    } else if (action === 'inprogress') {
-        actionLabel = 'Put In Progress';
-    } else if (action === 'checkout') {
-        actionLabel = 'Check Out';
-    }
-    
+// Process client action via ServiceScan.php API
+// ServiceScan auto-progresses: Pending → In-Progress, In-Progress → Complete
+async function processClientAction(clientId, action) {
     const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
     const serviceTitle = service ? service.name : 'Service';
-    
+
     console.log(`Processing client ${action}:`, clientId, 'for service:', serviceTitle);
-    
-    // Check if client exists in fake database
-    const client = FAKE_CLIENTS[clientId];
-    
-    if (!client) {
+
+    // Send all serviceIDs for this station — backend auto-detects the correct one
+    const serviceID = service ? service.serviceIDs.join(',') : '';
+
+    try {
+        const response = await fetch('/api/ServiceScan.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Failed',
+                text: data.message || 'Unable to update client status.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Map API newStatus to display text
+        let statusText = data.newStatus === 'In-Progress' ? 'Now in service' : 'Completed and checked out';
+        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
+
+        const wlClient = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+        const clientName = wlClient ? wlClient.name : clientId;
+
+        Swal.fire({
+            icon: 'success',
+            title: `${actionLabel} Successful`,
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>ID:</strong> ${clientId}</p>
+                    <p><strong>Service:</strong> ${serviceTitle}</p>
+                    <p><strong>Status:</strong> ${statusText}</p>
+                </div>
+            `,
+            confirmButtonText: 'OK'
+        }).then(() => {
+            // Refresh stats and waitlist from the server
+            fetchServiceData(currentServiceKey);
+        });
+    } catch (error) {
+        console.error('ServiceScan API error:', error);
         Swal.fire({
             icon: 'error',
-            title: 'Client Not Found',
-            text: `Client ID "${clientId}" does not exist in the system`,
+            title: 'Network Error',
+            text: 'Unable to reach the server. Please try again.',
             confirmButtonText: 'OK'
         });
-        return;
     }
-    
-    let statusText = '';
-    let newStatus = '';
-    
-    if (action === 'checkin') {
-        newStatus = 'waiting';
-        statusText = 'marked as waiting';
-        // Check in: add/update client in waitlist with 'waiting' status
-        if (SERVICE_WAITLISTS[currentServiceKey][clientId]) {
-            SERVICE_WAITLISTS[currentServiceKey][clientId].status = 'waiting';
-        } else {
-            SERVICE_WAITLISTS[currentServiceKey][clientId] = {
-                ...client,
-                checkInTime: new Date(),
-                status: 'waiting'
-            };
-        }
-    } else if (action === 'inprogress') {
-        newStatus = 'in-progress';
-        statusText = 'now in service';
-        // Mark as in-progress
-        if (SERVICE_WAITLISTS[currentServiceKey][clientId]) {
-            SERVICE_WAITLISTS[currentServiceKey][clientId].status = 'in-progress';
-        } else {
-            SERVICE_WAITLISTS[currentServiceKey][clientId] = {
-                ...client,
-                checkInTime: new Date(),
-                status: 'in-progress'
-            };
-        }
-    } else if (action === 'checkout') {
-        newStatus = 'completed';
-        statusText = 'completed and checked out';
-        // Mark as completed instead of removing
-        if (SERVICE_WAITLISTS[currentServiceKey][clientId]) {
-            SERVICE_WAITLISTS[currentServiceKey][clientId].status = 'completed';
-        }
-    }
-    
-    Swal.fire({
-        icon: 'success',
-        title: `${actionLabel} Successful`,
-        html: `
-            <div style="text-align: left;">
-                <p><strong>Client:</strong> ${client.name}</p>
-                <p><strong>ID:</strong> ${client.id}</p>
-                <p><strong>Service:</strong> ${serviceTitle}</p>
-                <p><strong>Status:</strong> ${statusText}</p>
-            </div>
-        `,
-        confirmButtonText: 'OK'
-    }).then(() => {
-        // Refresh UI
-        console.log(`Client ${client.id} action completed: ${action}`);
-        populateWaitlist(); // Refresh the table
-        updateStatsDisplay(); // Update stats
-        // Do NOT restart scanner - user will click button again if needed
-    });
 }
+
+
 
 // Populate the waitlist table with client data
 function populateWaitlist(clientsToShow = null) {
@@ -1215,16 +1134,30 @@ function populateWaitlist(clientsToShow = null) {
     
     // Populate with client data
     clientsArray.forEach(client => {
+        const isInProgress = client.status === 'in-progress';
+        const statusBadge = isInProgress
+            ? '<span class="badge text-dark ms-1" style="background-color: #ffe066; font-size: 0.7rem;">In Progress</span>'
+            : '';
+        // Show sub-service label only for stations with multiple serviceIDs
+        const hasMultiple = currentServiceKey && SERVICES[currentServiceKey] && SERVICES[currentServiceKey].serviceIDs.length > 1;
+        const subLabel = hasMultiple && client.serviceID && SUB_SERVICE_LABELS[client.serviceID]
+            ? `<span class="text-muted small"> · ${SUB_SERVICE_LABELS[client.serviceID]}</span>`
+            : '';
+        // Build secondary info line (sub-label and/or badge)
+        const secondaryInfo = (subLabel || statusBadge)
+            ? `<span class="small">${subLabel}${statusBadge}</span>`
+            : '';
         const row = document.createElement('tr');
         row.className = 'border-bottom';
         row.innerHTML = `
             <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                        <i class="bi bi-person"></i>
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${isInProgress ? 'text-dark' : 'bg-light'}" style="width: 30px; height: 30px;${isInProgress ? ' background-color: #ffe066;' : ''}">
+                        <i class="bi ${isInProgress ? 'bi-person-fill-check' : 'bi-person'}"></i>
                     </div>
                     <div class="d-flex flex-column">
                         <span class="fw-bold text-dark">${client.name}</span>
+                        ${secondaryInfo}
                         <span class="text-muted small d-md-none">DOB: ${client.dob}</span>
                     </div>
                 </div>
@@ -1232,8 +1165,8 @@ function populateWaitlist(clientsToShow = null) {
             
             <td class="fw-medium d-none d-md-table-cell">${client.dob}</td>
             
-            <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto" style="white-space: nowrap;" data-client-id="${client.id}">Update</button>
+            <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0" style="white-space: nowrap;">
+                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm px-3 rounded-2" style="white-space: nowrap;" data-client-id="${client.id}">${isInProgress ? 'Complete' : 'Update'}</button>
             </td>
         `;
         waitlistBody.appendChild(row);
