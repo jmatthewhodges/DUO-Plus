@@ -117,22 +117,30 @@ function populateWaitListTable(patients) {
 
     patients.forEach((patient) => {
         const formattedDOB = formatDOB(patient.DOB);
+        const allDone = patient.AllServicesComplete;
+        const doneBadge = allDone
+            ? '<span class="badge bg-success ms-2" style="font-size: 0.7rem;">All Done</span>'
+            : '';
+        const avatarClass = allDone ? 'bg-success text-white' : 'bg-light';
+        const avatarIcon = allDone ? 'bi-check-lg' : 'bi-person';
+        const btnClass = allDone ? 'btn-outline-secondary' : 'btn-primary';
+        const btnText = allDone ? 'Done' : 'Update';
         const rowHTML = `
             <tr class="border-bottom" data-client-id="${patient.ClientID}">
                 <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light flex-shrink-0" style="width: 30px; height: 30px;">
-                            <i class="bi bi-person"></i>
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${avatarClass} flex-shrink-0" style="width: 30px; height: 30px;">
+                            <i class="bi ${avatarIcon}"></i>
                         </div>
                         <div class="d-flex flex-column">
-                            <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}</span>
+                            <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}${doneBadge}</span>
                             <span class="text-muted small d-md-none">DOB: ${formattedDOB}</span>
                         </div>
                     </div>
                 </td>
                 <td class="fw-medium d-none d-md-table-cell">${formattedDOB}</td>
                 <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                    <button class="btn btn-primary btn-sm px-3 rounded-2 w-100 w-md-auto update-btn">Update</button>
+                    <button class="btn ${btnClass} btn-sm px-3 rounded-2 w-100 w-md-auto update-btn">${btnText}</button>
                 </td>
             </tr>
         `;

@@ -80,6 +80,21 @@ function formatDOB(dateString) {
     return `${month}/${day}/${year}`;
 }
 
+// Fetch only service stats and update progress bars (lightweight call after check-in)
+function refreshServiceStats() {
+    fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.services && Array.isArray(data.services)) {
+                updateServiceProgressBars(data.services);
+            }
+        })
+        .catch(error => console.error('Error refreshing service stats:', error));
+}
+
 //updates the service progress bars based on availability data from API
 function updateServiceProgressBars(servicesData) {
     if (!servicesData || !Array.isArray(servicesData)) return;
@@ -527,6 +542,9 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     // Fallback: increment locally if API didn't return updated count
                     statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
                 }
+
+                // Refresh service progress bars with latest counts
+                refreshServiceStats();
 
                 // Show QR modal
                 const qrModal = document.getElementById('qrCodeModal');
