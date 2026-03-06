@@ -1,0 +1,1294 @@
+/*
+ ============================================================
+ File:           Service.js
+ Description:    Handles service-specific content display based on 
+                 ServiceID from QR code URL params. Also handles
+                 client check-in/check-out via QR code scanning or
+                 manual client ID entry through Update buttons.
+                 ServiceID values: medical, optical, dental, haircut
+                 Works with pinCode.js security layer.
+ 
+ Last Modified By:  Cameron
+ Last Modified On:  Mar 5 @ 6:00 PM
+ Changes Made:      Added API endpoint guidance IDK if its needed but its there
+ 
+=============================================================
+
+ API ENDPOINTS TO BE IMPLEMENTED:
+ 
+ 1. SEARCH CLIENTS (lines ~920)
+    Purpose: Search waiting room for available clients by name/ID
+    Current temp call path: /api/searchWaitingRoomClients.php
+    Expected returns: { success: true, clients: [{id, name, dob}, ...] }
+    
+ 2. CHECK CLIENT ASSIGNMENT (lines ~1030)
+    Purpose: Verify if client is already assigned to another service
+    Current temp call path: /api/checkClientAssignment.php
+    Expected returns: { assigned: false } or { assigned: true, assignedService: "{service}" }
+    
+ 3. ADD CLIENT TO SERVICE (lines ~1055)
+    Purpose: Add waiting room client to a service, remove from pool
+    Current temp call path: /api/addClientToService.php
+    Expected request: POST with body { clientId, serviceKey }
+    Expected returns: { success: true, message: "Client added" }
+    
+ 4. GET SERVICE STATS — IMPLEMENTED via /api/GrabService.php
+    Purpose: Fetch stats (counts + avg time) and waitlist for one or more services
+    Endpoint: /api/GrabService.php?ServiceID=medicalExam,medicalFollowUp
+    Returns: { success, pendingCount, inProgressCount, completedCount, avgServiceTime, waitList }
+    
+ 5. SERVICE SCAN (CHECK-IN / CHECK-OUT) — IMPLEMENTED via /api/ServiceScan.php
+    Purpose: Auto-progress a client's service status (Pending→In-Progress or In-Progress→Complete)
+    Endpoint: POST /api/ServiceScan.php  body: { ClientID, ServiceID }
+    Returns: { success, message, VisitServiceID, newStatus }
+    
+ NOTE: All endpoint paths above are placeholders.
+       Backend developer should implement with preferred naming/structure.
+       Update the fetch URLs in comments throughout the file to match actual endpoints.
+ 
+ ============================================================
+*/
+
+// Service configuration
+const SERVICES = {
+    medical: {
+        name: 'Medical',
+        icon: 'bi-heart-pulse',
+        color: 'primary',
+        serviceIDs: ['medicalExam', 'medicalFollowUp']
+    },
+    optical: {
+        name: 'Optical',
+        icon: 'bi-eye',
+        color: 'primary',
+        serviceIDs: ['optical']
+    },
+    dental: {
+        name: 'Dental',
+        icon: 'bi-brightness-high',
+        color: 'primary',
+        serviceIDs: ['dentalHygiene', 'dentalExtraction']
+    },
+    haircut: {
+        name: 'Haircut',
+        icon: 'bi-scissors',
+        color: 'primary',
+        serviceIDs: ['haircut']
+    }
+};
+
+// Valid station names: medical, optical, dental, haircut
+// IMPORTANT: Service waitlist data storage (in-memory during session)
+// Structure: { serviceKey: { clientId: { id, name, dob, status, checkInTime, checkOutTime }, ... }, ... }
+// Status values: 'waiting', 'in-progress', 'completed'
+// TODO: When API is implemented, sync this with database on every change:
+//       - Load initial waitlist on page load from backend
+//       - Update on each action (add/check-in/check-out/remove) with API calls
+//       - Consider using API response as source of truth
+const SERVICE_WAITLISTS = {
+    medical: {},
+    optical: {},
+    dental: {},
+    haircut: {}
+};
+
+// Friendly short labels for sub-services (only shown when station has multiple)
+const SUB_SERVICE_LABELS = {
+    medicalExam: 'Exam',
+    medicalFollowUp: 'Follow Up',
+    dentalHygiene: 'Hygiene',
+    dentalExtraction: 'Extraction'
+};
+
+let videoStream = null;
+let isScanning = false;
+let currentOverlay = null;
+let currentServiceKey = null;  // Track current service for client operations
+let isClientScan = false;  // Flag to distinguish between service and client QR scans
+
+// Show a specific service's content section
+function showService(serviceKey) {
+    console.log(`showService called with: ${serviceKey}`);
+    
+    // Store current service for client operations
+    currentServiceKey = serviceKey;
+    
+    const service = SERVICES[serviceKey];
+    if (!service) {
+        console.error('Invalid service:', serviceKey);
+        return;
+    }
+
+    // Update the service title
+    const titleEl = document.getElementById('serviceTitle');
+    if (titleEl) titleEl.textContent = service.name;
+
+    // Update the service header background color
+    const headerEl = document.getElementById('serviceHeader');
+    if (headerEl) {
+        headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${service.color} p-3`;
+    }
+
+    // Set stat labels
+    const stat1LabelEl = document.getElementById('stat1Label');
+    const stat2LabelEl = document.getElementById('stat2Label');
+    const stat3LabelEl = document.getElementById('stat3Label');
+    if (stat1LabelEl) stat1LabelEl.textContent = 'Waitlist';
+    if (stat2LabelEl) stat2LabelEl.textContent = 'In Progress';
+    if (stat3LabelEl) stat3LabelEl.textContent = 'Completed';
+
+    // Update waitlist title
+    const waitlistTitleEl = document.getElementById('waitlistTitle');
+    if (waitlistTitleEl) waitlistTitleEl.textContent = `${service.name} - Waitlist`;
+
+    // Fetch live stats and waitlist from GrabService API
+    fetchServiceData(serviceKey);
+
+    // Show the service content if it's hidden
+    const serviceContent = document.getElementById('serviceContent');
+    if (serviceContent && serviceContent.style.display === 'none') {
+        serviceContent.style.display = 'block';
+    }
+
+    // Scroll to top so user can see the service
+    window.scrollTo(0, 0);
+
+    console.log(`Service displayed: ${serviceKey}`);
+}
+
+// Fetch live service data (stats + waitlist) from GrabService.php
+async function fetchServiceData(serviceKey) {
+    const service = SERVICES[serviceKey];
+    if (!service || !service.serviceIDs) return;
+
+    try {
+        const ids = service.serviceIDs.join(',');
+        const response = await fetch(`/api/GrabService.php?ServiceID=${encodeURIComponent(ids)}`);
+        
+        if (!response.ok) {
+            console.error(`Failed to fetch service data: ${response.status}`);
+            return;
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+            console.error('GrabService API error:', data.error);
+            return;
+        }
+
+        // Update stat values
+        const stat1ValueEl = document.getElementById('stat1Value');
+        const stat2ValueEl = document.getElementById('stat2Value');
+        const stat3ValueEl = document.getElementById('stat3Value');
+        if (stat1ValueEl) stat1ValueEl.textContent = data.pendingCount;
+        if (stat2ValueEl) stat2ValueEl.textContent = data.inProgressCount;
+        if (stat3ValueEl) stat3ValueEl.textContent = data.completedCount;
+
+        // Update average service time
+        const avgTimeEl = document.getElementById('avgTime');
+        if (avgTimeEl) {
+            avgTimeEl.textContent = data.avgServiceTime ? `${data.avgServiceTime} minutes` : 'N/A';
+        }
+
+        // Normalize API waitlist into local format and populate table
+        SERVICE_WAITLISTS[serviceKey] = {};
+        (data.waitList || []).forEach(client => {
+            const fullName = [client.FirstName, client.MiddleInitial, client.LastName]
+                .filter(Boolean)
+                .join(' ');
+            // Map API ServiceStatus to local status
+            let status = 'waiting';
+            if (client.ServiceStatus === 'In-Progress') status = 'in-progress';
+            SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
+                id: client.ClientID,
+                name: fullName,
+                dob: client.DOB,
+                status: status,
+                serviceID: client.ServiceID
+            };
+        });
+
+        populateWaitlist();
+        console.log(`Service data updated for ${serviceKey}`);
+    } catch (error) {
+        console.error('Error fetching service data:', error);
+        const avgTimeEl = document.getElementById('avgTime');
+        if (avgTimeEl) avgTimeEl.textContent = 'N/A';
+    }
+}
+
+
+// Show service selection dropdown for manual entry
+function showServiceSelectionDropdown() {
+    // Stop QR scanning first
+    stopQRScanning();
+    
+    let html = '<div class="d-grid gap-2">';
+    Object.entries(SERVICES).forEach(([serviceKey, serviceData]) => {
+        html += `<button class="btn btn-outline-primary service-select-btn" data-service="${serviceKey}">${serviceData.name}</button>`;
+    });
+    html += '</div>';
+
+    Swal.fire({
+        title: 'Select Service',
+        html: html,
+        showConfirmButton: false,
+        allowOutsideClick: true,
+        allowEscapeKey: true,
+        didOpen: (modal) => {
+            // Add click handlers to buttons
+            modal.querySelectorAll('.service-select-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const serviceKey = this.getAttribute('data-service');
+                    Swal.close();
+                    selectServiceManual(serviceKey);
+                });
+            });
+        }
+    });
+}
+
+// Select service from manual dropdown
+function selectServiceManual(serviceKey) {
+    console.log('selectServiceManual called for:', serviceKey);
+    Swal.close();
+    showService(serviceKey);
+}
+
+
+// Start QR code camera scanning
+function startQRScanning() {
+    if (isScanning) return;
+    
+    isScanning = true;
+    const canvas = document.createElement('canvas');
+    const video = document.createElement('video');
+    const container = document.body;
+
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+    }).then(stream => {
+        videoStream = stream;
+        video.srcObject = stream;
+        video.play();
+
+        // Create full-screen overlay for camera
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
+        closeBtn.className = 'btn btn-light position-absolute top-0 end-0 m-3';
+        closeBtn.title = 'Stop scanning';
+        closeBtn.style.pointerEvents = 'auto';
+        closeBtn.type = 'button';
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Close button clicked');
+            stopQRScanning();
+        };
+
+        const manualBtn = document.createElement('button');
+        manualBtn.innerHTML = 'Manual Entry';
+        manualBtn.className = 'btn btn-secondary position-absolute bottom-0 start-0 m-3';
+        manualBtn.title = 'Select service manually';
+        manualBtn.style.pointerEvents = 'auto';
+        manualBtn.type = 'button';
+        manualBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Manual Entry button clicked');
+            showServiceSelectionDropdown();
+        };
+
+        const hint = document.createElement('div');
+        hint.style.cssText = `
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 90%;
+            width: 280px;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        `;
+        hint.innerHTML = `
+            <div style="margin-bottom: 12px;">
+                <i class="bi bi-qr-code-scan" style="font-size: 32px; color: #174593;"></i>
+            </div>
+            <h2 style="font-size: 18px; margin: 0 0 8px 0; font-weight: 600; color: #174593;">Scan QR Code</h2>
+            <p style="font-size: 14px; margin: 0; color: #666; line-height: 1.4;">Point camera at QR code</p>
+        `;
+
+        video.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        `;
+
+        overlay.appendChild(video);
+        overlay.appendChild(closeBtn);
+        overlay.appendChild(manualBtn);
+        overlay.appendChild(hint);
+        container.appendChild(overlay);
+        
+        // Store reference so we can reliably remove it later
+        currentOverlay = overlay;
+
+        // Scanning loop
+        const scanLoop = setInterval(() => {
+            if (!isScanning) {
+                clearInterval(scanLoop);
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(video, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+            });
+
+            if (code) {
+                stopQRScanning();
+                handleQRScan(code.data);
+            }
+        }, 100);
+
+    }).catch(err => {
+        isScanning = false;
+        Swal.fire('Camera Error', 'Unable to access camera. Check permissions.', 'error');
+        console.error('Camera error:', err);
+    });
+}
+
+// Stop QR scanning and clean up
+function stopQRScanning() {
+    isScanning = false;
+    
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+
+    // Remove overlay using stored reference
+    if (currentOverlay) {
+        console.log('Removing overlay');
+        currentOverlay.remove();
+        currentOverlay = null;
+    }
+
+    // Fallback if overlay wasn't stored for some reason
+    const overlay = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
+    if (overlay) {
+        console.log('Removing overlay via selector');
+        overlay.remove();
+    }
+}
+
+// Handle QR code scan
+function handleQRScan(qrData) {
+    console.log('QR scanned:', qrData);
+    
+    try {
+        // Try to parse as URL
+        const url = new URL(qrData, window.location.href);
+        
+        // Get ServiceID from URL parameters
+        const serviceID = url.searchParams.get('ServiceID') || url.searchParams.get('serviceid');
+        const pathname = url.pathname.toLowerCase();
+        
+        // Check if URL is for service-scan page
+        if (!pathname.includes('service-scan')) {
+            console.error('Not a service-scan URL');
+            Swal.fire('Invalid QR', 'QR code is not for service selection', 'warning');
+            startQRScanning();
+            return;
+        }
+        
+        // Check if ServiceID is present
+        if (!serviceID) {
+            console.error('Missing ServiceID in QR');
+            Swal.fire('Invalid QR', 'QR code missing station information', 'warning');
+            startQRScanning();
+            return;
+        }
+
+        // Check if station exists in SERVICES config
+        if (!SERVICES[serviceID.toLowerCase()]) {
+            console.error('Unknown station:', serviceID);
+            Swal.fire('Invalid QR', 'Unknown station: ' + serviceID, 'warning');
+            startQRScanning();
+            return;
+        }
+
+        // Use ServiceID directly as service key
+        const serviceKey = serviceID.toLowerCase();
+
+        showService(serviceKey);
+
+    } catch (e) {
+        console.error('QR parse error:', e);
+        Swal.fire('Invalid QR', 'Could not parse QR code', 'warning');
+        startQRScanning();
+    }
+}
+
+// Start scanning after PIN verification
+document.addEventListener('pinVerified', function() {
+    console.log('PIN verified - checking for ServiceID');
+    
+    // Get ServiceID from URL if it exists
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
+    
+    if (serviceID) {
+        // Direct to service based on URL parameter
+        console.log('ServiceID found in URL:', serviceID);
+        handleServiceSelection(serviceID);
+    } else {
+        // No ServiceID, start QR scanner
+        console.log('No ServiceID - starting QR scanner');
+        startQRScanning();
+    }
+});
+
+
+// Handle service selection from ServiceID
+function handleServiceSelection(serviceID) {
+    const serviceKey = serviceID.toLowerCase();
+
+    // Check if station exists in SERVICES config
+    if (!SERVICES[serviceKey]) {
+        console.error('Unknown station:', serviceID);
+        Swal.fire('Invalid Station', 'Unknown station: ' + serviceID, 'warning');
+        startQRScanning();
+        return;
+    }
+
+    // Show the service directly
+    showService(serviceKey);
+}
+
+
+// If page reloads after PIN verification, check for ServiceID
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Service.js loaded');
+    
+    if (document.body.classList.contains('pin-verified')) {
+        console.log('Already pin-verified, checking for ServiceID');
+        const urlParams = new URLSearchParams(window.location.search);
+        const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
+        
+        if (serviceID) {
+            setTimeout(() => handleServiceSelection(serviceID), 100);
+        } else {
+            setTimeout(startQRScanning, 100);
+        }
+    }
+    
+    // Setup client QR scan button
+    const btnScan = document.getElementById('btnScan');
+    if (btnScan) {
+        btnScan.addEventListener('click', function() {
+            console.log('Scan button clicked, starting client QR scan');
+            startClientQRScanning();
+        });
+    }
+    
+    // Setup manual add client button
+    const btnManualAdd = document.getElementById('btnManualAdd');
+    if (btnManualAdd) {
+        btnManualAdd.addEventListener('click', function() {
+            console.log('Manual add button clicked');
+            showManualClientIdEntry();
+        });
+    }
+    
+    // Setup update button listeners for manual client ID entry
+    const updateButtons = document.querySelectorAll('.btn-primary');
+    updateButtons.forEach(btn => {
+        if (btn.textContent.trim() === 'Update') {
+            btn.addEventListener('click', function() {
+                console.log('Update button clicked');
+                showManualClientIdEntry();
+            });
+        }
+    });
+});
+
+// Start scanning for client QR codes
+function startClientQRScanning() {
+    if (isScanning) return;
+    
+    isScanning = true;
+    isClientScan = true;
+    const canvas = document.createElement('canvas');
+    const video = document.createElement('video');
+    const container = document.body;
+
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+    }).then(stream => {
+        videoStream = stream;
+        video.srcObject = stream;
+        video.play();
+
+        // Create full-screen overlay for camera
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
+        closeBtn.className = 'btn btn-light position-absolute top-0 end-0 m-3';
+        closeBtn.title = 'Stop scanning';
+        closeBtn.style.pointerEvents = 'auto';
+        closeBtn.type = 'button';
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Close button clicked');
+            stopClientQRScanning();
+        };
+
+        const hint = document.createElement('div');
+        hint.style.cssText = `
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 90%;
+            width: 280px;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        `;
+        hint.innerHTML = `
+            <div style="margin-bottom: 12px;">
+                <i class="bi bi-qr-code-scan" style="font-size: 32px; color: #174593;"></i>
+            </div>
+            <h2 style="font-size: 18px; margin: 0 0 8px 0; font-weight: 600; color: #174593;">Scan Client QR Code</h2>
+            <p style="font-size: 14px; margin: 0; color: #666; line-height: 1.4;">Point camera at client QR code</p>
+        `;
+
+        video.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        `;
+
+        overlay.appendChild(video);
+        overlay.appendChild(closeBtn);
+        overlay.appendChild(hint);
+        container.appendChild(overlay);
+        
+        // Store reference so we can reliably remove it later
+        currentOverlay = overlay;
+
+        // Scanning loop
+        const scanLoop = setInterval(() => {
+            if (!isScanning || !isClientScan) {
+                clearInterval(scanLoop);
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(video, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+            });
+
+            if (code) {
+                stopClientQRScanning();
+                handleClientQRScan(code.data);
+            }
+        }, 100);
+
+    }).catch(err => {
+        isScanning = false;
+        isClientScan = false;
+        Swal.fire('Camera Error', 'Unable to access camera. Check permissions.', 'error');
+        console.error('Camera error:', err);
+    });
+}
+
+// Stop client QR scanning
+function stopClientQRScanning() {
+    isScanning = false;
+    isClientScan = false;
+    
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+
+    // Remove overlay using stored reference
+    if (currentOverlay) {
+        console.log('Removing overlay');
+        currentOverlay.remove();
+        currentOverlay = null;
+    }
+}
+
+// Handle client QR code scan - AUTO-PROGRESSION WORKFLOW via ServiceScan.php
+// This function implements the core scanning workflow:
+//   1. Extract clientId from QR code (URL param or plain text)
+//   2. Look up client in the local waitlist (loaded from GrabService)
+//   3. Call ServiceScan.php which auto-progresses:
+//      - Pending → In-Progress  (check-in)
+//      - In-Progress → Complete (check-out)
+//   4. If client is already completed or not found, show appropriate message
+//   5. Refresh data from GrabService after each action
+async function handleClientQRScan(qrData) {
+    console.log('=== CLIENT QR SCAN START ===');
+    console.log('Raw QR data:', JSON.stringify(qrData));
+    console.log('Current service key:', currentServiceKey);
+    
+    try {
+        // Try to parse as URL or extract clientId
+        let clientId = null;
+        
+        try {
+            const url = new URL(qrData);  // Only absolute URLs
+            clientId = url.searchParams.get('clientId') || url.searchParams.get('id') || url.searchParams.get('ClientID');
+            console.log('Parsed as URL — extracted clientId:', clientId);
+        } catch (e) {
+            // Not a valid absolute URL — treat full text as the clientId
+            clientId = qrData.trim();
+            console.log('Not a URL — using raw text as clientId:', clientId);
+        }
+        
+        if (!clientId) {
+            console.error('No clientId found in QR code');
+            Swal.fire('Invalid QR', 'QR code does not contain a valid client ID', 'warning');
+            startClientQRScanning();
+            return;
+        }
+
+        console.log('Client ID extracted:', clientId);
+        
+        // Check if client is in the current service's waitlist (loaded from GrabService)
+        const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+        console.log('Client in waitlist:', clientInWaitlist ? JSON.stringify(clientInWaitlist) : 'NOT FOUND');
+        console.log('Waitlist keys for this service:', currentServiceKey ? Object.keys(SERVICE_WAITLISTS[currentServiceKey]) : 'no service');
+
+        if (clientInWaitlist && clientInWaitlist.status === 'completed') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Client Already Completed',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Client:</strong> ${clientInWaitlist.name}</p>
+                        <p><strong>ID:</strong> ${clientId}</p>
+                        <p><strong>Status:</strong> Already completed for this service</p>
+                    </div>
+                `,
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Determine the ServiceID(s) to pass to the API
+        // Send all serviceIDs for this station — backend auto-detects the correct one
+        const service = SERVICES[currentServiceKey];
+        const serviceID = service ? service.serviceIDs.join(',') : '';
+        console.log('Sending to ServiceScan.php:', { ClientID: clientId, ServiceID: serviceID });
+
+        // Call ServiceScan.php to auto-progress the client's status
+        const response = await fetch('/api/ServiceScan.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
+        });
+
+        console.log('ServiceScan response status:', response.status);
+        const data = await response.json();
+        console.log('ServiceScan response body:', JSON.stringify(data));
+
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Scan Failed',
+                text: data.message || 'Unable to process client scan.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        let statusText = data.newStatus === 'In-Progress' ? 'Checked in — now in service' : 'Completed and checked out';
+        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
+        const clientName = clientInWaitlist ? clientInWaitlist.name : clientId;
+
+        Swal.fire({
+            icon: 'success',
+            title: `${actionLabel} Successful`,
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>ID:</strong> ${clientId}</p>
+                    <p><strong>Service:</strong> ${service ? service.name : 'Service'}</p>
+                    <p><strong>Status:</strong> ${statusText}</p>
+                </div>
+            `,
+            confirmButtonText: 'OK'
+        }).then(() => {
+            // Refresh stats and waitlist from the server
+            fetchServiceData(currentServiceKey);
+        });
+
+    } catch (e) {
+        console.error('QR scan error:', e);
+        Swal.fire('Error', 'Could not process QR code scan', 'warning');
+        startClientQRScanning();
+    }
+}
+
+// Show modal to choose check-in or check-out action (calls ServiceScan.php)
+function showCheckInOutModal(clientId) {
+    const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
+    const serviceTitle = service ? service.name : 'Service';
+    
+    // Get client from waitlist
+    let client = null;
+    if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
+        client = SERVICE_WAITLISTS[currentServiceKey][clientId];
+    }
+    const clientName = client ? client.name : 'Unknown Client';
+    
+    // Determine which button to show based on client status
+    const isInProgress = client && client.status === 'in-progress';
+    const actionButton = isInProgress
+        ? `<button class="btn btn-success btn-lg" onclick="processClientAction('${clientId}', 'checkout')">
+               <i class="bi bi-person-check me-2"></i>Complete
+           </button>`
+        : `<button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
+               <i class="bi bi-person-plus me-2"></i>Check In
+           </button>`;
+
+    Swal.fire({
+        title: clientName,
+        html: `
+            <div style="text-align: left; margin-bottom: 20px;">
+                <p><strong>Client ID:</strong> ${clientId}</p>
+                <p><strong>Service:</strong> ${serviceTitle}</p>
+                <p><strong>Status:</strong> ${isInProgress ? 'In Progress' : 'Waiting'}</p>
+            </div>
+            <div class="d-grid gap-3">
+                ${actionButton}
+            </div>
+        `,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'Close',
+        allowOutsideClick: true,
+        allowEscapeKey: true,
+        didOpen: (modal) => {
+            modal.classList.add('modal-lg');
+        }
+    });
+}
+
+// Show manual client ID entry
+function showManualClientIdEntry() {
+    Swal.fire({
+        title: 'Add Client Manually',
+        input: 'text',
+        inputLabel: 'Search Client',
+        inputPlaceholder: 'Enter client ID or name (e.g., gicsxbtqog or John)',
+        showCancelButton: true,
+        confirmButtonText: 'Search',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Please enter a client ID or name';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            const searchTerm = result.value.trim().toLowerCase();
+            searchAndDisplayClients(searchTerm);
+        }
+    });
+}
+
+// Search for clients by ID or name from waiting room
+// IMPORTANT: This should only show clients from the WAITING ROOM pool (not already assigned to services)
+// See comments at top of file (line ~16) for endpoint details
+// The API should:
+//   1. Search waiting room clients by id (substring/partial matches)
+//   2. Return only clients NOT assigned to any service yet
+//   3. Return only clients available for the current service
+async function searchAndDisplayClients(searchTerm) {
+    try {
+        // Expected response: { success: true, clients: [{id, name, dob}, ...] }
+        // TODO: Replace the fetch URL below with the endpoint
+        // const response = await fetch(`ENDPOINT URL?q=${encodeURIComponent(searchTerm)}&service=${currentServiceKey}`);
+        // const data = await response.json();
+        // if (data.success) {
+        //     displayClientSearchResults(data.clients);
+        // } else {
+        //     Swal.fire('Search Error', data.message || 'Unable to search clients', 'error');
+        // }
+        // return;
+        
+        const results = {};
+        
+        // Search by ID first (exact match is highest priority)
+        if (FAKE_CLIENTS[searchTerm]) {
+            results[searchTerm] = FAKE_CLIENTS[searchTerm];
+        } else {
+            // Search by name (substring match - case insensitive)
+            Object.entries(FAKE_CLIENTS).forEach(([id, client]) => {
+                if (client.name.toLowerCase().includes(searchTerm)) {
+                    results[id] = client;
+                }
+            });
+        }
+        
+        // If no results found
+        if (Object.keys(results).length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Results',
+                text: `No clients found matching "${searchTerm}"`,
+                confirmButtonText: 'Try Again'
+            }).then(() => {
+                showManualClientIdEntry();
+            });
+            return;
+        }
+        
+        // Display search results
+        displayClientSearchResults(results);
+    } catch (error) {
+        console.error('Error searching clients:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Search Error',
+            text: 'Unable to search for clients. Please try again.',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            showManualClientIdEntry();
+        });
+    }
+}
+
+// Display client search results with add buttons
+// Note: Results should only show clients from the waiting room pool
+// When API is integrated, these will be fetched from the waiting room
+// and removed from list after being added to a service
+function displayClientSearchResults(results) {
+    let html = '<div style="text-align: left;">';
+    
+    Object.entries(results).forEach(([id, client]) => {
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;">
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">${client.name}</div>
+                    <div style="font-size: 0.9rem; color: #666;">DOB: ${client.dob}</div>
+                    <div style="font-size: 0.85rem; color: #999;">ID: ${id}</div>
+                </div>
+                <button class="btn btn-success btn-sm" onclick="addClientFromSearch('${id}')">
+                    <i class="bi bi-plus-lg me-1"></i>Add
+                </button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    Swal.fire({
+        title: 'Select Client',
+        html: html,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'Search Again',
+        didOpen: (modal) => {
+            modal.classList.add('modal-lg');
+        }
+    }).then((result) => {
+        if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+            showManualClientIdEntry();
+        }
+    });
+}
+
+// Add a client from search results to the service
+// IMPORTANT: This function handles a key workflow:
+//   1. Check if client is already assigned to another service (prevent multi-service assignment)
+//   2. Check if client is already in THIS service's waitlist
+//   3. If neither, add the client to the service
+// See comments at top of file (line ~16) for endpoint details
+// The API should:
+//   1. Verify client exists and is available
+//   2. Verify client is NOT already assigned to another service
+//   3. Add client to this service's waitlist with status='waiting'
+//   4. Remove client from waiting room pool
+async function addClientFromSearch(clientId) {
+    const client = FAKE_CLIENTS[clientId];
+    if (!client) return;
+    
+    try {
+        // STEP 1: Check if client is already assigned to ANOTHER service
+        // This prevents a single client from being in multiple services at once
+        // Implement assignment check endpoint
+        // TODO: Uncomment and use when API is ready:
+        // const checkResponse = await fetch(`ENDPOINT_URL?clientId=${clientId}`);
+        // const checkData = await checkResponse.json();
+        // if (assigned && assignedService !== currentServiceKey) {
+        //     Swal.fire({
+        //         icon: 'warning',
+        //         title: 'Client Already Assigned',
+        //         text: `This client is already in the ${assignedService} service. Remove them from that service first.`,
+        //         confirmButtonText: 'OK'
+        //     });
+        //     return;
+        // }
+        
+        // STEP 2: Check if client is already in THIS service's waitlist (local check)
+        const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+        
+        if (!clientInWaitlist) {
+            // STEP 3: Add to service
+            // Implement add client endpoint
+            // TODO: Uncomment and use when API is ready (this will replace the local state update):
+            // const response = await fetch('EndPoint_Url', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify({
+            //         clientId: clientId,
+            //         serviceKey: currentServiceKey
+            //     })
+            // });
+            // const result = await response.json();
+            // if (!result.success) {
+            //     Swal.fire('Error', result.message || 'Failed to add client', 'error');
+            //     return;
+            // }
+            
+            // For now: Update local state
+            addClientToWaitlist(clientId, currentServiceKey);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Client Added',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Client:</strong> ${client.name}</p>
+                        <p><strong>ID:</strong> ${client.id}</p>
+                        <p><strong>Status:</strong> Added to waiting list</p>
+                    </div>
+                `,
+                confirmButtonText: 'OK'
+            });
+        } else {
+            // Already in waitlist → show status options
+            showCheckInOutModal(clientId);
+        }
+    } catch (error) {
+        console.error('Error adding client:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Add Error',
+            text: 'Unable to add client. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+// Process client action via ServiceScan.php API
+// ServiceScan auto-progresses: Pending → In-Progress, In-Progress → Complete
+async function processClientAction(clientId, action) {
+    const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
+    const serviceTitle = service ? service.name : 'Service';
+
+    console.log(`Processing client ${action}:`, clientId, 'for service:', serviceTitle);
+
+    // Send all serviceIDs for this station — backend auto-detects the correct one
+    const serviceID = service ? service.serviceIDs.join(',') : '';
+
+    try {
+        const response = await fetch('/api/ServiceScan.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Failed',
+                text: data.message || 'Unable to update client status.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Map API newStatus to display text
+        let statusText = data.newStatus === 'In-Progress' ? 'Now in service' : 'Completed and checked out';
+        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
+
+        const wlClient = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+        const clientName = wlClient ? wlClient.name : clientId;
+
+        Swal.fire({
+            icon: 'success',
+            title: `${actionLabel} Successful`,
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>ID:</strong> ${clientId}</p>
+                    <p><strong>Service:</strong> ${serviceTitle}</p>
+                    <p><strong>Status:</strong> ${statusText}</p>
+                </div>
+            `,
+            confirmButtonText: 'OK'
+        }).then(() => {
+            // Refresh stats and waitlist from the server
+            fetchServiceData(currentServiceKey);
+        });
+    } catch (error) {
+        console.error('ServiceScan API error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Unable to reach the server. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+
+
+// Populate the waitlist table with client data
+function populateWaitlist(clientsToShow = null) {
+    const waitlistBody = document.getElementById('waitlistBody');
+    if (!waitlistBody) return;
+    
+    // Use provided clients or clients from current service's waitlist
+    let clientsArray;
+    if (clientsToShow) {
+        clientsArray = Object.values(clientsToShow);
+    } else {
+        // Show only active clients (waiting or in-progress) in the current service's waitlist
+        clientsArray = currentServiceKey ? 
+            Object.values(SERVICE_WAITLISTS[currentServiceKey]).filter(c => c.status !== 'completed') : [];
+    }
+    
+    // Clear existing rows
+    waitlistBody.innerHTML = '';
+    
+    // Show empty state if no clients
+    if (clientsArray.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="3" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                No clients in waitlist
+            </td>
+        `;
+        waitlistBody.appendChild(emptyRow);
+        return;
+    }
+    
+    // Populate with client data
+    clientsArray.forEach(client => {
+        const isInProgress = client.status === 'in-progress';
+        const statusBadge = isInProgress
+            ? '<span class="badge text-dark ms-1" style="background-color: #ffe066; font-size: 0.7rem;">In Progress</span>'
+            : '';
+        // Show sub-service label only for stations with multiple serviceIDs
+        const hasMultiple = currentServiceKey && SERVICES[currentServiceKey] && SERVICES[currentServiceKey].serviceIDs.length > 1;
+        const subLabel = hasMultiple && client.serviceID && SUB_SERVICE_LABELS[client.serviceID]
+            ? `<span class="text-muted small"> · ${SUB_SERVICE_LABELS[client.serviceID]}</span>`
+            : '';
+        // Build secondary info line (sub-label and/or badge)
+        const secondaryInfo = (subLabel || statusBadge)
+            ? `<span class="small">${subLabel}${statusBadge}</span>`
+            : '';
+        const row = document.createElement('tr');
+        row.className = 'border-bottom';
+        row.innerHTML = `
+            <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${isInProgress ? 'text-dark' : 'bg-light'}" style="width: 30px; height: 30px;${isInProgress ? ' background-color: #ffe066;' : ''}">
+                        <i class="bi ${isInProgress ? 'bi-person-fill-check' : 'bi-person'}"></i>
+                    </div>
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold text-dark">${client.name}</span>
+                        ${secondaryInfo}
+                        <span class="text-muted small d-md-none">DOB: ${client.dob}</span>
+                    </div>
+                </div>
+            </td>
+            
+            <td class="fw-medium d-none d-md-table-cell">${client.dob}</td>
+            
+            <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0" style="white-space: nowrap;">
+                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm px-3 rounded-2" style="white-space: nowrap;" data-client-id="${client.id}">${isInProgress ? 'Complete' : 'Update'}</button>
+            </td>
+        `;
+        waitlistBody.appendChild(row);
+    });
+    
+    // Reattach event listeners to Update buttons
+    attachUpdateButtonListeners();
+}
+
+// Attach event listeners to Update buttons
+function attachUpdateButtonListeners() {
+    const updateButtons = document.querySelectorAll('button[data-client-id]');
+    updateButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const clientId = this.getAttribute('data-client-id');
+            console.log('Update button clicked for client:', clientId);
+            showCheckInOutModal(clientId);
+        });
+    });
+}
+
+// Search/filter the waitlist table
+function filterWaitlist(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    
+    if (term === '') {
+        // Show all clients from current service if search is empty
+        populateWaitlist();
+        return;
+    }
+    
+    // Filter clients from current service's waitlist by name or ID
+    const filteredClients = {};
+    if (currentServiceKey) {
+        Object.entries(SERVICE_WAITLISTS[currentServiceKey]).forEach(([key, client]) => {
+            if (client.name.toLowerCase().includes(term) || client.id.toLowerCase().includes(term)) {
+                filteredClients[key] = client;
+            }
+        });
+    }
+    
+    populateWaitlist(filteredClients);
+}
+
+// Add a client to the service waitlist
+function addClientToWaitlist(clientId, serviceKey = null) {
+    const service = serviceKey || currentServiceKey;
+    if (!service) {
+        console.error('No service specified for adding client to waitlist');
+        return false;
+    }
+    
+    const client = FAKE_CLIENTS[clientId];
+    if (!client) {
+        console.error('Client not found:', clientId);
+        return false;
+    }
+    
+    // Check if client already in this service's waitlist
+    if (SERVICE_WAITLISTS[service][clientId]) {
+        console.log('Client already in waitlist:', clientId);
+        return false;
+    }
+    
+    // Add client to the service's waitlist
+    SERVICE_WAITLISTS[service][clientId] = {
+        ...client,
+        checkInTime: new Date(),
+        status: 'waiting'
+    };
+    
+    console.log(`Client ${clientId} added to ${service} waitlist`);
+    populateWaitlist();
+    updateStatsDisplay();
+    
+    return true;
+}
+
+// Remove a client from the service waitlist
+function removeClientFromWaitlist(clientId, serviceKey = null) {
+    const service = serviceKey || currentServiceKey;
+    if (!service) {
+        console.error('No service specified for removing client from waitlist');
+        return false;
+    }
+    
+    if (!SERVICE_WAITLISTS[service][clientId]) {
+        console.log('Client not in waitlist:', clientId);
+        return false;
+    }
+    
+    delete SERVICE_WAITLISTS[service][clientId];
+    console.log(`Client ${clientId} removed from ${service} waitlist`);
+    populateWaitlist();
+    updateStatsDisplay();
+    
+    return true;
+}
+
+// Update stats display based on current waitlist
+function updateStatsDisplay() {
+    if (!currentServiceKey) return;
+    
+    const waitlist = SERVICE_WAITLISTS[currentServiceKey];
+    
+    // Count clients by status
+    let waitingCount = 0;
+    let inProgressCount = 0;
+    let completedCount = 0;
+    
+    Object.values(waitlist).forEach(client => {
+        if (client.status === 'waiting') waitingCount++;
+        else if (client.status === 'in-progress') inProgressCount++;
+        else if (client.status === 'completed') completedCount++;
+    });
+    
+    // Update stat values in the UI
+    const stat1ValueEl = document.getElementById('stat1Value');
+    const stat2ValueEl = document.getElementById('stat2Value');
+    const stat3ValueEl = document.getElementById('stat3Value');
+    
+    if (stat1ValueEl) stat1ValueEl.textContent = waitingCount;
+    if (stat2ValueEl) stat2ValueEl.textContent = inProgressCount;
+    if (stat3ValueEl) stat3ValueEl.textContent = completedCount;
+}

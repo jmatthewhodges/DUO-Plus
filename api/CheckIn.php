@@ -155,6 +155,11 @@ if (!$insertService) {
     exit;
 }
 
+// Prepare statement to increment CurrentAssigned in tblEventServices
+$incrementAssigned = $mysqli->prepare(
+    "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
+);
+
 foreach ($services as $serviceID) {
     $serviceID = trim($serviceID);
     error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
@@ -166,10 +171,15 @@ foreach ($services as $serviceID) {
     $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
     if (!$insertService->execute()) {
         error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
+    } else if ($incrementAssigned) {
+        // Increment the assigned count for this service in the event
+        $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+        $incrementAssigned->execute();
     }
 }
 
 $insertService->close();
+if ($incrementAssigned) $incrementAssigned->close();
 
 // Update clientsProcessed stat in tblAnalytics
 $statKey = 'clientsProcessed';

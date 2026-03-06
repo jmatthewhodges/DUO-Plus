@@ -136,6 +136,25 @@ if (!empty($visitIDs)) {
     foreach ($vsRows as $vs) {
         $visitServiceMap[$vs['VisitID']][] = $vs;
     }
+
+    // Count remaining (Pending + In-Progress) services per visit
+    $vsRemainStmt = $mysqli->prepare(
+        "SELECT vs.VisitID,
+                SUM(CASE WHEN vs.ServiceStatus IN ('Pending','In-Progress') THEN 1 ELSE 0 END) AS RemainingCount
+         FROM tblVisitServices vs
+         WHERE vs.VisitID IN ($placeholders)
+         GROUP BY vs.VisitID"
+    );
+    $remainingMap = [];
+    if ($vsRemainStmt) {
+        $vsRemainStmt->bind_param($types, ...$visitIDs);
+        $vsRemainStmt->execute();
+        $remainRows = $vsRemainStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $vsRemainStmt->close();
+        foreach ($remainRows as $rr) {
+            $remainingMap[$rr['VisitID']] = (int)$rr['RemainingCount'];
+        }
+    }
 }
 
 /*
@@ -194,13 +213,16 @@ foreach ($clients as $client) {
     $pending = $visitServiceMap[$visitID] ?? [];
     $serviceIDs = array_column($pending, 'ServiceID');
 
+    $remaining = $remainingMap[$visitID] ?? 0;
+
     $waitList[] = [
-        'ClientID'          => $client['ClientID'],
-        'FirstName'         => $client['FirstName'],
-        'MiddleInitial'     => $client['MiddleInitial'],
-        'LastName'          => $client['LastName'],
-        'DOB'               => $client['DOB'],
-        'ServiceSelections' => implode(',', $serviceIDs),
+        'ClientID'            => $client['ClientID'],
+        'FirstName'           => $client['FirstName'],
+        'MiddleInitial'       => $client['MiddleInitial'],
+        'LastName'            => $client['LastName'],
+        'DOB'                 => $client['DOB'],
+        'ServiceSelections'   => implode(',', $serviceIDs),
+        'AllServicesComplete' => $remaining === 0,
     ];
 }
 

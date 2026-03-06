@@ -87,15 +87,15 @@ if ($avgStmt) {
     }
 }
 
-// --- Waitlist (all clients with Pending status for these services) ---
+// --- Waitlist (clients with Pending or In-Progress status for these services) ---
 $waitStmt = $mysqli->prepare(
-    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
+    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, vs.ServiceID, vs.ServiceStatus
      FROM tblVisitServices vs
      JOIN tblVisits v ON v.VisitID = vs.VisitID
      JOIN tblClients c ON c.ClientID = v.ClientID
      WHERE vs.ServiceID IN ($placeholders)
-     AND vs.ServiceStatus = 'Pending'
-     ORDER BY vs.QueuePriority ASC"
+     AND vs.ServiceStatus IN ('Pending', 'In-Progress')
+     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending'), vs.QueuePriority ASC"
 );
 if (!$waitStmt) {
     http_response_code(500);
