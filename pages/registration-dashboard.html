@@ -28,15 +28,11 @@
 
     <div class="container-fluid h-100 p-4">
 
-        <div class="row d-lg-none mb-3">
-            <div class="col-12 text-center">
-                <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 150px;">
-            </div>
-        </div>
+        
 
         <div class="row">
 
-            <div class="col-lg-8 col-md-12 mb-4 mb-lg-0 p-4">
+            <div class="col-lg-8 col-md-12 mb-4 mb-lg-0">
                 <div class="card h-100">
                     <div class="card-header d-flex align-items-center justify-content-between bg-primary p-3 gap-3">
                         <div class="header-title flex-shrink-0 d-flex align-items-center">
@@ -86,13 +82,9 @@
             </div>
 
             <div class="col-lg-4 col-md-12">
+                <div class="d-flex flex-column h-100" style="min-height: 0;">
 
-                <div class="text-center mb-4 d-none d-lg-block">
-                    <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus - Mobile Mission" class="mb-3"
-                        style="width: 180px;">
-                </div>
-
-                <div class="card mb-4">
+                <div class="card mb-4 flex-shrink-0">
                     <div class="card-header bg-primary p-3">
                         <h5 class="text-white mb-0 fw-bold">Statistics</h5>
                     </div>
@@ -120,75 +112,92 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header bg-primary p-3">
+                <div class="card flex-grow-1 d-flex flex-column" style="min-height: 0; overflow: hidden;">
+                    <div class="card-header bg-primary p-3 flex-shrink-0">
                         <h5 class="text-white mb-0 fw-bold">Availability</h5>
                     </div>
-                    <div class="card-body d-flex flex-column gap-3 p-3">
+                    <div class="card-body d-flex flex-column gap-2 p-3 flex-grow-1 justify-content-evenly" style="min-height: 0; overflow-y: auto;">
 
-                        <div id="service-medical-exam">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Exam</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
+                        <div id="service-medical-exam" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-heart-pulse text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Medical - Exam</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
                             </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
                             </div>
                         </div>
 
-                        <div id="service-medical-follow-up">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Medical - Follow
-                                    Up</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
+                        <div id="service-medical-follow-up" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-heart-pulse text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Medical - Follow Up</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
                             </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div id="service-dental-hygiene">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Dental - Hygiene</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
                             </div>
                         </div>
 
-                        <div id="service-dental-extraction">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Dental -
-                                    Extraction</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
+                        <div id="service-dental-hygiene" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-shaded text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Dental - Hygiene</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
                             </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div id="service-optical">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Optical</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
                             </div>
                         </div>
 
-                        <div id="service-haircut">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold mb-2" style="font-size: 1rem; color:black;">Haircut</span>
-                                <span class="fw-bold service-count" style="color:black;">(0/0)</span>
+                        <div id="service-dental-extraction" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-shaded text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Dental - Extraction</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
                             </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+
+                        <div id="service-optical" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-eye text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Optical</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+                            </div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+
+                        <div id="service-haircut" class="border rounded p-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-scissors text-primary" style="font-size: 1.1rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem; color:black;">Haircut</span>
+                                </div>
+                                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+                            </div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
                             </div>
                         </div>
 
                     </div>
+                </div>
                 </div>
             </div>
 

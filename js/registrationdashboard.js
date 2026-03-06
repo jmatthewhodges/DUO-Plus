@@ -105,7 +105,7 @@ function updateServiceProgressBars(servicesData) {
         if (container) {
             const countSpan = container.querySelector('.service-count');
             const progressBar = container.querySelector('.progress-bar');
-            if (countSpan) countSpan.textContent = '(0/0)';
+            if (countSpan) countSpan.textContent = '0/0';
             if (progressBar) {
                 progressBar.style.width = '0%';
             }
@@ -133,7 +133,7 @@ function updateServiceProgressBars(servicesData) {
 
         // Update display text
         if (countSpan) {
-            countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
+            countSpan.textContent = `${currentAssigned}/${maxCapacity}`;
         }
 
         // Update progress bar width and color based on capacity
