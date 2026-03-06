@@ -9,38 +9,37 @@
                  Works with pinCode.js security layer.
  
  Last Modified By:  Cameron
- Last Modified On:  Mar 4 @ 11:00 PM
- Changes Made:      Added API integration structure for future backend
+ Last Modified On:  Mar 5 @ 6:00 PM
+ Changes Made:      Added API endpoint guidance IDK if its needed but its there
  
 =============================================================
 
- API ENDPOINTS NEEDED (for implementation):
- - GET /api/searchWaitingRoomClients.php?q={searchTerm}&service={serviceKey}
-   Returns: { success: true, clients: [{id, name, dob}, ...] }
-   Description: Search for available clients in waiting room by name/ID
+ API ENDPOINTS TO BE IMPLEMENTED:
  
- - GET /api/checkClientAssignment.php?clientId={clientId}
-   Returns: { assigned: false } or { assigned: true, assignedService: "{service}" }
-   Description: Check if client is already assigned to a service
- 
- - POST /api/addClientToService.php
-   Body: { clientId, serviceKey }
-   Returns: { success: true, message: "Client added" }
-   Description: Add client from waiting room to service, removes from available list
- 
- - GET /api/getServiceStats.php?service={serviceKey}
-   Returns: { success: true, currentAvgTime: "20 minutes", pastAvgTime: "34 minutes" }
-   Description: Get current and past average service times for a service
- 
- - POST /api/CheckIn.php (already exists)
-   Body: { clientId, serviceKey }
-   Returns: { success: true, status: "in-progress" }
-   Description: Mark client as in-service
- 
- - POST /api/CheckOut.php (already exists)
-   Body: { clientId, serviceKey }
-   Returns: { success: true, status: "completed" }
-   Description: Mark client as completed/checked out
+ 1. SEARCH CLIENTS (lines ~920)
+    Purpose: Search waiting room for available clients by name/ID
+    Current temp call path: /api/searchWaitingRoomClients.php
+    Expected returns: { success: true, clients: [{id, name, dob}, ...] }
+    
+ 2. CHECK CLIENT ASSIGNMENT (lines ~1030)
+    Purpose: Verify if client is already assigned to another service
+    Current temp call path: /api/checkClientAssignment.php
+    Expected returns: { assigned: false } or { assigned: true, assignedService: "{service}" }
+    
+ 3. ADD CLIENT TO SERVICE (lines ~1055)
+    Purpose: Add waiting room client to a service, remove from pool
+    Current temp call path: /api/addClientToService.php
+    Expected request: POST with body { clientId, serviceKey }
+    Expected returns: { success: true, message: "Client added" }
+    
+ 4. GET SERVICE STATS (lines ~250)
+    Purpose: Fetch current and past average service times
+    Current temp call path: /api/getServiceStats.php
+    Expected returns: { success: true, currentAvgTime: "XX minutes", pastAvgTime: "XX minutes" }
+    
+ NOTE: All endpoint paths above are placeholders.
+       Backend developer should implement with preferred naming/structure.
+       Update the fetch URLs in comments throughout the file to match actual endpoints.
  
  ============================================================
 */
@@ -71,7 +70,9 @@ const SERVICES = {
 
 // Valid station names: medical, optical, dental, haircut
 
-// Fake hardcoded client database for testing
+// DEVELOPMENT ONLY: Fake hardcoded client database for testing
+// TODO: When API is ready, replace all FAKE_CLIENTS lookups with API calls to fetch client data
+// This object should be deleted once backend API is available
 const FAKE_CLIENTS = {
     'gicsxbtqog': {
         id: 'gicsxbtqog',
@@ -117,7 +118,13 @@ const FAKE_CLIENTS = {
     }
 };
 
-// Waitlist tracking per service
+// IMPORTANT: Service waitlist data storage (in-memory during session)
+// Structure: { serviceKey: { clientId: { id, name, dob, status, checkInTime, checkOutTime }, ... }, ... }
+// Status values: 'waiting', 'in-progress', 'completed'
+// TODO: When API is implemented, sync this with database on every change:
+//       - Load initial waitlist on page load from backend
+//       - Update on each action (add/check-in/check-out/remove) with API calls
+//       - Consider using API response as source of truth
 const SERVICE_WAITLISTS = {
     medical: {},
     optical: {},
@@ -236,11 +243,12 @@ function showService(serviceKey) {
 }
 
 // Fetch service time data from API and update display
+// See comments at top of file (line ~16) for endpoint details
 async function fetchServiceTimes(serviceKey) {
     try {
-        // TODO: Implement API endpoint
-        // GET /api/getServiceStats.php?service={serviceKey}
-        // Returns: { success: true, currentAvgTime: "20 minutes", pastAvgTime: "34 minutes" }
+        // BACKEND DEVELOPER: Implement endpoint for fetching service stats
+        // Expected response: { success: true, currentAvgTime: "XX minutes", pastAvgTime: "XX minutes" }
+        // TODO: Replace URL with your actual endpoint
         const response = await fetch(`/api/getServiceStats.php?service=${serviceKey}`);
         
         if (response.ok) {
@@ -717,7 +725,17 @@ function stopClientQRScanning() {
     }
 }
 
-// Handle client QR code scan - extract clientId
+// Handle client QR code scan - AUTO-PROGRESSION WORKFLOW
+// This function implements the core scanning workflow:
+//   1. Extract clientId from QR code (URL param or plain text)
+//   2. Find client in database
+//   3. Check client's current status in this service
+//   4. Auto-progress to next status:
+//      - Not in waitlist → Add as 'waiting'
+//      - Status='waiting' → Move to 'in-progress'
+//      - Status='in-progress' → Move to 'completed'
+//      - Status='completed' → Show 'already completed' message
+// TODO: When API is ready, fetch client data from backend instead of FAKE_CLIENTS (see line ~75)
 function handleClientQRScan(qrData) {
     console.log('Client QR scanned:', qrData);
     
@@ -890,15 +908,25 @@ function showManualClientIdEntry() {
 }
 
 // Search for clients by ID or name from waiting room
-// TODO: Replace with actual API call to backend
-// API Endpoint: GET /api/searchWaitingRoomClients.php?q={searchTerm}&service={serviceKey}
+// IMPORTANT: This should only show clients from the WAITING ROOM pool (not already assigned to services)
+// See comments at top of file (line ~16) for endpoint details
+// The API should:
+//   1. Search waiting room clients by id (substring/partial matches)
+//   2. Return only clients NOT assigned to any service yet
+//   3. Return only clients available for the current service
 async function searchAndDisplayClients(searchTerm) {
     try {
-        // TODO: Replace this with actual API call
-        // const response = await fetch(`/api/searchWaitingRoomClients.php?q=${encodeURIComponent(searchTerm)}&service=${currentServiceKey}`);
-        // const results = await response.json();
+        // Expected response: { success: true, clients: [{id, name, dob}, ...] }
+        // TODO: Replace the fetch URL below with the endpoint
+        // const response = await fetch(`ENDPOINT URL?q=${encodeURIComponent(searchTerm)}&service=${currentServiceKey}`);
+        // const data = await response.json();
+        // if (data.success) {
+        //     displayClientSearchResults(data.clients);
+        // } else {
+        //     Swal.fire('Search Error', data.message || 'Unable to search clients', 'error');
+        // }
+        // return;
         
-        // Fallback: Search local FAKE_CLIENTS for development
         const results = {};
         
         // Search by ID first (exact match is highest priority)
@@ -982,35 +1010,45 @@ function displayClientSearchResults(results) {
 }
 
 // Add a client from search results to the service
-// TODO: Replace with actual API call to backend
-// API Endpoint: POST /api/addClientToService.php
-// Body: { clientId, serviceKey }
+// IMPORTANT: This function handles a key workflow:
+//   1. Check if client is already assigned to another service (prevent multi-service assignment)
+//   2. Check if client is already in THIS service's waitlist
+//   3. If neither, add the client to the service
+// See comments at top of file (line ~16) for endpoint details
+// The API should:
+//   1. Verify client exists and is available
+//   2. Verify client is NOT already assigned to another service
+//   3. Add client to this service's waitlist with status='waiting'
+//   4. Remove client from waiting room pool
 async function addClientFromSearch(clientId) {
     const client = FAKE_CLIENTS[clientId];
     if (!client) return;
     
     try {
-        // Check if client is already assigned to another service
-        // TODO: Connect to API endpoint to check client assignment
-        // const checkResponse = await fetch(`/api/checkClientAssignment.php?clientId=${clientId}`);
+        // STEP 1: Check if client is already assigned to ANOTHER service
+        // This prevents a single client from being in multiple services at once
+        // Implement assignment check endpoint
+        // TODO: Uncomment and use when API is ready:
+        // const checkResponse = await fetch(`ENDPOINT_URL?clientId=${clientId}`);
         // const checkData = await checkResponse.json();
-        // if (checkData.assignedService && checkData.assignedService !== currentServiceKey) {
+        // if (assigned && assignedService !== currentServiceKey) {
         //     Swal.fire({
         //         icon: 'warning',
         //         title: 'Client Already Assigned',
-        //         text: `This client is already assigned to ${checkData.assignedService}. Please remove them from that service first.`,
+        //         text: `This client is already in the ${assignedService} service. Remove them from that service first.`,
         //         confirmButtonText: 'OK'
         //     });
         //     return;
         // }
         
-        // Check if client is already in this service's waitlist
+        // STEP 2: Check if client is already in THIS service's waitlist (local check)
         const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
         
         if (!clientInWaitlist) {
-            // Add to local waitlist
-            // TODO: Replace with actual API call
-            // const response = await fetch('/api/addClientToService.php', {
+            // STEP 3: Add to service
+            // Implement add client endpoint
+            // TODO: Uncomment and use when API is ready (this will replace the local state update):
+            // const response = await fetch('EndPoint_Url', {
             //     method: 'POST',
             //     headers: {
             //         'Content-Type': 'application/json'
@@ -1021,8 +1059,12 @@ async function addClientFromSearch(clientId) {
             //     })
             // });
             // const result = await response.json();
-            // if (!result.success) throw new Error(result.message);
+            // if (!result.success) {
+            //     Swal.fire('Error', result.message || 'Failed to add client', 'error');
+            //     return;
+            // }
             
+            // For now: Update local state
             addClientToWaitlist(clientId, currentServiceKey);
             
             Swal.fire({
