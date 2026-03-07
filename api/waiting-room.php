@@ -74,10 +74,16 @@ $svcStmt->close();
 
 // ServiceID => { ServiceName, available }
 $serviceInfo = [];
+$servicesList = []; // for frontend
 foreach ($svcRows as $row) {
     $serviceInfo[$row['ServiceID']] = [
         'ServiceName' => $row['ServiceName'],
         'available'   => !$row['IsClosed'] && (int)$row['SeatsInProgress'] < (int)$row['MaxSeats'],
+    ];
+    $servicesList[] = [
+        'ServiceID'   => $row['ServiceID'],
+        'ServiceName' => $row['ServiceName'],
+        'IsClosed'    => (bool)$row['IsClosed'],
     ];
 }
 
@@ -87,7 +93,7 @@ foreach ($svcRows as $row) {
 ---------------------------------
 */
 $clientsStmt = $mysqli->prepare(
-    "SELECT v.VisitID, v.ClientID, v.FirstCheckedIn,
+    "SELECT v.VisitID, v.ClientID, v.FirstCheckedIn, v.EnteredWaitingRoom,
             c.FirstName, c.MiddleInitial, c.LastName, c.DOB
      FROM tblVisits v
      JOIN tblClients c ON c.ClientID = v.ClientID
@@ -116,6 +122,25 @@ if (!empty($visitIDs)) {
     $placeholders = implode(',', array_fill(0, count($visitIDs), '?'));
     $types = str_repeat('s', count($visitIDs));
 
+    // All visit services (any status) — for the update modal
+    $allVsStmt = $mysqli->prepare(
+        "SELECT vs.VisitID, vs.VisitServiceID, vs.ServiceID, vs.ServiceStatus, s.ServiceName
+         FROM tblVisitServices vs
+         JOIN tblServices s ON s.ServiceID = vs.ServiceID
+         WHERE vs.VisitID IN ($placeholders)"
+    );
+    $allVisitServiceMap = []; // VisitID => [ { ServiceID, ServiceStatus, ... } ]
+    if ($allVsStmt) {
+        $allVsStmt->bind_param($types, ...$visitIDs);
+        $allVsStmt->execute();
+        $allVsRows = $allVsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $allVsStmt->close();
+        foreach ($allVsRows as $avs) {
+            $allVisitServiceMap[$avs['VisitID']][] = $avs;
+        }
+    }
+
+    // Pending only — for queue logic
     $vsStmt = $mysqli->prepare(
         "SELECT vs.VisitID, vs.ServiceID, s.ServiceName
          FROM tblVisitServices vs
@@ -240,8 +265,13 @@ foreach ($clients as $client) {
 
     $remaining = $remainingMap[$visitID] ?? 0;
 
+    // Client was skipped if FirstCheckedIn was reset after original EnteredWaitingRoom
+    $wasSkipped = (!empty($client['EnteredWaitingRoom']) && !empty($client['FirstCheckedIn']))
+        && $client['FirstCheckedIn'] > $client['EnteredWaitingRoom'];
+
     $entry = [
         'ClientID'            => $client['ClientID'],
+        'VisitID'             => $client['VisitID'],
         'FirstName'           => $client['FirstName'],
         'MiddleInitial'       => $client['MiddleInitial'],
         'LastName'            => $client['LastName'],
@@ -249,6 +279,8 @@ foreach ($clients as $client) {
         'ServiceSelections'   => implode(',', $serviceIDs),
         'AllServicesComplete' => $remaining === 0,
         'CurrentServiceName'  => null,
+        'WasSkipped'          => $wasSkipped,
+        'VisitServices'       => $allVisitServiceMap[$client['VisitID']] ?? [],
     ];
 
     if (isset($visitsInProgress[$visitID])) {
@@ -268,4 +300,5 @@ echo json_encode([
     'success'    => true,
     'NowServing' => $nowServing ? [$nowServing] : [],
     'WaitList'   => $waitList,
+    'Services'   => $servicesList,
 ]);

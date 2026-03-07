@@ -24,7 +24,9 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
                 <h5 class="text-white mb-0 fw-bold">Queue</h5>
-                <span class="status-dot"></span>
+                <button class="btn btn-sm text-white border-0 p-1" id="refreshQueueBtn" title="Refresh queue">
+                    <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
+                </button>
             </div>
             
             <div class="card-body position-relative p-4">
@@ -70,34 +72,14 @@
     </div>
 
     <div id="updateStatusModal" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none justify-content-center align-items-center" style="z-index: 1050;">
-        <div class="card shadow-lg" style="width: 450px; max-width: 90vw;">
-            <div class="card-header bg-primary text-white p-3">
-                <h5 class="mb-0 text-white fw-bold">Update Patient Status</h5>
-            </div>
+        <div class="card shadow-lg border-0 rounded-3 overflow-hidden" style="width: 420px; max-width: 90vw;">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-3 text-dark border-bottom pb-2" id="modalPatientName">Patient Name</h5>
-                
-                <div class="mb-4">
-                    <label class="fw-bold mb-2 text-primary small uppercase">Current Requested Services</label>
-                    <div id="modalServiceStatus" class="d-flex gap-3 p-2 border rounded bg-light justify-content-center">
-                        </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 text-dark" id="modalPatientName">Patient Name</h5>
+                    <button type="button" class="btn-close" id="cancelUpdateBtn" aria-label="Close"></button>
                 </div>
-
-                <div class="mb-4">
-                    <label class="fw-bold mb-2 text-dark">Move to Service:</label>
-                    <select class="form-select" id="moveServiceSelect">
-                        <option value="" selected disabled>Select a department...</option>
-                        <option value="medical">Medical</option>
-                        <option value="dental">Dental</option>
-                        <option value="optical">Optical</option>
-                        <option value="haircut">Haircut</option>
-                    </select>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-2">
-                    <button type="button" class="btn btn-outline-primary" id="cancelUpdateBtn">Cancel</button>
-                    <button type="button" class="btn bg-primary text-white" id="movePatientBtn">Move to Service</button>
-                </div>
+                <p class="text-muted small mb-3">Toggle services for this patient</p>
+                <div id="modalServiceToggles" class="d-flex flex-column gap-2"></div>
             </div>
         </div>
     </div>

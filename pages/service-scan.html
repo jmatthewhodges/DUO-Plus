@@ -40,9 +40,14 @@
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3" id="serviceHeader">
                             <h5 class="text-white mb-0 fw-bold" id="serviceTitle">Service</h5>
-                            <button id="btnScan" type="button" class="btn bg-primary btn-sm rounded-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0; border: none; transition: all 0.2s ease;">
-                                <i style="color: white; font-size: 2rem;" class="bi bi-qr-code-scan"></i>
-                            </button>
+                            <div class="d-flex align-items-center gap-1">
+                                <button class="btn btn-sm text-white border-0 p-1" id="refreshServiceBtn" title="Refresh data">
+                                    <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
+                                </button>
+                                <button id="btnScan" type="button" class="btn bg-primary btn-sm rounded-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0; border: none; transition: all 0.2s ease;">
+                                    <i style="color: white; font-size: 2rem;" class="bi bi-qr-code-scan"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="card-body p-4">

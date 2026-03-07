@@ -10,6 +10,7 @@ let waitListData = [];
 let availableServices = []; 
 let currentRowToUpdate = null;
 let currentClientId = null;
+let currentVisitId = null;
 let nowServingClientId = null;
 
 //================================================================================
@@ -17,7 +18,6 @@ let nowServingClientId = null;
 const tableBody = document.querySelector('tbody');
 const updateModal = document.getElementById('updateStatusModal');
 const waitListCountLabel = document.getElementById('waitlist-header-count');
-const moveServiceSelect = document.getElementById('moveServiceSelect');
 
 // Grab the single element for Now Serving
 const nowServingNameEl = document.querySelector('.queue-name');
@@ -35,36 +35,19 @@ function formatDOB(dateString) {
     return dateString; 
 }
 
-function buildServiceButton(state, iconTag, serviceName) {
-    let colorClass = state ? 'btn-success' : 'btn-secondary bg-secondary bg-opacity-25 border-0';
-    let iconColor = state ? 'text-white' : 'text-muted opacity-50';
-    let safeIcon = iconTag || 'bi-gear'; 
-    
-    return `
-        <button class="btn ${colorClass} btn-sm rounded-2 shadow-sm" disabled title="${serviceName}"
-                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-            <i class="bi ${safeIcon} ${iconColor}" style="font-size: 1.2rem;"></i>
-        </button>
-    `;
-}
-
 function closeUpdateModal() {
     updateModal.classList.add('d-none');
     updateModal.classList.remove('d-flex');
 }
 
-function hasService(serviceSelections, serviceId) {
-    if (!serviceSelections) return false;
-    const services = serviceSelections.toString().split(',');
-    return services.includes(serviceId.toString());
-}
-
-function populateServiceDropdown() {
-    moveServiceSelect.innerHTML = '<option value="" selected disabled>Select a department...</option>';
-    availableServices.forEach(service => {
-        const optionHTML = `<option value="${service.ServiceID}">${service.ServiceName}</option>`;
-        moveServiceSelect.insertAdjacentHTML('beforeend', optionHTML);
-    });
+function getServiceStatusLabel(status) {
+    switch (status) {
+        case 'Pending':     return { text: 'Pending', class: 'bg-warning text-dark' };
+        case 'In-Progress': return { text: 'In Progress', class: 'bg-info text-white' };
+        case 'Complete':    return { text: 'Complete', class: 'bg-success text-white' };
+        case 'Standby':     return { text: 'Standby', class: 'bg-secondary text-white' };
+        default:            return { text: 'Not Added', class: 'bg-light text-muted' };
+    }
 }
 
 async function skipNowServingClient(clientId) {
@@ -108,9 +91,7 @@ async function fetchQueueData() {
 
         if (data.success) {
             waitListData = data.WaitList;
-            availableServices = data.Services || []; 
-            
-            populateServiceDropdown();
+            availableServices = data.Services || [];
 
             // 1. Update Now Serving safely
             const skipBtn = document.getElementById('skipNowServingBtn');
@@ -156,11 +137,15 @@ function populateWaitListTable(patients) {
         const formattedDOB = formatDOB(patient.DOB);
         const allDone = patient.AllServicesComplete;
         const atService = patient.CurrentServiceName;
+        const wasSkipped = patient.WasSkipped;
         let statusBadge = '';
         if (allDone) {
             statusBadge = '<span class="badge bg-success ms-2" style="font-size: 0.7rem;">All Done</span>';
         } else if (atService) {
             statusBadge = `<span class="badge bg-info ms-2" style="font-size: 0.7rem;">At ${atService}</span>`;
+        }
+        if (wasSkipped) {
+            statusBadge += '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Skipped</span>';
         }
         const avatarClass = allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light');
         const avatarIcon = allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person');
@@ -200,6 +185,7 @@ function populateWaitListTable(patients) {
 tableBody.addEventListener('click', (event) => {
     const updateBtn = event.target.closest('.update-btn');
     if (updateBtn) {
+        updateBtn.blur();
         currentRowToUpdate = updateBtn.closest('tr');
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
 
@@ -210,48 +196,121 @@ tableBody.addEventListener('click', (event) => {
         }
         
         const patient = waitListData.find(p => p.ClientID == currentClientId);
+        currentVisitId = patient.VisitID;
         document.getElementById('modalPatientName').innerText = `${patient.FirstName} ${patient.LastName}`;
         
-        const statusContainer = document.getElementById('modalServiceStatus');
-        statusContainer.innerHTML = ''; 
-        
-        availableServices.forEach(service => {
-            const isSelected = hasService(patient.ServiceSelections, service.ServiceID);
-            statusContainer.innerHTML += buildServiceButton(isSelected, service.IconTag, service.ServiceName);
-        });
+        renderServiceToggles(patient);
 
         updateModal.classList.remove('d-none');
         updateModal.classList.add('d-flex');
     }
 });
 
-document.getElementById('cancelUpdateBtn').addEventListener('click', closeUpdateModal);
+// Parent/placeholder services that clients never get checked into directly
+const EXCLUDED_SERVICE_IDS = ['medical', 'dental'];
 
-// Skip Now Serving button (in the Now Serving header area)
-document.getElementById('skipNowServingBtn').addEventListener('click', function() {
-    if (!nowServingClientId) return;
-    skipNowServingClient(nowServingClientId);
-});
+function renderServiceToggles(patient) {
+    const container = document.getElementById('modalServiceToggles');
+    container.innerHTML = '';
 
-document.getElementById('movePatientBtn').addEventListener('click', function() {
-    const selectedServiceId = moveServiceSelect.value;
-    const selectedServiceName = moveServiceSelect.options[moveServiceSelect.selectedIndex].text;
-    
-    if (!selectedServiceId) {
-        Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select a service destination.', confirmButtonColor: '#174593' });
+    const visitServices = patient.VisitServices || [];
+    const filteredServices = availableServices.filter(s => !EXCLUDED_SERVICE_IDS.includes(s.ServiceID));
+
+    if (filteredServices.length === 0) {
+        container.innerHTML = '<p class="text-muted small mb-0">No services available.</p>';
         return;
     }
 
-    Swal.fire({
-        title: 'Moving Patient...',
-        text: `Patient is being manually moved to ${selectedServiceName.toUpperCase()}`,
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-    }).then(() => {
-        closeUpdateModal();
-        fetchQueueData(); 
+    filteredServices.forEach(service => {
+        const vs = visitServices.find(v => v.ServiceID === service.ServiceID);
+        const status = vs ? vs.ServiceStatus : null;
+        const isActive = status === 'Pending' || status === 'In-Progress';
+        const isComplete = status === 'Complete';
+        const statusInfo = getServiceStatusLabel(status);
+
+        const row = document.createElement('div');
+        row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 ${isActive ? 'bg-soft-primary border border-primary border-opacity-25' : 'border'}`;
+        row.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${service.ServiceName}</span>
+                ${status ? `<span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>` : ''}
+            </div>
+            <div>
+                ${isActive
+                    ? `<button class="btn btn-outline-danger btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="remove" style="font-size: 0.75rem;">Remove</button>`
+                    : `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="add" style="font-size: 0.75rem;">${isComplete ? 'Re-add' : 'Add'}</button>`
+                }
+            </div>
+        `;
+        container.appendChild(row);
     });
+
+    // Attach toggle listeners
+    container.querySelectorAll('.svc-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', handleServiceToggle);
+    });
+}
+
+async function handleServiceToggle(e) {
+    const btn = e.target.closest('.svc-toggle-btn');
+    btn.blur();
+    const serviceID = btn.dataset.serviceId;
+    const action = btn.dataset.action;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        const res = await fetch('../api/UpdateVisitServices.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitID: currentVisitId, serviceID, action })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Refresh data and re-render modal
+            await fetchQueueData();
+            const updatedPatient = waitListData.find(p => p.ClientID == currentClientId);
+            if (updatedPatient) {
+                renderServiceToggles(updatedPatient);
+            }
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Failed to update service.' });
+            btn.disabled = false;
+            btn.innerHTML = action === 'add' ? 'Add' : 'Remove';
+        }
+    } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Network Error', text: 'Unable to reach the server.' });
+        btn.disabled = false;
+        btn.innerHTML = action === 'add' ? 'Add' : 'Remove';
+    }
+}
+
+document.getElementById('cancelUpdateBtn').addEventListener('click', closeUpdateModal);
+
+// Search filter
+const waitlistSearchInput = document.getElementById('waitlist-search');
+if (waitlistSearchInput) {
+    waitlistSearchInput.addEventListener('input', function () {
+        const term = this.value.trim().toLowerCase();
+        if (!term) {
+            populateWaitListTable(waitListData);
+            return;
+        }
+        const filtered = waitListData.filter(p => {
+            const name = `${p.FirstName} ${p.MiddleInitial || ''} ${p.LastName}`.toLowerCase();
+            return name.includes(term);
+        });
+        populateWaitListTable(filtered);
+    });
+}
+
+// Skip Now Serving button (in the Now Serving header area)
+document.getElementById('skipNowServingBtn').addEventListener('click', function() {
+    this.blur();
+    if (!nowServingClientId) return;
+    skipNowServingClient(nowServingClientId);
 });
 
 //================================================================================
@@ -259,6 +318,9 @@ document.getElementById('movePatientBtn').addEventListener('click', function() {
 
 function init() {
     fetchQueueData();
+
+    const refreshBtn = document.getElementById('refreshQueueBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', fetchQueueData);
 }
 
 init();

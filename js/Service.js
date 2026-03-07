@@ -1131,3 +1131,11 @@ function updateStatsDisplay() {
     if (stat2ValueEl) stat2ValueEl.textContent = inProgressCount;
     if (stat3ValueEl) stat3ValueEl.textContent = completedCount;
 }
+
+// Refresh button
+const refreshServiceBtn = document.getElementById('refreshServiceBtn');
+if (refreshServiceBtn) {
+    refreshServiceBtn.addEventListener('click', () => {
+        if (currentServiceKey) fetchServiceData(currentServiceKey);
+    });
+}
