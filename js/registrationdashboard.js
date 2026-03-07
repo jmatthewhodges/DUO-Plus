@@ -11,25 +11,94 @@
 
 // 1. GLOBAL SETTINGS & STATE
 
-// Service availability. Will likely be attached to API response in the future, but hardcoded for now
-const serviceAvailability = {
-    medical: true,
-    dental: true,
-    optical: true,
-    haircut: true
-};
+// Service hierarchy — loaded from API at init
+let serviceCategories = [];   // [{ ServiceID, ServiceName, IconTag, SortOrder, children: [...] }]
+let serviceAvailability = {};  // { categoryID: true/false }
 
-// Service configuration mapping ServiceID to display info
-// This maps possible service ID patterns to container IDs and display names
-const serviceMapping = {
-    'medicalExam': { containerId: 'service-medical-exam', displayName: 'Medical - Exam' },
-    'medicalFollowUp': { containerId: 'service-medical-follow-up', displayName: 'Medical - Follow Up' },
-    'dentalHygiene': { containerId: 'service-dental-hygiene', displayName: 'Dental - Hygiene' },
-    'dentalExtraction': { containerId: 'service-dental-extraction', displayName: 'Dental - Extraction' },
-    'optical': { containerId: 'service-optical', displayName: 'Optical' },
-    'haircut': { containerId: 'service-haircut', displayName: 'Haircut' },
-    'hair': { containerId: 'service-haircut', displayName: 'Haircut' }
-};
+// Service configuration mapping operational ServiceID to display info
+// Built dynamically from hierarchy API response
+let serviceMapping = {};
+
+// Loads the service hierarchy and builds serviceCategories, serviceAvailability, serviceMapping
+async function loadServiceHierarchyForDashboard() {
+    try {
+        const res = await fetch('/api/services.php?view=hierarchy');
+        const json = await res.json();
+        if (!json.success || !json.hierarchy) return;
+
+        serviceCategories = json.hierarchy;
+        serviceAvailability = {};
+        serviceMapping = {};
+
+        serviceCategories.forEach(cat => {
+            serviceAvailability[cat.ServiceID] = true; // updated by API availability later
+
+            if (cat.children && cat.children.length > 0) {
+                cat.children.forEach(child => {
+                    const containerId = 'service-' + child.ServiceID.replace(/([A-Z])/g, '-$1').toLowerCase();
+                    // Strip parent name prefix from child (e.g. "Medical Exam" → "Exam")
+                    let shortName = child.ServiceName;
+                    if (shortName.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                        shortName = shortName.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    serviceMapping[child.ServiceID] = {
+                        containerId: containerId,
+                        displayName: cat.ServiceName + ' - ' + (shortName || child.ServiceName),
+                    };
+                });
+            } else {
+                // Standalone category (no children)
+                const containerId = 'service-' + cat.ServiceID;
+                serviceMapping[cat.ServiceID] = {
+                    containerId: containerId,
+                    displayName: cat.ServiceName,
+                };
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load service hierarchy:', err);
+    }
+}
+
+// Builds the service progress bar elements in the Availability card
+function buildServiceProgressBars() {
+    const container = document.getElementById('serviceProgressContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    Object.entries(serviceMapping).forEach(([serviceID, mapping]) => {
+        // Find the icon from the hierarchy — check children first, then standalone categories
+        let iconTag = '';
+        for (const cat of serviceCategories) {
+            if (cat.children && cat.children.length > 0) {
+                const child = cat.children.find(c => c.ServiceID === serviceID);
+                if (child) { iconTag = cat.IconTag || ''; break; }
+            } else if (cat.ServiceID === serviceID) {
+                iconTag = cat.IconTag || ''; break;
+            }
+        }
+
+        const div = document.createElement('div');
+        div.id = mapping.containerId;
+        div.className = 'border rounded p-2 px-3';
+        div.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between mb-1">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="text-primary" style="font-size: 1.1rem;"></i>
+                    <span class="fw-bold" style="font-size: 0.9rem; color:black;"></span>
+                </div>
+                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+            </div>
+            <div class="progress" style="height: 6px; border-radius: 3px;">
+                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
+            </div>`;
+        // Set text content safely (not innerHTML) to prevent XSS from DB values
+        const icon = div.querySelector('i');
+        icon.className = `bi ${iconTag} text-primary`;
+        div.querySelector('span.fw-bold').textContent = mapping.displayName;
+        container.appendChild(div);
+    });
+}
 
 // Active check-in state
 let currentRowToUpdate = null;
@@ -98,6 +167,21 @@ function refreshServiceStats() {
 //updates the service progress bars based on availability data from API
 function updateServiceProgressBars(servicesData) {
     if (!servicesData || !Array.isArray(servicesData)) return;
+
+    // Build a lookup of operational service closed status
+    const closedLookup = {};
+    servicesData.forEach(s => { closedLookup[s.serviceID] = !!s.isClosed; });
+
+    // Update serviceAvailability per category: available if any child (or self) is not closed
+    serviceCategories.forEach(cat => {
+        if (cat.children && cat.children.length > 0) {
+            serviceAvailability[cat.ServiceID] = cat.children.some(
+                child => closedLookup[child.ServiceID] === false
+            );
+        } else {
+            serviceAvailability[cat.ServiceID] = closedLookup[cat.ServiceID] === false;
+        }
+    });
 
     // Initialize all service containers first (optional - for services not in API response)
     Object.values(serviceMapping).forEach(mapping => {
@@ -324,12 +408,13 @@ function populateRegistrationTable(patientsData) {
         }
         const formattedDOB = formatDOB(patient.DOB);
 
-        // Map services array to individual fields
+        // Build service buttons dynamically from serviceCategories
         const serviceSet = new Set(patient.services || []);
-        patient.Medical = serviceSet.has('medical') ? 1 : 0;
-        patient.Dental = serviceSet.has('dental') ? 1 : 0;
-        patient.Optical = serviceSet.has('optical') ? 1 : 0;
-        patient.Hair = serviceSet.has('haircut') ? 1 : 0;
+        let serviceButtonsHTML = '';
+        serviceCategories.forEach(cat => {
+            const state = serviceSet.has(cat.ServiceID) ? 1 : 0;
+            serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
+        });
 
         const rowHTML = `
             <tr class="align-middle" data-client-id="${patient.ClientID}" data-translator="${patient.TranslatorNeeded || 0}">
@@ -345,10 +430,7 @@ function populateRegistrationTable(patientsData) {
                 <td>
                     <div class="d-flex justify-content-between align-items-center pe-3">
                         <div class="d-flex gap-3">
-                            ${buildServiceButton('Medical', patient.Medical, 'bi-heart-pulse', 'medical')}
-                            ${buildServiceButton('Dental', patient.Dental, 'bi-shield-shaded', 'dental')}
-                            ${buildServiceButton('Optical', patient.Optical, 'bi-eye', 'optical')}
-                            ${buildServiceButton('Haircut', patient.Hair, 'bi-scissors', 'haircut')}
+                            ${serviceButtonsHTML}
                         </div>
                         <button class="btn bg-primary text-white btn-sm check-in-btn">Check In</button>
                     </div>
@@ -398,36 +480,54 @@ tableBody.addEventListener('click', function (event) {
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
 
-        // --- Dental section ---
-        const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-        const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
+        // --- Build sub-service sections dynamically ---
+        const subSvcContainer = document.getElementById('modalSubServiceSections');
+        subSvcContainer.innerHTML = '';
+
+        // Help text shown below the label in the check-in modal for categories with sub-services
+        const categoryDescriptions = {
+            'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
+            'dental':  'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+        };
+
+        serviceCategories.forEach(cat => {
+            const btn = currentRowToUpdate.querySelector(`[title="${cat.ServiceName}"]`);
+            if (!btn) return;
+            const state = parseInt(btn.getAttribute('data-state'));
+            const isAvailable = serviceAvailability[cat.ServiceID];
+
+            if (state === 1 && isAvailable && cat.children && cat.children.length > 0) {
+                // Build radio group for sub-services with short labels (strip parent name prefix)
+                const radioName = `${cat.ServiceID}Choice`;
+                let radiosHTML = cat.children.map(child => {
+                    let shortLabel = child.ServiceName;
+                    if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                        shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    return `
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="${radioName}" 
+                            id="${child.ServiceID}" value="${child.ServiceID}">
+                        <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                    </div>`;
+                }).join('');
+
+                const descHTML = categoryDescriptions[cat.ServiceID]
+                    ? `<p class="text-muted small mb-2">${categoryDescriptions[cat.ServiceID]}</p>`
+                    : '';
+
+                subSvcContainer.innerHTML += `
+                    <div class="mb-4 p-3 border rounded bg-light sub-service-section" data-category="${cat.ServiceID}">
+                        <label class="fw-bold mb-2 text-primary">Select ${cat.ServiceName} Service:</label>
+                        ${descHTML}
+                        <div class="d-flex gap-4">${radiosHTML}</div>
+                    </div>`;
+            }
+        });
 
         // Auto-toggle translator checkbox if client was flagged as needing one (e.g. registered in Spanish)
         const translatorNeeded = currentRowToUpdate.getAttribute('data-translator');
         document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
-        document.getElementById('dentalHygiene').checked = false;
-        document.getElementById('dentalExtraction').checked = false;
-
-        const dentalSection = document.getElementById('modalDentalSection');
-        if (dentalState === 1 && serviceAvailability.dental) {
-            dentalSection.classList.remove('d-none');
-        } else {
-            dentalSection.classList.add('d-none');
-        }
-
-        // --- Medical section ---
-        const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-        const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
-
-        document.getElementById('medicalExam').checked = false;
-        document.getElementById('medicalFollowUp').checked = false;
-
-        const medicalSection = document.getElementById('modalMedicalSection');
-        if (medicalState === 1 && serviceAvailability.medical) {
-            medicalSection.classList.remove('d-none');
-        } else {
-            medicalSection.classList.add('d-none');
-        }
 
         document.getElementById('modalPatientName').innerText = currentClientName;
 
@@ -450,58 +550,37 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
     const btn = this;
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
 
-    // Build services array from selected buttons
+    // Build services array dynamically from category buttons and sub-service selections
     const services = [];
+    const categoryStates = {}; // track which categories are selected for QR card
 
-    // --- Medical: requires sub-selection (Exam or Follow Up) ---
-    const medicalSection = document.getElementById('modalMedicalSection');
-    const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
+    for (const cat of serviceCategories) {
+        const catBtn = currentRowToUpdate.querySelector(`[title="${cat.ServiceName}"]`);
+        if (!catBtn) continue;
+        const state = parseInt(catBtn.getAttribute('data-state'));
+        categoryStates[cat.ServiceID] = (state === 1);
 
-    if (!medicalSection.classList.contains('d-none')) {
-        if (!selectedMedical) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Exam or Follow Up to proceed.',
-                confirmButtonColor: '#174593'
-            });
-            return;
+        if (state !== 1) continue;
+
+        if (cat.children && cat.children.length > 0) {
+            // Category has sub-services — require radio selection
+            const radioName = `${cat.ServiceID}Choice`;
+            const selected = document.querySelector(`input[name="${radioName}"]:checked`);
+            if (!selected) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selection Required',
+                    text: `Please select a ${cat.ServiceName} sub-service to proceed.`,
+                    confirmButtonColor: '#174593'
+                });
+                return;
+            }
+            services.push(selected.value);
+        } else {
+            // Standalone category (no children) — use category ID directly
+            services.push(cat.ServiceID);
         }
-        services.push(selectedMedical.value);
     }
-
-    // --- Optical ---
-    const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
-    if (parseInt(opticalBtn.getAttribute('data-state')) === 1) services.push('optical');
-
-    // --- Haircut ---
-    const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
-    if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
-
-    // --- Dental: requires sub-selection (Hygiene or Extraction) ---
-    const dentalSection = document.getElementById('modalDentalSection');
-    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
-
-    if (!dentalSection.classList.contains('d-none')) {
-        if (!selectedDental) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Hygiene or Extraction to proceed.',
-                confirmButtonColor: '#174593'
-            });
-            return;
-        }
-        services.push(selectedDental.value);
-    }
-
-    // Capture service states for QR card NOW (while DOM still exists)
-    const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-    const hasDental = dentalBtn && dentalBtn.getAttribute('data-state') === '1';
-    const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
-    const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
-    const hasHaircut = hairBtn && hairBtn.getAttribute('data-state') === '1';
 
     // Loading state
     const originalText = btn.innerHTML;
@@ -589,20 +668,19 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     size: 200,
                 });
 
-                // Reset all QR card icons to be invisible but still occupy their "slot" (using visibility)
-                const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
-                qrIcons.forEach(id => {
-                    const iconEl = document.getElementById(id);
-                    iconEl.style.visibility = 'hidden';
+                // Build QR card icons dynamically from serviceCategories
+                const qrIconsContainer = document.getElementById('qrCardIcons');
+                qrIconsContainer.innerHTML = '';
+                serviceCategories.forEach(cat => {
+                    const iconEl = document.createElement('i');
+                    iconEl.className = `bi ${cat.IconTag} qr-icon-border`;
+                    iconEl.style.fontSize = '2.5rem';
+                    iconEl.style.color = 'black';
+                    iconEl.style.visibility = categoryStates[cat.ServiceID] ? 'visible' : 'hidden';
                     iconEl.style.display = 'inline-flex';
+                    qrIconsContainer.appendChild(iconEl);
                 });
                 document.getElementById('qrCardTranslator').style.display = 'none';
-
-                // Show icons for selected services by making them visible (preserves their fixed positions)
-                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
-                if (hasDental) document.getElementById('qrCardDentalIcon').style.visibility = 'visible';
-                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
-                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
 
                 // Translator badge: show the icon pinned to top-right of the name area
                 if (isInterpreterNeeded) {
@@ -737,4 +815,8 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 
 //================================================================================
 // 8. INITIALIZATION
-fetchRegistrationQueue();
+(async () => {
+    await loadServiceHierarchyForDashboard();
+    buildServiceProgressBars();
+    fetchRegistrationQueue();
+})();

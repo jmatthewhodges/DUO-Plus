@@ -222,6 +222,20 @@
                         <form id="addServiceForm">
                             <div class="row g-3">
                                 <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Service Type</label>
+                                    <select class="form-select" id="newServiceType">
+                                        <option value="category">Category (shown at registration)</option>
+                                        <option value="operational">Operational (sub-service)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6" id="parentServiceGroup" style="display:none;">
+                                    <label class="form-label fw-semibold small">Parent Category</label>
+                                    <select class="form-select" id="newParentServiceID">
+                                        <option value="">— Select parent —</option>
+                                        <!-- Populated by JS -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold small">Service ID</label>
                                     <input type="text" class="form-control" id="newServiceID"
                                         placeholder="e.g. mentalHealth" maxlength="64">
@@ -231,6 +245,12 @@
                                     <label class="form-label fw-semibold small">Service Name</label>
                                     <input type="text" class="form-control" id="newServiceName"
                                         placeholder="e.g. Mental Health" maxlength="100">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Sort Order</label>
+                                    <input type="number" class="form-control" id="newSortOrder"
+                                        value="0" min="0" inputmode="numeric">
+                                    <small class="text-muted">Lower = higher priority</small>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label fw-semibold small">Choose Icon</label>

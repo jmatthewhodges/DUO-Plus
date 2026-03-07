@@ -143,6 +143,35 @@ if (!$updateVisit->execute()) {
 }
 $updateVisit->close();
 
+// Resolve category IDs to operational IDs.
+// If a serviceID is a category WITH children, expand to its children.
+// If it's a category with no children (e.g. optical), keep it as-is.
+// If it's already operational, keep it as-is.
+$resolvedServices = [];
+foreach ($services as $rawID) {
+    $rawID = trim($rawID);
+    if (empty($rawID)) continue;
+
+    $childStmt = $mysqli->prepare(
+        "SELECT ServiceID FROM tblServices WHERE ParentServiceID = ? ORDER BY SortOrder ASC"
+    );
+    $childStmt->bind_param('s', $rawID);
+    $childStmt->execute();
+    $childRows = $childStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $childStmt->close();
+
+    if (!empty($childRows)) {
+        // Category with children — expand
+        foreach ($childRows as $cr) {
+            $resolvedServices[] = $cr['ServiceID'];
+        }
+    } else {
+        // Operational service or standalone category — keep as-is
+        $resolvedServices[] = $rawID;
+    }
+}
+$resolvedServices = array_unique($resolvedServices);
+
 // Insert rows into tblVisitServices for each service
 $insertService = $mysqli->prepare(
     "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
@@ -160,7 +189,7 @@ $incrementAssigned = $mysqli->prepare(
     "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
 );
 
-foreach ($services as $serviceID) {
+foreach ($resolvedServices as $serviceID) {
     $serviceID = trim($serviceID);
     error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
     if (empty($serviceID)) continue;

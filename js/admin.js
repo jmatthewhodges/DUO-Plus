@@ -125,60 +125,30 @@ function renderServicesSection() {
         return;
     }
 
-    container.innerHTML = services.map(svc => {
-        const hasEvent = svc.EventServiceID !== null;
-        const statusBadge = hasEvent
-            ? (svc.IsClosed == 1
-                ? '<span class="badge bg-danger status-badge">Closed</span>'
-                : '<span class="badge bg-success status-badge">Open</span>')
-            : '<span class="badge bg-secondary status-badge">Not in Event</span>';
+    // Group: categories first, then their children underneath
+    const categories = services.filter(s => s.ServiceType === 'category' && !s.ParentServiceID);
+    const operationals = services.filter(s => s.ServiceType === 'operational' && s.ParentServiceID);
+    const childMap = {};
+    operationals.forEach(op => {
+        if (!childMap[op.ParentServiceID]) childMap[op.ParentServiceID] = [];
+        childMap[op.ParentServiceID].push(op);
+    });
 
-        return `
-        <div class="service-row" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}">
-            <div class="service-icon-preview">
-                <i class="bi ${svc.IconTag || 'bi-circle'}"></i>
-            </div>
-            <div class="service-fields">
-                <div style="min-width: 140px;">
-                    <label>Service</label>
-                    <div class="fw-bold small">${svc.ServiceName}</div>
-                    <div class="text-muted" style="font-size:0.7rem;">${svc.ServiceID}</div>
-                    ${statusBadge}
-                </div>
-                ${hasEvent ? `
-                <div class="form-group">
-                    <label>Max Capacity</label>
-                    <input type="number" class="form-control form-control-sm svc-maxCapacity" 
-                        value="${svc.MaxCapacity ?? ''}" min="0" inputmode="numeric">
-                </div>
-                <div class="form-group">
-                    <label>Max Seats</label>
-                    <input type="number" class="form-control form-control-sm svc-maxSeats" 
-                        value="${svc.MaxSeats ?? ''}" min="0" inputmode="numeric">
-                </div>
-                <div class="form-group">
-                    <label>Standby Limit</label>
-                    <input type="number" class="form-control form-control-sm svc-standbyLimit" 
-                        value="${svc.StandbyLimit ?? ''}" min="0" inputmode="numeric">
-                </div>
-                ` : '<div class="text-muted small fst-italic">No active event settings</div>'}
-            </div>
-            <div class="d-flex flex-column gap-1">
-                ${hasEvent ? `
-                <button class="btn btn-sm btn-outline-primary btn-save-service" title="Save changes">
-                    <i class="bi bi-check-lg"></i>
-                </button>
-                <button class="btn btn-sm ${svc.IsClosed == 1 ? 'btn-outline-success' : 'btn-outline-warning'} btn-toggle-service" 
-                    title="${svc.IsClosed == 1 ? 'Open service' : 'Close service'}">
-                    <i class="bi ${svc.IsClosed == 1 ? 'bi-play-fill' : 'bi-pause-fill'}"></i>
-                </button>
-                ` : ''}
-                <button class="btn btn-sm btn-outline-danger btn-remove-service" title="Remove service">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>`;
-    }).join('');
+    let html = '';
+    categories.forEach(cat => {
+        html += renderServiceRow(cat, false);
+        (childMap[cat.ServiceID] || []).forEach(child => {
+            html += renderServiceRow(child, true);
+        });
+    });
+
+    // Any orphan operational services not under a known category
+    const categoryIDs = new Set(categories.map(c => c.ServiceID));
+    operationals.filter(op => !categoryIDs.has(op.ParentServiceID)).forEach(op => {
+        html += renderServiceRow(op, true);
+    });
+
+    container.innerHTML = html;
 
     // Attach event listeners
     container.querySelectorAll('.btn-save-service').forEach(btn => {
@@ -190,30 +160,127 @@ function renderServicesSection() {
     container.querySelectorAll('.btn-remove-service').forEach(btn => {
         btn.addEventListener('click', handleRemoveService);
     });
+
+    // Populate parent dropdown in Add Service form
+    populateParentDropdown(categories);
+}
+
+function renderServiceRow(svc, isChild) {
+    const hasEvent = svc.EventServiceID !== null;
+    const typeBadge = svc.ServiceType === 'category'
+        ? '<span class="badge bg-info status-badge">Category</span>'
+        : '<span class="badge bg-light text-dark status-badge">Operational</span>';
+    const statusBadge = hasEvent
+        ? (svc.IsClosed == 1
+            ? '<span class="badge bg-danger status-badge">Closed</span>'
+            : '<span class="badge bg-success status-badge">Open</span>')
+        : '';
+    const indent = isChild ? 'style="padding-left: 2.5rem; background: #fafbfe;"' : '';
+    const childIcon = isChild ? '<i class="bi bi-arrow-return-right text-muted me-1" style="font-size:0.75rem;"></i>' : '';
+
+    return `
+    <div class="service-row" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}" ${indent}>
+        <div class="service-icon-preview">
+            <i class="bi ${svc.IconTag || 'bi-circle'}"></i>
+        </div>
+        <div class="service-fields">
+            <div style="min-width: 140px;">
+                <label>Service</label>
+                <div class="fw-bold small">${childIcon}${svc.ServiceName}</div>
+                <div class="text-muted" style="font-size:0.7rem;">${svc.ServiceID}</div>
+                ${typeBadge} ${statusBadge}
+            </div>
+            <div class="form-group" style="max-width: 70px;">
+                <label>Order</label>
+                <input type="number" class="form-control form-control-sm svc-sortOrder" 
+                    value="${svc.SortOrder ?? 0}" min="0" inputmode="numeric">
+            </div>
+            ${hasEvent ? `
+            <div class="form-group">
+                <label>Max Capacity</label>
+                <input type="number" class="form-control form-control-sm svc-maxCapacity" 
+                    value="${svc.MaxCapacity ?? ''}" min="0" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>Max Seats</label>
+                <input type="number" class="form-control form-control-sm svc-maxSeats" 
+                    value="${svc.MaxSeats ?? ''}" min="0" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>Standby Limit</label>
+                <input type="number" class="form-control form-control-sm svc-standbyLimit" 
+                    value="${svc.StandbyLimit ?? ''}" min="0" inputmode="numeric">
+            </div>
+            ` : (!isChild ? '<div class="text-muted small fst-italic">Category only — no event settings</div>' : '<div class="text-muted small fst-italic">No active event settings</div>')}
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <button class="btn btn-sm btn-outline-primary btn-save-service" title="Save changes">
+                <i class="bi bi-check-lg"></i>
+            </button>
+            ${hasEvent ? `
+            <button class="btn btn-sm ${svc.IsClosed == 1 ? 'btn-outline-success' : 'btn-outline-warning'} btn-toggle-service" 
+                title="${svc.IsClosed == 1 ? 'Open service' : 'Close service'}">
+                <i class="bi ${svc.IsClosed == 1 ? 'bi-play-fill' : 'bi-pause-fill'}"></i>
+            </button>
+            ` : ''}
+            <button class="btn btn-sm btn-outline-danger btn-remove-service" title="Remove service">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>`;
+}
+
+function populateParentDropdown(categories) {
+    const select = document.getElementById('newParentServiceID');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Select parent —</option>';
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.ServiceID;
+        opt.textContent = cat.ServiceName;
+        select.appendChild(opt);
+    });
 }
 
 async function handleSaveService(e) {
     const row = e.target.closest('.service-row');
+    const serviceID = row.dataset.serviceId;
     const eventServiceID = row.dataset.eventServiceId;
+    const sortOrder = row.querySelector('.svc-sortOrder')?.value;
 
     const maxCapacity = row.querySelector('.svc-maxCapacity')?.value;
     const maxSeats = row.querySelector('.svc-maxSeats')?.value;
     const standbyLimit = row.querySelector('.svc-standbyLimit')?.value;
 
     try {
-        const result = await adminPost({
-            action: 'updateService',
-            eventServiceID,
-            maxCapacity: maxCapacity !== '' ? parseInt(maxCapacity) : null,
-            maxSeats: maxSeats !== '' ? parseInt(maxSeats) : null,
-            standbyLimit: standbyLimit !== '' ? parseInt(standbyLimit) : null,
-        });
+        const promises = [];
 
-        if (result.success) {
-            Swal.fire({ icon: 'success', title: 'Saved', timer: 1200, showConfirmButton: false });
-        } else {
-            throw new Error(result.error);
+        // Always update sort order on tblServices
+        if (sortOrder !== '' && sortOrder !== undefined) {
+            promises.push(adminPost({
+                action: 'updateSortOrder',
+                serviceID,
+                sortOrder: parseInt(sortOrder),
+            }));
         }
+
+        // Update event settings if this service has an event row
+        if (eventServiceID) {
+            promises.push(adminPost({
+                action: 'updateService',
+                eventServiceID,
+                maxCapacity: maxCapacity !== '' ? parseInt(maxCapacity) : null,
+                maxSeats: maxSeats !== '' ? parseInt(maxSeats) : null,
+                standbyLimit: standbyLimit !== '' ? parseInt(standbyLimit) : null,
+            }));
+        }
+
+        const results = await Promise.all(promises);
+        const failed = results.find(r => !r.success);
+        if (failed) throw new Error(failed.error);
+
+        await loadAdminData();
+        Swal.fire({ icon: 'success', title: 'Saved', timer: 1200, showConfirmButton: false });
     } catch (err) {
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
@@ -297,12 +364,21 @@ function renderIconPicker() {
 // SECTION: Add Service Form
 // ═══════════════════════════════════════════════════════════════
 
+// Toggle parent dropdown visibility based on service type
+document.getElementById('newServiceType').addEventListener('change', function () {
+    const parentGroup = document.getElementById('parentServiceGroup');
+    parentGroup.style.display = this.value === 'operational' ? '' : 'none';
+});
+
 document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const serviceID = document.getElementById('newServiceID').value.trim();
     const serviceName = document.getElementById('newServiceName').value.trim();
     const iconTag = document.getElementById('newServiceIcon').value;
+    const serviceType = document.getElementById('newServiceType').value;
+    const parentServiceID = document.getElementById('newParentServiceID').value || null;
+    const sortOrder = parseInt(document.getElementById('newSortOrder').value) || 0;
 
     if (!serviceID || !serviceName) {
         Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'Service ID and Name are required.' });
@@ -314,18 +390,27 @@ document.getElementById('addServiceForm').addEventListener('submit', async (e) =
         return;
     }
 
+    if (serviceType === 'operational' && !parentServiceID) {
+        Swal.fire({ icon: 'warning', title: 'Missing Parent', text: 'Operational services must have a parent category.' });
+        return;
+    }
+
     try {
         const result = await adminPost({
             action: 'addService',
             serviceID,
             serviceName,
             iconTag,
+            serviceType,
+            parentServiceID: serviceType === 'operational' ? parentServiceID : null,
+            sortOrder,
         });
 
         if (result.success) {
             Swal.fire({ icon: 'success', title: 'Service Added', timer: 1500, showConfirmButton: false });
             document.getElementById('addServiceForm').reset();
             document.getElementById('newServiceIcon').value = '';
+            document.getElementById('parentServiceGroup').style.display = 'none';
             document.querySelectorAll('.icon-picker-item').forEach(i => i.classList.remove('selected'));
             await loadAdminData();
         } else {

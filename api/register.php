@@ -235,9 +235,9 @@ if ($clientID) {
         exit;
     }
 
-    // Check if each ServiceID is valid
+    // Check if each ServiceID is valid (must be a category)
     foreach ($services as $service) {
-        $serviceCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ServiceID = ?");
+        $serviceCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ServiceID = ? AND ServiceType = 'category'");
         $serviceCheck->bind_param("s", $service);
         $serviceCheck->execute();
         $serviceCheck->bind_result($serviceCount);
@@ -246,7 +246,7 @@ if ($clientID) {
 
         if ($serviceCount == 0) {
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => "ServiceID '$service' does not exist."]);
+            echo json_encode(['success' => false, 'message' => "ServiceID '$service' is not a valid category."]);
             exit;
         }
     }
@@ -520,9 +520,9 @@ if ($clientID) {
         exit;
     }
 
-    // Check if each ServiceID is valid
+    // Check if each ServiceID is valid (must be a category)
     foreach ($services as $service) {
-        $serviceCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ServiceID = ?");
+        $serviceCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ServiceID = ? AND ServiceType = 'category'");
         $serviceCheck->bind_param("s", $service);
         $serviceCheck->execute();
         $serviceCheck->bind_result($serviceCount);
@@ -531,7 +531,7 @@ if ($clientID) {
 
         if ($serviceCount == 0) {
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => "ServiceID '$service' does not exist."]);
+            echo json_encode(['success' => false, 'message' => "ServiceID '$service' is not a valid category."]);
             exit;
         }
     }

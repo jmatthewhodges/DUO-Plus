@@ -53,15 +53,8 @@
                         <i class="bi bi-chat-dots" style="display: none; font-size: 1rem; color:black;"
                             id="qrCardTranslator"></i>
                         <canvas class="p-3" id="qr" role="img" aria-label="Your registration QR code"></canvas>
-                        <div class="d-flex justify-content-center gap-3 mt-3">
-                            <i class="bi bi-plus-lg qr-icon-border" style="display: none; font-size: 3rem; color:black;"
-                                id="qrCardMedicalIcon" aria-hidden="true"></i>
-                            <i class="bi bi-shield-shaded qr-icon-border"
-                                style="display: none; font-size: 3rem; color:black;" id="qrCardDentalIcon" aria-hidden="true"></i>
-                            <i class="bi bi-eye qr-icon-border" style="display: none; font-size: 3rem; color:black;"
-                                id="qrCardOpticalIcon" aria-hidden="true"></i>
-                            <i class="bi bi-scissors qr-icon-border"
-                                style="display: none; font-size: 3rem; color:black;" id="qrCardHaircutIcon" aria-hidden="true"></i>
+                        <div class="d-flex justify-content-center gap-3 mt-3" id="qrCardIcons">
+                            <!-- Populated dynamically by JS based on selected services -->
                         </div>
                         <div class="mt-3">
                             <a href="../index.html" class="btn btn-outline-primary w-100 rounded-2">Back to Login</a>
@@ -387,48 +380,10 @@
                     <div id="divStepFive" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
                         <h5 id="titleStepFive" class="card-title text-center mb-3">Service Selection</h5>
                         <form id="clientRegisterFormStep5" novalidate>
-                            <!-- Services Grid -->
-                            <fieldset class="row mb-3" aria-label="Select services">
+                            <!-- Services Grid (populated dynamically from API) -->
+                            <fieldset class="row mb-3" id="serviceSelectionGrid" aria-label="Select services">
                                 <legend class="visually-hidden">Select the services you need</legend>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceMedical" value="medical" autocomplete="off"
-                                            aria-label="Medical">
-                                        <label class="btn btn-outline-navy w-100 text-start p-3"
-                                            style="font-size: 20px;" for="btnServiceMedical">
-                                            <i class="bi bi-heart-pulse me-2"></i> Medical
-                                        </label>
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceOptical" value="optical" autocomplete="off"
-                                            aria-label="Optical">
-                                        <label class="btn btn-outline-navy w-100 text-start p-3"
-                                            style="font-size: 20px;" for="btnServiceOptical">
-                                            <i class="bi bi-eye me-2"></i> Optical
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceDental" value="dental" autocomplete="off" aria-label="Dental">
-                                        <label class="btn btn-outline-navy w-100 text-start p-3"
-                                            style="font-size: 20px;" for="btnServiceDental">
-                                            <i class="bi bi-shield-shaded me-2"></i> Dental
-                                        </label>
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="checkbox" class="btn-check" name="clientServices"
-                                            id="btnServiceHaircut" value="haircut" autocomplete="off"
-                                            aria-label="Haircut">
-                                        <label class="btn btn-outline-navy w-100 text-start p-3"
-                                            style="font-size: 20px;" for="btnServiceHaircut">
-                                            <i class="bi bi-scissors me-2"></i> Haircut
-                                        </label>
-                                    </div>
-                                </div>
+                                <div class="text-center p-3 text-muted">Loading services...</div>
                             </fieldset>
 
                             <!-- Buttons -->

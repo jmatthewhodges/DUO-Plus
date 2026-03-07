@@ -49,56 +49,64 @@
  ============================================================
 */
 
-// Service configuration
-const SERVICES = {
-    medical: {
-        name: 'Medical',
-        icon: 'bi-heart-pulse',
-        color: 'primary',
-        serviceIDs: ['medicalExam', 'medicalFollowUp']
-    },
-    optical: {
-        name: 'Optical',
-        icon: 'bi-eye',
-        color: 'primary',
-        serviceIDs: ['optical']
-    },
-    dental: {
-        name: 'Dental',
-        icon: 'bi-brightness-high',
-        color: 'primary',
-        serviceIDs: ['dentalHygiene', 'dentalExtraction']
-    },
-    haircut: {
-        name: 'Haircut',
-        icon: 'bi-scissors',
-        color: 'primary',
-        serviceIDs: ['haircut']
+// Service configuration — loaded from API at init, populated by loadServiceHierarchy()
+let SERVICES = {};
+
+// In-memory waitlist per service station (keyed by category ServiceID)
+let SERVICE_WAITLISTS = {};
+
+// Friendly short labels for sub-services (built from API data)
+let SUB_SERVICE_LABELS = {};
+
+// Loads service hierarchy from /api/services.php and builds SERVICES, SERVICE_WAITLISTS, and SUB_SERVICE_LABELS
+async function loadServiceHierarchy() {
+    try {
+        const res = await fetch('/api/services.php?view=hierarchy');
+        const json = await res.json();
+        if (!json.success || !json.hierarchy) {
+            console.error('Failed to load service hierarchy');
+            return;
+        }
+
+        SERVICES = {};
+        SERVICE_WAITLISTS = {};
+        SUB_SERVICE_LABELS = {};
+
+        json.hierarchy.forEach(cat => {
+            const key = cat.ServiceID;
+            const children = cat.children || [];
+
+            // If category has children, serviceIDs = child IDs
+            // If no children, serviceIDs = [category ID itself] (standalone like optical, haircut)
+            const serviceIDs = children.length > 0
+                ? children.map(c => c.ServiceID)
+                : [key];
+
+            SERVICES[key] = {
+                name: cat.ServiceName,
+                icon: cat.IconTag || 'bi-circle',
+                color: 'primary',
+                serviceIDs: serviceIDs,
+            };
+
+            SERVICE_WAITLISTS[key] = {};
+
+            // Build sub-service labels from child ServiceName
+            // Strip the parent name prefix if present (e.g. "Dental Hygiene" → "Hygiene")
+            children.forEach(child => {
+                let label = child.ServiceName;
+                if (label.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                    label = label.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                }
+                SUB_SERVICE_LABELS[child.ServiceID] = label || child.ServiceName;
+            });
+        });
+
+        console.log('Service hierarchy loaded:', Object.keys(SERVICES));
+    } catch (err) {
+        console.error('Error loading service hierarchy:', err);
     }
-};
-
-// Valid station names: medical, optical, dental, haircut
-// IMPORTANT: Service waitlist data storage (in-memory during session)
-// Structure: { serviceKey: { clientId: { id, name, dob, status, checkInTime, checkOutTime }, ... }, ... }
-// Status values: 'waiting', 'in-progress', 'completed'
-// TODO: When API is implemented, sync this with database on every change:
-//       - Load initial waitlist on page load from backend
-//       - Update on each action (add/check-in/check-out/remove) with API calls
-//       - Consider using API response as source of truth
-const SERVICE_WAITLISTS = {
-    medical: {},
-    optical: {},
-    dental: {},
-    haircut: {}
-};
-
-// Friendly short labels for sub-services (only shown when station has multiple)
-const SUB_SERVICE_LABELS = {
-    medicalExam: 'Exam',
-    medicalFollowUp: 'Follow Up',
-    dentalHygiene: 'Hygiene',
-    dentalExtraction: 'Extraction'
-};
+}
 
 let videoStream = null;
 let isScanning = false;
@@ -566,8 +574,11 @@ function handleQRScan(qrData) {
 }
 
 // Start scanning after PIN verification
-document.addEventListener('pinVerified', function() {
-    console.log('PIN verified - checking for ServiceID');
+document.addEventListener('pinVerified', async function() {
+    console.log('PIN verified - loading service hierarchy');
+
+    // Load service hierarchy from API before proceeding
+    await loadServiceHierarchy();
     
     // Get ServiceID from URL if it exists
     const urlParams = new URLSearchParams(window.location.search);
@@ -603,11 +614,12 @@ function handleServiceSelection(serviceID) {
 
 
 // If page reloads after PIN verification, check for ServiceID
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOMContentLoaded - Service.js loaded');
     
     if (document.body.classList.contains('pin-verified')) {
-        console.log('Already pin-verified, checking for ServiceID');
+        console.log('Already pin-verified, loading hierarchy and checking for ServiceID');
+        await loadServiceHierarchy();
         const urlParams = new URLSearchParams(window.location.search);
         const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
         

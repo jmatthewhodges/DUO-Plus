@@ -42,10 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // --- Services (all defined + event-specific settings) ---
     $svcStmt = $mysqli->prepare(
         "SELECT s.ServiceID, s.ServiceName, s.IconTag,
+                s.ParentServiceID, s.ServiceType, s.SortOrder,
                 es.EventServiceID, es.MaxCapacity, es.MaxSeats, es.StandbyLimit, es.IsClosed
          FROM tblServices s
          LEFT JOIN tblEventServices es ON es.ServiceID = s.ServiceID AND es.EventID = ?
-         ORDER BY s.ServiceName ASC"
+         ORDER BY s.SortOrder ASC, s.ServiceName ASC"
     );
     if ($svcStmt) {
         $svcStmt->bind_param('s', $activeEventID);
@@ -158,11 +159,39 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Service settings updated.']);
         break;
 
+    // ── Update Sort Order ─────────────────────────────────────
+    case 'updateSortOrder':
+        $serviceID = trim($body['serviceID'] ?? '');
+        $sortOrder = $body['sortOrder'] ?? null;
+
+        if (empty($serviceID)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing serviceID.']);
+            exit;
+        }
+        if ($sortOrder === null || !is_numeric($sortOrder)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'sortOrder must be a number.']);
+            exit;
+        }
+
+        $stmt = $mysqli->prepare("UPDATE tblServices SET SortOrder = ? WHERE ServiceID = ?");
+        $sortVal = (int) $sortOrder;
+        $stmt->bind_param('is', $sortVal, $serviceID);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(['success' => true, 'message' => 'Sort order updated.']);
+        break;
+
     // ── Add New Service ──────────────────────────────────────
     case 'addService':
-        $serviceID   = trim($body['serviceID']   ?? '');
-        $serviceName = trim($body['serviceName'] ?? '');
-        $iconTag     = trim($body['iconTag']     ?? '');
+        $serviceID       = trim($body['serviceID']       ?? '');
+        $serviceName     = trim($body['serviceName']     ?? '');
+        $iconTag         = trim($body['iconTag']         ?? '');
+        $parentServiceID = trim($body['parentServiceID'] ?? '') ?: null;
+        $serviceType     = trim($body['serviceType']     ?? 'category');
+        $sortOrder       = (int)($body['sortOrder']      ?? 0);
 
         if (empty($serviceID) || empty($serviceName) || empty($iconTag)) {
             http_response_code(400);
@@ -175,6 +204,34 @@ switch ($action) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'ServiceID must be alphanumeric camelCase (2-64 chars).']);
             exit;
+        }
+
+        // Validate serviceType
+        if (!in_array($serviceType, ['category', 'operational'], true)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'serviceType must be "category" or "operational".']);
+            exit;
+        }
+
+        // If operational, parentServiceID is required
+        if ($serviceType === 'operational' && empty($parentServiceID)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Operational services must have a parentServiceID.']);
+            exit;
+        }
+
+        // Validate parent exists if provided
+        if ($parentServiceID !== null) {
+            $parentCheck = $mysqli->prepare("SELECT ServiceType FROM tblServices WHERE ServiceID = ?");
+            $parentCheck->bind_param('s', $parentServiceID);
+            $parentCheck->execute();
+            $parentRow = $parentCheck->get_result()->fetch_assoc();
+            $parentCheck->close();
+            if (!$parentRow || $parentRow['ServiceType'] !== 'category') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'parentServiceID must reference an existing category.']);
+                exit;
+            }
         }
 
         // Sanitize ServiceName
@@ -194,14 +251,31 @@ switch ($action) {
             exit;
         }
 
-        $stmt = $mysqli->prepare("INSERT INTO tblServices (ServiceID, ServiceName, IconTag) VALUES (?, ?, ?)");
-        $stmt->bind_param('sss', $serviceID, $serviceName, $iconTag);
+        $stmt = $mysqli->prepare(
+            "INSERT INTO tblServices (ServiceID, ServiceName, IconTag, ParentServiceID, ServiceType, SortOrder) VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->bind_param('sssssi', $serviceID, $serviceName, $iconTag, $parentServiceID, $serviceType, $sortOrder);
         $stmt->execute();
         $stmt->close();
 
-        // Also add to active event's tblEventServices with defaults
-        $eID = '4cbde538985861b9';
-        {
+        // Only add to tblEventServices for operational services (or categories with no children)
+        // Categories that have children don't need event-level capacity
+        $needsEventRow = ($serviceType === 'operational');
+        if ($serviceType === 'category' && $parentServiceID === null) {
+            // Check if this category has children — if not, it doubles as operational
+            $childCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblServices WHERE ParentServiceID = ?");
+            $childCheck->bind_param('s', $serviceID);
+            $childCheck->execute();
+            $childCheck->bind_result($childCount);
+            $childCheck->fetch();
+            $childCheck->close();
+            // Standalone category with no children doubles as its own operational service,
+            // so it needs an event row for capacity/queue management.
+            $needsEventRow = ($childCount === 0);
+        }
+
+        if ($needsEventRow) {
+            $eID = '4cbde538985861b9';
             $esID = bin2hex(random_bytes(8));
             $defaultCapacity = 50;
             $defaultSeats = 3;

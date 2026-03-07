@@ -17,16 +17,27 @@ header('Content-Type: application/json');
 
 $mysqli = $GLOBALS['mysqli'];
 
-// Service hierarchy — lower number = higher priority
-// Dental (#1) > Optical (#2) > Medical (#3) > Haircut (#4)
-$serviceHierarchy = [
-    'dentalHygiene'    => 1,
-    'dentalExtraction' => 1,
-    'optical'          => 2,
-    'medicalExam'      => 3,
-    'medicalFollowUp'  => 3,
-    'haircut'          => 4,
-];
+// Service hierarchy — loaded from DB (category SortOrder drives priority).
+// Operational services inherit their parent category's SortOrder.
+$serviceHierarchy = [];
+$hierStmt = $mysqli->prepare(
+    "SELECT s.ServiceID,
+            COALESCE(p.SortOrder, s.SortOrder) AS Priority
+     FROM tblServices s
+     LEFT JOIN tblServices p ON p.ServiceID = s.ParentServiceID
+     WHERE s.ServiceType = 'operational'
+        OR (s.ServiceType = 'category' AND NOT EXISTS (
+            SELECT 1 FROM tblServices c WHERE c.ParentServiceID = s.ServiceID
+        ))"
+);
+if ($hierStmt) {
+    $hierStmt->execute();
+    $hierRows = $hierStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $hierStmt->close();
+    foreach ($hierRows as $hr) {
+        $serviceHierarchy[$hr['ServiceID']] = (int)$hr['Priority'];
+    }
+}
 
 /*
 ---------------------------------

@@ -144,6 +144,50 @@ function createDobMask(lang) {
     }
 }
 
+// Stored categories from API for QR card icon rendering
+let registrationCategories = [];
+
+// Load service categories from API and render Step 5 checkboxes dynamically
+async function loadServiceCategories() {
+    const grid = document.getElementById('serviceSelectionGrid');
+    try {
+        const res = await fetch('/api/services.php?view=categories');
+        const json = await res.json();
+        if (!json.success || !json.categories || json.categories.length === 0) {
+            grid.innerHTML = '<div class="text-center p-3 text-danger">No services available.</div>';
+            return;
+        }
+
+        registrationCategories = json.categories;
+
+        // Build a 2-column grid of checkboxes
+        const col1 = [];
+        const col2 = [];
+        json.categories.forEach((cat, i) => {
+            const id = `btnService_${cat.ServiceID}`;
+            const html = `
+                <div class="mb-3">
+                    <input type="checkbox" class="btn-check" name="clientServices"
+                        id="${id}" value="${cat.ServiceID}" autocomplete="off"
+                        aria-label="${cat.ServiceName}">
+                    <label class="btn btn-outline-navy w-100 text-start p-3"
+                        style="font-size: 20px;" for="${id}">
+                        <i class="bi ${cat.IconTag || 'bi-circle'} me-2"></i> ${cat.ServiceName}
+                    </label>
+                </div>`;
+            if (i % 2 === 0) col1.push(html); else col2.push(html);
+        });
+
+        grid.innerHTML = `
+            <legend class="visually-hidden">Select the services you need</legend>
+            <div class="col-6">${col1.join('')}</div>
+            <div class="col-6">${col2.join('')}</div>`;
+    } catch (err) {
+        console.error('Failed to load service categories:', err);
+        grid.innerHTML = '<div class="text-center p-3 text-danger">Failed to load services.</div>';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize DOB mask with saved language (or default to English)
     const savedLang = sessionStorage.getItem('lang') || 'en';
@@ -153,6 +197,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('selLanguageSwitch').addEventListener('change', function () {
         createDobMask(this.value);
     });
+
+    // Load service categories from API for Step 5
+    loadServiceCategories();
 
     // Check if returning user via URL param (e.g. ?clientID=abc123)
     const urlParams = new URLSearchParams(window.location.search);
@@ -852,29 +899,19 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                         size: 200,
                     });
 
-                    // Show service icons (use visibility like dashboard)
-                    const serviceIcons = {
-                        medical: 'qrCardMedicalIcon',
-                        dental: 'qrCardDentalIcon',
-                        optical: 'qrCardOpticalIcon',
-                        haircut: 'qrCardHaircutIcon'
-                    };
+                    // Build QR card icons dynamically from loaded categories
+                    const qrIconsContainer = document.getElementById('qrCardIcons');
+                    qrIconsContainer.innerHTML = '';
                     const selectedServices = data.services || [];
-
-                    Object.values(serviceIcons).forEach(id => {
-                        const icon = document.getElementById(id);
-                        if (icon) {
-                            icon.style.display = 'inline-flex';
-                            icon.style.visibility = 'hidden';
-                        }
-                    });
-
-                    selectedServices.forEach(key => {
-                        const id = serviceIcons[key];
-                        if (id) {
-                            const icon = document.getElementById(id);
-                            if (icon) icon.style.visibility = 'visible';
-                        }
+                    registrationCategories.forEach(cat => {
+                        const iconEl = document.createElement('i');
+                        iconEl.className = `bi ${cat.IconTag || 'bi-circle'} qr-icon-border`;
+                        iconEl.style.fontSize = '3rem';
+                        iconEl.style.color = 'black';
+                        iconEl.style.display = 'inline-flex';
+                        iconEl.style.visibility = selectedServices.includes(cat.ServiceID) ? 'visible' : 'hidden';
+                        iconEl.setAttribute('aria-hidden', 'true');
+                        qrIconsContainer.appendChild(iconEl);
                     });
                 });
             } else {
