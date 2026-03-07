@@ -219,7 +219,8 @@ async function fetchServiceData(serviceKey) {
 
 
 // Show service selection dropdown for manual entry
-function showServiceSelectionDropdown() {
+// If required=true, user cannot dismiss without selecting a service
+function showServiceSelectionDropdown(required = false) {
     // Stop QR scanning first
     stopQRScanning();
     
@@ -233,9 +234,12 @@ function showServiceSelectionDropdown() {
         title: 'Select Service',
         html: html,
         showConfirmButton: false,
-        allowOutsideClick: true,
-        allowEscapeKey: true,
+        allowOutsideClick: !required,
+        allowEscapeKey: !required,
         didOpen: (modal) => {
+            // Prevent auto-focus so a residual keypress doesn't insta-select the first button
+            if (document.activeElement) document.activeElement.blur();
+
             // Add click handlers to buttons
             modal.querySelectorAll('.service-select-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -255,6 +259,62 @@ function selectServiceManual(serviceKey) {
     showService(serviceKey);
 }
 
+
+// Show a pre-permission screen explaining why camera access is needed
+// Skips the modal if camera permission is already granted
+async function showCameraPermissionScreen() {
+    try {
+        const permStatus = await navigator.permissions.query({ name: 'camera' });
+        if (permStatus.state === 'granted') {
+            startQRScanning();
+            return;
+        }
+    } catch (e) {
+        // Permissions API not supported — fall through to show the modal
+    }
+
+    Swal.fire({
+        html: `
+            <div style="padding: 10px 0;">
+                <div style="margin-bottom: 20px;">
+                    <i class="bi bi-camera-video" style="font-size: 48px; color: #174593;"></i>
+                </div>
+                <h2 style="font-size: 1.4rem; font-weight: 700; color: #174593; margin-bottom: 12px;">Camera Access Needed</h2>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 16px;">
+                    We use your camera to scan QR codes at each service station and on client badges for quick check-in and check-out.
+                </p>
+                <div style="text-align: left; background: #f0f4ff; border-radius: 10px; padding: 16px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="bi bi-qr-code-scan" style="font-size: 1.2rem; color: #174593;"></i>
+                        <span style="font-size: 0.95rem;"><strong>Station QR</strong> &mdash; Identify which service station you're at</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="bi bi-person-badge" style="font-size: 1.2rem; color: #174593;"></i>
+                        <span style="font-size: 0.95rem;"><strong>Client Badge</strong> &mdash; Scan to check clients in &amp; out</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="bi bi-shield-lock" style="font-size: 1.2rem; color: #174593;"></i>
+                        <span style="font-size: 0.95rem;"><strong>Private</strong> &mdash; Camera is only used locally, nothing is recorded</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        confirmButtonText: '<i class="bi bi-camera-video me-2"></i>Allow Camera',
+        confirmButtonColor: '#174593',
+        showDenyButton: true,
+        denyButtonText: 'Continue without camera',
+        denyButtonColor: '#6c757d',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            startQRScanning();
+        } else {
+            showCameraRecommendation();
+            showServiceSelectionDropdown(true);
+        }
+    });
+}
 
 // Start QR code camera scanning
 function startQRScanning() {
@@ -299,10 +359,14 @@ function startQRScanning() {
             e.stopPropagation();
             console.log('Close button clicked');
             stopQRScanning();
+            // If no service selected yet, force the selection modal
+            if (!currentServiceKey) {
+                showServiceSelectionDropdown(true);
+            }
         };
 
         const manualBtn = document.createElement('button');
-        manualBtn.innerHTML = 'Manual Entry';
+        manualBtn.innerHTML = 'Manual Select';
         manualBtn.className = 'btn btn-secondary position-absolute bottom-0 start-0 m-3';
         manualBtn.title = 'Select service manually';
         manualBtn.style.pointerEvents = 'auto';
@@ -376,9 +440,57 @@ function startQRScanning() {
 
     }).catch(err => {
         isScanning = false;
-        Swal.fire('Camera Error', 'Unable to access camera. Check permissions.', 'error');
         console.error('Camera error:', err);
+        showCameraRecommendation();
+        showServiceSelectionDropdown(true);
     });
+}
+
+// Show a persistent banner recommending camera usage for QR scanning
+function showCameraRecommendation() {
+    if (document.getElementById('cameraRecBanner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'cameraRecBanner';
+    banner.className = 'alert alert-warning d-flex align-items-center gap-2 mb-3';
+    banner.setAttribute('role', 'alert');
+    banner.innerHTML = `
+        <i class="bi bi-camera-video-off" style="font-size: 1.2rem;"></i>
+        <div class="small">
+            <strong>Camera not available.</strong> For the best experience, enable camera permissions to scan QR codes.
+            <a href="#" id="enableCamLink" style="margin-left: 4px; font-weight: 600;">Enable Cam</a>
+        </div>
+    `;
+    banner.querySelector('#enableCamLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                // Camera works — stop the test stream and remove the banner
+                stream.getTracks().forEach(track => track.stop());
+                banner.remove();
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Enable Camera',
+                    html: `
+                        <div style="text-align: left; line-height: 1.7;">
+                            <p>Your browser has blocked camera access. To re-enable it:</p>
+                            <ol style="padding-left: 20px;">
+                                <li>Tap the <strong>lock icon</strong> <i class="bi bi-lock"></i> (or camera icon) in your address bar</li>
+                                <li>Find <strong>Camera</strong> and change it to <strong>Allow</strong></li>
+                                <li>Reload the page</li>
+                            </ol>
+                        </div>
+                    `,
+                    confirmButtonText: 'Got it',
+                    confirmButtonColor: '#174593'
+                });
+            });
+    });
+    const serviceContent = document.getElementById('serviceContent');
+    if (serviceContent) {
+        serviceContent.insertBefore(banner, serviceContent.firstChild);
+    }
 }
 
 // Stop QR scanning and clean up
@@ -466,9 +578,9 @@ document.addEventListener('pinVerified', function() {
         console.log('ServiceID found in URL:', serviceID);
         handleServiceSelection(serviceID);
     } else {
-        // No ServiceID, start QR scanner
-        console.log('No ServiceID - starting QR scanner');
-        startQRScanning();
+        // No ServiceID, show camera permission screen
+        console.log('No ServiceID - showing camera permission screen');
+        showCameraPermissionScreen();
     }
 });
 
@@ -502,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (serviceID) {
             setTimeout(() => handleServiceSelection(serviceID), 100);
         } else {
-            setTimeout(startQRScanning, 100);
+            setTimeout(showCameraPermissionScreen, 100);
         }
     }
     
@@ -515,25 +627,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Setup manual add client button
-    const btnManualAdd = document.getElementById('btnManualAdd');
-    if (btnManualAdd) {
-        btnManualAdd.addEventListener('click', function() {
-            console.log('Manual add button clicked');
-            showManualClientIdEntry();
-        });
-    }
-    
-    // Setup update button listeners for manual client ID entry
-    const updateButtons = document.querySelectorAll('.btn-primary');
-    updateButtons.forEach(btn => {
-        if (btn.textContent.trim() === 'Update') {
-            btn.addEventListener('click', function() {
-                console.log('Update button clicked');
-                showManualClientIdEntry();
-            });
-        }
-    });
 });
 
 // Start scanning for client QR codes
@@ -644,8 +737,9 @@ function startClientQRScanning() {
     }).catch(err => {
         isScanning = false;
         isClientScan = false;
-        Swal.fire('Camera Error', 'Unable to access camera. Check permissions.', 'error');
         console.error('Camera error:', err);
+        showCameraRecommendation();
+        Swal.fire('Camera Error', 'Unable to access camera.', 'warning');
     });
 }
 
@@ -825,215 +919,13 @@ function showCheckInOutModal(clientId) {
     });
 }
 
-// Show manual client ID entry
-function showManualClientIdEntry() {
-    Swal.fire({
-        title: 'Add Client Manually',
-        input: 'text',
-        inputLabel: 'Search Client',
-        inputPlaceholder: 'Enter client ID or name (e.g., gicsxbtqog or John)',
-        showCancelButton: true,
-        confirmButtonText: 'Search',
-        cancelButtonText: 'Cancel',
-        inputValidator: (value) => {
-            if (!value) {
-                return 'Please enter a client ID or name';
-            }
-        }
-    }).then((result) => {
-        if (result.isConfirmed && result.value) {
-            const searchTerm = result.value.trim().toLowerCase();
-            searchAndDisplayClients(searchTerm);
-        }
-    });
-}
 
-// Search for clients by ID or name from waiting room
-// IMPORTANT: This should only show clients from the WAITING ROOM pool (not already assigned to services)
-// See comments at top of file (line ~16) for endpoint details
-// The API should:
-//   1. Search waiting room clients by id (substring/partial matches)
-//   2. Return only clients NOT assigned to any service yet
-//   3. Return only clients available for the current service
-async function searchAndDisplayClients(searchTerm) {
-    try {
-        // Expected response: { success: true, clients: [{id, name, dob}, ...] }
-        // TODO: Replace the fetch URL below with the endpoint
-        // const response = await fetch(`ENDPOINT URL?q=${encodeURIComponent(searchTerm)}&service=${currentServiceKey}`);
-        // const data = await response.json();
-        // if (data.success) {
-        //     displayClientSearchResults(data.clients);
-        // } else {
-        //     Swal.fire('Search Error', data.message || 'Unable to search clients', 'error');
-        // }
-        // return;
-        
-        const results = {};
-        
-        // Search by ID first (exact match is highest priority)
-        if (FAKE_CLIENTS[searchTerm]) {
-            results[searchTerm] = FAKE_CLIENTS[searchTerm];
-        } else {
-            // Search by name (substring match - case insensitive)
-            Object.entries(FAKE_CLIENTS).forEach(([id, client]) => {
-                if (client.name.toLowerCase().includes(searchTerm)) {
-                    results[id] = client;
-                }
-            });
-        }
-        
-        // If no results found
-        if (Object.keys(results).length === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'No Results',
-                text: `No clients found matching "${searchTerm}"`,
-                confirmButtonText: 'Try Again'
-            }).then(() => {
-                showManualClientIdEntry();
-            });
-            return;
-        }
-        
-        // Display search results
-        displayClientSearchResults(results);
-    } catch (error) {
-        console.error('Error searching clients:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Search Error',
-            text: 'Unable to search for clients. Please try again.',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            showManualClientIdEntry();
-        });
-    }
-}
 
-// Display client search results with add buttons
-// Note: Results should only show clients from the waiting room pool
-// When API is integrated, these will be fetched from the waiting room
-// and removed from list after being added to a service
-function displayClientSearchResults(results) {
-    let html = '<div style="text-align: left;">';
-    
-    Object.entries(results).forEach(([id, client]) => {
-        html += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;">
-                <div>
-                    <div style="font-weight: 600; margin-bottom: 4px;">${client.name}</div>
-                    <div style="font-size: 0.9rem; color: #666;">DOB: ${client.dob}</div>
-                    <div style="font-size: 0.85rem; color: #999;">ID: ${id}</div>
-                </div>
-                <button class="btn btn-success btn-sm" onclick="addClientFromSearch('${id}')">
-                    <i class="bi bi-plus-lg me-1"></i>Add
-                </button>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    
-    Swal.fire({
-        title: 'Select Client',
-        html: html,
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: 'Search Again',
-        didOpen: (modal) => {
-            modal.classList.add('modal-lg');
-        }
-    }).then((result) => {
-        if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
-            showManualClientIdEntry();
-        }
-    });
-}
 
-// Add a client from search results to the service
-// IMPORTANT: This function handles a key workflow:
-//   1. Check if client is already assigned to another service (prevent multi-service assignment)
-//   2. Check if client is already in THIS service's waitlist
-//   3. If neither, add the client to the service
-// See comments at top of file (line ~16) for endpoint details
-// The API should:
-//   1. Verify client exists and is available
-//   2. Verify client is NOT already assigned to another service
-//   3. Add client to this service's waitlist with status='waiting'
-//   4. Remove client from waiting room pool
-async function addClientFromSearch(clientId) {
-    const client = FAKE_CLIENTS[clientId];
-    if (!client) return;
-    
-    try {
-        // STEP 1: Check if client is already assigned to ANOTHER service
-        // This prevents a single client from being in multiple services at once
-        // Implement assignment check endpoint
-        // TODO: Uncomment and use when API is ready:
-        // const checkResponse = await fetch(`ENDPOINT_URL?clientId=${clientId}`);
-        // const checkData = await checkResponse.json();
-        // if (assigned && assignedService !== currentServiceKey) {
-        //     Swal.fire({
-        //         icon: 'warning',
-        //         title: 'Client Already Assigned',
-        //         text: `This client is already in the ${assignedService} service. Remove them from that service first.`,
-        //         confirmButtonText: 'OK'
-        //     });
-        //     return;
-        // }
-        
-        // STEP 2: Check if client is already in THIS service's waitlist (local check)
-        const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
-        
-        if (!clientInWaitlist) {
-            // STEP 3: Add to service
-            // Implement add client endpoint
-            // TODO: Uncomment and use when API is ready (this will replace the local state update):
-            // const response = await fetch('EndPoint_Url', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     },
-            //     body: JSON.stringify({
-            //         clientId: clientId,
-            //         serviceKey: currentServiceKey
-            //     })
-            // });
-            // const result = await response.json();
-            // if (!result.success) {
-            //     Swal.fire('Error', result.message || 'Failed to add client', 'error');
-            //     return;
-            // }
-            
-            // For now: Update local state
-            addClientToWaitlist(clientId, currentServiceKey);
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Client Added',
-                html: `
-                    <div style="text-align: left;">
-                        <p><strong>Client:</strong> ${client.name}</p>
-                        <p><strong>ID:</strong> ${client.id}</p>
-                        <p><strong>Status:</strong> Added to waiting list</p>
-                    </div>
-                `,
-                confirmButtonText: 'OK'
-            });
-        } else {
-            // Already in waitlist → show status options
-            showCheckInOutModal(clientId);
-        }
-    } catch (error) {
-        console.error('Error adding client:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Add Error',
-            text: 'Unable to add client. Please try again.',
-            confirmButtonText: 'OK'
-        });
-    }
-}
+
+
+
+
 
 // Process client action via ServiceScan.php API
 // ServiceScan auto-progresses: Pending → In-Progress, In-Progress → Complete
@@ -1211,60 +1103,7 @@ function filterWaitlist(searchTerm) {
     populateWaitlist(filteredClients);
 }
 
-// Add a client to the service waitlist
-function addClientToWaitlist(clientId, serviceKey = null) {
-    const service = serviceKey || currentServiceKey;
-    if (!service) {
-        console.error('No service specified for adding client to waitlist');
-        return false;
-    }
-    
-    const client = FAKE_CLIENTS[clientId];
-    if (!client) {
-        console.error('Client not found:', clientId);
-        return false;
-    }
-    
-    // Check if client already in this service's waitlist
-    if (SERVICE_WAITLISTS[service][clientId]) {
-        console.log('Client already in waitlist:', clientId);
-        return false;
-    }
-    
-    // Add client to the service's waitlist
-    SERVICE_WAITLISTS[service][clientId] = {
-        ...client,
-        checkInTime: new Date(),
-        status: 'waiting'
-    };
-    
-    console.log(`Client ${clientId} added to ${service} waitlist`);
-    populateWaitlist();
-    updateStatsDisplay();
-    
-    return true;
-}
 
-// Remove a client from the service waitlist
-function removeClientFromWaitlist(clientId, serviceKey = null) {
-    const service = serviceKey || currentServiceKey;
-    if (!service) {
-        console.error('No service specified for removing client from waitlist');
-        return false;
-    }
-    
-    if (!SERVICE_WAITLISTS[service][clientId]) {
-        console.log('Client not in waitlist:', clientId);
-        return false;
-    }
-    
-    delete SERVICE_WAITLISTS[service][clientId];
-    console.log(`Client ${clientId} removed from ${service} waitlist`);
-    populateWaitlist();
-    updateStatsDisplay();
-    
-    return true;
-}
 
 // Update stats display based on current waitlist
 function updateStatsDisplay() {

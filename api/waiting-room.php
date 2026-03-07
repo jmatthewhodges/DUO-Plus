@@ -155,6 +155,28 @@ if (!empty($visitIDs)) {
             $remainingMap[$rr['VisitID']] = (int)$rr['RemainingCount'];
         }
     }
+
+    // Track which visits currently have an In-Progress service (client is at a station)
+    $inProgressStmt = $mysqli->prepare(
+        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName
+         FROM tblVisitServices vs
+         JOIN tblServices s ON s.ServiceID = vs.ServiceID
+         WHERE vs.VisitID IN ($placeholders)
+           AND vs.ServiceStatus = 'In-Progress'"
+    );
+    $visitsInProgress = [];
+    if ($inProgressStmt) {
+        $inProgressStmt->bind_param($types, ...$visitIDs);
+        $inProgressStmt->execute();
+        $ipRows = $inProgressStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $inProgressStmt->close();
+        foreach ($ipRows as $ipRow) {
+            $visitsInProgress[$ipRow['VisitID']] = [
+                'ServiceID'   => $ipRow['ServiceID'],
+                'ServiceName' => $ipRow['ServiceName'],
+            ];
+        }
+    }
 }
 
 /*
@@ -171,6 +193,9 @@ $nowServingClientID = null;
 foreach ($clients as $client) {
     $visitID = $client['VisitID'];
     if (!isset($visitServiceMap[$visitID])) continue;
+
+    // Skip clients who are currently being served at a station
+    if (isset($visitsInProgress[$visitID])) continue;
 
     $pending = $visitServiceMap[$visitID];
 
@@ -215,7 +240,7 @@ foreach ($clients as $client) {
 
     $remaining = $remainingMap[$visitID] ?? 0;
 
-    $waitList[] = [
+    $entry = [
         'ClientID'            => $client['ClientID'],
         'FirstName'           => $client['FirstName'],
         'MiddleInitial'       => $client['MiddleInitial'],
@@ -223,7 +248,14 @@ foreach ($clients as $client) {
         'DOB'                 => $client['DOB'],
         'ServiceSelections'   => implode(',', $serviceIDs),
         'AllServicesComplete' => $remaining === 0,
+        'CurrentServiceName'  => null,
     ];
+
+    if (isset($visitsInProgress[$visitID])) {
+        $entry['CurrentServiceName'] = $visitsInProgress[$visitID]['ServiceName'];
+    }
+
+    $waitList[] = $entry;
 }
 
 /*
