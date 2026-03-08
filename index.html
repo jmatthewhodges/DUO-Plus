@@ -3,9 +3,9 @@
   File:        index.html
   Description: Client login page.
 
-  Last Modified By:  Matthew
-  Last Modified On:  Feb 26 @ 10:07 PM
-  Changes Made:      Form changes
+  Last Modified By:  Lauren
+  Last Modified On:  March 5 @ 3:17 PM
+  Changes Made:      Added horizontal divider below Register
  ============================================================
 -->
 
@@ -34,6 +34,7 @@
   </div>
 
   <div class="container text-center login-container">
+    
     <!-- Logo Section -->
     <div class="logo-section mb-3">
       <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Plus - Home" class="mb-1" style="width: 200px;">
@@ -64,17 +65,28 @@
       </div>
     </div>
 
-    <!-- Register Section -->
+    <!-- Register + Forget Password Section -->
     <div class="register-section">
       <div class="d-flex align-items-center justify-content-center mb-2" aria-hidden="true">
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
-        <span class="mx-2 text-muted fw-semibold" id="orText">Or</span>
+                <span id="orText" class="mx-2 text-muted fw-semibold">Or</span>
         <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
       </div>
 
-      <a id="btn2Register" href="pages/register.html" style="color: #174593;"
-        class="fw-semibold d-block mb-3 text-decoration-none">Register</a>
+      <!-- Register Link -->
+      <div class="d-flex flex-column align-items-center justify-content-center gap-1 mb-3">
+        <a id="btn2Register" href="pages/register.html" style="color: #174593;"
+          class="fw-semibold text-decoration-none text-center text-nowrap">Register</a>
 
+        <!-- Horizontal Line -->
+        <hr class="w-75 my-1" style="height:1px; background-color:#ccc; border:none;">
+
+      <!-- Forget Password Link -->
+        <a id="btn2ForgetPass" href="pages/forgetpass.html" style="color: #174593;"
+          class="fw-semibold text-decoration-none text-center text-nowrap">Forgot Password?</a>
+      </div>
+
+      <!-- Life Church Logo -->
       <div class="d-flex flex-column align-items-center">
         <img src="assets/images/lifeChurchLogo.webp" alt="Life Church - Partner Organization" class="mb-3" style="width: 200px;">
       </div>
@@ -101,3 +113,4 @@
 </body>
 
 </html>
+
