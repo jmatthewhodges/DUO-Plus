@@ -151,9 +151,9 @@ if (!empty($visitIDs)) {
         }
     }
 
-    // Pending only — for queue logic
+    // Pending only — for queue logic (include ParentServiceID for category-based rules)
     $vsStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked
+        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked, s.ParentServiceID
          FROM tblVisitServices vs
          JOIN tblServices s ON s.ServiceID = vs.ServiceID
          WHERE vs.VisitID IN ($placeholders)
@@ -248,9 +248,23 @@ foreach ($clients as $client) {
         return $pa - $pb;
     });
 
+    // Non-fast-tracked: dental must wait until all medical services are complete.
+    // Check if client has any pending medical AND any pending dental.
+    $hasPendingMedical = false;
+    $anyFastTracked = false;
+    foreach ($pending as $svc) {
+        if (strtolower($svc['ParentServiceID'] ?? '') === 'medical') $hasPendingMedical = true;
+        if ((int)($svc['IsFastTracked'] ?? 0) === 1) $anyFastTracked = true;
+    }
+
     // Pick first service with an available seat
     foreach ($pending as $svc) {
         $sid = $svc['ServiceID'];
+
+        // Block dental if medical is still pending (unless fast-tracked)
+        if (!$anyFastTracked && $hasPendingMedical && strtolower($svc['ParentServiceID'] ?? '') === 'dental') {
+            continue; // skip dental — medical must go first
+        }
         if (isset($serviceInfo[$sid]) && $serviceInfo[$sid]['available']) {
             $serviceIDs = array_column($pending, 'ServiceID');
             $nowServing = [

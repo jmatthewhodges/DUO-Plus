@@ -112,6 +112,26 @@ $now = date('Y-m-d H:i:s');
 $LogID = uniqid('log_', true);
 
 if ($currentStatus === 'Pending') {
+    // Block check-in if client already has another service In-Progress
+    $ipCheck = $mysqli->prepare(
+        "SELECT vs.ServiceID, s.ServiceName
+         FROM tblVisitServices vs
+         JOIN tblServices s ON s.ServiceID = vs.ServiceID
+         WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
+    );
+    $ipCheck->bind_param('s', $visitService['VisitID']);
+    $ipCheck->execute();
+    $ipRow = $ipCheck->get_result()->fetch_assoc();
+    $ipCheck->close();
+    if ($ipRow) {
+        http_response_code(409);
+        echo json_encode([
+            'success' => false,
+            'message' => 'This client is currently being served at ' . $ipRow['ServiceName'] . '. They must be checked out of that service first.'
+        ]);
+        exit;
+    }
+
     // CHECK IN: Pending -> In-Progress
     $newStatus = 'In-Progress';
     $action = $ServiceID . 'CheckIn';

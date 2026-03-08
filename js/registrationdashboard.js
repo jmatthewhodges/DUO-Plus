@@ -509,7 +509,7 @@ function populateRegistrationTable(patientsData) {
 }
 
 // ── Checked-In Table ────────────────────────────────────────
-// Renders a read-only table of already checked-in clients with a "Reprint QR" button.
+// Renders the checked-in table with service icons and Reprint/Edit buttons.
 function populateCheckedInTable(patientsData) {
     tableBody.innerHTML = '';
 
@@ -518,13 +518,13 @@ function populateCheckedInTable(patientsData) {
         return;
     }
 
-    // Build icon lookup for sub-service icons
-    const iconLookup = {};
+    // Build lookup: child service ID → parent category ID
+    const childToCategory = {};
     serviceCategories.forEach(cat => {
-        iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+        childToCategory[cat.ServiceID] = cat.ServiceID; // standalone
         if (cat.children) {
             cat.children.forEach(child => {
-                iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+                childToCategory[child.ServiceID] = cat.ServiceID;
             });
         }
     });
@@ -541,13 +541,28 @@ function populateCheckedInTable(patientsData) {
             fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
         }
 
-        // Build small service icons showing what they were assigned
-        const svcIcons = (patient.services || []).map(svcID =>
-            `<span style="font-size:1.1rem;" title="${svcID}">${renderIcon(iconLookup[svcID] || 'bi-circle')}</span>`
-        ).join(' ');
+        // Determine which parent categories are active for this client
+        const activeCategoryIDs = new Set();
+        (patient.services || []).forEach(svcID => {
+            const catID = childToCategory[svcID];
+            if (catID) activeCategoryIDs.add(catID);
+        });
+
+        // Build service icon buttons (read-only display using same style as registration)
+        let serviceButtonsHTML = '';
+        serviceCategories.forEach(cat => {
+            const state = activeCategoryIDs.has(cat.ServiceID) ? 1 : 0;
+            const colorClass = state === 1 ? 'btn-success' : 'btn-grey';
+            const iconColor = state === 1 ? 'text-white' : '';
+            serviceButtonsHTML += `
+                <span class="btn ${colorClass} btn-sm rounded-2" 
+                    style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                    ${renderIcon(cat.IconTag || 'bi-circle', iconColor)}
+                </span>`;
+        });
 
         const translatorBadge = patient.TranslatorNeeded == 1
-            ? '<span class="badge bg-warning text-dark ms-2" style="font-size:0.65rem;">🌐</span>'
+            ? '<i class="bi bi-chat-dots text-muted ms-2" title="Needs translator" style="font-size: 1rem;"></i>'
             : '';
 
         const rowHTML = `
@@ -568,11 +583,13 @@ function populateCheckedInTable(patientsData) {
             <td>
                 <div class="d-flex justify-content-between align-items-center pe-3">
                     <div class="d-flex gap-3">
-                        ${svcIcons || '<span class="text-muted small">—</span>'}
+                        ${serviceButtonsHTML}
                     </div>
-                    <button class="btn btn-sm btn-outline-primary btn-reprint-qr" title="Reprint QR Badge">
-                        <i class="bi bi-printer me-1"></i>Reprint
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary btn-reprint-qr" title="Reprint QR Badge">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
                 </div>
             </td>
         </tr>`;
@@ -649,10 +666,17 @@ async function handleReprintQR(e) {
     // Translator badge
     document.getElementById('qrCardTranslator').style.display = needsTranslator ? 'block' : 'none';
 
-    // Show QR modal
+    // Show QR modal (print disabled until fully rendered)
+    const printBtn = document.getElementById('printQrBtn');
+    printBtn.disabled = true;
     const qrModal = document.getElementById('qrCodeModal');
     qrModal.classList.remove('d-none');
     qrModal.classList.add('d-flex');
+
+    // Allow a frame for the browser to paint, then enable print
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => { printBtn.disabled = false; });
+    });
 }
 
 //================================================================================
@@ -863,8 +887,10 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 // Refresh service progress bars with latest counts
                 refreshServiceStats();
 
-                // Show QR modal
+                // Show QR modal (print disabled until fully rendered)
                 const qrModal = document.getElementById('qrCodeModal');
+                const printBtn = document.getElementById('printQrBtn');
+                printBtn.disabled = true;
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
@@ -936,6 +962,11 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 if (ftBadge) {
                     ftBadge.style.display = data.isFastTracked ? 'block' : 'none';
                 }
+
+                // Allow a frame for the browser to paint, then enable print
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { printBtn.disabled = false; });
+                });
 
             } else {
                 // Check-in failed logic

@@ -3,8 +3,9 @@
  * ============================================================
  *  File:        SkipClient.php
  *  Description: Skips the "Now Serving" client by moving them
- *               one position back in the FIFO queue (swaps
- *               FirstCheckedIn with the next client behind them).
+ *               one position back in the FIFO queue. Sets their
+ *               FirstCheckedIn to 1 second after the next client
+ *               (no swap — avoids infinite loops).
  *  Method:      POST  { "ClientID": "..." }
  * ============================================================
  */
@@ -77,23 +78,20 @@ $nextRow = $nextStmt->get_result()->fetch_assoc();
 $nextStmt->close();
 
 if (!$nextRow) {
-    // Already last in queue — nothing to swap with
+    // Already last in queue — nowhere to move
     echo json_encode(['success' => true, 'message' => 'Client is already at the end of the queue.']);
     exit;
 }
 
-$nextVisitID = $nextRow['VisitID'];
-$nextTime    = $nextRow['FirstCheckedIn'];
+$nextTime = $nextRow['FirstCheckedIn'];
 
-// Swap their FirstCheckedIn timestamps so the skipped client moves back one spot
+// Move the skipped client to 1 second after the next client.
+// Don't touch the next client — avoids swap loops when multiple clients are skipped.
+$newTime = date('Y-m-d H:i:s', strtotime($nextTime) + 1);
+
 $updateSkipped = $mysqli->prepare("UPDATE tblVisits SET FirstCheckedIn = ? WHERE VisitID = ?");
-$updateSkipped->bind_param('ss', $nextTime, $skippedVisitID);
+$updateSkipped->bind_param('ss', $newTime, $skippedVisitID);
 $updateSkipped->execute();
 $updateSkipped->close();
-
-$updateNext = $mysqli->prepare("UPDATE tblVisits SET FirstCheckedIn = ? WHERE VisitID = ?");
-$updateNext->bind_param('ss', $skippedTime, $nextVisitID);
-$updateNext->execute();
-$updateNext->close();
 
 echo json_encode(['success' => true, 'message' => 'Client moved back one position in queue.']);

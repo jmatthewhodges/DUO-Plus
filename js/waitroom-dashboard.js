@@ -154,7 +154,7 @@ function populateWaitListTable(patients) {
             statusBadge = `<span class="badge bg-info ms-2" style="font-size: 0.7rem;">At ${atService}</span>`;
         }
         if (wasSkipped) {
-            statusBadge += '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Skipped</span>';
+            statusBadge += '<i class="bi bi-skip-forward-fill text-warning ms-2" title="Skipped" style="font-size: 0.9rem;"></i>';
         }
         const avatarClass = allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light');
         const avatarIcon = allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person');

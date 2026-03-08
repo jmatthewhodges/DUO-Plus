@@ -40,22 +40,42 @@ if (!$queue) {
     exit;
 }
 
-// Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-$clientDataStmt = $mysqli->prepare(
-    "SELECT 
-        c.ClientID, 
-        c.FirstName, 
-        c.MiddleInitial, 
-        c.LastName, 
-        c.DOB, 
-        c.TranslatorNeeded,
-        GROUP_CONCAT(s.ServiceID) AS ServiceSelections
-    FROM tblClients c
-    LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
-    LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
-    WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
-);
+// Query to get all client data related to the dashboard (client names, DOBs, language flags, and services.)
+// For CheckedIn clients, use tblVisitServices (actual assigned services).
+// For Registered clients, use tblVisitServiceSelections (pre-registration selections).
+if ($queue === 'CheckedIn') {
+    $clientDataStmt = $mysqli->prepare(
+        "SELECT 
+            c.ClientID, 
+            c.FirstName, 
+            c.MiddleInitial, 
+            c.LastName, 
+            c.DOB, 
+            c.TranslatorNeeded,
+            GROUP_CONCAT(vs.ServiceID) AS ServiceSelections
+        FROM tblClients c
+        LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+        LEFT JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
+        WHERE v.RegistrationStatus = ?
+        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
+    );
+} else {
+    $clientDataStmt = $mysqli->prepare(
+        "SELECT 
+            c.ClientID, 
+            c.FirstName, 
+            c.MiddleInitial, 
+            c.LastName, 
+            c.DOB, 
+            c.TranslatorNeeded,
+            GROUP_CONCAT(s.ServiceID) AS ServiceSelections
+        FROM tblClients c
+        LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+        LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
+        WHERE v.RegistrationStatus = ?
+        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
+    );
+}
 
 // Checks for if the connection to mysql is a success
 if (!$clientDataStmt) {
