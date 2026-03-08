@@ -64,15 +64,28 @@ if (!$skipRow) {
 $skippedVisitID = $skipRow['VisitID'];
 $skippedTime    = $skipRow['FirstCheckedIn'];
 
-// Find the next client in queue (the one directly behind the skipped client)
+// Find the next *eligible* client in queue — one who:
+//   1. Is behind the skipped client in FIFO order
+//   2. Has at least one Pending visit service
+//   3. Is NOT currently in-progress at any service
 $nextStmt = $mysqli->prepare(
-    "SELECT VisitID, FirstCheckedIn FROM tblVisits
-     WHERE EventID = ? AND RegistrationStatus = 'CheckedIn'
-       AND FirstCheckedIn > ?
-     ORDER BY FirstCheckedIn ASC
+    "SELECT v.VisitID, v.FirstCheckedIn
+     FROM tblVisits v
+     WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
+       AND v.FirstCheckedIn > ?
+       AND v.VisitID != ?
+       AND EXISTS (
+           SELECT 1 FROM tblVisitServices vs
+           WHERE vs.VisitID = v.VisitID AND vs.ServiceStatus = 'Pending'
+       )
+       AND NOT EXISTS (
+           SELECT 1 FROM tblVisitServices vs2
+           WHERE vs2.VisitID = v.VisitID AND vs2.ServiceStatus = 'In-Progress'
+       )
+     ORDER BY v.FirstCheckedIn ASC
      LIMIT 1"
 );
-$nextStmt->bind_param('ss', $activeEventID, $skippedTime);
+$nextStmt->bind_param('sss', $activeEventID, $skippedTime, $skippedVisitID);
 $nextStmt->execute();
 $nextRow = $nextStmt->get_result()->fetch_assoc();
 $nextStmt->close();
