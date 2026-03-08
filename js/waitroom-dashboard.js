@@ -220,41 +220,43 @@ tableBody.addEventListener('click', (event) => {
     }
 });
 
-// Parent/placeholder services that clients never get checked into directly
-const EXCLUDED_SERVICE_IDS = ['medical', 'dental'];
-
 function renderServiceToggles(patient) {
     const container = document.getElementById('modalServiceToggles');
     container.innerHTML = '';
 
     const visitServices = patient.VisitServices || [];
-    const filteredServices = availableServices.filter(s => !EXCLUDED_SERVICE_IDS.includes(s.ServiceID));
 
-    if (filteredServices.length === 0) {
-        container.innerHTML = '<p class="text-muted small mb-0">No services available.</p>';
+    if (visitServices.length === 0) {
+        container.innerHTML = '<p class="text-muted small mb-0">No services assigned to this patient.</p>';
         return;
     }
 
-    filteredServices.forEach(service => {
-        const vs = visitServices.find(v => v.ServiceID === service.ServiceID);
-        const status = vs ? vs.ServiceStatus : null;
-        const isActive = status === 'Pending' || status === 'In-Progress';
-        const isComplete = status === 'Complete';
+    visitServices.forEach(vs => {
+        const status = vs.ServiceStatus;
         const statusInfo = getServiceStatusLabel(status);
+        const isPending = status === 'Pending';
+        const isInProgress = status === 'In-Progress';
+        const isComplete = status === 'Complete';
+
+        let rowBg = 'border';
+        if (isInProgress) rowBg = 'bg-soft-primary border border-primary border-opacity-25';
+        else if (isComplete) rowBg = 'bg-soft-success border border-success border-opacity-25';
+
+        let actionBtn = '';
+        if (isPending) {
+            actionBtn = `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+        } else if (isInProgress) {
+            actionBtn = `<button class="btn btn-outline-success btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkout" style="font-size: 0.75rem;">Check Out</button>`;
+        }
 
         const row = document.createElement('div');
-        row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 ${isActive ? 'bg-soft-primary border border-primary border-opacity-25' : 'border'}`;
+        row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 ${rowBg}`;
         row.innerHTML = `
             <div class="d-flex align-items-center gap-2">
-                <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${service.ServiceName}</span>
-                ${status ? `<span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>` : ''}
+                <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
+                <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
             </div>
-            <div>
-                ${isActive
-                ? `<button class="btn btn-outline-danger btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="remove" style="font-size: 0.75rem;">Remove</button>`
-                : `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="add" style="font-size: 0.75rem;">${isComplete ? 'Re-add' : 'Add'}</button>`
-            }
-            </div>
+            <div>${actionBtn}</div>
         `;
         container.appendChild(row);
     });
@@ -270,6 +272,7 @@ async function handleServiceToggle(e) {
     btn.blur();
     const serviceID = btn.dataset.serviceId;
     const action = btn.dataset.action;
+    const originalLabel = action === 'checkin' ? 'Check In' : 'Check Out';
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
@@ -292,12 +295,12 @@ async function handleServiceToggle(e) {
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Failed to update service.' });
             btn.disabled = false;
-            btn.innerHTML = action === 'add' ? 'Add' : 'Remove';
+            btn.innerHTML = originalLabel;
         }
     } catch (err) {
         Swal.fire({ icon: 'error', title: 'Network Error', text: 'Unable to reach the server.' });
         btn.disabled = false;
-        btn.innerHTML = action === 'add' ? 'Add' : 'Remove';
+        btn.innerHTML = originalLabel;
     }
 }
 

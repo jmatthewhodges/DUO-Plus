@@ -36,9 +36,9 @@ $visitID   = trim($input['visitID']   ?? '');
 $serviceID = trim($input['serviceID'] ?? '');
 $action    = trim($input['action']    ?? '');
 
-if (empty($visitID) || empty($serviceID) || !in_array($action, ['add', 'remove'], true)) {
+if (empty($visitID) || empty($serviceID) || !in_array($action, ['add', 'remove', 'checkin', 'checkout'], true)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'visitID, serviceID, and action (add|remove) are required.']);
+    echo json_encode(['success' => false, 'error' => 'visitID, serviceID, and action (add|remove|checkin|checkout) are required.']);
     exit;
 }
 
@@ -158,4 +158,70 @@ if ($action === 'add') {
     $decStmt->close();
 
     echo json_encode(['success' => true, 'message' => 'Service removed.']);
+
+} elseif ($action === 'checkin') {
+    // Check In: Pending -> In-Progress
+    $findStmt = $mysqli->prepare(
+        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus = 'Pending' LIMIT 1"
+    );
+    $findStmt->bind_param('ss', $visitID, $serviceID);
+    $findStmt->execute();
+    $vs = $findStmt->get_result()->fetch_assoc();
+    $findStmt->close();
+
+    if (!$vs) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'No pending visit service found to check in.']);
+        exit;
+    }
+
+    $updateStmt = $mysqli->prepare(
+        "UPDATE tblVisitServices SET ServiceStatus = 'In-Progress' WHERE VisitServiceID = ?"
+    );
+    $updateStmt->bind_param('s', $vs['VisitServiceID']);
+    $updateStmt->execute();
+    $updateStmt->close();
+
+    // Increment SeatsInProgress
+    $incSeats = $mysqli->prepare(
+        "UPDATE tblEventServices SET SeatsInProgress = SeatsInProgress + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+    $incSeats->bind_param('ss', $eventID, $serviceID);
+    $incSeats->execute();
+    $incSeats->close();
+
+    echo json_encode(['success' => true, 'message' => 'Service checked in (In-Progress).']);
+
+} elseif ($action === 'checkout') {
+    // Check Out: In-Progress -> Complete
+    $findStmt = $mysqli->prepare(
+        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus = 'In-Progress' LIMIT 1"
+    );
+    $findStmt->bind_param('ss', $visitID, $serviceID);
+    $findStmt->execute();
+    $vs = $findStmt->get_result()->fetch_assoc();
+    $findStmt->close();
+
+    if (!$vs) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'No in-progress visit service found to check out.']);
+        exit;
+    }
+
+    $updateStmt = $mysqli->prepare(
+        "UPDATE tblVisitServices SET ServiceStatus = 'Complete' WHERE VisitServiceID = ?"
+    );
+    $updateStmt->bind_param('s', $vs['VisitServiceID']);
+    $updateStmt->execute();
+    $updateStmt->close();
+
+    // Decrement SeatsInProgress
+    $decSeats = $mysqli->prepare(
+        "UPDATE tblEventServices SET SeatsInProgress = GREATEST(SeatsInProgress - 1, 0) WHERE EventID = ? AND ServiceID = ?"
+    );
+    $decSeats->bind_param('ss', $eventID, $serviceID);
+    $decSeats->execute();
+    $decSeats->close();
+
+    echo json_encode(['success' => true, 'message' => 'Service checked out (Complete).']);
 }
