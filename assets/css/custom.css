@@ -1,3 +1,6 @@
+/* ==========================================
+   1. GLOBAL VARIABLES & BOOTSTRAP OVERRIDES
+   ========================================== */
 :root {
     --bs-primary: #174593;
     --bs-primary-rgb: 23, 69, 147;
@@ -188,33 +191,18 @@ body.v-center-page {
     margin-bottom: 1.25rem;
 }
 
-/* Replace the existing .qr-icon-border rule in custom.css with this: */
-
+/* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 5rem !important;
-    height: 5rem !important;
+    display: block !important;
+    /* Changed from inline-flex to block to reserve space */
+    width: 5rem;
+    height: 5rem;
     background: #fff;
     border: 3px solid black;
     border-radius: 20%;
-    overflow: hidden;                  
-    flex-shrink: 0;
-    box-sizing: border-box;
-    padding: 0.4rem;     
-}
-
-/* SVGs injected inside badge icon slots should fill their container */
-.qr-icon-border svg {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-
-/* Bootstrap icon font sizing inside the badge slot */
-.qr-icon-border.bi {
-    font-size: 2.2rem;
+    /* Ensure the icon inside is centered even in a block container */
+    line-height: 5rem;
+    text-align: center;
 }
 
 /* Add a wrapper style for the icons in your HTML if you want better spacing control */
