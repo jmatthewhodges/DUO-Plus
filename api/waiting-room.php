@@ -153,7 +153,7 @@ if (!empty($visitIDs)) {
 
     // Pending only — for queue logic
     $vsStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName
+        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked
          FROM tblVisitServices vs
          JOIN tblServices s ON s.ServiceID = vs.ServiceID
          WHERE vs.VisitID IN ($placeholders)
@@ -235,8 +235,14 @@ foreach ($clients as $client) {
 
     $pending = $visitServiceMap[$visitID];
 
-    // Sort by hierarchy (lowest number = highest priority)
+    // Sort by: fast-tracked first, then by hierarchy (lowest SortOrder = highest priority)
     usort($pending, function ($a, $b) use ($serviceHierarchy) {
+        // IsFastTracked DESC: fast-tracked services come first
+        $ftA = (int)($a['IsFastTracked'] ?? 0);
+        $ftB = (int)($b['IsFastTracked'] ?? 0);
+        if ($ftA !== $ftB) return $ftB - $ftA;
+
+        // Then by hierarchy priority ASC
         $pa = $serviceHierarchy[$a['ServiceID']] ?? 99;
         $pb = $serviceHierarchy[$b['ServiceID']] ?? 99;
         return $pa - $pb;

@@ -59,6 +59,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // --- Config values ---
     $response['config'] = getConfig($mysqli);
 
+    // --- Event Settings (e.g. FastTrackLimit) ---
+    $evtSettingsStmt = $mysqli->prepare(
+        "SELECT SettingKey, SettingValue FROM tblEventSettings WHERE EventID = ?"
+    );
+    $eventSettings = [];
+    if ($evtSettingsStmt) {
+        $evtSettingsStmt->bind_param('s', $activeEventID);
+        $evtSettingsStmt->execute();
+        $evtRows = $evtSettingsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $evtSettingsStmt->close();
+        foreach ($evtRows as $er) {
+            $eventSettings[$er['SettingKey']] = $er['SettingValue'];
+        }
+    }
+    $response['eventSettings'] = $eventSettings;
+
+    // --- Fast Track current usage count ---
+    $ftCountStmt = $mysqli->prepare(
+        "SELECT COUNT(DISTINCT vs.VisitID) AS cnt
+         FROM tblVisitServices vs
+         JOIN tblVisits v ON v.VisitID = vs.VisitID
+         WHERE v.EventID = ? AND vs.IsFastTracked = 1"
+    );
+    $ftUsed = 0;
+    if ($ftCountStmt) {
+        $ftCountStmt->bind_param('s', $activeEventID);
+        $ftCountStmt->execute();
+        $ftRow = $ftCountStmt->get_result()->fetch_assoc();
+        $ftCountStmt->close();
+        $ftUsed = (int)($ftRow['cnt'] ?? 0);
+    }
+    $response['fastTrackUsed'] = $ftUsed;
+
     http_response_code(200);
     echo json_encode(['success' => true, 'data' => $response]);
     exit;
@@ -105,6 +138,31 @@ switch ($action) {
         $stmt->close();
 
         echo json_encode(['success' => true, 'message' => 'PIN updated.']);
+        break;
+
+    // ── Update Event Setting ─────────────────────────────────
+    case 'updateEventSetting':
+        $settingKey   = trim($body['settingKey']   ?? '');
+        $settingValue = trim($body['settingValue'] ?? '');
+        $settingEventID = '4cbde538985861b9'; // hardcoded for now
+
+        if (empty($settingKey)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing settingKey.']);
+            exit;
+        }
+
+        // Upsert: INSERT or UPDATE
+        $upsertStmt = $mysqli->prepare(
+            "INSERT INTO tblEventSettings (EventID, SettingKey, SettingValue)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE SettingValue = VALUES(SettingValue)"
+        );
+        $upsertStmt->bind_param('sss', $settingEventID, $settingKey, $settingValue);
+        $upsertStmt->execute();
+        $upsertStmt->close();
+
+        echo json_encode(['success' => true, 'message' => 'Setting updated.']);
         break;
 
     // ── Update Service Capacity / Seats / Standby ────────────
@@ -378,6 +436,45 @@ switch ($action) {
         $stmt->bind_param('is', $closedVal, $eventServiceID);
         $stmt->execute();
         $stmt->close();
+
+        // Cascade to child services: if this is a category, close/open all children too
+        $lookupStmt = $mysqli->prepare(
+            "SELECT es.ServiceID, es.EventID FROM tblEventServices es WHERE es.EventServiceID = ?"
+        );
+        if ($lookupStmt) {
+            $lookupStmt->bind_param('s', $eventServiceID);
+            $lookupStmt->execute();
+            $lookupRow = $lookupStmt->get_result()->fetch_assoc();
+            $lookupStmt->close();
+
+            if ($lookupRow) {
+                $parentSvcID = $lookupRow['ServiceID'];
+                $parentEvtID = $lookupRow['EventID'];
+
+                // Find child services
+                $childStmt = $mysqli->prepare(
+                    "SELECT s.ServiceID FROM tblServices s WHERE s.ParentServiceID = ?"
+                );
+                if ($childStmt) {
+                    $childStmt->bind_param('s', $parentSvcID);
+                    $childStmt->execute();
+                    $childRows = $childStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                    $childStmt->close();
+
+                    // Update each child's tblEventServices row
+                    foreach ($childRows as $cr) {
+                        $updateChild = $mysqli->prepare(
+                            "UPDATE tblEventServices SET IsClosed = ? WHERE EventID = ? AND ServiceID = ?"
+                        );
+                        if ($updateChild) {
+                            $updateChild->bind_param('iss', $closedVal, $parentEvtID, $cr['ServiceID']);
+                            $updateChild->execute();
+                            $updateChild->close();
+                        }
+                    }
+                }
+            }
+        }
 
         echo json_encode(['success' => true, 'message' => $isClosed ? 'Service closed.' : 'Service opened.']);
         break;

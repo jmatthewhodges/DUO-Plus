@@ -55,6 +55,7 @@ async function loadAdminData() {
         renderPinSection();
         renderServicesSection();
         renderIconPicker();
+        renderFastTrackSection();
     } catch (err) {
         Swal.fire({ icon: 'error', title: 'Load Error', text: err.message });
     }
@@ -540,6 +541,62 @@ document.getElementById('addServiceForm').addEventListener('submit', async (e) =
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION: Fast Track Settings
+// ═══════════════════════════════════════════════════════════════
+
+function renderFastTrackSection() {
+    const container = document.getElementById('fastTrackSection');
+    if (!container) return;
+
+    const settings = adminData.eventSettings || {};
+    const limit = settings.FastTrackLimit || '0';
+    const used = adminData.fastTrackUsed || 0;
+
+    container.innerHTML = `
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="form-group" style="max-width: 120px;">
+                <label class="form-label fw-semibold small mb-1">Fast Track Limit</label>
+                <input type="number" class="form-control form-control-sm" id="inputFastTrackLimit"
+                    value="${limit}" min="0" max="50" inputmode="numeric">
+            </div>
+            <div class="pt-3">
+                <span class="badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-warning text-dark' : 'bg-info'}"
+                    style="font-size: 0.8rem;">
+                    ⚡ ${used}/${limit} used
+                </span>
+            </div>
+            <div class="pt-3">
+                <button class="btn btn-sm btn-primary" id="btnSaveFastTrack">
+                    <i class="bi bi-check-lg me-1"></i>Save
+                </button>
+            </div>
+        </div>
+        <div class="text-muted small mt-2">
+            First N dental patients skip medical and go straight to dental.
+        </div>
+    `;
+
+    document.getElementById('btnSaveFastTrack').addEventListener('click', async () => {
+        const val = document.getElementById('inputFastTrackLimit').value.trim();
+        try {
+            const result = await adminPost({
+                action: 'updateEventSetting',
+                settingKey: 'FastTrackLimit',
+                settingValue: val,
+            });
+            if (result.success) {
+                Swal.fire({ icon: 'success', title: 'Saved', text: `Fast track limit set to ${val}.`, timer: 1500, showConfirmButton: false });
+                await loadAdminData();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+        }
+    });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // Refresh button

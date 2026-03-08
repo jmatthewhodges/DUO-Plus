@@ -210,6 +210,89 @@ foreach ($resolvedServices as $serviceID) {
 $insertService->close();
 if ($incrementAssigned) $incrementAssigned->close();
 
+// ── Fast Track Logic ─────────────────────────────────────────
+// If this client has dental sub-services, and the fast-track limit hasn't been reached,
+// flag their dental visit-services as IsFastTracked = 1 so they go to dental first.
+$isFastTracked = false;
+
+// 1. Fetch FastTrackLimit setting for this event
+$fastTrackLimit = 0;
+$ftSetting = $mysqli->prepare(
+    "SELECT SettingValue FROM tblEventSettings WHERE EventID = ? AND SettingKey = 'FastTrackLimit' LIMIT 1"
+);
+if ($ftSetting) {
+    $ftSetting->bind_param('s', $eventID);
+    $ftSetting->execute();
+    $ftResult = $ftSetting->get_result()->fetch_assoc();
+    $ftSetting->close();
+    if ($ftResult) {
+        $fastTrackLimit = (int)$ftResult['SettingValue'];
+    }
+}
+error_log("[FastTrack] Limit=$fastTrackLimit | resolvedServices=" . implode(',', $resolvedServices));
+
+if ($fastTrackLimit > 0) {
+    // 2. Identify which of the resolved services are "dental" (have a dental parent category)
+    $dentalServiceIDs = [];
+    foreach ($resolvedServices as $svcID) {
+        $parentStmt = $mysqli->prepare(
+            "SELECT p.ServiceID AS ParentID, p.ServiceName AS ParentName
+             FROM tblServices s
+             JOIN tblServices p ON p.ServiceID = s.ParentServiceID
+             WHERE s.ServiceID = ? AND p.ServiceType = 'category'"
+        );
+        if ($parentStmt) {
+            $parentStmt->bind_param('s', $svcID);
+            $parentStmt->execute();
+            $parentRow = $parentStmt->get_result()->fetch_assoc();
+            $parentStmt->close();
+            error_log("[FastTrack] Service=$svcID | Parent=" . ($parentRow ? $parentRow['ParentName'] : 'NONE'));
+            if ($parentRow && stripos($parentRow['ParentName'], 'dental') !== false) {
+                $dentalServiceIDs[] = $svcID;
+            }
+        }
+    }
+
+    error_log("[FastTrack] dentalServiceIDs=" . implode(',', $dentalServiceIDs));
+
+    if (!empty($dentalServiceIDs)) {
+        // 3. Count how many distinct visits already have fast-tracked dental services
+        $countStmt = $mysqli->prepare(
+            "SELECT COUNT(DISTINCT vs.VisitID) AS FastTrackedCount
+             FROM tblVisitServices vs
+             JOIN tblVisits v ON v.VisitID = vs.VisitID
+             WHERE v.EventID = ? AND vs.IsFastTracked = 1"
+        );
+        $currentFTCount = 0;
+        if ($countStmt) {
+            $countStmt->bind_param('s', $eventID);
+            $countStmt->execute();
+            $countRow = $countStmt->get_result()->fetch_assoc();
+            $countStmt->close();
+            $currentFTCount = (int)($countRow['FastTrackedCount'] ?? 0);
+        }
+
+        error_log("[FastTrack] currentFTCount=$currentFTCount / limit=$fastTrackLimit");
+
+        // 4. If under the limit, flag this client's dental services
+        if ($currentFTCount < $fastTrackLimit) {
+            foreach ($dentalServiceIDs as $dentalSvcID) {
+                $flagStmt = $mysqli->prepare(
+                    "UPDATE tblVisitServices SET IsFastTracked = 1 WHERE VisitID = ? AND ServiceID = ?"
+                );
+                if ($flagStmt) {
+                    $flagStmt->bind_param('ss', $visitID, $dentalSvcID);
+                    $flagStmt->execute();
+                    error_log("[FastTrack] Flagged VisitID=$visitID ServiceID=$dentalSvcID as fast-tracked");
+                    $flagStmt->close();
+                }
+            }
+            $isFastTracked = true;
+        }
+    }
+}
+error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false'));
+
 // Update clientsProcessed stat in tblAnalytics
 $statKey = 'clientsProcessed';
 $updateStat = $mysqli->prepare(
@@ -258,5 +341,6 @@ echo json_encode([
     'visitID'          => $visitID,
     'firstCheckIn'     => !$alreadyCheckedIn,
     'clientsProcessed' => $clientsProcessed,
-    'checkedIn'        => $checkedIn
+    'checkedIn'        => $checkedIn,
+    'isFastTracked'    => $isFastTracked
 ]);

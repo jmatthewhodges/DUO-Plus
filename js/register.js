@@ -171,10 +171,18 @@ async function loadServiceCategories() {
 
         registrationCategories = json.categories;
 
+        // Filter out closed services
+        const openCategories = json.categories.filter(cat => !cat.IsClosed);
+
+        if (openCategories.length === 0) {
+            grid.innerHTML = `<div class="text-center p-3 text-muted">${t.noServicesAvailable}</div>`;
+            return;
+        }
+
         // Build a 2-column grid of checkboxes
         const col1 = [];
         const col2 = [];
-        json.categories.forEach((cat, i) => {
+        openCategories.forEach((cat, i) => {
             const id = `btnService_${cat.ServiceID}`;
             const html = `
                 <div class="mb-3">

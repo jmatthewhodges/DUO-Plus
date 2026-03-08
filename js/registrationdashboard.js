@@ -32,7 +32,18 @@ async function loadServiceHierarchyForDashboard() {
         const json = await res.json();
         if (!json.success || !json.hierarchy) return;
 
-        serviceCategories = json.hierarchy;
+        // Filter out closed services from hierarchy
+        // Remove closed children, and remove categories where all children are closed
+        const filtered = json.hierarchy.map(cat => {
+            if (cat.children && cat.children.length > 0) {
+                const openChildren = cat.children.filter(c => !c.IsClosed);
+                if (openChildren.length === 0) return null; // all children closed — hide category
+                return { ...cat, children: openChildren };
+            }
+            return cat; // standalone category — keep (availability handles closure)
+        }).filter(Boolean);
+
+        serviceCategories = filtered;
         serviceAvailability = {};
         serviceMapping = {};
 
@@ -748,6 +759,20 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         }
     }
 
+    // ── Validation: Dental requires Medical ─────────────────────
+    // If any dental category is selected, at least one medical category must also be selected
+    const dentalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('dental'));
+    const medicalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('medical'));
+    if (dentalCat && medicalCat && categoryStates[dentalCat.ServiceID] && !categoryStates[medicalCat.ServiceID]) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Medical Required',
+            text: 'Dental patients must also be checked into a Medical service.',
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
     // Loading state
     const originalText = btn.innerHTML;
     btn.disabled = true;
@@ -865,6 +890,13 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 // Translator badge: show the icon pinned to top-right of the name area
                 if (isInterpreterNeeded) {
                     document.getElementById('qrCardTranslator').style.display = 'block';
+                }
+
+                // Fast Track badge: show if API flagged this client as fast-tracked
+                const ftBadge = document.getElementById('qrCardFastTrack');
+                console.log('[FastTrack] data.isFastTracked =', data.isFastTracked, '| badge element =', ftBadge);
+                if (ftBadge) {
+                    ftBadge.style.display = data.isFastTracked ? 'block' : 'none';
                 }
 
             } else {
