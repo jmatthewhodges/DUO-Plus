@@ -7,7 +7,7 @@
 
 // 1. GLOBAL SETTINGS & STATE
 let waitListData = [];
-let availableServices = []; 
+let availableServices = [];
 let currentRowToUpdate = null;
 let currentClientId = null;
 let currentVisitId = null;
@@ -28,11 +28,11 @@ const nowServingServiceEl = document.querySelector('.queue-service');
 
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
-    const parts = dateString.split(/[- ]/); 
-    if(parts.length >= 3) {
+    const parts = dateString.split(/[- ]/);
+    if (parts.length >= 3) {
         return `${parts[1]}/${parts[2]}/${parts[0]}`;
     }
-    return dateString; 
+    return dateString;
 }
 
 function closeUpdateModal() {
@@ -42,11 +42,11 @@ function closeUpdateModal() {
 
 function getServiceStatusLabel(status) {
     switch (status) {
-        case 'Pending':     return { text: 'Pending', class: 'bg-warning text-dark' };
+        case 'Pending': return { text: 'Pending', class: 'bg-warning text-dark' };
         case 'In-Progress': return { text: 'In Progress', class: 'bg-info text-white' };
-        case 'Complete':    return { text: 'Complete', class: 'bg-success text-white' };
-        case 'Standby':     return { text: 'Standby', class: 'bg-secondary text-white' };
-        default:            return { text: 'Not Added', class: 'bg-light text-muted' };
+        case 'Complete': return { text: 'Complete', class: 'bg-success text-white' };
+        case 'Standby': return { text: 'Standby', class: 'bg-secondary text-white' };
+        default: return { text: 'Not Added', class: 'bg-light text-muted' };
     }
 }
 
@@ -100,7 +100,7 @@ async function fetchQueueData() {
                     const serving = data.NowServing[0];
                     nowServingClientId = serving.ClientID;
                     nowServingNameEl.innerText = `${serving.FirstName} ${serving.LastName}`;
-                    
+
                     if (nowServingServiceEl) {
                         nowServingServiceEl.innerText = serving.AssignedServiceName || '';
                     }
@@ -117,7 +117,7 @@ async function fetchQueueData() {
             populateWaitListTable(waitListData);
         } else {
             console.error("Database Error:", data.error);
-            Swal.fire({ icon: 'error', title: 'Data Error', text: 'Could not load waiting room data.'});
+            Swal.fire({ icon: 'error', title: 'Data Error', text: 'Could not load waiting room data.' });
         }
     } catch (error) {
         console.error("Fetch Error:", error);
@@ -126,6 +126,15 @@ async function fetchQueueData() {
 
 function populateWaitListTable(patients) {
     tableBody.innerHTML = '';
+
+    // Sort: clients with all services complete go to the bottom
+    if (patients && patients.length > 0) {
+        patients = [...patients].sort((a, b) => {
+            if (a.AllServicesComplete && !b.AllServicesComplete) return 1;
+            if (!a.AllServicesComplete && b.AllServicesComplete) return -1;
+            return 0;
+        });
+    }
 
     if (!patients || patients.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients in the waiting room.</td></tr>';
@@ -199,11 +208,11 @@ tableBody.addEventListener('click', (event) => {
         updateBtn.blur();
         currentRowToUpdate = updateBtn.closest('tr');
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
-        
+
         const patient = waitListData.find(p => p.ClientID == currentClientId);
         currentVisitId = patient.VisitID;
         document.getElementById('modalPatientName').innerText = `${patient.FirstName} ${patient.LastName}`;
-        
+
         renderServiceToggles(patient);
 
         updateModal.classList.remove('d-none');
@@ -242,9 +251,9 @@ function renderServiceToggles(patient) {
             </div>
             <div>
                 ${isActive
-                    ? `<button class="btn btn-outline-danger btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="remove" style="font-size: 0.75rem;">Remove</button>`
-                    : `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="add" style="font-size: 0.75rem;">${isComplete ? 'Re-add' : 'Add'}</button>`
-                }
+                ? `<button class="btn btn-outline-danger btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="remove" style="font-size: 0.75rem;">Remove</button>`
+                : `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${service.ServiceID}" data-action="add" style="font-size: 0.75rem;">${isComplete ? 'Re-add' : 'Add'}</button>`
+            }
             </div>
         `;
         container.appendChild(row);
@@ -312,7 +321,7 @@ if (waitlistSearchInput) {
 }
 
 // Skip Now Serving button (in the Now Serving header area)
-document.getElementById('skipNowServingBtn').addEventListener('click', function() {
+document.getElementById('skipNowServingBtn').addEventListener('click', function () {
     this.blur();
     if (!nowServingClientId) return;
     skipNowServingClient(nowServingClientId);
