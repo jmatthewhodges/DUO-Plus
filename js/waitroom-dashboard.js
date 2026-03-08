@@ -154,20 +154,20 @@ function populateWaitListTable(patients) {
         const btnText = allDone ? 'Done' : (isNowServing ? 'Skip' : 'Update');
         const rowHTML = `
             <tr class="border-bottom" data-client-id="${patient.ClientID}">
-                <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                    <div class="d-flex align-items-center gap-2">
+                <td class="ps-3 py-3">
+                    <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                         <div class="rounded-circle border d-flex align-items-center justify-content-center ${avatarClass} flex-shrink-0" style="width: 30px; height: 30px;">
                             <i class="bi ${avatarIcon}"></i>
                         </div>
-                        <div class="d-flex flex-column">
-                            <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}${statusBadge}</span>
-                            <span class="text-muted small d-md-none">DOB: ${formattedDOB}</span>
+                        <div class="d-flex flex-wrap align-items-center gap-1" style="min-width: 0;">
+                            <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}</span>
+                            ${statusBadge}
                         </div>
                     </div>
                 </td>
-                <td class="fw-medium d-none d-md-table-cell">${formattedDOB}</td>
-                <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0">
-                    <button class="btn ${btnClass} btn-sm px-3 rounded-2 w-100 w-md-auto update-btn">${btnText}</button>
+                <td class="fw-medium text-nowrap py-3">${formattedDOB}</td>
+                <td class="text-end pe-3 py-3">
+                    <button class="btn ${btnClass} btn-sm px-3 rounded-2 ${isNowServing ? 'skip-btn' : 'update-btn'} text-nowrap">${btnText}</button>
                 </td>
             </tr>
         `;
@@ -183,17 +183,22 @@ function populateWaitListTable(patients) {
 // 5. EVENT LISTENERS
 
 tableBody.addEventListener('click', (event) => {
+    // Handle skip button
+    const skipBtn = event.target.closest('.skip-btn');
+    if (skipBtn) {
+        skipBtn.blur();
+        const row = skipBtn.closest('tr');
+        const clientId = row.getAttribute('data-client-id');
+        skipNowServingClient(clientId);
+        return;
+    }
+
+    // Handle update button
     const updateBtn = event.target.closest('.update-btn');
     if (updateBtn) {
         updateBtn.blur();
         currentRowToUpdate = updateBtn.closest('tr');
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
-
-        // If this is the now-serving client, skip instead of opening modal
-        if (currentClientId == nowServingClientId) {
-            skipNowServingClient(currentClientId);
-            return;
-        }
         
         const patient = waitListData.find(p => p.ClientID == currentClientId);
         currentVisitId = patient.VisitID;

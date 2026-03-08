@@ -55,12 +55,17 @@
             
             <div class="card-body p-0 position-relative">
                 <div class="table-responsive custom-scroll" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
-                    <table class="table table-borderless align-middle mb-0">
-                        <thead class="d-none d-md-table-header-group sticky-top bg-white" style="z-index: 1;">
+                    <table class="table table-borderless align-middle mb-0 waitlist-table">
+                        <colgroup>
+                            <col style="width: 50%;">
+                            <col style="width: 28%;">
+                            <col style="width: 22%;">
+                        </colgroup>
+                        <thead class="sticky-top bg-white d-none" style="z-index: 1;">
                             <tr class="border-bottom">
-                                <th scope="col" class="ps-3" style="width: 50%;">Name</th>
-                                <th scope="col" style="width: 30%;">DOB</th>
-                                <th scope="col" class="text-end pe-3" style="width: 20%;"></th> 
+                                <th scope="col" class="ps-3">Name</th>
+                                <th scope="col">DOB</th>
+                                <th scope="col" class="text-end pe-3"></th> 
                             </tr>
                         </thead>
                         <tbody>

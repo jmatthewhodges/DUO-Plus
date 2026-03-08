@@ -417,6 +417,38 @@ body.v-center-page {
    WAITING ROOM & GENERAL SCROLLING
    ========================================== */
 
+/* Fixed table layout for consistent column widths */
+.waitlist-table {
+    table-layout: fixed;
+}
+
+.waitlist-table td {
+    vertical-align: middle;
+}
+
+/* Name column: contain text, wrap long words (overrides hope-ui's white-space:nowrap on td) */
+.waitlist-table td:first-child {
+    overflow: hidden;
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+.waitlist-table td:first-child .d-flex {
+    min-width: 0;
+}
+
+.waitlist-table td:first-child .fw-bold {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 400px) {
+    .waitlist-table col:nth-child(1) { width: 48% !important; }
+    .waitlist-table col:nth-child(2) { width: 27% !important; }
+    .waitlist-table col:nth-child(3) { width: 25% !important; }
+    .waitlist-table .badge { font-size: 0.6rem !important; }
+}
+
 /* Hide scrollbar while keeping functionality */
 .custom-scroll::-webkit-scrollbar {
     display: none;

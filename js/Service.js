@@ -1054,23 +1054,20 @@ function populateWaitlist(clientsToShow = null) {
         const row = document.createElement('tr');
         row.className = 'border-bottom';
         row.innerHTML = `
-            <td class="ps-3 d-block d-md-table-cell mb-2 mb-md-0">
-                <div class="d-flex align-items-center gap-2">
+            <td class="ps-3 py-3">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                     <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${isInProgress ? 'text-dark' : 'bg-light'}" style="width: 30px; height: 30px;${isInProgress ? ' background-color: #ffe066;' : ''}">
                         <i class="bi ${isInProgress ? 'bi-person-fill-check' : 'bi-person'}"></i>
                     </div>
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column" style="min-width: 0;">
                         <span class="fw-bold text-dark">${client.name}</span>
                         ${secondaryInfo}
-                        <span class="text-muted small d-md-none">DOB: ${client.dob}</span>
                     </div>
                 </div>
             </td>
-            
-            <td class="fw-medium d-none d-md-table-cell">${client.dob}</td>
-            
-            <td class="d-block d-md-table-cell text-end pe-3 mb-2 mb-md-0" style="white-space: nowrap;">
-                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm px-3 rounded-2" style="white-space: nowrap;" data-client-id="${client.id}">${isInProgress ? 'Complete' : 'Update'}</button>
+            <td class="fw-medium text-nowrap py-3">${client.dob}</td>
+            <td class="text-end pe-3 py-3">
+                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm px-3 rounded-2 text-nowrap" data-client-id="${client.id}">${isInProgress ? 'Complete' : 'Update'}</button>
             </td>
         `;
         waitlistBody.appendChild(row);
