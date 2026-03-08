@@ -349,10 +349,11 @@ clearSearchBtn.addEventListener('click', () => {
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading...</td></tr>';
 
-    //fetch queue data from API
-    fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
+    const status = currentTab === 'checked-in' ? 'CheckedIn' : 'Registered';
+
+    fetch(`../api/registration-dashboard.php?RegistrationStatus=${status}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -360,10 +361,14 @@ function fetchRegistrationQueue() {
         .then(data => {
             if (data.success) {
                 const clients = (data.data || []).filter(item => item.ClientID);
-                populateRegistrationTable(clients);
-                updateStats('registration', clients.length);
+                if (currentTab === 'checked-in') {
+                    populateCheckedInTable(clients);
+                } else {
+                    populateRegistrationTable(clients);
+                    updateStats('registration', clients.length);
+                }
             } else {
-                tableBody.innerHTML = 'No patients currently in queue.';
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients found.</td></tr>';
             }
             // Always update processed count if it came back
             if (statCompCount && data.clientsProcessed !== undefined) {
@@ -385,7 +390,6 @@ function fetchRegistrationQueue() {
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
-    // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
         return;
@@ -450,6 +454,162 @@ function populateRegistrationTable(patientsData) {
     if (searchInput.value.trim()) {
         applySearch();
     }
+}
+
+// ── Checked-In Table ────────────────────────────────────────
+// Renders a read-only table of already checked-in clients with a "Reprint QR" button.
+function populateCheckedInTable(patientsData) {
+    tableBody.innerHTML = '';
+
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No checked-in patients yet.</td></tr>';
+        return;
+    }
+
+    // Build icon lookup for sub-service icons
+    const iconLookup = {};
+    serviceCategories.forEach(cat => {
+        iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+        if (cat.children) {
+            cat.children.forEach(child => {
+                iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+            });
+        }
+    });
+
+    // Sort by Last Name, then First Name
+    patientsData.sort((a, b) => {
+        const lastCmp = (a.LastName || '').localeCompare(b.LastName || '', undefined, { sensitivity: 'base' });
+        return lastCmp !== 0 ? lastCmp : (a.FirstName || '').localeCompare(b.FirstName || '', undefined, { sensitivity: 'base' });
+    });
+
+    patientsData.forEach(patient => {
+        let fullName = `${patient.FirstName} ${patient.LastName}`;
+        if (patient.MiddleInitial) {
+            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
+        }
+
+        // Build small service icons showing what they were assigned
+        const svcIcons = (patient.services || []).map(svcID =>
+            `<span style="font-size:1.1rem;" title="${svcID}">${renderIcon(iconLookup[svcID] || 'bi-circle')}</span>`
+        ).join(' ');
+
+        const translatorBadge = patient.TranslatorNeeded == 1
+            ? '<span class="badge bg-warning text-dark ms-2" style="font-size:0.65rem;">🌐</span>'
+            : '';
+
+        const rowHTML = `
+        <tr class="align-middle" data-client-id="${patient.ClientID}"
+            data-first-name="${patient.FirstName}"
+            data-last-name="${patient.LastName}"
+            data-services='${JSON.stringify(patient.services || [])}'
+            data-translator="${patient.TranslatorNeeded || 0}">
+            <td class="ps-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                        <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
+                    </div>
+                    <span class="fw-bold text-dark">${fullName}${translatorBadge}</span>
+                </div>
+            </td>
+            <td class="fw-medium text-secondary">${formatDOB(patient.DOB)}</td>
+            <td>
+                <div class="d-flex justify-content-between align-items-center pe-3">
+                    <div class="d-flex gap-3">
+                        ${svcIcons || '<span class="text-muted small">—</span>'}
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary btn-reprint-qr" title="Reprint QR Badge">
+                        <i class="bi bi-printer me-1"></i>Reprint
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+        tableBody.insertAdjacentHTML('beforeend', rowHTML);
+    });
+
+    // Attach reprint handlers
+    tableBody.querySelectorAll('.btn-reprint-qr').forEach(btn => {
+        btn.addEventListener('click', handleReprintQR);
+    });
+
+    // Re-apply search
+    if (searchInput.value.trim()) {
+        applySearch();
+    }
+}
+
+// ── Reprint QR Badge ────────────────────────────────────────
+async function handleReprintQR(e) {
+    const row = e.target.closest('tr');
+    const clientID = row.dataset.clientId;
+    const firstName = row.dataset.firstName.toUpperCase();
+    const lastName = row.dataset.lastName;
+    const services = JSON.parse(row.dataset.services || '[]');
+    const needsTranslator = row.dataset.translator === '1';
+
+    // Re-fetch hierarchy for fresh icons
+    await loadServiceHierarchyForDashboard();
+
+    // Build icon lookup
+    const iconLookup = {};
+    serviceCategories.forEach(cat => {
+        iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+        if (cat.children) {
+            cat.children.forEach(child => {
+                iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+            });
+        }
+    });
+
+    // Populate QR card
+    const firstNameEl = document.getElementById('qrCardFirstName');
+    const lastNameEl = document.getElementById('qrCardLastName');
+
+    // Scale font size (reuse same logic as check-in)
+    function scaledName(name, maxSize, minSize) {
+        const len = name.length;
+        if (len <= 6) return { text: name, size: maxSize };
+        if (len <= 8) return { text: name, size: maxSize * 0.85 };
+        if (len <= 10) return { text: name, size: maxSize * 0.70 };
+        if (len <= 12) return { text: name, size: maxSize * 0.58 };
+        if (len <= 14) return { text: name, size: maxSize * 0.50 };
+        return { text: name.slice(0, 14) + '…', size: minSize };
+    }
+
+    const first = scaledName(firstName, 2.5, 1.1);
+    const last = scaledName(lastName, 1.5, 0.8);
+    firstNameEl.innerText = first.text;
+    firstNameEl.style.fontSize = first.size + 'rem';
+    lastNameEl.innerText = last.text;
+    lastNameEl.style.fontSize = last.size + 'rem';
+
+    // Generate QR code
+    new QRious({
+        element: document.getElementById('qr'),
+        value: clientID,
+        size: 200,
+    });
+
+    // Build service icons
+    const qrIconsContainer = document.getElementById('qrCardIcons');
+    qrIconsContainer.innerHTML = '';
+    services.forEach(svcID => {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'qr-icon-border';
+        wrapper.style.fontSize = '2.5rem';
+        wrapper.style.color = 'black';
+        wrapper.style.display = 'inline-flex';
+        wrapper.innerHTML = renderIcon(iconLookup[svcID] || 'bi-circle');
+        qrIconsContainer.appendChild(wrapper);
+    });
+
+    // Translator badge
+    document.getElementById('qrCardTranslator').style.display = needsTranslator ? 'block' : 'none';
+
+    // Show QR modal
+    const qrModal = document.getElementById('qrCodeModal');
+    qrModal.classList.remove('d-none');
+    qrModal.classList.add('d-flex');
 }
 
 //================================================================================
