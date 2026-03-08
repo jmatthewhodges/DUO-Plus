@@ -139,20 +139,17 @@ function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
 
     serviceCategories.forEach(cat => {
         const wrapper = document.createElement('span');
-        wrapper.className = 'qr-icon-border';
         wrapper.style.fontSize = '2.5rem';
         wrapper.style.display = 'inline-flex';
         wrapper.style.alignItems = 'center';
         wrapper.style.justifyContent = 'center';
 
         if (selectedCategoryIDs.has(cat.ServiceID)) {
-            // Selected — show icon with visible border
+            wrapper.className = 'qr-icon-border';
             wrapper.style.color = 'black';
             wrapper.innerHTML = renderIcon(iconLookup[cat.ServiceID] || 'bi-circle');
         } else {
-            // Not selected — invisible placeholder (same size, no border/icon)
-            wrapper.style.visibility = 'hidden';
-            wrapper.innerHTML = renderIcon('bi-circle');
+            wrapper.className = 'qr-icon-border qr-icon-empty';
         }
         container.appendChild(wrapper);
     });

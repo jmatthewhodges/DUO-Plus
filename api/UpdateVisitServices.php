@@ -205,9 +205,9 @@ if ($action === 'add') {
     $incSeats->execute();
     $incSeats->close();
 
-    // Clear the skipped flag by resetting FirstCheckedIn to EnteredWaitingRoom
+    // Clear any skip flag when client gets checked into a service
     $clearSkip = $mysqli->prepare(
-        "UPDATE tblVisits SET FirstCheckedIn = EnteredWaitingRoom WHERE VisitID = ? AND FirstCheckedIn > EnteredWaitingRoom"
+        "UPDATE tblVisits SET SkipCount = 0 WHERE VisitID = ? AND SkipCount > 0"
     );
     $clearSkip->bind_param('s', $visitID);
     $clearSkip->execute();

@@ -2,10 +2,11 @@
 /**
  * ============================================================
  *  File:        SkipClient.php
- *  Description: Skips the "Now Serving" client by moving them
- *               one position back in the FIFO queue. Sets their
- *               FirstCheckedIn to 1 second after the next client
- *               (no swap — avoids infinite loops).
+ *  Description: Skips the "Now Serving" client by setting
+ *               SkipCount = 1 on their visit. The Now Serving
+ *               logic in waiting-room.php will pass over them
+ *               once, then decrement so they're eligible again.
+ *               No timestamp manipulation — no swap loops.
  *  Method:      POST  { "ClientID": "..." }
  * ============================================================
  */
@@ -46,7 +47,7 @@ $activeEventID = $eventResult['EventID'];
 
 // Get the skipped client's visit
 $skipStmt = $mysqli->prepare(
-    "SELECT VisitID, FirstCheckedIn FROM tblVisits
+    "SELECT VisitID FROM tblVisits
      WHERE ClientID = ? AND EventID = ? AND RegistrationStatus = 'CheckedIn'
      LIMIT 1"
 );
@@ -61,43 +62,10 @@ if (!$skipRow) {
     exit;
 }
 
-$skippedVisitID = $skipRow['VisitID'];
-$skippedTime    = $skipRow['FirstCheckedIn'];
+// Set SkipCount to 1 — client loses exactly one turn
+$updateStmt = $mysqli->prepare("UPDATE tblVisits SET SkipCount = 1 WHERE VisitID = ?");
+$updateStmt->bind_param('s', $skipRow['VisitID']);
+$updateStmt->execute();
+$updateStmt->close();
 
-// Find the very next client in absolute FIFO order (regardless of their
-// service status). This ensures the skip only moves the client back ONE
-// position in the queue.  The "Now Serving" logic in waiting-room.php
-// already skips over in-progress / completed clients when deciding who
-// to serve, so eligibility filtering here is not needed.
-$nextStmt = $mysqli->prepare(
-    "SELECT v.VisitID, v.FirstCheckedIn
-     FROM tblVisits v
-     WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
-       AND v.FirstCheckedIn > ?
-       AND v.VisitID != ?
-     ORDER BY v.FirstCheckedIn ASC
-     LIMIT 1"
-);
-$nextStmt->bind_param('sss', $activeEventID, $skippedTime, $skippedVisitID);
-$nextStmt->execute();
-$nextRow = $nextStmt->get_result()->fetch_assoc();
-$nextStmt->close();
-
-if (!$nextRow) {
-    // Already last in queue — nowhere to move
-    echo json_encode(['success' => true, 'message' => 'Client is already at the end of the queue.']);
-    exit;
-}
-
-$nextTime = $nextRow['FirstCheckedIn'];
-
-// Move the skipped client to 1 second after the next client.
-// Don't touch the next client — avoids swap loops when multiple clients are skipped.
-$newTime = date('Y-m-d H:i:s', strtotime($nextTime) + 1);
-
-$updateSkipped = $mysqli->prepare("UPDATE tblVisits SET FirstCheckedIn = ? WHERE VisitID = ?");
-$updateSkipped->bind_param('ss', $newTime, $skippedVisitID);
-$updateSkipped->execute();
-$updateSkipped->close();
-
-echo json_encode(['success' => true, 'message' => 'Client moved back one position in queue.']);
+echo json_encode(['success' => true, 'message' => 'Client will be skipped one turn.']);

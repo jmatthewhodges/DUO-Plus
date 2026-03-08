@@ -204,16 +204,21 @@ body.v-center-page {
 
 /* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: block !important;
-    /* Changed from inline-flex to block to reserve space */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
     width: 5rem;
     height: 5rem;
     background: #fff;
     border: 3px solid black;
     border-radius: 20%;
-    /* Ensure the icon inside is centered even in a block container */
     line-height: 5rem;
     text-align: center;
+}
+
+.qr-icon-border.qr-icon-empty {
+    border: 2.5px dashed #c0c0c0;
+    background: #fafafa;
 }
 
 /* Add a wrapper style for the icons in your HTML if you want better spacing control */

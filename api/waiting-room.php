@@ -105,7 +105,7 @@ foreach ($svcRows as $row) {
 */
 $clientsStmt = $mysqli->prepare(
     "SELECT v.VisitID, v.ClientID, v.FirstCheckedIn, v.EnteredWaitingRoom,
-            c.FirstName, c.MiddleInitial, c.LastName, c.DOB
+            v.SkipCount, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
      FROM tblVisits v
      JOIN tblClients c ON c.ClientID = v.ClientID
      WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
@@ -225,6 +225,7 @@ if (!empty($visitIDs)) {
 */
 $nowServing = null;
 $nowServingClientID = null;
+$skippedVisitIDs = []; // Track visits we passed over due to SkipCount
 
 foreach ($clients as $client) {
     $visitID = $client['VisitID'];
@@ -232,6 +233,12 @@ foreach ($clients as $client) {
 
     // Skip clients who are currently being served at a station
     if (isset($visitsInProgress[$visitID])) continue;
+
+    // Skip clients with SkipCount > 0 (they lose one turn)
+    if ((int)($client['SkipCount'] ?? 0) > 0) {
+        $skippedVisitIDs[] = $visitID;
+        continue;
+    }
 
     $pending = $visitServiceMap[$visitID];
 
@@ -283,6 +290,18 @@ foreach ($clients as $client) {
     }
 }
 
+// Decrement SkipCount for clients that were passed over this evaluation
+if (!empty($skippedVisitIDs)) {
+    $skipPlaceholders = implode(',', array_fill(0, count($skippedVisitIDs), '?'));
+    $skipTypes = str_repeat('s', count($skippedVisitIDs));
+    $decSkipStmt = $mysqli->prepare(
+        "UPDATE tblVisits SET SkipCount = GREATEST(SkipCount - 1, 0) WHERE VisitID IN ($skipPlaceholders)"
+    );
+    $decSkipStmt->bind_param($skipTypes, ...$skippedVisitIDs);
+    $decSkipStmt->execute();
+    $decSkipStmt->close();
+}
+
 /*
 ---------------------------------
   Wait List (all checked-in clients)
@@ -296,23 +315,8 @@ foreach ($clients as $client) {
 
     $remaining = $remainingMap[$visitID] ?? 0;
 
-    // Client was skipped if FirstCheckedIn was reset after original EnteredWaitingRoom
-    $wasSkipped = (!empty($client['EnteredWaitingRoom']) && !empty($client['FirstCheckedIn']))
-        && $client['FirstCheckedIn'] > $client['EnteredWaitingRoom'];
-
-    // Clear skipped icon once client reaches now-serving or has been checked into a service
-    if ($wasSkipped) {
-        $isNowServing = $nowServingClientID && $client['ClientID'] === $nowServingClientID;
-        $hasBeenServed = isset($visitsInProgress[$visitID]);
-        if (!$hasBeenServed) {
-            foreach ($allVisitServiceMap[$visitID] ?? [] as $cvs) {
-                if ($cvs['ServiceStatus'] === 'Complete') { $hasBeenServed = true; break; }
-            }
-        }
-        if ($isNowServing || $hasBeenServed) {
-            $wasSkipped = false;
-        }
-    }
+    // Client is marked as skipped if SkipCount > 0
+    $wasSkipped = (int)($client['SkipCount'] ?? 0) > 0;
 
     $entry = [
         'ClientID'            => $client['ClientID'],
