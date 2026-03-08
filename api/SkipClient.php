@@ -64,24 +64,17 @@ if (!$skipRow) {
 $skippedVisitID = $skipRow['VisitID'];
 $skippedTime    = $skipRow['FirstCheckedIn'];
 
-// Find the next *eligible* client in queue — one who:
-//   1. Is behind the skipped client in FIFO order
-//   2. Has at least one Pending visit service
-//   3. Is NOT currently in-progress at any service
+// Find the very next client in absolute FIFO order (regardless of their
+// service status). This ensures the skip only moves the client back ONE
+// position in the queue.  The "Now Serving" logic in waiting-room.php
+// already skips over in-progress / completed clients when deciding who
+// to serve, so eligibility filtering here is not needed.
 $nextStmt = $mysqli->prepare(
     "SELECT v.VisitID, v.FirstCheckedIn
      FROM tblVisits v
      WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
        AND v.FirstCheckedIn > ?
        AND v.VisitID != ?
-       AND EXISTS (
-           SELECT 1 FROM tblVisitServices vs
-           WHERE vs.VisitID = v.VisitID AND vs.ServiceStatus = 'Pending'
-       )
-       AND NOT EXISTS (
-           SELECT 1 FROM tblVisitServices vs2
-           WHERE vs2.VisitID = v.VisitID AND vs2.ServiceStatus = 'In-Progress'
-       )
      ORDER BY v.FirstCheckedIn ASC
      LIMIT 1"
 );

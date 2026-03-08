@@ -231,6 +231,8 @@ function renderServiceToggles(patient) {
         return;
     }
 
+    const hasInProgress = visitServices.some(v => v.ServiceStatus === 'In-Progress');
+
     visitServices.forEach(vs => {
         const status = vs.ServiceStatus;
         const statusInfo = getServiceStatusLabel(status);
@@ -244,7 +246,11 @@ function renderServiceToggles(patient) {
 
         let actionBtn = '';
         if (isPending) {
-            actionBtn = `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+            if (hasInProgress) {
+                actionBtn = `<button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled style="font-size: 0.75rem;" title="Check out current service first">Check In</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+            }
         } else if (isInProgress) {
             actionBtn = `<button class="btn btn-outline-success btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkout" style="font-size: 0.75rem;">Check Out</button>`;
         }

@@ -160,6 +160,21 @@ if ($action === 'add') {
     echo json_encode(['success' => true, 'message' => 'Service removed.']);
 
 } elseif ($action === 'checkin') {
+    // Block check-in if client already has an In-Progress service
+    $ipCheck = $mysqli->prepare(
+        "SELECT VisitServiceID FROM tblVisitServices WHERE VisitID = ? AND ServiceStatus = 'In-Progress' LIMIT 1"
+    );
+    $ipCheck->bind_param('s', $visitID);
+    $ipCheck->execute();
+    $ipExists = $ipCheck->get_result()->fetch_assoc();
+    $ipCheck->close();
+
+    if ($ipExists) {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => 'Client already has a service in progress. Check out the current service first.']);
+        exit;
+    }
+
     // Check In: Pending -> In-Progress
     $findStmt = $mysqli->prepare(
         "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus = 'Pending' LIMIT 1"
