@@ -108,6 +108,25 @@ $visitID          = $visitRow['VisitID'];
 $alreadyCheckedIn = !empty($visitRow['FirstCheckedIn']); // true if they've checked in before
 $now              = date('Y-m-d H:i:s');
 
+// ── Block check-in if client is currently In-Progress at any service ─────
+$ipStmt = $mysqli->prepare(
+    "SELECT vs.ServiceID FROM tblVisitServices vs WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
+);
+if ($ipStmt) {
+    $ipStmt->bind_param('s', $visitID);
+    $ipStmt->execute();
+    $ipRow = $ipStmt->get_result()->fetch_assoc();
+    $ipStmt->close();
+    if ($ipRow) {
+        http_response_code(409);
+        echo json_encode([
+            'success' => false,
+            'message' => 'This client is currently being served at a service station and cannot be checked in again until that service is complete.'
+        ]);
+        exit;
+    }
+}
+
 // Update tblVisits:
 //   - EnteredWaitingRoom: always updated (tracks most recent entry)
 //   - FirstCheckedIn: only set if it's null (one-time, never overwritten)

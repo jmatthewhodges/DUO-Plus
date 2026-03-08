@@ -117,6 +117,47 @@ function buildServiceProgressBars() {
     });
 }
 
+// Builds fixed-position icon slots for the QR badge.
+// Always renders one slot per service category in hierarchy order.
+// Selected services show the icon with a border; unselected show an invisible placeholder.
+function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
+    container.innerHTML = '';
+    // Map selected operational service IDs back to their parent category ID
+    const selectedCategoryIDs = new Set();
+    selectedServiceIDs.forEach(svcID => {
+        // Check if the ID is a category itself
+        const directCat = serviceCategories.find(c => c.ServiceID === svcID);
+        if (directCat) { selectedCategoryIDs.add(svcID); return; }
+        // Otherwise find the parent category
+        for (const cat of serviceCategories) {
+            if (cat.children && cat.children.some(ch => ch.ServiceID === svcID)) {
+                selectedCategoryIDs.add(cat.ServiceID);
+                return;
+            }
+        }
+    });
+
+    serviceCategories.forEach(cat => {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'qr-icon-border';
+        wrapper.style.fontSize = '2.5rem';
+        wrapper.style.display = 'inline-flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.justifyContent = 'center';
+
+        if (selectedCategoryIDs.has(cat.ServiceID)) {
+            // Selected — show icon with visible border
+            wrapper.style.color = 'black';
+            wrapper.innerHTML = renderIcon(iconLookup[cat.ServiceID] || 'bi-circle');
+        } else {
+            // Not selected — invisible placeholder (same size, no border/icon)
+            wrapper.style.visibility = 'hidden';
+            wrapper.innerHTML = renderIcon('bi-circle');
+        }
+        container.appendChild(wrapper);
+    });
+}
+
 // Active check-in state
 let currentRowToUpdate = null;
 let currentClientName = "";
@@ -601,18 +642,9 @@ async function handleReprintQR(e) {
         size: 200,
     });
 
-    // Build service icons
+    // Build fixed-position service icon slots
     const qrIconsContainer = document.getElementById('qrCardIcons');
-    qrIconsContainer.innerHTML = '';
-    services.forEach(svcID => {
-        const wrapper = document.createElement('span');
-        wrapper.className = 'qr-icon-border';
-        wrapper.style.fontSize = '2.5rem';
-        wrapper.style.color = 'black';
-        wrapper.style.display = 'inline-flex';
-        wrapper.innerHTML = renderIcon(iconLookup[svcID] || 'bi-circle');
-        qrIconsContainer.appendChild(wrapper);
-    });
+    buildQrIconSlots(qrIconsContainer, services, iconLookup);
 
     // Translator badge
     document.getElementById('qrCardTranslator').style.display = needsTranslator ? 'block' : 'none';
@@ -890,16 +922,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 });
 
                 const qrIconsContainer = document.getElementById('qrCardIcons');
-                qrIconsContainer.innerHTML = '';
-                services.forEach(svcID => {
-                    const wrapper = document.createElement('span');
-                    wrapper.className = 'qr-icon-border';
-                    wrapper.style.fontSize = '2.5rem';
-                    wrapper.style.color = 'black';
-                    wrapper.style.display = 'inline-flex';
-                    wrapper.innerHTML = renderIcon(iconLookup[svcID] || 'bi-circle');
-                    qrIconsContainer.appendChild(wrapper);
-                });
+                buildQrIconSlots(qrIconsContainer, services, iconLookup);
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
                 // Translator badge: show the icon pinned to top-right of the name area
