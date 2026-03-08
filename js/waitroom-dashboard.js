@@ -53,7 +53,7 @@ function getServiceStatusLabel(status) {
 async function skipNowServingClient(clientId) {
     const result = await Swal.fire({
         title: 'Skip this client?',
-        text: 'They will be moved to the back of the queue.',
+        text: 'They will be moved back one position in the queue.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Skip',
@@ -70,7 +70,7 @@ async function skipNowServingClient(clientId) {
         });
         const data = await response.json();
         if (data.success) {
-            Swal.fire({ icon: 'success', title: 'Skipped', text: 'Client moved to back of queue.', timer: 1200, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Skipped', text: 'Client moved back one position.', timer: 1200, showConfirmButton: false });
             fetchQueueData();
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Could not skip client.' });
