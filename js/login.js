@@ -17,6 +17,12 @@ const VALIDATION_PATTERNS = {
     password: /.+/ // login just checks presence (not strength)
 };
 
+// Helper to get current language translations
+function getLang() {
+    var lang = sessionStorage.getItem("lang") || "en";
+    return translations[lang];
+}
+
 // Events
 
 // Blur handlers — green checkmark on valid input
@@ -47,19 +53,20 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     const emailInput = document.getElementById('txtClientEmail');
     const passInput = document.getElementById('txtClientPassword');
     const errors = [];
+    const t = getLang();
 
     if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
-        errors.push('Please enter a valid email address.');
+        errors.push(t.loginValidEmail);
     }
 
     if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
-        errors.push('Please enter your password.');
+        errors.push(t.loginEnterPassword);
     }
 
     if (errors.length > 0) {
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -69,7 +76,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     // Loading state
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${t.loggingIn}`;
 
     const email = emailInput.value;
     const password = passInput.value;
@@ -85,8 +92,8 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Welcome Back!',
-                    html: `Hello, <strong>${data.data.FirstName}</strong>! Redirecting you now...`,
+                    title: t.loginWelcomeTitle,
+                    html: `${t.loginWelcomeHello}<strong>${data.data.FirstName}</strong>${t.loginWelcomeRedirect}`,
                     timer: 1500,
                     timerProgressBar: true,
                     showConfirmButton: false,
@@ -102,8 +109,8 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
 
                 Swal.fire({
                     icon: 'error',
-                    title: 'Login Failed',
-                    text: data.message || 'Invalid email or password.',
+                    title: t.loginFailedTitle,
+                    text: data.message || t.loginFailedText,
                     confirmButtonColor: '#174593'
                 });
             }
@@ -113,15 +120,15 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server.',
+                title: t.loginConnectionErrorTitle,
+                text: t.loginConnectionErrorText,
                 confirmButtonColor: '#174593'
             });
         })
         .finally(() => {
             // Re-enable button after request completes
             btn.disabled = false;
-            btn.innerHTML = 'Login';
+            btn.innerHTML = t.btnClientLogin || 'Login';
         })
 });
 

@@ -57,7 +57,7 @@
                             <!-- Populated dynamically by JS based on selected services -->
                         </div>
                         <div class="mt-3">
-                            <a href="../index.html" class="btn btn-outline-primary w-100 rounded-2">Back to Login</a>
+                            <a href="../index.html" class="btn btn-outline-primary w-100 rounded-2" id="backToLogin">Back to Login</a>
                         </div>
                     </div>
                 </div>
@@ -237,7 +237,7 @@
                                 <label id="selectStateLabel" for="selectState"
                                     class="form-label fw-semibold">State</label>
                                 <select class="form-select" id="selectState" required>
-                                    <option selected disabled value="">Choose...</option>
+                                    <option selected disabled value="" id="stateChoose">Choose...</option>
                                     <option value="AL">Alabama</option>
                                     <option value="AK">Alaska</option>
                                     <option value="AZ">Arizona</option>
@@ -383,7 +383,7 @@
                             <!-- Services Grid (populated dynamically from API) -->
                             <fieldset class="row mb-3" id="serviceSelectionGrid" aria-label="Select services">
                                 <legend class="visually-hidden">Select the services you need</legend>
-                                <div class="text-center p-3 text-muted">Loading services...</div>
+                                <div class="text-center p-3 text-muted" id="loadingServices">Loading services...</div>
                             </fieldset>
 
                             <!-- Buttons -->
@@ -405,11 +405,11 @@
                         </div>
                         <div class="d-flex justify-content-between mt-1" id="progressStepLabels"
                             style="font-size: 0.65rem; color: #777;" aria-hidden="true">
-                            <span>Login</span>
-                            <span>Personal</span>
-                            <span>Address</span>
-                            <span>Emergency</span>
-                            <span>Services</span>
+                            <span id="progressLogin">Login</span>
+                            <span id="progressPersonal">Personal</span>
+                            <span id="progressAddress">Address</span>
+                            <span id="progressEmergency">Emergency</span>
+                            <span id="progressServices">Services</span>
                         </div>
                     </div>
                 </div>

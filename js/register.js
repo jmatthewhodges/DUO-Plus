@@ -153,8 +153,9 @@ async function loadServiceCategories() {
     try {
         const res = await fetch('/api/services.php?view=categories');
         const json = await res.json();
+        const t = getLang();
         if (!json.success || !json.categories || json.categories.length === 0) {
-            grid.innerHTML = '<div class="text-center p-3 text-danger">No services available.</div>';
+            grid.innerHTML = `<div class="text-center p-3 text-danger">${t.noServicesAvailable}</div>`;
             return;
         }
 
@@ -184,7 +185,8 @@ async function loadServiceCategories() {
             <div class="col-6">${col2.join('')}</div>`;
     } catch (err) {
         console.error('Failed to load service categories:', err);
-        grid.innerHTML = '<div class="text-center p-3 text-danger">Failed to load services.</div>';
+        const t = getLang();
+        grid.innerHTML = `<div class="text-center p-3 text-danger">${t.failedToLoadServices}</div>`;
     }
 }
 
@@ -237,19 +239,20 @@ function stepOneSubmit() {
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
     const errors = [];
+    const t = getLang();
 
     if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
-        errors.push('Please enter a valid email address.');
+        errors.push(t.registerValidEmail);
     }
 
     if (!VALIDATION_PATTERNS.password.test(passInput.value)) {
-        errors.push('Please enter a valid password.');
+        errors.push(t.registerValidPassword);
     }
 
     if (errors.length > 0) {
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -287,23 +290,24 @@ function stepTwoSubmit() {
     const phone = document.getElementById('clientPhone');
     const sexRadios = document.querySelectorAll('input[name="clientSex"]');
     const errors = [];
+    const t = getLang();
 
     if (!firstName.value.trim()) {
-        errors.push('Please enter your first name.');
+        errors.push(t.registerFirstName);
     }
 
     if (!lastName.value.trim()) {
-        errors.push('Please enter your last name.');
+        errors.push(t.registerLastName);
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
     if (!sexSelected) {
-        errors.push('Please select your sex.');
+        errors.push(t.registerSex);
     }
 
     // DOB 18+ validation
     if (!dob.value || !dobMask.masked.isComplete) {
-        errors.push('Please enter your date of birth.');
+        errors.push(t.registerDOB);
     } else {
         const parts = dob.value.split('/');
         const currentLang = sessionStorage.getItem('lang') || 'en';
@@ -316,19 +320,19 @@ function stepTwoSubmit() {
         const today = new Date();
         const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         if (enteredDate > minAgeDate) {
-            errors.push('You must be at least 18 years old.');
+            errors.push(t.registerAge);
         }
     }
 
     // Phone optional but must match format if provided
     if (phone.value.length > 0 && !VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-        errors.push('Please enter a valid 10-digit phone number — (123) 456-7890.');
+        errors.push(t.registerPhone);
     }
 
     if (errors.length > 0) {
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -405,31 +409,32 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
     }
 
     const errors = [];
+    const t = getLang();
 
     const address1 = document.getElementById('clientAddress1');
     if (!address1.value.trim() || address1.value.trim().length < 5) {
-        errors.push('Please enter a street address (at least 5 characters).');
+        errors.push(t.registerAddress);
     }
 
     const city = document.getElementById('clientCity');
     if (!city.value.trim() || city.value.trim().length < 2) {
-        errors.push('Please enter a city (at least 2 characters).');
+        errors.push(t.registerCity);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        errors.push('Please select a state.');
+        errors.push(t.registerState);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        errors.push('Please enter a valid 5-digit zip code.');
+        errors.push(t.registerZip);
     }
 
     if (errors.length > 0) {
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -492,26 +497,27 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
     }
 
     const errors = [];
+    const t = getLang();
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        errors.push('Please enter a first name for your contact.');
+        errors.push(t.registerContactFirstName);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        errors.push('Please enter a last name for your contact.');
+        errors.push(t.registerContactLastName);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
     if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-        errors.push('Please enter a valid 10-digit phone number — (123) 456-7890.');
+        errors.push(t.registerContactPhone);
     }
 
     if (errors.length > 0) {
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -539,10 +545,11 @@ document.getElementById('btnRegisterNext5').addEventListener('click', function (
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
 
     if (services.length === 0) {
+        const t = getLang();
         Swal.fire({
             icon: 'warning',
-            title: 'Check your info',
-            html: '• Please select at least one service.',
+            title: t.checkYourInfo,
+            html: `• ${t.registerService}`,
             confirmButtonColor: '#174593'
         });
         return;
@@ -781,15 +788,15 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     // Disable button and show spinner
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${t.submitting}`;
 
     const waiverCheckbox = document.getElementById('waiverAgree');
 
     if (!waiverCheckbox.checked) {
         Swal.fire({
             icon: 'warning',
-            title: 'Waiver Required',
-            text: 'You must agree to the waiver to continue.',
+            title: t.waiverRequiredTitle,
+            text: t.waiverRequiredText,
             confirmButtonColor: '#174593'
         });
         btn.disabled = false;
