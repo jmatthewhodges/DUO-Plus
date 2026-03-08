@@ -349,8 +349,7 @@ var translations = {
     registrationConnectionErrorTitle: "Error de conexión",
     registrationConnectionErrorText: "No se puede conectar al servidor. Inténtelo más tarde.",
 
-    // Forget Password Translations 
-    // Note: TEMPORARY!! I NEED TO FIX THE TRANSLATION
+    // Forget Password Translations
     forgetEmailLabel: "Correo electrónico <span class=\"text-danger\" aria-hidden=\"true\">*</span>",
     forgetDOBLabel: 'Fecha de nacimiento <span class="text-danger" aria-hidden="true">*</span>',
     forgetPasswordLabel: "Nueva contraseña",
@@ -361,10 +360,10 @@ var translations = {
     loginCheckInfoTitle: "Revise su información",
     accountFoundTitle: "Verificado",
     accountFoundText: "Identidad verificada.",
-    accountNotFoundTitle: "Informacion incorrecta",
-    accountNotFoundText: "La combinacion de correo electronico y fecha de nacimiento es incorrecta",
-    emailDobIncorrectTitle: "Informacion incorrecta",
-    emailDobIncorrectText: "La combinacion de correo electronico y fecha de nacimiento es incorrecta",
+    accountNotFoundTitle: "Información incorrecta",
+    accountNotFoundText: "La combinación de correo electrónico y fecha de nacimiento es incorrecta.",
+    emailDobIncorrectTitle: "Información incorrecta",
+    emailDobIncorrectText: "La combinación de correo electrónico y fecha de nacimiento es incorrecta.",
     verifyFirstTitle: "Verifique primero",
     verifyFirstText: "Primero verifique su correo electrónico y fecha de nacimiento.",
     confirmPasswordError: "La confirmación de contraseña no coincide.",
@@ -376,7 +375,6 @@ var translations = {
     continueText: "Continuar",
     verifyingText: "Verificando...",
     resettingText: "Restableciendo..."
-    // Seriously, these need to be cleaned up later.
   }
 };
 

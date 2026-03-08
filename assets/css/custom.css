@@ -330,6 +330,7 @@ body.v-center-page {
 
 #selLanguageSwitch {
     border-radius: 999px;
+    border: 2px solid white;
     padding: 0.35rem 0.85rem;
     min-width: 72px;
 }
