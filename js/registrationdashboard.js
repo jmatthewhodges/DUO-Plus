@@ -723,7 +723,7 @@ document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
     closeModalAnimated();
 });
 
-document.getElementById('finalizeCheckInBtn').addEventListener('click', function () {
+document.getElementById('finalizeCheckInBtn').addEventListener('click', async function () {
     const btn = this;
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
 
@@ -771,6 +771,21 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
             confirmButtonColor: '#174593'
         });
         return;
+    }
+
+    // ── Warning: Dental + Optical both selected ─────────────────
+    const opticalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('optical'));
+    if (dentalCat && opticalCat && categoryStates[dentalCat.ServiceID] && categoryStates[opticalCat.ServiceID]) {
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Dental & Optical Selected',
+            text: 'This patient has both Dental and Optical selected. Please confirm they have permission to receive both services.',
+            showCancelButton: true,
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#174593'
+        });
+        if (!result.isConfirmed) return;
     }
 
     // Loading state
