@@ -300,6 +300,20 @@ foreach ($clients as $client) {
     $wasSkipped = (!empty($client['EnteredWaitingRoom']) && !empty($client['FirstCheckedIn']))
         && $client['FirstCheckedIn'] > $client['EnteredWaitingRoom'];
 
+    // Clear skipped icon once client reaches now-serving or has been checked into a service
+    if ($wasSkipped) {
+        $isNowServing = $nowServingClientID && $client['ClientID'] === $nowServingClientID;
+        $hasBeenServed = isset($visitsInProgress[$visitID]);
+        if (!$hasBeenServed) {
+            foreach ($allVisitServiceMap[$visitID] ?? [] as $cvs) {
+                if ($cvs['ServiceStatus'] === 'Complete') { $hasBeenServed = true; break; }
+            }
+        }
+        if ($isNowServing || $hasBeenServed) {
+            $wasSkipped = false;
+        }
+    }
+
     $entry = [
         'ClientID'            => $client['ClientID'],
         'VisitID'             => $client['VisitID'],

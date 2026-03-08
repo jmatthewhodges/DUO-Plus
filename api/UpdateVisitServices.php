@@ -190,6 +190,14 @@ if ($action === 'add') {
     $incSeats->execute();
     $incSeats->close();
 
+    // Clear the skipped flag by resetting FirstCheckedIn to EnteredWaitingRoom
+    $clearSkip = $mysqli->prepare(
+        "UPDATE tblVisits SET FirstCheckedIn = EnteredWaitingRoom WHERE VisitID = ? AND FirstCheckedIn > EnteredWaitingRoom"
+    );
+    $clearSkip->bind_param('s', $visitID);
+    $clearSkip->execute();
+    $clearSkip->close();
+
     echo json_encode(['success' => true, 'message' => 'Service checked in (In-Progress).']);
 
 } elseif ($action === 'checkout') {
