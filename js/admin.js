@@ -30,6 +30,17 @@ const AVAILABLE_ICONS = [
     'bi-people', 'bi-globe', 'bi-gift', 'bi-balloon',
 ];
 
+// ─── SVG-aware icon renderer ────────────────────────────────
+// Returns HTML string: raw SVG if iconTag starts with '<', otherwise a Bootstrap Icon <i>
+function renderIcon(iconTag, extraClass = '', style = '') {
+    if (!iconTag) iconTag = 'bi-circle';
+    if (iconTag.trim().startsWith('<')) {
+        // Wrap SVG in a span so we can style it uniformly
+        return `<span class="svg-icon ${extraClass}" style="${style}">${iconTag.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor"')}</span>`;
+    }
+    return `<i class="bi ${iconTag} ${extraClass}" style="${style}"></i>`;
+}
+
 // ─── Load All Data ──────────────────────────────────────────
 async function loadAdminData() {
     try {
@@ -160,6 +171,9 @@ function renderServicesSection() {
     container.querySelectorAll('.btn-remove-service').forEach(btn => {
         btn.addEventListener('click', handleRemoveService);
     });
+    container.querySelectorAll('.icon-editable').forEach(btn => {
+        btn.addEventListener('click', handleEditIcon);
+    });
 
     // Populate parent dropdown in Add Service form
     populateParentDropdown(categories);
@@ -179,9 +193,10 @@ function renderServiceRow(svc, isChild) {
     const childIcon = isChild ? '<i class="bi bi-arrow-return-right text-muted me-1" style="font-size:0.75rem;"></i>' : '';
 
     return `
-    <div class="service-row" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}" ${indent}>
-        <div class="service-icon-preview">
-            <i class="bi ${svc.IconTag || 'bi-circle'}"></i>
+    <div class="service-row" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}" data-icon-tag="${(svc.IconTag || '').replace(/"/g, '&quot;')}" ${indent}>
+        <div class="service-icon-preview icon-editable" title="Click to change icon">
+            ${renderIcon(svc.IconTag)}
+            <div class="icon-edit-badge"><i class="bi bi-pencil-fill"></i></div>
         </div>
         <div class="service-fields">
             <div style="min-width: 140px;">
@@ -340,7 +355,7 @@ async function handleRemoveService(e) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SECTION: Icon Picker
+// SECTION: Icon Picker (for Add New Service form)
 // ═══════════════════════════════════════════════════════════════
 
 function renderIconPicker() {
@@ -358,6 +373,111 @@ function renderIconPicker() {
             document.getElementById('newServiceIcon').value = item.dataset.icon;
         });
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION: Icon Edit Popup (for existing services)
+// ═══════════════════════════════════════════════════════════════
+
+async function handleEditIcon(e) {
+    const row = e.target.closest('.service-row');
+    const serviceID = row.dataset.serviceId;
+    const currentIcon = row.dataset.iconTag || '';
+    const isSvg = currentIcon.trim().startsWith('<');
+
+    // Build the icon grid HTML
+    const gridHTML = AVAILABLE_ICONS.map(icon => {
+        const selected = (!isSvg && currentIcon === icon) ? 'selected' : '';
+        return `<div class="icon-picker-item ${selected}" data-icon="${icon}" title="${icon.replace('bi-', '')}">
+            <i class="bi ${icon}"></i>
+        </div>`;
+    }).join('');
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Change Icon',
+        width: 520,
+        html: `
+            <div style="text-align:left;">
+                <label class="form-label fw-semibold small">Bootstrap Icons</label>
+                <div class="icon-picker-grid border rounded" id="editIconGrid" style="max-height:180px;overflow-y:auto;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px;">
+                    ${gridHTML}
+                </div>
+                <hr>
+                <label class="form-label fw-semibold small">Or paste custom SVG</label>
+                <textarea id="editIconSvg" class="form-control form-control-sm" rows="3"
+                    placeholder='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; ...>...</svg>'
+                    style="font-family:monospace;font-size:0.75rem;">${isSvg ? currentIcon : ''}</textarea>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <span class="text-muted small">Preview:</span>
+                    <div id="editIconPreview" class="service-icon-preview" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#f0f4ff;border-radius:8px;font-size:1.25rem;color:#174593;">
+                        ${renderIcon(currentIcon)}
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Save',
+        confirmButtonColor: '#174593',
+        didOpen: (popup) => {
+            let selectedIcon = isSvg ? '' : currentIcon;
+            const svgInput = popup.querySelector('#editIconSvg');
+            const preview = popup.querySelector('#editIconPreview');
+
+            // Grid item click
+            popup.querySelectorAll('.icon-picker-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    popup.querySelectorAll('.icon-picker-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedIcon = item.dataset.icon;
+                    svgInput.value = ''; // clear SVG when picking a BI icon
+                    preview.innerHTML = renderIcon(selectedIcon);
+                });
+            });
+
+            // SVG textarea input
+            svgInput.addEventListener('input', () => {
+                const val = svgInput.value.trim();
+                if (val.startsWith('<')) {
+                    popup.querySelectorAll('.icon-picker-item').forEach(i => i.classList.remove('selected'));
+                    selectedIcon = '';
+                    preview.innerHTML = renderIcon(val);
+                }
+            });
+        },
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            const svgVal = popup.querySelector('#editIconSvg').value.trim();
+            const selectedBI = popup.querySelector('.icon-picker-item.selected');
+
+            if (svgVal.startsWith('<')) {
+                return { iconTag: svgVal };
+            } else if (selectedBI) {
+                return { iconTag: selectedBI.dataset.icon };
+            } else {
+                Swal.showValidationMessage('Please select an icon or paste SVG.');
+                return false;
+            }
+        }
+    });
+
+    if (!formValues) return; // cancelled
+
+    try {
+        const result = await adminPost({
+            action: 'updateIcon',
+            serviceID,
+            iconTag: formValues.iconTag,
+        });
+
+        if (result.success) {
+            Swal.fire({ icon: 'success', title: 'Icon Updated', timer: 1200, showConfirmButton: false });
+            await loadAdminData();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════

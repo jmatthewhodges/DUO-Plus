@@ -184,6 +184,30 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Sort order updated.']);
         break;
 
+    // ── Update Icon Tag ───────────────────────────────────────
+    case 'updateIcon':
+        $serviceID = trim($body['serviceID'] ?? '');
+        $iconTag   = trim($body['iconTag']   ?? '');
+
+        if (empty($serviceID)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing serviceID.']);
+            exit;
+        }
+        if (empty($iconTag)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'iconTag is required.']);
+            exit;
+        }
+
+        $stmt = $mysqli->prepare("UPDATE tblServices SET IconTag = ? WHERE ServiceID = ?");
+        $stmt->bind_param('ss', $iconTag, $serviceID);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(['success' => true, 'message' => 'Icon updated.']);
+        break;
+
     // ── Add New Service ──────────────────────────────────────
     case 'addService':
         $serviceID       = trim($body['serviceID']       ?? '');

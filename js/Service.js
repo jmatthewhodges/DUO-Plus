@@ -84,7 +84,7 @@ async function loadServiceHierarchy() {
 
             SERVICES[key] = {
                 name: cat.ServiceName,
-                icon: cat.IconTag || 'bi-circle',
+                iconTag: cat.IconTag || 'bi-circle',
                 color: 'primary',
                 serviceIDs: serviceIDs,
             };
@@ -117,10 +117,10 @@ let isClientScan = false;  // Flag to distinguish between service and client QR 
 // Show a specific service's content section
 function showService(serviceKey) {
     console.log(`showService called with: ${serviceKey}`);
-    
+
     // Store current service for client operations
     currentServiceKey = serviceKey;
-    
+
     const service = SERVICES[serviceKey];
     if (!service) {
         console.error('Invalid service:', serviceKey);
@@ -172,7 +172,7 @@ async function fetchServiceData(serviceKey) {
     try {
         const ids = service.serviceIDs.join(',');
         const response = await fetch(`/api/GrabService.php?ServiceID=${encodeURIComponent(ids)}`);
-        
+
         if (!response.ok) {
             console.error(`Failed to fetch service data: ${response.status}`);
             return;
@@ -231,7 +231,7 @@ async function fetchServiceData(serviceKey) {
 function showServiceSelectionDropdown(required = false) {
     // Stop QR scanning first
     stopQRScanning();
-    
+
     let html = '<div class="d-grid gap-2">';
     Object.entries(SERVICES).forEach(([serviceKey, serviceData]) => {
         html += `<button class="btn btn-outline-primary service-select-btn" data-service="${serviceKey}">${serviceData.name}</button>`;
@@ -250,7 +250,7 @@ function showServiceSelectionDropdown(required = false) {
 
             // Add click handlers to buttons
             modal.querySelectorAll('.service-select-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     const serviceKey = this.getAttribute('data-service');
                     Swal.close();
                     selectServiceManual(serviceKey);
@@ -327,15 +327,15 @@ async function showCameraPermissionScreen() {
 // Start QR code camera scanning
 function startQRScanning() {
     if (isScanning) return;
-    
+
     isScanning = true;
     const canvas = document.createElement('canvas');
     const video = document.createElement('video');
     const container = document.body;
 
     // Request camera access
-    navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
     }).then(stream => {
         videoStream = stream;
         video.srcObject = stream;
@@ -419,7 +419,7 @@ function startQRScanning() {
         overlay.appendChild(manualBtn);
         overlay.appendChild(hint);
         container.appendChild(overlay);
-        
+
         // Store reference so we can reliably remove it later
         currentOverlay = overlay;
 
@@ -468,7 +468,7 @@ function showCameraRecommendation() {
             <a href="#" id="enableCamLink" style="margin-left: 4px; font-weight: 600;">Enable Cam</a>
         </div>
     `;
-    banner.querySelector('#enableCamLink').addEventListener('click', function(e) {
+    banner.querySelector('#enableCamLink').addEventListener('click', function (e) {
         e.preventDefault();
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
@@ -504,7 +504,7 @@ function showCameraRecommendation() {
 // Stop QR scanning and clean up
 function stopQRScanning() {
     isScanning = false;
-    
+
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
@@ -528,15 +528,15 @@ function stopQRScanning() {
 // Handle QR code scan
 function handleQRScan(qrData) {
     console.log('QR scanned:', qrData);
-    
+
     try {
         // Try to parse as URL
         const url = new URL(qrData, window.location.href);
-        
+
         // Get ServiceID from URL parameters
         const serviceID = url.searchParams.get('ServiceID') || url.searchParams.get('serviceid');
         const pathname = url.pathname.toLowerCase();
-        
+
         // Check if URL is for service-scan page
         if (!pathname.includes('service-scan')) {
             console.error('Not a service-scan URL');
@@ -544,7 +544,7 @@ function handleQRScan(qrData) {
             startQRScanning();
             return;
         }
-        
+
         // Check if ServiceID is present
         if (!serviceID) {
             console.error('Missing ServiceID in QR');
@@ -574,16 +574,16 @@ function handleQRScan(qrData) {
 }
 
 // Start scanning after PIN verification
-document.addEventListener('pinVerified', async function() {
+document.addEventListener('pinVerified', async function () {
     console.log('PIN verified - loading service hierarchy');
 
     // Load service hierarchy from API before proceeding
     await loadServiceHierarchy();
-    
+
     // Get ServiceID from URL if it exists
     const urlParams = new URLSearchParams(window.location.search);
     const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
-    
+
     if (serviceID) {
         // Direct to service based on URL parameter
         console.log('ServiceID found in URL:', serviceID);
@@ -614,37 +614,37 @@ function handleServiceSelection(serviceID) {
 
 
 // If page reloads after PIN verification, check for ServiceID
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('DOMContentLoaded - Service.js loaded');
-    
+
     if (document.body.classList.contains('pin-verified')) {
         console.log('Already pin-verified, loading hierarchy and checking for ServiceID');
         await loadServiceHierarchy();
         const urlParams = new URLSearchParams(window.location.search);
         const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
-        
+
         if (serviceID) {
             setTimeout(() => handleServiceSelection(serviceID), 100);
         } else {
             setTimeout(showCameraPermissionScreen, 100);
         }
     }
-    
+
     // Setup client QR scan button
     const btnScan = document.getElementById('btnScan');
     if (btnScan) {
-        btnScan.addEventListener('click', function() {
+        btnScan.addEventListener('click', function () {
             console.log('Scan button clicked, starting client QR scan');
             startClientQRScanning();
         });
     }
-    
+
 });
 
 // Start scanning for client QR codes
 function startClientQRScanning() {
     if (isScanning) return;
-    
+
     isScanning = true;
     isClientScan = true;
     const canvas = document.createElement('canvas');
@@ -652,8 +652,8 @@ function startClientQRScanning() {
     const container = document.body;
 
     // Request camera access
-    navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
     }).then(stream => {
         videoStream = stream;
         video.srcObject = stream;
@@ -719,7 +719,7 @@ function startClientQRScanning() {
         overlay.appendChild(closeBtn);
         overlay.appendChild(hint);
         container.appendChild(overlay);
-        
+
         // Store reference so we can reliably remove it later
         currentOverlay = overlay;
 
@@ -759,7 +759,7 @@ function startClientQRScanning() {
 function stopClientQRScanning() {
     isScanning = false;
     isClientScan = false;
-    
+
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
@@ -786,11 +786,11 @@ async function handleClientQRScan(qrData) {
     console.log('=== CLIENT QR SCAN START ===');
     console.log('Raw QR data:', JSON.stringify(qrData));
     console.log('Current service key:', currentServiceKey);
-    
+
     try {
         // Try to parse as URL or extract clientId
         let clientId = null;
-        
+
         try {
             const url = new URL(qrData);  // Only absolute URLs
             clientId = url.searchParams.get('clientId') || url.searchParams.get('id') || url.searchParams.get('ClientID');
@@ -800,7 +800,7 @@ async function handleClientQRScan(qrData) {
             clientId = qrData.trim();
             console.log('Not a URL — using raw text as clientId:', clientId);
         }
-        
+
         if (!clientId) {
             console.error('No clientId found in QR code');
             Swal.fire('Invalid QR', 'QR code does not contain a valid client ID', 'warning');
@@ -809,7 +809,7 @@ async function handleClientQRScan(qrData) {
         }
 
         console.log('Client ID extracted:', clientId);
-        
+
         // Check if client is in the current service's waitlist (loaded from GrabService)
         const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
         console.log('Client in waitlist:', clientInWaitlist ? JSON.stringify(clientInWaitlist) : 'NOT FOUND');
@@ -890,14 +890,14 @@ async function handleClientQRScan(qrData) {
 function showCheckInOutModal(clientId) {
     const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
     const serviceTitle = service ? service.name : 'Service';
-    
+
     // Get client from waitlist
     let client = null;
     if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
         client = SERVICE_WAITLISTS[currentServiceKey][clientId];
     }
     const clientName = client ? client.name : 'Unknown Client';
-    
+
     // Determine which button to show based on client status
     const isInProgress = client && client.status === 'in-progress';
     const actionButton = isInProgress
@@ -1009,20 +1009,20 @@ async function processClientAction(clientId, action) {
 function populateWaitlist(clientsToShow = null) {
     const waitlistBody = document.getElementById('waitlistBody');
     if (!waitlistBody) return;
-    
+
     // Use provided clients or clients from current service's waitlist
     let clientsArray;
     if (clientsToShow) {
         clientsArray = Object.values(clientsToShow);
     } else {
         // Show only active clients (waiting or in-progress) in the current service's waitlist
-        clientsArray = currentServiceKey ? 
+        clientsArray = currentServiceKey ?
             Object.values(SERVICE_WAITLISTS[currentServiceKey]).filter(c => c.status !== 'completed') : [];
     }
-    
+
     // Clear existing rows
     waitlistBody.innerHTML = '';
-    
+
     // Show empty state if no clients
     if (clientsArray.length === 0) {
         const emptyRow = document.createElement('tr');
@@ -1035,7 +1035,7 @@ function populateWaitlist(clientsToShow = null) {
         waitlistBody.appendChild(emptyRow);
         return;
     }
-    
+
     // Populate with client data
     clientsArray.forEach(client => {
         const isInProgress = client.status === 'in-progress';
@@ -1072,7 +1072,7 @@ function populateWaitlist(clientsToShow = null) {
         `;
         waitlistBody.appendChild(row);
     });
-    
+
     // Reattach event listeners to Update buttons
     attachUpdateButtonListeners();
 }
@@ -1081,7 +1081,7 @@ function populateWaitlist(clientsToShow = null) {
 function attachUpdateButtonListeners() {
     const updateButtons = document.querySelectorAll('button[data-client-id]');
     updateButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const clientId = this.getAttribute('data-client-id');
             console.log('Update button clicked for client:', clientId);
             showCheckInOutModal(clientId);
@@ -1092,13 +1092,13 @@ function attachUpdateButtonListeners() {
 // Search/filter the waitlist table
 function filterWaitlist(searchTerm) {
     const term = searchTerm.toLowerCase().trim();
-    
+
     if (term === '') {
         // Show all clients from current service if search is empty
         populateWaitlist();
         return;
     }
-    
+
     // Filter clients from current service's waitlist by name or ID
     const filteredClients = {};
     if (currentServiceKey) {
@@ -1108,7 +1108,7 @@ function filterWaitlist(searchTerm) {
             }
         });
     }
-    
+
     populateWaitlist(filteredClients);
 }
 
@@ -1117,25 +1117,25 @@ function filterWaitlist(searchTerm) {
 // Update stats display based on current waitlist
 function updateStatsDisplay() {
     if (!currentServiceKey) return;
-    
+
     const waitlist = SERVICE_WAITLISTS[currentServiceKey];
-    
+
     // Count clients by status
     let waitingCount = 0;
     let inProgressCount = 0;
     let completedCount = 0;
-    
+
     Object.values(waitlist).forEach(client => {
         if (client.status === 'waiting') waitingCount++;
         else if (client.status === 'in-progress') inProgressCount++;
         else if (client.status === 'completed') completedCount++;
     });
-    
+
     // Update stat values in the UI
     const stat1ValueEl = document.getElementById('stat1Value');
     const stat2ValueEl = document.getElementById('stat2Value');
     const stat3ValueEl = document.getElementById('stat3Value');
-    
+
     if (stat1ValueEl) stat1ValueEl.textContent = waitingCount;
     if (stat2ValueEl) stat2ValueEl.textContent = inProgressCount;
     if (stat3ValueEl) stat3ValueEl.textContent = completedCount;

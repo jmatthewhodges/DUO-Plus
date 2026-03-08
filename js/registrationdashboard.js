@@ -13,11 +13,17 @@
 
 // Service hierarchy — loaded from API at init
 let serviceCategories = [];   // [{ ServiceID, ServiceName, IconTag, SortOrder, children: [...] }]
-let serviceAvailability = {};  // { categoryID: true/false }
+let serviceAvailability = {};  // { categoryServiceID: true/false }
+let serviceMapping = {};       // { childServiceID: { containerId, displayName } }
 
-// Service configuration mapping operational ServiceID to display info
-// Built dynamically from hierarchy API response
-let serviceMapping = {};
+// SVG-aware icon renderer (shared helper)
+function renderIcon(iconTag, extraClass = '', style = '') {
+    if (!iconTag) iconTag = 'bi-circle';
+    if (iconTag.trim().startsWith('<')) {
+        return `<span class="svg-icon ${extraClass}" style="display:inline-flex;align-items:center;justify-content:center;${style}">${iconTag.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor"')}</span>`;
+    }
+    return `<i class="bi ${iconTag} ${extraClass}" style="${style}"></i>`;
+}
 
 // Loads the service hierarchy and builds serviceCategories, serviceAvailability, serviceMapping
 async function loadServiceHierarchyForDashboard() {
@@ -84,7 +90,7 @@ function buildServiceProgressBars() {
         div.innerHTML = `
             <div class="d-flex align-items-center justify-content-between mb-1">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="text-primary" style="font-size: 1.1rem;"></i>
+                    <span class="text-primary" style="font-size: 1.1rem;"></span>
                     <span class="fw-bold" style="font-size: 0.9rem; color:black;"></span>
                 </div>
                 <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
@@ -92,9 +98,9 @@ function buildServiceProgressBars() {
             <div class="progress" style="height: 6px; border-radius: 3px;">
                 <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
             </div>`;
-        // Set text content safely (not innerHTML) to prevent XSS from DB values
-        const icon = div.querySelector('i');
-        icon.className = `bi ${iconTag} text-primary`;
+        // Set icon (SVG-aware)
+        const iconContainer = div.querySelector('span.text-primary');
+        iconContainer.innerHTML = renderIcon(iconTag, 'text-primary');
         div.querySelector('span.fw-bold').textContent = mapping.displayName;
         container.appendChild(div);
     });
@@ -294,7 +300,7 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
         <button class="btn ${colorClass} btn-sm rounded-2 service-btn" 
                 data-state="${state}" ${disabledAttr} title="${serviceType}" 
                 style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-            <i class="bi ${iconClass} ${iconColor}"></i>
+            ${renderIcon(iconClass, iconColor)}
         </button>
     `;
 }
@@ -458,17 +464,17 @@ tableBody.addEventListener('click', function (event) {
 
         // Toggle service state between 1 (selected) and 0 (not selected)
         let currentState = parseInt(serviceBtn.getAttribute('data-state'));
-        const icon = serviceBtn.querySelector('i');
+        const icon = serviceBtn.querySelector('i, .svg-icon');
 
         // If the service is currently selected, deselect it. If it's not selected, select it. Update button styles accordingly.
         if (currentState === 1) {
             serviceBtn.setAttribute('data-state', '0');
             serviceBtn.classList.replace('btn-success', 'btn-grey');
-            icon.classList.remove('text-white');
+            if (icon) icon.classList.remove('text-white');
         } else if (currentState === 0) {
             serviceBtn.setAttribute('data-state', '1');
             serviceBtn.classList.replace('btn-grey', 'btn-success');
-            icon.classList.add('text-white');
+            if (icon) icon.classList.add('text-white');
         }
         return;
     }
@@ -487,7 +493,7 @@ tableBody.addEventListener('click', function (event) {
         // Help text shown below the label in the check-in modal for categories with sub-services
         const categoryDescriptions = {
             'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
-            'dental':  'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+            'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
         };
 
         serviceCategories.forEach(cat => {
@@ -598,7 +604,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         })
     })
         .then(response => response.json())
-        .then(data => {
+        .then(async data => {
             if (data.success) {
 
                 // Close check-in modal
@@ -643,8 +649,8 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 // Truncate with ellipsis only as a last resort if over 16 chars.
                 function scaledName(name, maxSize, minSize) {
                     const len = name.length;
-                    if (len <= 6)  return { text: name, size: maxSize };
-                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
+                    if (len <= 6) return { text: name, size: maxSize };
+                    if (len <= 8) return { text: name, size: maxSize * 0.85 };
                     if (len <= 10) return { text: name, size: maxSize * 0.70 };
                     if (len <= 12) return { text: name, size: maxSize * 0.58 };
                     if (len <= 14) return { text: name, size: maxSize * 0.50 };
@@ -653,7 +659,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                 }
 
                 const first = scaledName(firstName, 2.5, 1.1);
-                const last  = scaledName(lastName,  1.5, 0.8);
+                const last = scaledName(lastName, 1.5, 0.8);
 
                 firstNameEl.innerText = first.text;
                 firstNameEl.style.fontSize = first.size + 'rem';
@@ -668,17 +674,31 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     size: 200,
                 });
 
-                // Build QR card icons dynamically from serviceCategories
+                // Re-fetch service hierarchy to pick up any icon changes made in admin
+                await loadServiceHierarchyForDashboard();
+
+                // Build QR card icons from the actual selected services (not parent categories)
+                // Build a lookup of all service IDs → IconTag (categories + children)
+                const iconLookup = {};
+                serviceCategories.forEach(cat => {
+                    iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+                    if (cat.children) {
+                        cat.children.forEach(child => {
+                            iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+                        });
+                    }
+                });
+
                 const qrIconsContainer = document.getElementById('qrCardIcons');
                 qrIconsContainer.innerHTML = '';
-                serviceCategories.forEach(cat => {
-                    const iconEl = document.createElement('i');
-                    iconEl.className = `bi ${cat.IconTag} qr-icon-border`;
-                    iconEl.style.fontSize = '2.5rem';
-                    iconEl.style.color = 'black';
-                    iconEl.style.visibility = categoryStates[cat.ServiceID] ? 'visible' : 'hidden';
-                    iconEl.style.display = 'inline-flex';
-                    qrIconsContainer.appendChild(iconEl);
+                services.forEach(svcID => {
+                    const wrapper = document.createElement('span');
+                    wrapper.className = 'qr-icon-border';
+                    wrapper.style.fontSize = '2.5rem';
+                    wrapper.style.color = 'black';
+                    wrapper.style.display = 'inline-flex';
+                    wrapper.innerHTML = renderIcon(iconLookup[svcID] || 'bi-circle');
+                    qrIconsContainer.appendChild(wrapper);
                 });
                 document.getElementById('qrCardTranslator').style.display = 'none';
 

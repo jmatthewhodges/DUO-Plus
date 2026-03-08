@@ -14,6 +14,16 @@
 
 let dobMask;
 
+// SVG-aware icon renderer (shared helper)
+function renderIcon(iconTag, extraClass = '', style = '') {
+    if (!iconTag) iconTag = 'bi-circle';
+    if (iconTag.trim().startsWith('<')) {
+        // Constrain SVG to 1em so it scales with font-size like Bootstrap Icons
+        return `<span class="svg-icon ${extraClass}" style="display:inline-flex;align-items:center;justify-content:center;${style}">${iconTag.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor"')}</span>`;
+    }
+    return `<i class="bi ${iconTag} ${extraClass}" style="${style}"></i>`;
+}
+
 // Config
 const TRANSITION_DURATION = 500; // ms for step fade animation
 
@@ -173,7 +183,7 @@ async function loadServiceCategories() {
                         aria-label="${cat.ServiceName}">
                     <label class="btn btn-outline-navy w-100 text-start p-3"
                         style="font-size: 20px;" for="${id}">
-                        <i class="bi ${cat.IconTag || 'bi-circle'} me-2"></i> ${cat.ServiceName}
+                        ${renderIcon(cat.IconTag, 'me-2')} ${cat.ServiceName}
                     </label>
                 </div>`;
             if (i % 2 === 0) col1.push(html); else col2.push(html);
@@ -911,14 +921,15 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                     qrIconsContainer.innerHTML = '';
                     const selectedServices = data.services || [];
                     registrationCategories.forEach(cat => {
-                        const iconEl = document.createElement('i');
-                        iconEl.className = `bi ${cat.IconTag || 'bi-circle'} qr-icon-border`;
-                        iconEl.style.fontSize = '3rem';
-                        iconEl.style.color = 'black';
-                        iconEl.style.display = 'inline-flex';
-                        iconEl.style.visibility = selectedServices.includes(cat.ServiceID) ? 'visible' : 'hidden';
-                        iconEl.setAttribute('aria-hidden', 'true');
-                        qrIconsContainer.appendChild(iconEl);
+                        const wrapper = document.createElement('span');
+                        wrapper.className = 'qr-icon-border';
+                        wrapper.style.fontSize = '3rem';
+                        wrapper.style.color = 'black';
+                        wrapper.style.display = 'inline-flex';
+                        wrapper.style.visibility = selectedServices.includes(cat.ServiceID) ? 'visible' : 'hidden';
+                        wrapper.setAttribute('aria-hidden', 'true');
+                        wrapper.innerHTML = renderIcon(cat.IconTag);
+                        qrIconsContainer.appendChild(wrapper);
                     });
                 });
             } else {
