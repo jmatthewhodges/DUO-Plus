@@ -45,7 +45,7 @@ function getServiceStatusLabel(status) {
         case 'Pending': return { text: 'Pending', class: 'bg-light text-dark' };
         case 'In-Progress': return { text: 'In Progress', class: 'bg-info text-white' };
         case 'Complete': return { text: 'Complete', class: 'bg-success text-white' };
-        case 'Standby': return { text: 'Standby', class: 'bg-secondary text-white' };
+        case 'Standby': return { text: 'Standby', class: 'bg-warning text-dark' };
         default: return { text: 'Not Added', class: 'bg-light text-muted' };
     }
 }
@@ -147,11 +147,15 @@ function populateWaitListTable(patients) {
         const allDone = patient.AllServicesComplete;
         const atService = patient.CurrentServiceName;
         const wasSkipped = patient.WasSkipped;
+        const hasStandby = (patient.VisitServices || []).some(v => v.ServiceStatus === 'Standby');
         let statusBadge = '';
         if (allDone) {
             statusBadge = '<span class="badge bg-success ms-2" style="font-size: 0.7rem;">All Done</span>';
         } else if (atService) {
             statusBadge = `<span class="badge bg-info ms-2" style="font-size: 0.7rem;">At ${atService}</span>`;
+        }
+        if (hasStandby && !allDone) {
+            statusBadge += '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Standby</span>';
         }
         if (wasSkipped) {
             statusBadge += '<i class="bi bi-skip-forward-fill text-warning ms-2" title="Skipped" style="font-size: 0.9rem;"></i>';
@@ -239,10 +243,12 @@ function renderServiceToggles(patient) {
         const isPending = status === 'Pending';
         const isInProgress = status === 'In-Progress';
         const isComplete = status === 'Complete';
+        const isStandby = status === 'Standby';
 
         let rowBg = 'border';
         if (isInProgress) rowBg = 'bg-soft-primary border border-primary border-opacity-25';
         else if (isComplete) rowBg = 'bg-soft-success border border-success border-opacity-25';
+        else if (isStandby) rowBg = 'bg-soft-warning border border-warning border-opacity-25';
 
         let actionBtn = '';
         if (isPending) {
@@ -251,6 +257,12 @@ function renderServiceToggles(patient) {
             } else {
                 actionBtn = `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
             }
+        } else if (isStandby) {
+            if (hasInProgress) {
+                actionBtn = `<button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled style="font-size: 0.75rem;" title="Check out current service first">Check In</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-outline-warning btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+            }
         } else if (isInProgress) {
             actionBtn = `<button class="btn btn-outline-success btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkout" style="font-size: 0.75rem;">Check Out</button>`;
         }
@@ -258,9 +270,12 @@ function renderServiceToggles(patient) {
         const row = document.createElement('div');
         row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 ${rowBg}`;
         row.innerHTML = `
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
-                <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
+            <div class="d-flex flex-column">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
+                    <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
+                </div>
+                ${isStandby ? '<span class="text-muted" style="font-size: 0.7rem;">If available only</span>' : ''}
             </div>
             <div>${actionBtn}</div>
         `;
