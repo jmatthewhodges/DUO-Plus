@@ -228,6 +228,17 @@ if ($alreadyCheckedIn) {
         $delStmt->bind_param('s', $row['VisitServiceID']);
         $delStmt->execute();
 
+        // Log removal to tblMovementLogs
+        $logID = uniqid('log_', true);
+        $logStmt = $mysqli->prepare(
+            "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'ServiceRemoved', ?)"
+        );
+        if ($logStmt) {
+            $logStmt->bind_param('sss', $logID, $row['VisitServiceID'], $now);
+            $logStmt->execute();
+            $logStmt->close();
+        }
+
         if ($decAssigned) {
             $decAssigned->bind_param('ss', $eventID, $svcID);
             $decAssigned->execute();
@@ -256,9 +267,21 @@ if ($alreadyCheckedIn) {
         $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
         if (!$insertService->execute()) {
             error_log('Re-check-in: Failed to insert service ' . $serviceID . ': ' . $insertService->error);
-        } else if ($incrementAssigned) {
-            $incrementAssigned->bind_param('ss', $eventID, $serviceID);
-            $incrementAssigned->execute();
+        } else {
+            // Log addition to tblMovementLogs
+            $logID = uniqid('log_', true);
+            $logStmt = $mysqli->prepare(
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'CheckedIn', ?)"
+            );
+            if ($logStmt) {
+                $logStmt->bind_param('sss', $logID, $visitServiceID, $now);
+                $logStmt->execute();
+                $logStmt->close();
+            }
+            if ($incrementAssigned) {
+                $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+                $incrementAssigned->execute();
+            }
         }
         error_log("Re-check-in: Added service $serviceID for VisitID=$visitID");
     }
@@ -294,9 +317,21 @@ if ($alreadyCheckedIn) {
         $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
         if (!$insertService->execute()) {
             error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
-        } else if ($incrementAssigned) {
-            $incrementAssigned->bind_param('ss', $eventID, $serviceID);
-            $incrementAssigned->execute();
+        } else {
+            // Log to tblMovementLogs
+            $logID = uniqid('log_', true);
+            $logStmt = $mysqli->prepare(
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'CheckedIn', ?)"
+            );
+            if ($logStmt) {
+                $logStmt->bind_param('sss', $logID, $visitServiceID, $now);
+                $logStmt->execute();
+                $logStmt->close();
+            }
+            if ($incrementAssigned) {
+                $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+                $incrementAssigned->execute();
+            }
         }
     }
 

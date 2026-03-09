@@ -68,4 +68,28 @@ $updateStmt->bind_param('s', $skipRow['VisitID']);
 $updateStmt->execute();
 $updateStmt->close();
 
+// Log skip to tblMovementLogs for each pending service on this visit
+$pendingStmt = $mysqli->prepare(
+    "SELECT VisitServiceID FROM tblVisitServices WHERE VisitID = ? AND ServiceStatus = 'Pending'"
+);
+if ($pendingStmt) {
+    $pendingStmt->bind_param('s', $skipRow['VisitID']);
+    $pendingStmt->execute();
+    $pendingRows = $pendingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $pendingStmt->close();
+
+    $now = date('Y-m-d H:i:s');
+    $logStmt = $mysqli->prepare(
+        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Skipped', ?)"
+    );
+    if ($logStmt) {
+        foreach ($pendingRows as $pr) {
+            $logID = uniqid('log_', true);
+            $logStmt->bind_param('sss', $logID, $pr['VisitServiceID'], $now);
+            $logStmt->execute();
+        }
+        $logStmt->close();
+    }
+}
+
 echo json_encode(['success' => true, 'message' => 'Client will be skipped one turn.']);

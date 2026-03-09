@@ -213,6 +213,18 @@ if ($action === 'add') {
     $clearSkip->execute();
     $clearSkip->close();
 
+    // Log to tblMovementLogs
+    $logID = uniqid('log_', true);
+    $now = date('Y-m-d H:i:s');
+    $logStmt = $mysqli->prepare(
+        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Seated', ?)"
+    );
+    if ($logStmt) {
+        $logStmt->bind_param('sss', $logID, $vs['VisitServiceID'], $now);
+        $logStmt->execute();
+        $logStmt->close();
+    }
+
     echo json_encode(['success' => true, 'message' => 'Service checked in (In-Progress).']);
 
 } elseif ($action === 'checkout') {
@@ -245,6 +257,18 @@ if ($action === 'add') {
     $decSeats->bind_param('ss', $eventID, $serviceID);
     $decSeats->execute();
     $decSeats->close();
+
+    // Log to tblMovementLogs
+    $logID = uniqid('log_', true);
+    $now = date('Y-m-d H:i:s');
+    $logStmt = $mysqli->prepare(
+        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Completed', ?)"
+    );
+    if ($logStmt) {
+        $logStmt->bind_param('sss', $logID, $vs['VisitServiceID'], $now);
+        $logStmt->execute();
+        $logStmt->close();
+    }
 
     echo json_encode(['success' => true, 'message' => 'Service checked out (Complete).']);
 }
