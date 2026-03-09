@@ -97,13 +97,29 @@ if ($action === 'add') {
         exit;
     }
 
-    // Insert new visit service
+    // Insert new visit service (check capacity for standby)
     $vsID = bin2hex(random_bytes(8));
     $now = date('Y-m-d H:i:s');
-    $insertStmt = $mysqli->prepare(
-        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority) VALUES (?, ?, ?, 'Pending', ?)"
+    $svcStatus = 'Pending';
+
+    // Check if service is at max capacity — if so, set to Standby
+    $capCheck = $mysqli->prepare(
+        "SELECT MaxCapacity, CurrentAssigned, StandbyLimit FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
     );
-    $insertStmt->bind_param('ssss', $vsID, $visitID, $serviceID, $now);
+    if ($capCheck) {
+        $capCheck->bind_param('ss', $eventID, $serviceID);
+        $capCheck->execute();
+        $capRow = $capCheck->get_result()->fetch_assoc();
+        $capCheck->close();
+        if ($capRow && (int)$capRow['MaxCapacity'] > 0 && (int)$capRow['CurrentAssigned'] >= (int)$capRow['MaxCapacity']) {
+            $svcStatus = 'Standby';
+        }
+    }
+
+    $insertStmt = $mysqli->prepare(
+        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority) VALUES (?, ?, ?, ?, ?)"
+    );
+    $insertStmt->bind_param('sssss', $vsID, $visitID, $serviceID, $svcStatus, $now);
     $insertStmt->execute();
     $insertStmt->close();
 
@@ -115,12 +131,12 @@ if ($action === 'add') {
     $incStmt->execute();
     $incStmt->close();
 
-    echo json_encode(['success' => true, 'message' => 'Service added.']);
+    echo json_encode(['success' => true, 'message' => $svcStatus === 'Standby' ? 'Service added (Standby).' : 'Service added.']);
 
 } elseif ($action === 'remove') {
     // Find the visit service
     $findStmt = $mysqli->prepare(
-        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus IN ('Pending','In-Progress') LIMIT 1"
+        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus IN ('Pending','In-Progress','Standby') LIMIT 1"
     );
     $findStmt->bind_param('ss', $visitID, $serviceID);
     $findStmt->execute();
@@ -195,9 +211,9 @@ if ($action === 'add') {
         }
     }
 
-    // Check In: Pending -> In-Progress
+    // Check In: Pending/Standby -> In-Progress
     $findStmt = $mysqli->prepare(
-        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus = 'Pending' LIMIT 1"
+        "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus IN ('Pending','Standby') LIMIT 1"
     );
     $findStmt->bind_param('ss', $visitID, $serviceID);
     $findStmt->execute();
@@ -206,7 +222,7 @@ if ($action === 'add') {
 
     if (!$vs) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'No pending visit service found to check in.']);
+        echo json_encode(['success' => false, 'error' => 'No pending or standby visit service found to check in.']);
         exit;
     }
 

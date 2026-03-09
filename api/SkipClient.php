@@ -68,9 +68,9 @@ $updateStmt->bind_param('s', $skipRow['VisitID']);
 $updateStmt->execute();
 $updateStmt->close();
 
-// Log skip to tblMovementLogs for each pending service on this visit
+// Log skip to tblMovementLogs for each pending/standby service on this visit
 $pendingStmt = $mysqli->prepare(
-    "SELECT VisitServiceID FROM tblVisitServices WHERE VisitID = ? AND ServiceStatus = 'Pending'"
+    "SELECT VisitServiceID FROM tblVisitServices WHERE VisitID = ? AND ServiceStatus IN ('Pending','Standby')"
 );
 if ($pendingStmt) {
     $pendingStmt->bind_param('s', $skipRow['VisitID']);

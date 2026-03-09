@@ -83,8 +83,8 @@ $sql = "
     JOIN tblVisits v ON vs.VisitID = v.VisitID
     WHERE v.ClientID = ?
       AND vs.ServiceID IN ($placeholders)
-      AND vs.ServiceStatus IN ('Pending', 'In-Progress')
-    ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending')
+      AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Standby')
+    ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending', 'Standby')
     LIMIT 1
 ";
 
@@ -97,7 +97,7 @@ if ($result->num_rows === 0) {
     http_response_code(404);
     echo json_encode([
         'success' => false,
-        'message' => 'No pending or in-progress service found for this client and service.'
+        'message' => 'No pending, standby, or in-progress service found for this client and service.'
     ]);
     exit;
 }
@@ -111,7 +111,7 @@ $currentStatus = $visitService['ServiceStatus'];
 $now = date('Y-m-d H:i:s');
 $LogID = uniqid('log_', true);
 
-if ($currentStatus === 'Pending') {
+if ($currentStatus === 'Pending' || $currentStatus === 'Standby') {
     // Block check-in if client already has another service In-Progress
     $ipCheck = $mysqli->prepare(
         "SELECT vs.ServiceID, s.ServiceName

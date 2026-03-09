@@ -104,7 +104,10 @@ function buildServiceProgressBars() {
                     <span class="text-primary" style="font-size: 1.1rem;"></span>
                     <span class="fw-bold" style="font-size: 0.9rem; color:black;"></span>
                 </div>
-                <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+                <div class="d-flex align-items-center gap-1">
+                    <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+                    <span class="badge standby-badge fw-bold d-none" style="font-size: 0.7rem; background-color: #fd7e14; color: #fff !important;">0 standby</span>
+                </div>
             </div>
             <div class="progress" style="height: 6px; border-radius: 3px;">
                 <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
@@ -244,10 +247,12 @@ function updateServiceProgressBars(servicesData) {
         if (container) {
             const countSpan = container.querySelector('.service-count');
             const progressBar = container.querySelector('.progress-bar');
+            const standbyBadge = container.querySelector('.standby-badge');
             if (countSpan) countSpan.textContent = '0/0';
             if (progressBar) {
                 progressBar.style.width = '0%';
             }
+            if (standbyBadge) standbyBadge.classList.add('d-none');
         }
     });
 
@@ -263,32 +268,61 @@ function updateServiceProgressBars(servicesData) {
 
         const countSpan = container.querySelector('.service-count');
         const progressBar = container.querySelector('.progress-bar');
+        const standbyBadge = container.querySelector('.standby-badge');
 
         const maxCapacity = service.maxCapacity || 0;
         const currentAssigned = service.currentAssigned || 0;
+        const standbyCount = service.standbyCount || 0;
+        const standbyLimit = service.standbyLimit || 0;
 
         // Calculate percentage (avoid division by zero)
         const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
 
-        // Update display text
+        // Update display text — show actual assigned / max capacity
         if (countSpan) {
             countSpan.textContent = `${currentAssigned}/${maxCapacity}`;
+            // If over capacity, tint the count badge orange
+            if (currentAssigned > maxCapacity) {
+                countSpan.style.backgroundColor = '#fd7e14';
+                countSpan.style.color = '#fff';
+            } else {
+                countSpan.style.backgroundColor = '#e9ecef';
+                countSpan.style.color = '#495057';
+            }
+        }
+
+        // Update standby badge
+        if (standbyBadge) {
+            if (standbyCount > 0) {
+                standbyBadge.classList.remove('d-none');
+                standbyBadge.textContent = `${standbyCount} standby`;
+                // Red tint when standby limit is exceeded
+                if (standbyLimit > 0 && standbyCount >= standbyLimit) {
+                    standbyBadge.style.backgroundColor = '#dc3545';
+                } else {
+                    standbyBadge.style.backgroundColor = '#fd7e14';
+                }
+            } else {
+                standbyBadge.classList.add('d-none');
+            }
         }
 
         // Update progress bar width and color based on capacity
         if (progressBar) {
-            progressBar.style.width = percentage + '%';
+            progressBar.style.width = Math.min(percentage, 100) + '%';
 
             // Remove all color classes
             progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
 
             // Add color based on percentage
-            if (percentage <= 50) {
-                progressBar.classList.add('bg-success');  // Green: under 50%
+            if (percentage > 100) {
+                progressBar.classList.add('bg-danger');    // Red: over capacity (standby)
+            } else if (percentage <= 50) {
+                progressBar.classList.add('bg-success');   // Green: under 50%
             } else if (percentage < 80) {
-                progressBar.classList.add('bg-warning');  // Yellow: 50-80%
+                progressBar.classList.add('bg-warning');   // Yellow: 50-80%
             } else {
-                progressBar.classList.add('bg-danger');   // Red: 80%+
+                progressBar.classList.add('bg-danger');    // Red: 80%+
             }
         }
     });
@@ -853,6 +887,22 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
 
                 // Close check-in modal
                 closeModalAnimated();
+
+                // Show standby notification if any services were placed on standby
+                if (data.standbyServices && data.standbyServices.length > 0) {
+                    const standbyMsg = data.standbyMessage || 'Some services are on standby.';
+                    const isStandbyFull = data.standbyFull && data.standbyFull.length > 0;
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'On Standby',
+                        html: `<p>${standbyMsg}</p>` +
+                              `<p class="text-muted small mb-0">They are still checked in and will be served once others ahead of them are done.</p>` +
+                              (isStandbyFull ? '<p class="text-danger fw-bold mt-2">Standby list is full for some services.</p>' : ''),
+                        confirmButtonColor: '#174593',
+                        timer: 6000,
+                        timerProgressBar: true
+                    });
+                }
 
                 // Remove patient from queue table (registration tab) or refresh (checked-in tab)
                 if (currentTab === 'checked-in') {

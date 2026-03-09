@@ -191,8 +191,27 @@ foreach ($services as $rawID) {
 }
 $resolvedServices = array_unique($resolvedServices);
 
+// ── Load capacity data for standby detection ─────────────────
+$capacityMap = []; // serviceID => { MaxCapacity, CurrentAssigned, StandbyLimit }
+$capStmt = $mysqli->prepare(
+    "SELECT ServiceID, MaxCapacity, CurrentAssigned, StandbyLimit FROM tblEventServices WHERE EventID = ?"
+);
+if ($capStmt) {
+    $capStmt->bind_param('s', $eventID);
+    $capStmt->execute();
+    $capRows = $capStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $capStmt->close();
+    foreach ($capRows as $cr) {
+        $capacityMap[$cr['ServiceID']] = $cr;
+    }
+}
+
+// Track which services went to standby and whether standby is full
+$standbyServices = [];  // service IDs that were placed on standby
+$standbyFull = [];      // service IDs where standby limit is also exceeded
+
 // ── Service diff logic for re-check-in ───────────────────────
-// When the client is already checked in, diff existing Pending services
+// When the client is already checked in, diff existing Pending/Standby services
 // against the newly selected ones: remove deselected, add new ones.
 // Services that are In-Progress or Complete are never touched.
 if ($alreadyCheckedIn) {
@@ -215,7 +234,7 @@ if ($alreadyCheckedIn) {
     $toAdd    = array_diff($resolvedServices, $existingServiceIDs);
     $toRemove = array_diff($existingServiceIDs, $resolvedServices);
 
-    // Remove deselected services (only Pending ones)
+    // Remove deselected services (only Pending or Standby ones)
     $decAssigned = $mysqli->prepare(
         "UPDATE tblEventServices SET CurrentAssigned = GREATEST(CurrentAssigned - 1, 0) WHERE EventID = ? AND ServiceID = ?"
     );
@@ -223,7 +242,7 @@ if ($alreadyCheckedIn) {
 
     foreach ($toRemove as $svcID) {
         $row = $existingByServiceID[$svcID];
-        if ($row['ServiceStatus'] !== 'Pending') continue; // don't touch In-Progress or Complete
+        if ($row['ServiceStatus'] !== 'Pending' && $row['ServiceStatus'] !== 'Standby') continue; // don't touch In-Progress or Complete
 
         $delStmt->bind_param('s', $row['VisitServiceID']);
         $delStmt->execute();
@@ -251,7 +270,7 @@ if ($alreadyCheckedIn) {
     // Add newly selected services
     $insertService = $mysqli->prepare(
         "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
-         VALUES (?, ?, ?, 'Pending', ?)"
+         VALUES (?, ?, ?, ?, ?)"
     );
     $incrementAssigned = $mysqli->prepare(
         "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
@@ -261,10 +280,23 @@ if ($alreadyCheckedIn) {
         $serviceID = trim($serviceID);
         if (empty($serviceID)) continue;
 
+        // Determine status: Standby if at capacity, Pending otherwise
+        $svcStatus = 'Pending';
+        $cap = $capacityMap[$serviceID] ?? null;
+        if ($cap && (int)$cap['MaxCapacity'] > 0 && (int)$cap['CurrentAssigned'] >= (int)$cap['MaxCapacity']) {
+            $svcStatus = 'Standby';
+            $standbyServices[] = $serviceID;
+            $standbyLimit = (int)($cap['StandbyLimit'] ?? 0);
+            $standbyCount = (int)$cap['CurrentAssigned'] - (int)$cap['MaxCapacity'];
+            if ($standbyLimit > 0 && $standbyCount >= $standbyLimit) {
+                $standbyFull[] = $serviceID;
+            }
+        }
+
         $visitServiceID = bin2hex(random_bytes(8));
         $queuePriority  = date('Y-m-d H:i:s');
 
-        $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
+        $insertService->bind_param('sssss', $visitServiceID, $visitID, $serviceID, $svcStatus, $queuePriority);
         if (!$insertService->execute()) {
             error_log('Re-check-in: Failed to insert service ' . $serviceID . ': ' . $insertService->error);
         } else {
@@ -293,7 +325,7 @@ if ($alreadyCheckedIn) {
     // ── First check-in: insert all services ──────────────────────
     $insertService = $mysqli->prepare(
         "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
-         VALUES (?, ?, ?, 'Pending', ?)"
+         VALUES (?, ?, ?, ?, ?)"
     );
 
     if (!$insertService) {
@@ -311,10 +343,23 @@ if ($alreadyCheckedIn) {
         error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
         if (empty($serviceID)) continue;
 
+        // Determine status: Standby if at capacity, Pending otherwise
+        $svcStatus = 'Pending';
+        $cap = $capacityMap[$serviceID] ?? null;
+        if ($cap && (int)$cap['MaxCapacity'] > 0 && (int)$cap['CurrentAssigned'] >= (int)$cap['MaxCapacity']) {
+            $svcStatus = 'Standby';
+            $standbyServices[] = $serviceID;
+            $standbyLimit = (int)($cap['StandbyLimit'] ?? 0);
+            $standbyCount = (int)$cap['CurrentAssigned'] - (int)$cap['MaxCapacity'];
+            if ($standbyLimit > 0 && $standbyCount >= $standbyLimit) {
+                $standbyFull[] = $serviceID;
+            }
+        }
+
         $visitServiceID = bin2hex(random_bytes(8));
         $queuePriority  = date('Y-m-d H:i:s');
 
-        $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
+        $insertService->bind_param('sssss', $visitServiceID, $visitID, $serviceID, $svcStatus, $queuePriority);
         if (!$insertService->execute()) {
             error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
         } else {
@@ -462,6 +507,27 @@ if ($checkedInQuery) {
     $checkedInQuery->close();
 }
 
+// Build standby message if any services went to standby
+$standbyMessage = '';
+if (!empty($standbyServices)) {
+    // Resolve service names for the standby services
+    $standbyNames = [];
+    foreach (array_unique($standbyServices) as $sbID) {
+        $nameStmt = $mysqli->prepare("SELECT ServiceName FROM tblServices WHERE ServiceID = ? LIMIT 1");
+        if ($nameStmt) {
+            $nameStmt->bind_param('s', $sbID);
+            $nameStmt->execute();
+            $nameRow = $nameStmt->get_result()->fetch_assoc();
+            $nameStmt->close();
+            if ($nameRow) $standbyNames[] = $nameRow['ServiceName'];
+        }
+    }
+    $standbyMessage = 'Client placed on STANDBY for: ' . implode(', ', $standbyNames) . '. They are still checked in and in the queue.';
+    if (!empty($standbyFull)) {
+        $standbyMessage .= ' Note: Standby list is full for some services.';
+    }
+}
+
 // Success
 http_response_code(200);
 echo json_encode([
@@ -471,5 +537,8 @@ echo json_encode([
     'firstCheckIn'     => !$alreadyCheckedIn,
     'clientsProcessed' => $clientsProcessed,
     'checkedIn'        => $checkedIn,
-    'isFastTracked'    => $isFastTracked
+    'isFastTracked'    => $isFastTracked,
+    'standbyServices'  => array_values(array_unique($standbyServices)),
+    'standbyFull'      => array_values(array_unique($standbyFull)),
+    'standbyMessage'   => $standbyMessage
 ]);

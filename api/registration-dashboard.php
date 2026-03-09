@@ -121,7 +121,7 @@ if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
 $serviceAvailability = [];
 $serviceQuery = $mysqli->prepare(
     "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed,
-            s.ServiceName
+            es.StandbyLimit, s.ServiceName
      FROM tblEventServices es
      LEFT JOIN tblServices s ON es.ServiceID = s.ServiceID
      WHERE es.EventID = ?"
@@ -133,12 +133,18 @@ if ($serviceQuery) {
     $serviceResult = $serviceQuery->get_result();
     
     while ($serviceRow = $serviceResult->fetch_assoc()) {
+        $maxCap = (int)$serviceRow['MaxCapacity'];
+        $assigned = (int)$serviceRow['CurrentAssigned'];
+        $standbyCount = ($maxCap > 0 && $assigned > $maxCap) ? ($assigned - $maxCap) : 0;
+
         $serviceAvailability[] = [
             'serviceID' => $serviceRow['ServiceID'],
             'serviceName' => $serviceRow['ServiceName'],
-            'maxCapacity' => (int)$serviceRow['MaxCapacity'],
-            'currentAssigned' => (int)$serviceRow['CurrentAssigned'],
-            'isClosed' => (int)$serviceRow['IsClosed']
+            'maxCapacity' => $maxCap,
+            'currentAssigned' => $assigned,
+            'isClosed' => (int)$serviceRow['IsClosed'],
+            'standbyLimit' => (int)$serviceRow['StandbyLimit'],
+            'standbyCount' => $standbyCount
         ];
     }
     $serviceQuery->close();

@@ -151,13 +151,13 @@ if (!empty($visitIDs)) {
         }
     }
 
-    // Pending only — for queue logic (include ParentServiceID for category-based rules)
+    // Pending + Standby — for queue logic (include ParentServiceID for category-based rules)
     $vsStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked, s.ParentServiceID
+        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked, s.ParentServiceID, vs.ServiceStatus
          FROM tblVisitServices vs
          JOIN tblServices s ON s.ServiceID = vs.ServiceID
          WHERE vs.VisitID IN ($placeholders)
-         AND vs.ServiceStatus = 'Pending'"
+         AND vs.ServiceStatus IN ('Pending','Standby')"
     );
     if (!$vsStmt) {
         http_response_code(500);
@@ -173,10 +173,10 @@ if (!empty($visitIDs)) {
         $visitServiceMap[$vs['VisitID']][] = $vs;
     }
 
-    // Count remaining (Pending + In-Progress) services per visit
+    // Count remaining (Pending + Standby + In-Progress) services per visit
     $vsRemainStmt = $mysqli->prepare(
         "SELECT vs.VisitID,
-                SUM(CASE WHEN vs.ServiceStatus IN ('Pending','In-Progress') THEN 1 ELSE 0 END) AS RemainingCount
+                SUM(CASE WHEN vs.ServiceStatus IN ('Pending','Standby','In-Progress') THEN 1 ELSE 0 END) AS RemainingCount
          FROM tblVisitServices vs
          WHERE vs.VisitID IN ($placeholders)
          GROUP BY vs.VisitID"
