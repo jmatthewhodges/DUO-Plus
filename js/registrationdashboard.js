@@ -125,16 +125,17 @@ function buildServiceProgressBars() {
 // Selected services show the icon with a border; unselected show an invisible placeholder.
 function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
     container.innerHTML = '';
-    // Map selected operational service IDs back to their parent category ID
-    const selectedCategoryIDs = new Set();
+    // Map selected operational service IDs back to their parent category ID,
+    // keeping track of which specific child was selected so we use its icon.
+    const selectedCategoryMap = {}; // { categoryID: childServiceID }
     selectedServiceIDs.forEach(svcID => {
         // Check if the ID is a category itself
         const directCat = serviceCategories.find(c => c.ServiceID === svcID);
-        if (directCat) { selectedCategoryIDs.add(svcID); return; }
+        if (directCat) { selectedCategoryMap[svcID] = svcID; return; }
         // Otherwise find the parent category
         for (const cat of serviceCategories) {
             if (cat.children && cat.children.some(ch => ch.ServiceID === svcID)) {
-                selectedCategoryIDs.add(cat.ServiceID);
+                selectedCategoryMap[cat.ServiceID] = svcID;
                 return;
             }
         }
@@ -147,10 +148,11 @@ function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
         wrapper.style.alignItems = 'center';
         wrapper.style.justifyContent = 'center';
 
-        if (selectedCategoryIDs.has(cat.ServiceID)) {
+        const selectedChildID = selectedCategoryMap[cat.ServiceID];
+        if (selectedChildID) {
             wrapper.className = 'qr-icon-border';
             wrapper.style.color = 'black';
-            wrapper.innerHTML = renderIcon(iconLookup[cat.ServiceID] || 'bi-circle');
+            wrapper.innerHTML = renderIcon(iconLookup[selectedChildID] || iconLookup[cat.ServiceID] || 'bi-circle');
         } else {
             wrapper.className = 'qr-icon-border qr-icon-empty';
         }
@@ -975,11 +977,8 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                     size: 200,
                 });
 
-                // Re-fetch service hierarchy to pick up any icon changes made in admin
-                await loadServiceHierarchyForDashboard();
-
-                // Build QR card icons from the actual selected services (not parent categories)
-                // Build a lookup of all service IDs → IconTag (categories + children)
+                // Build QR card icons BEFORE re-fetching hierarchy, so closed
+                // children (e.g. medicalExam at capacity) are still in the lookup.
                 const iconLookup = {};
                 serviceCategories.forEach(cat => {
                     iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
@@ -992,6 +991,9 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
 
                 const qrIconsContainer = document.getElementById('qrCardIcons');
                 buildQrIconSlots(qrIconsContainer, services, iconLookup);
+
+                // Re-fetch service hierarchy to pick up any icon/capacity changes
+                await loadServiceHierarchyForDashboard();
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
                 // Translator badge: show the icon pinned to top-right of the name area
