@@ -616,6 +616,11 @@ function handleReprintQR(e) {
         'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
     };
 
+    // Parse existing operational service IDs so we can pre-select radio buttons
+    let existingServices = [];
+    try { existingServices = JSON.parse(row.dataset.services || '[]'); } catch (_) {}
+    const existingSet = new Set(existingServices);
+
     serviceCategories.forEach(cat => {
         const btn = row.querySelector(`[title="${cat.ServiceName}"]`);
         if (!btn) return;
@@ -629,10 +634,11 @@ function handleReprintQR(e) {
                 if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
                     shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
                 }
+                const checked = existingSet.has(child.ServiceID) ? 'checked' : '';
                 return `
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="${radioName}" 
-                        id="${child.ServiceID}" value="${child.ServiceID}">
+                        id="${child.ServiceID}" value="${child.ServiceID}" ${checked}>
                     <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
                 </div>`;
             }).join('');

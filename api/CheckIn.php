@@ -191,43 +191,118 @@ foreach ($services as $rawID) {
 }
 $resolvedServices = array_unique($resolvedServices);
 
-// Insert rows into tblVisitServices for each service
-$insertService = $mysqli->prepare(
-    "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
-     VALUES (?, ?, ?, 'Pending', ?)"
-);
+// ── Service diff logic for re-check-in ───────────────────────
+// When the client is already checked in, diff existing Pending services
+// against the newly selected ones: remove deselected, add new ones.
+// Services that are In-Progress or Complete are never touched.
+if ($alreadyCheckedIn) {
+    // Fetch existing visit services for this visit
+    $existingStmt = $mysqli->prepare(
+        "SELECT VisitServiceID, ServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ?"
+    );
+    $existingStmt->bind_param('s', $visitID);
+    $existingStmt->execute();
+    $existingRows = $existingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $existingStmt->close();
 
-if (!$insertService) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
-    exit;
-}
-
-// Prepare statement to increment CurrentAssigned in tblEventServices
-$incrementAssigned = $mysqli->prepare(
-    "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
-);
-
-foreach ($resolvedServices as $serviceID) {
-    $serviceID = trim($serviceID);
-    error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
-    if (empty($serviceID)) continue;
-
-    $visitServiceID = bin2hex(random_bytes(8)); // 16-char hex ID
-    $queuePriority  = date('Y-m-d H:i:s');      // Timestamp = FIFO order
-
-    $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
-    if (!$insertService->execute()) {
-        error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
-    } else if ($incrementAssigned) {
-        // Increment the assigned count for this service in the event
-        $incrementAssigned->bind_param('ss', $eventID, $serviceID);
-        $incrementAssigned->execute();
+    // Build lookup of existing services by ID
+    $existingByServiceID = [];
+    foreach ($existingRows as $row) {
+        $existingByServiceID[$row['ServiceID']] = $row;
     }
-}
 
-$insertService->close();
-if ($incrementAssigned) $incrementAssigned->close();
+    $existingServiceIDs = array_keys($existingByServiceID);
+    $toAdd    = array_diff($resolvedServices, $existingServiceIDs);
+    $toRemove = array_diff($existingServiceIDs, $resolvedServices);
+
+    // Remove deselected services (only Pending ones)
+    $decAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = GREATEST(CurrentAssigned - 1, 0) WHERE EventID = ? AND ServiceID = ?"
+    );
+    $delStmt = $mysqli->prepare("DELETE FROM tblVisitServices WHERE VisitServiceID = ?");
+
+    foreach ($toRemove as $svcID) {
+        $row = $existingByServiceID[$svcID];
+        if ($row['ServiceStatus'] !== 'Pending') continue; // don't touch In-Progress or Complete
+
+        $delStmt->bind_param('s', $row['VisitServiceID']);
+        $delStmt->execute();
+
+        if ($decAssigned) {
+            $decAssigned->bind_param('ss', $eventID, $svcID);
+            $decAssigned->execute();
+        }
+        error_log("Re-check-in: Removed service $svcID (Pending) for VisitID=$visitID");
+    }
+    $delStmt->close();
+    if ($decAssigned) $decAssigned->close();
+
+    // Add newly selected services
+    $insertService = $mysqli->prepare(
+        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
+         VALUES (?, ?, ?, 'Pending', ?)"
+    );
+    $incrementAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+
+    foreach ($toAdd as $serviceID) {
+        $serviceID = trim($serviceID);
+        if (empty($serviceID)) continue;
+
+        $visitServiceID = bin2hex(random_bytes(8));
+        $queuePriority  = date('Y-m-d H:i:s');
+
+        $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
+        if (!$insertService->execute()) {
+            error_log('Re-check-in: Failed to insert service ' . $serviceID . ': ' . $insertService->error);
+        } else if ($incrementAssigned) {
+            $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+            $incrementAssigned->execute();
+        }
+        error_log("Re-check-in: Added service $serviceID for VisitID=$visitID");
+    }
+
+    $insertService->close();
+    if ($incrementAssigned) $incrementAssigned->close();
+
+} else {
+    // ── First check-in: insert all services ──────────────────────
+    $insertService = $mysqli->prepare(
+        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
+         VALUES (?, ?, ?, 'Pending', ?)"
+    );
+
+    if (!$insertService) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+        exit;
+    }
+
+    $incrementAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+
+    foreach ($resolvedServices as $serviceID) {
+        $serviceID = trim($serviceID);
+        error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
+        if (empty($serviceID)) continue;
+
+        $visitServiceID = bin2hex(random_bytes(8));
+        $queuePriority  = date('Y-m-d H:i:s');
+
+        $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
+        if (!$insertService->execute()) {
+            error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
+        } else if ($incrementAssigned) {
+            $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+            $incrementAssigned->execute();
+        }
+    }
+
+    $insertService->close();
+    if ($incrementAssigned) $incrementAssigned->close();
+}
 
 // ── Fast Track Logic ─────────────────────────────────────────
 // If this client has dental sub-services, and the fast-track limit hasn't been reached,
