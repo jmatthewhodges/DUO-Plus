@@ -509,6 +509,49 @@ body.v-center-page {
     overflow-wrap: anywhere;
 }
 
+/* ==========================================
+   SERVICE SCAN — MOBILE
+   ========================================== */
+
+/* Stat labels shrink to fit 3-across layout */
+.service-stat-label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* On very small screens, abbreviate "In Progress" label via content override */
+@media (max-width: 380px) {
+    #stat2Label {
+        font-size: 0.65rem;
+    }
+}
+
+/* Table max-height: shorter on mobile so the whole page doesn't scroll awkwardly */
+@media (max-width: 575px) {
+    .table-responsive {
+        max-height: calc(100dvh - 420px) !important;
+        min-height: 180px;
+    }
+
+    /* Tighter padding in table cells on mobile */
+    .waitlist-table td {
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    /* Icon-only button on mobile — keep it square */
+    .waitlist-table td:last-child .btn {
+        min-width: 34px;
+    }
+
+    /* Search input wider on small screens */
+    #searchInput {
+        width: 100px !important;
+    }
+}
+
 @media (max-width: 400px) {
     .waitlist-table col:nth-child(1) { width: 48% !important; }
     .waitlist-table col:nth-child(2) { width: 27% !important; }

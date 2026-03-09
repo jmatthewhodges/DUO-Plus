@@ -49,6 +49,14 @@
  ============================================================
 */
 
+// Format a YYYY-MM-DD date string to MM/DD/YYYY to match other dashboards
+function formatDOB(dateString) {
+    if (!dateString) return 'N/A';
+    const parts = dateString.split('-');
+    if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    return dateString;
+}
+
 // Service configuration — loaded from API at init, populated by loadServiceHierarchy()
 let SERVICES = {};
 
@@ -1065,9 +1073,12 @@ function populateWaitlist(clientsToShow = null) {
                     </div>
                 </div>
             </td>
-            <td class="fw-medium text-nowrap py-3">${client.dob}</td>
+            <td class="fw-medium text-nowrap py-3">${formatDOB(client.dob)}</td>
             <td class="text-end pe-3 py-3">
-                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm px-3 rounded-2 text-nowrap" data-client-id="${client.id}">${isInProgress ? 'Complete' : 'Update'}</button>
+                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${isInProgress ? 'Complete' : 'Update'}">
+                    <i class="bi ${isInProgress ? 'bi-check-lg' : 'bi-arrow-right'} d-sm-none" style="font-size: 1rem; line-height: 1;"></i>
+                    <span class="d-none d-sm-inline text-nowrap">${isInProgress ? 'Complete' : 'Update'}</span>
+                </button>
             </td>
         `;
         waitlistBody.appendChild(row);
