@@ -25,14 +25,18 @@
     <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
 </head>
 
-<body>
-    <div class="container">
+<body style="overflow-x: hidden;">
+    <div class="container" style="padding-top: 3.5rem;">
 
         <div id="divLanguageSwitch">
-            <select name="languageSwitch" id="selLanguageSwitch" class="btn-primary" aria-label="Select language">
+            <select name="languageSwitch" id="selLanguageSwitch" class="d-none" aria-hidden="true">
                 <option value="en">EN</option>
                 <option value="es">ES</option>
             </select>
+            <div class="lang-toggle" role="radiogroup" aria-label="Select language">
+                <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
+                <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
+            </div>
         </div>
 
         <div class="row justify-content-center">
@@ -143,7 +147,7 @@
                             <div class="mb-3 text-start">
                                 <label class="form-label fw-semibold d-block" id="sexLabel">Sex <span
                                         class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="btn-group" role="radiogroup" aria-label="Select your sex." aria-required="true">
+                                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Select your sex." aria-required="true">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
                                     <label class="btn btn-outline-primary" id="btnSexMaleLabel"
@@ -167,7 +171,7 @@
                                 <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of Birth
                                     <span class="text-danger" aria-hidden="true">*</span></label>
                                 <input type="text" id="clientDOB" class="form-control input-black" required
-                                    placeholder="MM/DD/YYYY">
+                                    inputmode="numeric" placeholder="MM/DD/YYYY">
                             </div>
 
                             <!-- Phone (optional) -->

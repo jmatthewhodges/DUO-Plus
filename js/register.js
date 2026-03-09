@@ -179,28 +179,25 @@ async function loadServiceCategories() {
             return;
         }
 
-        // Build a 2-column grid of checkboxes
-        const col1 = [];
-        const col2 = [];
-        openCategories.forEach((cat, i) => {
+        // Build a 2-column grid of checkboxes with equal-height buttons
+        let items = '';
+        openCategories.forEach((cat) => {
             const id = `btnService_${cat.ServiceID}`;
-            const html = `
-                <div class="mb-3">
+            items += `
+                <div class="col-6 mb-3 d-flex">
                     <input type="checkbox" class="btn-check" name="clientServices"
                         id="${id}" value="${cat.ServiceID}" autocomplete="off"
                         aria-label="${cat.ServiceName}">
-                    <label class="btn btn-outline-navy w-100 text-start p-3"
-                        style="font-size: 20px;" for="${id}">
+                    <label class="btn btn-outline-navy w-100 text-start p-3 service-btn-label"
+                        for="${id}">
                         ${renderIcon(cat.IconTag, 'me-2')} ${cat.ServiceName}
                     </label>
                 </div>`;
-            if (i % 2 === 0) col1.push(html); else col2.push(html);
         });
 
         grid.innerHTML = `
             <legend class="visually-hidden">Select the services you need</legend>
-            <div class="col-6">${col1.join('')}</div>
-            <div class="col-6">${col2.join('')}</div>`;
+            ${items}`;
     } catch (err) {
         console.error('Failed to load service categories:', err);
         const t = getLang();

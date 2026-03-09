@@ -90,12 +90,20 @@ hr {
     transition: all 0.2s ease-in-out;
 }
 
-/* Hover and Checked states */
-.btn-outline-navy:hover,
+/* Checked state */
 .btn-check:checked+.btn-outline-navy {
     color: #ffffff !important;
     background-color: #174593 !important;
     border-color: #174593 !important;
+}
+
+/* Hover only on devices that truly support it (not touch) */
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-navy:hover {
+        color: #ffffff !important;
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+    }
 }
 
 /* Focus state: Adds a custom soft navy ring when clicked/tabbed */
@@ -103,11 +111,18 @@ hr {
     box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
 }
 
+/* Equal-height service selection buttons */
+#serviceSelectionGrid .service-btn-label {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+}
+
 
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* Set max width for login and dashboard containers */
@@ -325,19 +340,41 @@ body.v-center-page {
     background-image: none !important;
 }
 
-/* Language Select */
+/* Language Toggle */
 #divLanguageSwitch {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 1050;
 }
 
-#selLanguageSwitch {
+.lang-toggle {
+    display: inline-flex;
     border-radius: 999px;
-    border: 2px solid white;
-    padding: 0.35rem 0.85rem;
-    min-width: 72px;
+    overflow: hidden;
+    border: 2px solid #174593;
+    background: #fff;
+}
+
+.lang-btn {
+    border: none;
+    background: #fff;
+    color: #174593;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    line-height: 1.2;
+}
+
+.lang-btn.active {
+    background: #174593;
+    color: #fff;
+}
+
+.lang-btn:hover:not(.active) {
+    background: #e9ecef;
 }
 
 /* ==========================================

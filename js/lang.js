@@ -407,3 +407,30 @@ select.addEventListener("change", function () {
   }
 });
 
+// Wire language toggle buttons (EN/ES pill) to the hidden <select>
+(function () {
+  var buttons = document.querySelectorAll('.lang-btn');
+  if (!buttons.length) return;
+  // Sync initial state from saved language
+  var saved = sessionStorage.getItem('lang');
+  if (saved) {
+    buttons.forEach(function (b) {
+      var isActive = b.dataset.lang === saved;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      buttons.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
+      select.value = btn.dataset.lang;
+      select.dispatchEvent(new Event('change'));
+    });
+  });
+})();
+
