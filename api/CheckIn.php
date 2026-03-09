@@ -146,7 +146,7 @@ $updateVisit->close();
 // Insert rows into tblVisitServices for each service
 $insertService = $mysqli->prepare(
     "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
-     VALUES (?, ?, ?, 'Pending', ?)"
+     VALUES (?, ?, ?, ?, ?)"
 );
 
 if (!$insertService) {
@@ -155,20 +155,98 @@ if (!$insertService) {
     exit;
 }
 
+// Prepare update for tblEventServices
+$updateEventService = $mysqli->prepare(
+    "UPDATE tblEventServices
+     SET CurrentAssigned = CurrentAssigned + 1
+     WHERE EventID = ? AND ServiceID = ?"
+);
+
+if (!$updateEventService) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+    exit;
+}
+
 foreach ($services as $serviceID) {
+
     $serviceID = trim($serviceID);
-    error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
     if (empty($serviceID)) continue;
 
-    $visitServiceID = bin2hex(random_bytes(8)); // 16-char hex ID
-    $queuePriority  = date('Y-m-d H:i:s');      // Timestamp = FIFO order
+    $visitServiceID = bin2hex(random_bytes(8));
+    $queuePriority  = date('Y-m-d H:i:s');
 
-    $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
-    if (!$insertService->execute()) {
+    // Check capacity
+    $capacityCheck = $mysqli->prepare(
+        "SELECT CurrentAssigned, MaxCapacity
+         FROM tblEventServices
+         WHERE EventID = ? AND ServiceID = ?"
+    );
+
+    $capacityCheck->bind_param('ss', $eventID, $serviceID);
+    $capacityCheck->execute();
+    $capacity = $capacityCheck->get_result()->fetch_assoc();
+    $capacityCheck->close();
+
+    $status = 'Pending';
+
+    if ($capacity && $capacity['CurrentAssigned'] >= $capacity['MaxCapacity']) {
+        $status = 'Standby';
+    }
+
+    $insertService->bind_param(
+        'sssss',
+        $visitServiceID,
+        $visitID,
+        $serviceID,
+        $status,
+        $queuePriority
+    );
+
+    if ($insertService->execute()) {
+
+        if ($status == 'Pending') {
+
+            $update = $mysqli->prepare(
+                "UPDATE tblEventServices
+                 SET CurrentAssigned = CurrentAssigned + 1
+                 WHERE EventID=? AND ServiceID=?"
+            );
+
+        } else {
+
+            // Increment CurrentAssigned always, but only increment CurrentStandby if below StandbyLimit
+            $update = $mysqli->prepare(
+                "UPDATE tblEventServices
+                SET CurrentAssigned = CurrentAssigned + 1,
+                    CurrentStandby = CASE 
+                                        WHEN CurrentStandby < StandbyLimit 
+                                        THEN CurrentStandby + 1 
+                                        ELSE CurrentStandby 
+                                    END
+                WHERE EventID=? AND ServiceID=?"
+            );
+        }
+
+        $update->bind_param('ss', $eventID, $serviceID);
+        $update->execute();
+        $update->close();
+
+        // Auto-close if CurrentStandby >= StandbyLimit
+        $closeService = $mysqli->prepare(
+            "UPDATE tblEventServices
+            SET IsClosed = 1
+            WHERE EventID=? AND ServiceID=? AND CurrentStandby >= StandbyLimit"
+        );
+        $closeService->bind_param('ss', $eventID, $serviceID);
+        $closeService->execute();
+        $closeService->close();
+    
+
+    } else {
         error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
     }
 }
-
 $insertService->close();
 
 // Update clientsProcessed stat in tblAnalytics
@@ -211,6 +289,16 @@ if ($checkedInQuery) {
     $checkedInQuery->close();
 }
 
+$servicesQuery = $mysqli->prepare(
+    "SELECT ServiceID, MaxCapacity, CurrentAssigned, StandbyLimit
+     FROM tblEventServices
+     WHERE EventID = ?"
+);
+$servicesQuery->bind_param('s', $eventID);
+$servicesQuery->execute();
+$servicesData = $servicesQuery->get_result()->fetch_all(MYSQLI_ASSOC);
+$servicesQuery->close();
+
 // Success
 http_response_code(200);
 echo json_encode([
@@ -219,5 +307,6 @@ echo json_encode([
     'visitID'          => $visitID,
     'firstCheckIn'     => !$alreadyCheckedIn,
     'clientsProcessed' => $clientsProcessed,
-    'checkedIn'        => $checkedIn
+    'checkedIn'        => $checkedIn,
+    'services'         => $servicesData
 ]);
