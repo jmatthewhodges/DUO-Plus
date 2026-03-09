@@ -26,6 +26,19 @@ const nowServingServiceEl = document.querySelector('.queue-service');
 //================================================================================
 // 3. HELPERS
 
+// Spin a refresh button's arrow icon while a promise is pending, then restore it
+function spinRefreshBtn(btn, promise) {
+    if (!btn) return promise;
+    const icon = btn.querySelector('.bi-arrow-clockwise');
+    btn.disabled = true;
+    if (icon) icon.classList.add('spin-refresh');
+    const minDelay = new Promise(r => setTimeout(r, 600));
+    return Promise.all([promise, minDelay]).finally(() => {
+        if (icon) icon.classList.remove('spin-refresh');
+        btn.disabled = false;
+    });
+}
+
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const parts = dateString.split(/[- ]/);
@@ -358,7 +371,7 @@ function init() {
     fetchQueueData();
 
     const refreshBtn = document.getElementById('refreshQueueBtn');
-    if (refreshBtn) refreshBtn.addEventListener('click', fetchQueueData);
+    if (refreshBtn) refreshBtn.addEventListener('click', () => spinRefreshBtn(refreshBtn, fetchQueueData()));
 }
 
 init();

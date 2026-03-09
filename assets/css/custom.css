@@ -510,6 +510,22 @@ body.v-center-page {
 }
 
 /* ==========================================
+   REFRESH BUTTON SPIN ANIMATION
+   ========================================== */
+
+@keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Applied to the icon inside a refresh button while loading */
+.spin-refresh {
+    display: inline-block;
+    animation: refresh-spin 0.7s linear infinite;
+    pointer-events: none;
+}
+
+/* ==========================================
    SERVICE SCAN — MOBILE
    ========================================== */
 

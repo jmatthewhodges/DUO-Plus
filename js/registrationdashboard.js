@@ -11,6 +11,19 @@
 
 // 1. GLOBAL SETTINGS & STATE
 
+// Spin a refresh button's arrow icon while a promise is pending, then restore it
+function spinRefreshBtn(btn, promise) {
+    if (!btn) return promise;
+    const icon = btn.querySelector('.bi-arrow-clockwise');
+    btn.disabled = true;
+    if (icon) icon.classList.add('spin-refresh');
+    const minDelay = new Promise(r => setTimeout(r, 600));
+    return Promise.all([promise, minDelay]).finally(() => {
+        if (icon) icon.classList.remove('spin-refresh');
+        btn.disabled = false;
+    });
+}
+
 // Service hierarchy — loaded from API at init
 let serviceCategories = [];   // [{ ServiceID, ServiceName, IconTag, SortOrder, children: [...] }]
 let serviceAvailability = {};  // { categoryServiceID: true/false }
@@ -438,7 +451,7 @@ function fetchRegistrationQueue() {
 
     const status = currentTab === 'checked-in' ? 'CheckedIn' : 'Registered';
 
-    fetch(`../api/registration-dashboard.php?RegistrationStatus=${status}`, {
+    return fetch(`../api/registration-dashboard.php?RegistrationStatus=${status}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -1149,4 +1162,9 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     await loadServiceHierarchyForDashboard();
     buildServiceProgressBars();
     fetchRegistrationQueue();
+
+    const refreshQueueBtn = document.getElementById('refreshQueueBtn');
+    if (refreshQueueBtn) {
+        refreshQueueBtn.addEventListener('click', () => spinRefreshBtn(refreshQueueBtn, fetchRegistrationQueue()));
+    }
 })();

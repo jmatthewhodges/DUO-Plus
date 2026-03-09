@@ -49,6 +49,19 @@
  ============================================================
 */
 
+// Spin a refresh button's arrow icon while a promise is pending, then restore it
+function spinRefreshBtn(btn, promise) {
+    if (!btn) return promise;
+    const icon = btn.querySelector('.bi-arrow-clockwise');
+    btn.disabled = true;
+    if (icon) icon.classList.add('spin-refresh');
+    const minDelay = new Promise(r => setTimeout(r, 600));
+    return Promise.all([promise, minDelay]).finally(() => {
+        if (icon) icon.classList.remove('spin-refresh');
+        btn.disabled = false;
+    });
+}
+
 // Format a YYYY-MM-DD date string to MM/DD/YYYY to match other dashboards
 function formatDOB(dateString) {
     if (!dateString) return 'N/A';
@@ -1156,6 +1169,6 @@ function updateStatsDisplay() {
 const refreshServiceBtn = document.getElementById('refreshServiceBtn');
 if (refreshServiceBtn) {
     refreshServiceBtn.addEventListener('click', () => {
-        if (currentServiceKey) fetchServiceData(currentServiceKey);
+        if (currentServiceKey) spinRefreshBtn(refreshServiceBtn, fetchServiceData(currentServiceKey));
     });
 }
