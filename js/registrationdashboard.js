@@ -545,17 +545,11 @@ function populateCheckedInTable(patientsData) {
             if (catID) activeCategoryIDs.add(catID);
         });
 
-        // Build service icon buttons (read-only display using same style as registration)
+        // Build service icon buttons (interactive — same as registration)
         let serviceButtonsHTML = '';
         serviceCategories.forEach(cat => {
             const state = activeCategoryIDs.has(cat.ServiceID) ? 1 : 0;
-            const colorClass = state === 1 ? 'btn-success' : 'btn-grey';
-            const iconColor = state === 1 ? 'text-white' : '';
-            serviceButtonsHTML += `
-                <span class="btn ${colorClass} btn-sm rounded-2" 
-                    style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                    ${renderIcon(cat.IconTag || 'bi-circle', iconColor)}
-                </span>`;
+            serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
         });
 
         const translatorBadge = patient.TranslatorNeeded == 1
@@ -604,76 +598,67 @@ function populateCheckedInTable(patientsData) {
     }
 }
 
-// ── Reprint QR Badge ────────────────────────────────────────
-async function handleReprintQR(e) {
+// ── Reprint / Re-Check-In ───────────────────────────────────
+// Opens the same check-in modal as registration so the user can
+// adjust services, pick sub-services, set translator, and re-check-in.
+function handleReprintQR(e) {
     const row = e.target.closest('tr');
-    const clientID = row.dataset.clientId;
-    const firstName = row.dataset.firstName.toUpperCase();
-    const lastName = row.dataset.lastName;
-    const services = JSON.parse(row.dataset.services || '[]');
-    const needsTranslator = row.dataset.translator === '1';
+    currentRowToUpdate = row;
+    currentClientId = row.dataset.clientId;
+    currentClientName = row.querySelector('.fw-bold.text-dark').innerText;
 
-    // Re-fetch hierarchy for fresh icons
-    await loadServiceHierarchyForDashboard();
+    // --- Build sub-service sections dynamically (same as registration check-in) ---
+    const subSvcContainer = document.getElementById('modalSubServiceSections');
+    subSvcContainer.innerHTML = '';
 
-    // Build icon lookup
-    const iconLookup = {};
+    const categoryDescriptions = {
+        'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
+        'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+    };
+
     serviceCategories.forEach(cat => {
-        iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
-        if (cat.children) {
-            cat.children.forEach(child => {
-                iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
-            });
+        const btn = row.querySelector(`[title="${cat.ServiceName}"]`);
+        if (!btn) return;
+        const state = parseInt(btn.getAttribute('data-state'));
+        const isAvailable = serviceAvailability[cat.ServiceID];
+
+        if (state === 1 && isAvailable && cat.children && cat.children.length > 0) {
+            const radioName = `${cat.ServiceID}Choice`;
+            let radiosHTML = cat.children.map(child => {
+                let shortLabel = child.ServiceName;
+                if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                    shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                }
+                return `
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="${radioName}" 
+                        id="${child.ServiceID}" value="${child.ServiceID}">
+                    <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                </div>`;
+            }).join('');
+
+            const descHTML = categoryDescriptions[cat.ServiceID]
+                ? `<p class="text-muted small mb-2">${categoryDescriptions[cat.ServiceID]}</p>`
+                : '';
+
+            subSvcContainer.innerHTML += `
+                <div class="mb-4 p-3 border rounded bg-light sub-service-section" data-category="${cat.ServiceID}">
+                    <label class="fw-bold mb-2 text-primary">Select ${cat.ServiceName} Service:</label>
+                    ${descHTML}
+                    <div class="d-flex gap-4">${radiosHTML}</div>
+                </div>`;
         }
     });
 
-    // Populate QR card
-    const firstNameEl = document.getElementById('qrCardFirstName');
-    const lastNameEl = document.getElementById('qrCardLastName');
+    // Pre-fill translator checkbox
+    const translatorNeeded = row.dataset.translator;
+    document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
 
-    // Scale font size (reuse same logic as check-in)
-    function scaledName(name, maxSize, minSize) {
-        const len = name.length;
-        if (len <= 6) return { text: name, size: maxSize };
-        if (len <= 8) return { text: name, size: maxSize * 0.85 };
-        if (len <= 10) return { text: name, size: maxSize * 0.70 };
-        if (len <= 12) return { text: name, size: maxSize * 0.58 };
-        if (len <= 14) return { text: name, size: maxSize * 0.50 };
-        return { text: name.slice(0, 14) + '…', size: minSize };
-    }
+    document.getElementById('modalPatientName').innerText = currentClientName;
 
-    const first = scaledName(firstName, 2.5, 1.1);
-    const last = scaledName(lastName, 1.5, 0.8);
-    firstNameEl.innerText = first.text;
-    firstNameEl.style.fontSize = first.size + 'rem';
-    lastNameEl.innerText = last.text;
-    lastNameEl.style.fontSize = last.size + 'rem';
-
-    // Generate QR code
-    new QRious({
-        element: document.getElementById('qr'),
-        value: clientID,
-        size: 200,
-    });
-
-    // Build fixed-position service icon slots
-    const qrIconsContainer = document.getElementById('qrCardIcons');
-    buildQrIconSlots(qrIconsContainer, services, iconLookup);
-
-    // Translator badge
-    document.getElementById('qrCardTranslator').style.display = needsTranslator ? 'block' : 'none';
-
-    // Show QR modal (print disabled until fully rendered)
-    const printBtn = document.getElementById('printQrBtn');
-    printBtn.disabled = true;
-    const qrModal = document.getElementById('qrCodeModal');
-    qrModal.classList.remove('d-none');
-    qrModal.classList.add('d-flex');
-
-    // Allow a frame for the browser to paint, then enable print
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => { printBtn.disabled = false; });
-    });
+    const modal = document.getElementById('checkInModal');
+    modal.classList.remove('d-none');
+    modal.classList.add('d-flex');
 }
 
 //================================================================================
@@ -863,22 +848,27 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 // Close check-in modal
                 closeModalAnimated();
 
-                // Remove patient from queue table
-                if (currentRowToUpdate) {
+                // Remove patient from queue table (registration tab) or refresh (checked-in tab)
+                if (currentTab === 'checked-in') {
+                    // Re-fetch the checked-in list so the row updates with new services
+                    fetchRegistrationQueue();
+                } else if (currentRowToUpdate) {
                     currentRowToUpdate.remove();
                 }
 
-                // Update Stats
-                // Decrement registration count
-                let currentReg = parseInt(statRegCount.innerText) || 0;
-                statRegCount.innerText = Math.max(0, currentReg - 1);
+                // Update Stats (only when coming from registration tab)
+                if (currentTab !== 'checked-in') {
+                    // Decrement registration count
+                    let currentReg = parseInt(statRegCount.innerText) || 0;
+                    statRegCount.innerText = Math.max(0, currentReg - 1);
 
-                // Update processed count from API (source of truth is the DB)
-                if (statCompCount && data.clientsProcessed !== undefined) {
-                    statCompCount.innerText = data.clientsProcessed;
-                } else if (statCompCount) {
-                    // Fallback: increment locally if API didn't return updated count
-                    statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    // Update processed count from API (source of truth is the DB)
+                    if (statCompCount && data.clientsProcessed !== undefined) {
+                        statCompCount.innerText = data.clientsProcessed;
+                    } else if (statCompCount) {
+                        // Fallback: increment locally if API didn't return updated count
+                        statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    }
                 }
 
                 // Refresh service progress bars with latest counts
