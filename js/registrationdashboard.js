@@ -80,11 +80,14 @@ function formatDOB(dateString) {
     return `${month}/${day}/${year}`;
 }
 
-//updates the service progress bars based on availability data from API
+// Track services that have already triggered a SweetAlert
+const alertedServices = new Set();
+
+// Updates the service progress bars based on API data (uses IsClosed from PHP)
 function updateServiceProgressBars(servicesData) {
     if (!servicesData || !Array.isArray(servicesData)) return;
 
-    // Initialize all service containers first (optional - for services not in API response)
+    // Initialize all service containers
     Object.values(serviceMapping).forEach(mapping => {
         const container = document.getElementById(mapping.containerId);
         if (container) {
@@ -93,16 +96,17 @@ function updateServiceProgressBars(servicesData) {
             if (countSpan) countSpan.textContent = '(0/0)';
             if (progressBar) {
                 progressBar.style.width = '0%';
+                progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-dark', 'bg-info'); 
+                // Bg-dark needs to turn into a purple and light into a grey
             }
         }
     });
 
-    // Update services based on API data
+    // Update each service
     servicesData.forEach(service => {
-        const serviceID = service.serviceID || '';
+        const serviceID = service.serviceID || service.ServiceID || '';
         const mapping = serviceMapping[serviceID];
-
-        if (!mapping) return; // Skip if we don't have a mapping for this service
+        if (!mapping) return;
 
         const container = document.getElementById(mapping.containerId);
         if (!container) return;
@@ -110,31 +114,57 @@ function updateServiceProgressBars(servicesData) {
         const countSpan = container.querySelector('.service-count');
         const progressBar = container.querySelector('.progress-bar');
 
-        const maxCapacity = service.maxCapacity || 0;
-        const currentAssigned = service.currentAssigned || 0;
+        // Ensure numeric values
+        const maxCapacity = parseInt(service.maxCapacity ?? service.MaxCapacity ?? 0, 10);
+        const currentAssigned = parseInt(service.currentAssigned ?? service.CurrentAssigned ?? 0, 10);
+        const standbyLimit = parseInt(service.standbyLimit ?? service.StandbyLimit ?? 0, 10);
+        const isClosed = parseInt(service.isClosed ?? service.IsClosed ?? 0, 10);
 
-        // Calculate percentage (avoid division by zero)
-        const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+        // Total capacity including standby (for width calculation)
+        const totalCapacity = maxCapacity + standbyLimit;
+        const percentage = totalCapacity > 0 ? Math.round((currentAssigned / totalCapacity) * 100) : 0;
 
-        // Update display text
         if (countSpan) {
-            countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
+            // Always use numeric values for the bar text
+            if (isClosed === 1) {
+                countSpan.textContent = `(${currentAssigned}/${maxCapacity}) MAX`;
+
+                // SweetAlert tells user when max hit
+                if (!alertedServices.has(serviceID)) {
+                    alertedServices.add(serviceID);
+                    const serviceName = mapping.displayName || 'This';
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Service Full',
+                        text: `${serviceName} service has reached MAX Capacity.`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                }
+            } else {
+                countSpan.textContent = `(${currentAssigned}/${maxCapacity})`;
+            }
         }
 
-        // Update progress bar width and color based on capacity
+        // Update progress bar width (capped at 100%)
         if (progressBar) {
-            progressBar.style.width = percentage + '%';
+            progressBar.style.width = Math.min(percentage, 100) + '%';
 
-            // Remove all color classes
-            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            // Remove all existing color classes
+            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-dark', 'bg-info');
+            // Bg-dark needs to turn into a purple and light into a grey
 
-            // Add color based on percentage
-            if (percentage <= 50) {
-                progressBar.classList.add('bg-success');  // Green: under 50%
+            // Set color
+            if (isClosed === 1) {
+                progressBar.classList.add('bg-info'); // greyed out for maxed service Change color
+            } else if (currentAssigned > maxCapacity) {
+                progressBar.classList.add('bg-dark'); // standby Change color
+            } else if (percentage <= 50) {
+                progressBar.classList.add('bg-success'); // green
             } else if (percentage < 80) {
-                progressBar.classList.add('bg-warning');  // Yellow: 50-80%
+                progressBar.classList.add('bg-warning'); // yellow
             } else {
-                progressBar.classList.add('bg-danger');   // Red: 80%+
+                progressBar.classList.add('bg-danger'); // red
             }
         }
     });
