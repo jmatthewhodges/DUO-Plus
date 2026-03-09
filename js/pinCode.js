@@ -215,6 +215,38 @@ function initializePINModal() {
         const name = nameInput.value.trim();
         const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
 
+        // Client-side validation: PIN first, then name
+        const pinComplete = pin.length === 6 && /^\d{6}$/.test(pin);
+
+        if (!pinComplete) {
+            if (document.activeElement) document.activeElement.blur();
+            Swal.fire({
+                icon: 'warning',
+                title: 'PIN Required',
+                text: 'Please enter the 6-digit PIN',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                clearInputs(inputs);
+                setTimeout(() => inputs[0].focus(), 300);
+            });
+            return;
+        }
+
+        if (!name) {
+            if (document.activeElement) document.activeElement.blur();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Name Required',
+                text: 'Please enter your name',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                setTimeout(() => nameInput.focus(), 300);
+            });
+            return;
+        }
+
         // UI FEEDBACK: Show loading spinner while verifying
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
@@ -255,6 +287,9 @@ function initializePINModal() {
             }, 500);
 
         } catch (err) {
+            // Blur any focused input so the mobile keyboard closes before the alert
+            if (document.activeElement) document.activeElement.blur();
+
             // FAILURE: Display error using SweetAlert
             Swal.fire({
                 icon: 'error',
@@ -263,24 +298,14 @@ function initializePINModal() {
                 confirmButtonText: 'OK',
                 allowOutsideClick: false
             }).then(() => {
-                // Clear only the invalid field - keep the valid one
-                if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
-                    // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
-                    clearInputs(inputs);
-                    inputs[0].focus();
-                } else if (err.message === 'Please enter your name') {
-                    // Name is missing, keep PIN, clear name and refocus on name
-                    nameInput.value = '';
-                    nameInput.focus();
-                } else {
-                    // Other errors (rate limit, etc) - clear name only
-                    nameInput.value = '';
-                    nameInput.focus();
-                }
                 // Re-enable button after alert is dismissed
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Verify PIN';
                 isSubmitting = false; // Allow new submissions
+
+                // PIN was wrong — clear it and reset to first digit
+                clearInputs(inputs);
+                setTimeout(() => inputs[0].focus(), 300);
             });
         } finally {
         }

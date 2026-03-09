@@ -33,12 +33,18 @@
     border-color: #174593;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:active,
 .btn-outline-primary:focus {
     background-color: #174593 !important;
     border-color: #174593 !important;
     color: #ffffff !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-primary:hover {
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+        color: #ffffff !important;
+    }
 }
 
 /* ==========================================
@@ -161,13 +167,14 @@ body.v-center-page {
     color: white;
 }
 
-/* Primary button hover effect */
-.btn-primary:hover {
-    background-color: #10326e !important;
-    /* Slightly darker shade of #174593 */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px #10326e !important;
-    cursor: pointer;
+/* Primary button hover effect — only on mouse devices */
+@media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+        background-color: #10326e !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px #10326e !important;
+        cursor: pointer;
+    }
 }
 
 /* Fade transition for step switching */
