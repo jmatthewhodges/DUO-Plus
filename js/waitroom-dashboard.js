@@ -53,7 +53,7 @@ function getServiceStatusLabel(status) {
 async function skipNowServingClient(clientId) {
     const result = await Swal.fire({
         title: 'Skip this client?',
-        text: 'They will be moved back one position in the queue.',
+        text: 'They will be skipped this turn.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Skip',

@@ -1053,16 +1053,20 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
             
             #qrCodeModal .qr-icon-border {
                 flex-shrink: 0 !important; 
-                font-size: 2rem !important; /* Icon size inside the box */
-                width: 46px !important;  /* Increased from 40px */
-                height: 46px !important; /* Increased from 40px */
-                border-width: 2px !important; /* Forces a thinner, cleaner border */
-                border-style: solid !important;
-                border-color: black !important;
-                border-radius: 8px !important; /* Optional: adds a slight rounding to the border */
+                font-size: 2rem !important;
+                width: 46px !important;
+                height: 46px !important;
+                border: 2px solid black !important;
+                border-radius: 8px !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
+                background: #fff !important;
+            }
+
+            #qrCodeModal .qr-icon-border.qr-icon-empty {
+                border: 2px dashed #c0c0c0 !important;
+                background: #f5f5f5 !important;
             }
 
             /* Tighten the gap even more so the larger icons don't overflow the label */
