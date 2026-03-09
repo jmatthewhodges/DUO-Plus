@@ -159,8 +159,8 @@ function populateWaitListTable(patients) {
         const avatarClass = allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light');
         const avatarIcon = allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person');
         const isNowServing = patient.ClientID == nowServingClientId;
-        const btnClass = allDone ? 'btn-outline-secondary' : (isNowServing ? 'btn-outline-danger' : 'btn-primary');
-        const btnText = allDone ? 'Done' : (isNowServing ? 'Skip' : 'Update');
+        const btnClass = allDone ? 'btn-outline-secondary' : 'btn-primary';
+        const btnText = allDone ? 'Done' : 'Update';
         const rowHTML = `
             <tr class="border-bottom" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
@@ -176,7 +176,7 @@ function populateWaitListTable(patients) {
                 </td>
                 <td class="fw-medium text-nowrap py-3">${formattedDOB}</td>
                 <td class="text-end pe-3 py-3">
-                    <button class="btn ${btnClass} btn-sm px-3 rounded-2 ${isNowServing ? 'skip-btn' : 'update-btn'} text-nowrap">${btnText}</button>
+                    <button class="btn ${btnClass} btn-sm px-3 rounded-2 update-btn text-nowrap">${btnText}</button>
                 </td>
             </tr>
         `;
