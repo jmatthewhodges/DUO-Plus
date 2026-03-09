@@ -111,10 +111,38 @@ const API_METHODS = [
             const pick = arr => arr[Math.floor(Math.random() * arr.length)];
             const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-            const firstNames = ['John', 'Maria', 'Carlos', 'Emily', 'James', 'Sofia', 'David', 'Ana', 'Michael', 'Rosa', 'Luis', 'Sarah', 'Daniel', 'Elena', 'Robert'];
-            const lastNames = ['Smith', 'Garcia', 'Johnson', 'Martinez', 'Williams', 'Lopez', 'Brown', 'Gonzalez', 'Jones', 'Rodriguez', 'Davis', 'Hernandez', 'Miller', 'Perez'];
-            const streets = ['Main St', 'Oak Ave', 'Elm Dr', 'Cedar Ln', 'Pine Rd', 'Maple Blvd', '1st St', '2nd Ave', 'Park Dr', 'Lake Rd'];
-            const cities = ['Oklahoma City', 'Tulsa', 'Norman', 'Edmond', 'Broken Arrow', 'Lawton', 'Moore', 'Stillwater', 'Midwest City', 'Enid'];
+            const firstNames = [
+                'John', 'Maria', 'Carlos', 'Emily', 'James', 'Sofia', 'David', 'Ana', 'Michael', 'Rosa',
+                'Luis', 'Sarah', 'Daniel', 'Elena', 'Robert', 'Isabella', 'William', 'Gabriela', 'Richard', 'Carmen',
+                'Thomas', 'Patricia', 'Joseph', 'Linda', 'Christopher', 'Barbara', 'Matthew', 'Jessica', 'Anthony', 'Ashley',
+                'Mark', 'Kimberly', 'Steven', 'Donna', 'Paul', 'Michelle', 'Andrew', 'Dorothy', 'Kenneth', 'Sandra',
+                'George', 'Alejandro', 'Edward', 'Valentina', 'Brian', 'Natalia', 'Kevin', 'Camila', 'Jason', 'Lucia',
+                'Timothy', 'Mariana', 'Ryan', 'Adriana', 'Jacob', 'Catalina', 'Gary', 'Teresa', 'Nicholas', 'Francisco',
+                'Eric', 'Fernando', 'Stephen', 'Ricardo', 'Larry', 'Hector', 'Justin', 'Oscar', 'Brandon', 'Roberto',
+                'Samuel', 'Victoria', 'Benjamin', 'Angela', 'Raymond', 'Melissa', 'Gregory', 'Brenda', 'Frank', 'Amy',
+                'Alexander', 'Anna', 'Patrick', 'Rebecca', 'Jack', 'Virginia', 'Dennis', 'Catherine', 'Jerry', 'Christine'
+            ];
+            const lastNames = [
+                'Smith', 'Garcia', 'Johnson', 'Martinez', 'Williams', 'Lopez', 'Brown', 'Gonzalez', 'Jones', 'Rodriguez',
+                'Davis', 'Hernandez', 'Miller', 'Perez', 'Wilson', 'Sanchez', 'Moore', 'Ramirez', 'Taylor', 'Torres',
+                'Anderson', 'Flores', 'Thomas', 'Rivera', 'Jackson', 'Gomez', 'White', 'Diaz', 'Harris', 'Reyes',
+                'Martin', 'Cruz', 'Thompson', 'Morales', 'Robinson', 'Ortiz', 'Clark', 'Gutierrez', 'Lewis', 'Chavez',
+                'Lee', 'Castillo', 'Walker', 'Jimenez', 'Hall', 'Ruiz', 'Allen', 'Vargas', 'Young', 'Mendoza',
+                'King', 'Ramos', 'Wright', 'Medina', 'Scott', 'Aguilar', 'Green', 'Herrera', 'Baker', 'Guerrero',
+                'Adams', 'Silva', 'Nelson', 'Vasquez', 'Carter', 'Delgado', 'Mitchell', 'Romero', 'Roberts', 'Estrada',
+                'Turner', 'Acosta', 'Phillips', 'Nunez', 'Campbell', 'Soto', 'Parker', 'Vega', 'Evans', 'Sandoval'
+            ];
+            const streets = [
+                'Main St', 'Oak Ave', 'Elm Dr', 'Cedar Ln', 'Pine Rd', 'Maple Blvd', '1st St', '2nd Ave', 'Park Dr', 'Lake Rd',
+                'Washington Blvd', 'Lincoln Ave', 'Highland Dr', 'Sunset Blvd', 'Broadway', 'Church St', 'Walnut St', 'Chestnut Ave',
+                'Hickory Ln', 'Willow Way', 'Birch Ct', 'Magnolia Dr', 'Dogwood Ln', 'Sycamore Rd', 'Poplar St',
+                'Spring Creek Rd', 'Valley View Dr', 'Hillcrest Ave', 'Meadow Ln', 'Riverside Dr'
+            ];
+            const cities = [
+                'Oklahoma City', 'Tulsa', 'Norman', 'Edmond', 'Broken Arrow', 'Lawton', 'Moore', 'Stillwater', 'Midwest City', 'Enid',
+                'Muskogee', 'Bartlesville', 'Shawnee', 'Owasso', 'Ponca City', 'Ardmore', 'Duncan', 'Del City', 'Bixby', 'Yukon',
+                'Mustang', 'Claremore', 'El Reno', 'Chickasha', 'Sapulpa', 'Bethany', 'Altus', 'Sand Springs', 'Tahlequah', 'Jenks'
+            ];
             const initials = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const allServices = ['medical', 'optical', 'dental', 'haircut'];
 
@@ -150,6 +178,7 @@ const API_METHODS = [
                 emergencyFirstName: pick(firstNames),
                 emergencyLastName: pick(lastNames),
                 emergencyPhone: `555-${rand(100, 999)}-${rand(1000, 9999)}`,
+                EventID: '4cbde538985861b9',
                 services: JSON.stringify(services)
             };
         }
@@ -418,6 +447,11 @@ const API_METHODS = [
                                     <span class="send-text"><i class="bi bi-send-fill"></i> Send Request</span>
                                     <span class="spinner"></span>
                                 </button>
+                                ${method.id === 'register' ? `
+                                <button type="button" class="btn-send" id="btnBulkRegister" style="background: #16a34a;">
+                                    <span class="send-text"><i class="bi bi-people-fill"></i> Add 5 Clients</span>
+                                    <span class="spinner"></span>
+                                </button>` : ''}
                                 <button type="button" class="btn-clear" id="btnClear">
                                     <i class="bi bi-arrow-counterclockwise"></i> Reset
                                 </button>
@@ -478,6 +512,12 @@ const API_METHODS = [
                 clearForm(method);
             }
         });
+
+        // Bulk register button (register method only)
+        const bulkBtn = document.getElementById('btnBulkRegister');
+        if (bulkBtn) {
+            bulkBtn.addEventListener('click', () => sendBulkRegister(method, 5));
+        }
     }
 
     // ─── Fill Form with Data ──────────────────────────────────────────────
@@ -626,6 +666,50 @@ const API_METHODS = [
         } finally {
             btn.classList.remove('loading');
         }
+    }
+
+    // ─── Bulk Register (send N random clients) ────────────────────────────
+    async function sendBulkRegister(method, count) {
+        const btn = document.getElementById('btnBulkRegister');
+        btn.classList.add('loading');
+
+        const url = getFullURL(method.endpoint);
+        const startTime = performance.now();
+        const results = [];
+
+        for (let i = 0; i < count; i++) {
+            const body = getTestData(method);
+            // Parse services string back to array for the request
+            if (typeof body.services === 'string') {
+                try { body.services = JSON.parse(body.services); } catch {}
+            }
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                results.push({ i: i + 1, name: `${body.firstName} ${body.lastName}`, status: res.status, success: data.success, message: data.message || '' });
+            } catch (err) {
+                results.push({ i: i + 1, name: `${body.firstName} ${body.lastName}`, status: 0, success: false, message: err.message });
+            }
+        }
+
+        const elapsed = Math.round(performance.now() - startTime);
+        const successCount = results.filter(r => r.success).length;
+
+        const summary = {
+            message: `Registered ${successCount}/${count} clients`,
+            elapsed: `${elapsed}ms`,
+            results
+        };
+
+        lastResponse = { status: successCount === count ? 200 : 207, data: summary, elapsed };
+        renderResponse(lastResponse.status, summary, elapsed);
+        // Refresh the form with new random data for next use
+        fillForm(method, getTestData(method));
+        btn.classList.remove('loading');
     }
 
     // ─── Render Response ──────────────────────────────────────────────────

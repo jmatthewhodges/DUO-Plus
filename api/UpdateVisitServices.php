@@ -175,6 +175,26 @@ if ($action === 'add') {
         exit;
     }
 
+    // Block check-in if all seats are full for this service
+    $seatCheck = $mysqli->prepare(
+        "SELECT MaxSeats, SeatsInProgress FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
+    );
+    if ($seatCheck) {
+        $seatCheck->bind_param('ss', $eventID, $serviceID);
+        $seatCheck->execute();
+        $seatRow = $seatCheck->get_result()->fetch_assoc();
+        $seatCheck->close();
+        if ($seatRow) {
+            $maxSeats = (int)$seatRow['MaxSeats'];
+            $seatsInUse = (int)$seatRow['SeatsInProgress'];
+            if ($maxSeats > 0 && $seatsInUse >= $maxSeats) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'error' => 'All seats are currently full for this service. Please wait for an opening.']);
+                exit;
+            }
+        }
+    }
+
     // Check In: Pending -> In-Progress
     $findStmt = $mysqli->prepare(
         "SELECT VisitServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ? AND ServiceID = ? AND ServiceStatus = 'Pending' LIMIT 1"

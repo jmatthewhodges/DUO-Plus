@@ -42,7 +42,7 @@ function closeUpdateModal() {
 
 function getServiceStatusLabel(status) {
     switch (status) {
-        case 'Pending': return { text: 'Pending', class: 'bg-warning text-dark' };
+        case 'Pending': return { text: 'Pending', class: 'bg-light text-dark' };
         case 'In-Progress': return { text: 'In Progress', class: 'bg-info text-white' };
         case 'Complete': return { text: 'Complete', class: 'bg-success text-white' };
         case 'Standby': return { text: 'Standby', class: 'bg-secondary text-white' };

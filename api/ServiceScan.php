@@ -78,7 +78,7 @@ $types = 's' . str_repeat('s', count($serviceIDs)); // ClientID + each ServiceID
 $params = array_merge([$ClientID], $serviceIDs);
 
 $sql = "
-    SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode
+    SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode, v.EventID
     FROM tblVisitServices vs
     JOIN tblVisits v ON vs.VisitID = v.VisitID
     WHERE v.ClientID = ?
@@ -132,6 +132,30 @@ if ($currentStatus === 'Pending') {
         exit;
     }
 
+    // Block check-in if all seats are full for this service
+    $eventID = $visitService['EventID'];
+    $seatCheck = $mysqli->prepare(
+        "SELECT MaxSeats, SeatsInProgress FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
+    );
+    if ($seatCheck) {
+        $seatCheck->bind_param('ss', $eventID, $ServiceID);
+        $seatCheck->execute();
+        $seatRow = $seatCheck->get_result()->fetch_assoc();
+        $seatCheck->close();
+        if ($seatRow) {
+            $maxSeats = (int)$seatRow['MaxSeats'];
+            $seatsInUse = (int)$seatRow['SeatsInProgress'];
+            if ($maxSeats > 0 && $seatsInUse >= $maxSeats) {
+                http_response_code(409);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'All seats are currently full for this service. Please wait for an opening.'
+                ]);
+                exit;
+            }
+        }
+    }
+
     // CHECK IN: Pending -> In-Progress
     $newStatus = 'In-Progress';
     $action = $ServiceID . 'CheckIn';
@@ -152,6 +176,28 @@ $updateStmt = $mysqli->prepare("
 $updateStmt->bind_param('ss', $newStatus, $VisitServiceID);
 $updateStmt->execute();
 $updateStmt->close();
+
+// Update SeatsInProgress in tblEventServices
+$eventID = $visitService['EventID'];
+if ($newStatus === 'In-Progress') {
+    $incSeats = $mysqli->prepare(
+        "UPDATE tblEventServices SET SeatsInProgress = SeatsInProgress + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+    if ($incSeats) {
+        $incSeats->bind_param('ss', $eventID, $ServiceID);
+        $incSeats->execute();
+        $incSeats->close();
+    }
+} elseif ($newStatus === 'Complete') {
+    $decSeats = $mysqli->prepare(
+        "UPDATE tblEventServices SET SeatsInProgress = GREATEST(SeatsInProgress - 1, 0) WHERE EventID = ? AND ServiceID = ?"
+    );
+    if ($decSeats) {
+        $decSeats->bind_param('ss', $eventID, $ServiceID);
+        $decSeats->execute();
+        $decSeats->close();
+    }
+}
 
 // Log the action in tblMovementLogs
 $logStmt = $mysqli->prepare("
