@@ -389,6 +389,26 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.passInput.addEventListener('input', updatePasswordFieldMarkers);
     elements.confirmInput.addEventListener('input', updatePasswordFieldMarkers);
 
+    // Submit on Enter — verify section
+    [elements.emailInput, elements.dobInput].forEach(input => {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleVerifyAccount();
+            }
+        });
+    });
+
+    // Submit on Enter — reset section
+    [elements.passInput, elements.confirmInput].forEach(input => {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleResetPassword();
+            }
+        });
+    });
+
         // Verify button
     elements.verifyBtn.addEventListener('click', function (e) {
         e.preventDefault();

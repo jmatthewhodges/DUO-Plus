@@ -102,7 +102,7 @@ function buildServiceProgressBars() {
         for (const cat of serviceCategories) {
             if (cat.children && cat.children.length > 0) {
                 const child = cat.children.find(c => c.ServiceID === serviceID);
-                if (child) { iconTag = cat.IconTag || ''; break; }
+                if (child) { iconTag = child.IconTag || cat.IconTag || ''; break; }
             } else if (cat.ServiceID === serviceID) {
                 iconTag = cat.IconTag || ''; break;
             }

@@ -674,6 +674,16 @@ body.v-center-page {
     text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
 }
 
+#btn2ForgetPass {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2ForgetPass:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
 /* Button chip (used in register.html step-jumper) */
 .dev-step-btn {
     font-size: 0.7rem;
