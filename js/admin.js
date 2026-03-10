@@ -555,26 +555,24 @@ function renderFastTrackSection() {
     const used = adminData.fastTrackUsed || 0;
 
     container.innerHTML = `
-        <div class="d-flex align-items-center gap-3 flex-wrap">
-            <div class="form-group" style="max-width: 120px;">
+        <p class="text-muted small mb-3">First N dental patients skip medical and go straight to dental.</p>
+        <div class="d-flex align-items-end gap-3">
+            <div>
                 <label class="form-label fw-semibold small mb-1">Fast Track Limit</label>
                 <input type="number" class="form-control form-control-sm" id="inputFastTrackLimit"
-                    value="${limit}" min="0" max="50" inputmode="numeric">
+                    value="${limit}" min="0" max="50" inputmode="numeric" style="max-width: 100px;">
             </div>
-            <div class="pt-3">
+            <div>
                 <span class="badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-warning text-dark' : 'bg-info'}"
-                    style="font-size: 0.8rem;">
+                    style="font-size: 0.8rem; margin-bottom: 6px; display: inline-block;">
                     ⚡ ${used}/${limit} used
                 </span>
             </div>
-            <div class="pt-3">
+            <div>
                 <button class="btn btn-sm btn-primary" id="btnSaveFastTrack">
                     <i class="bi bi-check-lg me-1"></i>Save
                 </button>
             </div>
-        </div>
-        <div class="text-muted small mt-2">
-            First N dental patients skip medical and go straight to dental.
         </div>
     `;
 
