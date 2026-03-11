@@ -77,10 +77,60 @@ $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = 's' . str_repeat('s', count($serviceIDs)); // ClientID + each ServiceID
 $params = array_merge([$ClientID], $serviceIDs);
 
-// Begin transaction + row lock so simultaneous scans for the same client
-// cannot both pass the status checks and produce duplicate In-Progress rows.
+// Begin transaction.
+// CRITICAL: We lock tblVisits FOR UPDATE FIRST — before any status checks.
+// This serializes ALL concurrent requests for the same client at the visit level,
+// so two simultaneous check-ins to different services cannot both pass the
+// In-Progress guard and end up In-Progress at the same time.
 $mysqli->begin_transaction();
 
+// Step 1: Lock the visit row for this client.
+// Any concurrent request for the same client will block here until we commit.
+$lockStmt = $mysqli->prepare(
+    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = '4cbde538985861b9' LIMIT 1 FOR UPDATE"
+);
+if (!$lockStmt) {
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'DB prepare error (lock): ' . $mysqli->error]);
+    exit;
+}
+$lockStmt->bind_param('s', $ClientID);
+$lockStmt->execute();
+$lockResult = $lockStmt->get_result()->fetch_assoc();
+$lockStmt->close();
+
+if (!$lockResult) {
+    $mysqli->rollback();
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'No visit found for this client.']);
+    exit;
+}
+$lockedVisitID = $lockResult['VisitID'];
+
+// Step 2: Now that we hold the visit lock, re-check for any In-Progress service.
+// Any concurrent request that got here first will have already committed by now.
+$ipCheck = $mysqli->prepare(
+    "SELECT vs.ServiceID, s.ServiceName
+     FROM tblVisitServices vs
+     JOIN tblServices s ON s.ServiceID = vs.ServiceID
+     WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
+);
+$ipCheck->bind_param('s', $lockedVisitID);
+$ipCheck->execute();
+$ipRow = $ipCheck->get_result()->fetch_assoc();
+$ipCheck->close();
+if ($ipRow) {
+    $mysqli->rollback();
+    http_response_code(409);
+    echo json_encode([
+        'success' => false,
+        'message' => 'This client is currently being served at ' . $ipRow['ServiceName'] . '. They must be checked out of that service first.'
+    ]);
+    exit;
+}
+
+// Step 3: Fetch the specific service row to act on.
 $sql = "
     SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode, v.EventID
     FROM tblVisitServices vs
@@ -90,7 +140,6 @@ $sql = "
       AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Standby')
     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending', 'Standby')
     LIMIT 1
-    FOR UPDATE
 ";
 
 $stmt = $mysqli->prepare($sql);
@@ -118,26 +167,6 @@ $now = date('Y-m-d H:i:s');
 $LogID = uniqid('log_', true);
 
 if ($currentStatus === 'Pending' || $currentStatus === 'Standby') {
-    // Block check-in if client already has another service In-Progress
-    $ipCheck = $mysqli->prepare(
-        "SELECT vs.ServiceID, s.ServiceName
-         FROM tblVisitServices vs
-         JOIN tblServices s ON s.ServiceID = vs.ServiceID
-         WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
-    );
-    $ipCheck->bind_param('s', $visitService['VisitID']);
-    $ipCheck->execute();
-    $ipRow = $ipCheck->get_result()->fetch_assoc();
-    $ipCheck->close();
-    if ($ipRow) {
-        $mysqli->rollback();
-        http_response_code(409);
-        echo json_encode([
-            'success' => false,
-            'message' => 'This client is currently being served at ' . $ipRow['ServiceName'] . '. They must be checked out of that service first.'
-        ]);
-        exit;
-    }
 
     // Block check-in if all seats are full for this service
     $eventID = $visitService['EventID'];
