@@ -961,17 +961,17 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 const firstNameEl = document.getElementById('qrCardFirstName');
                 const lastNameEl = document.getElementById('qrCardLastName');
 
-                // Scale font size down based on character length so name always fits on one line.
-                // Truncate with ellipsis only as a last resort if over 16 chars.
+                // Scale font size down based on character length; never truncate.
+                // Long names wrap naturally at the minimum size.
                 function scaledName(name, maxSize, minSize) {
                     const len = name.length;
-                    if (len <= 6) return { text: name, size: maxSize };
-                    if (len <= 8) return { text: name, size: maxSize * 0.85 };
+                    if (len <= 6)  return { text: name, size: maxSize };
+                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
                     if (len <= 10) return { text: name, size: maxSize * 0.70 };
                     if (len <= 12) return { text: name, size: maxSize * 0.58 };
                     if (len <= 14) return { text: name, size: maxSize * 0.50 };
-                    // Beyond 14 chars: truncate and use minimum size
-                    return { text: name.slice(0, 14) + '…', size: minSize };
+                    if (len <= 18) return { text: name, size: maxSize * 0.42 };
+                    return { text: name, size: minSize };
                 }
 
                 const first = scaledName(firstName, 2.5, 1.1);

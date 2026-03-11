@@ -29,7 +29,7 @@ const TRANSITION_DURATION = 500; // ms for step fade animation
 
 // Validation regex patterns
 const VALIDATION_PATTERNS = {
-    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i,
     password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/,  // 8+ non-space chars, upper, lower, number
     phone: /^[\d\s\-\(\)]{10,}$/,
     phoneFormatted: /^\(\d{3}\) \d{3}-\d{4}$/,
