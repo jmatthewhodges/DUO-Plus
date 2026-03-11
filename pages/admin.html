@@ -12,172 +12,11 @@
     <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
     <link href="../assets/css/custom.css" rel="stylesheet">
     <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
-
-    <style>
-        .admin-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .admin-section .card-header {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .admin-section .card-header .collapse-icon {
-            transition: transform 0.2s;
-        }
-
-        .admin-section .card-header.collapsed .collapse-icon {
-            transform: rotate(-90deg);
-        }
-
-        .service-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .service-row:last-child {
-            border-bottom: none;
-        }
-
-        .service-icon-preview {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f0f4ff;
-            border-radius: 8px;
-            font-size: 1.25rem;
-            color: #174593;
-        }
-
-        .service-fields {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            flex: 1;
-        }
-
-        .service-fields .form-group {
-            display: flex;
-            flex-direction: column;
-            min-width: 100px;
-        }
-
-        .service-fields .form-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #6c757d;
-            margin-bottom: 2px;
-            text-transform: uppercase;
-        }
-
-        .service-fields input {
-            width: 90px;
-        }
-
-        .icon-picker-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-            gap: 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .icon-picker-item {
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.15s;
-        }
-
-        .icon-picker-item:hover,
-        .icon-picker-item.selected {
-            border-color: #174593;
-            background: #f0f4ff;
-            color: #174593;
-        }
-
-        .status-badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 20px;
-        }
-
-        .back-link {
-            color: #174593;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        /* Icon edit overlay */
-        .icon-editable {
-            position: relative;
-            cursor: pointer;
-            transition: box-shadow 0.15s;
-        }
-
-        .icon-editable:hover {
-            box-shadow: 0 0 0 2px #174593;
-        }
-
-        .icon-edit-badge {
-            position: absolute;
-            bottom: -4px;
-            right: -4px;
-            width: 18px;
-            height: 18px;
-            background: #174593;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.55rem;
-            opacity: 0;
-            transition: opacity 0.15s;
-            pointer-events: none;
-        }
-
-        .icon-editable:hover .icon-edit-badge {
-            opacity: 1;
-        }
-
-        /* SVG icon sizing inside service previews */
-        .svg-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .svg-icon svg {
-            width: 1.25em;
-            height: 1.25em;
-            fill: currentColor;
-        }
-    </style>
 </head>
 
 <body class="bg-light py-4">
     <div class="container-fluid" style="max-width: 800px;">
 
-        <!-- Header -->
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
                 <a href="../index.html" class="back-link"><i class="bi bi-arrow-left me-1"></i>Back</a>
@@ -189,9 +28,7 @@
             </button>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             SECTION: PIN Code
-             ═══════════════════════════════════════════════ -->
+        <!-- PIN Code -->
         <div class="admin-section" id="section-pincode">
             <div class="card">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
@@ -227,9 +64,7 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             SECTION: Services
-             ═══════════════════════════════════════════════ -->
+        <!-- Services -->
         <div class="admin-section" id="section-services">
             <div class="card">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
@@ -242,7 +77,6 @@
                 </div>
                 <div class="collapse show" id="collapse-services">
                     <div class="card-body p-0">
-                        <!-- Service list is rendered by JS -->
                         <div id="serviceList">
                             <div class="text-center p-4 text-muted">Loading services...</div>
                         </div>
@@ -251,9 +85,7 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             SECTION: Fast Track Settings
-             ═══════════════════════════════════════════════ -->
+        <!-- Fast Track -->
         <div class="admin-section" id="section-fast-track">
             <div class="card">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
@@ -269,9 +101,7 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             SECTION: Add Service
-             ═══════════════════════════════════════════════ -->
+        <!-- Add New Service -->
         <div class="admin-section" id="section-add-service">
             <div class="card">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
@@ -297,7 +127,6 @@
                                     <label class="form-label fw-semibold small">Parent Category</label>
                                     <select class="form-select" id="newParentServiceID">
                                         <option value="">— Select parent —</option>
-                                        <!-- Populated by JS -->
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -319,9 +148,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label fw-semibold small">Choose Icon</label>
-                                    <div class="icon-picker-grid border rounded" id="iconPicker">
-                                        <!-- Icons populated by JS -->
-                                    </div>
+                                    <div class="icon-picker-grid border rounded" id="iconPicker"></div>
                                     <input type="hidden" id="newServiceIcon" value="">
                                 </div>
                             </div>
@@ -336,13 +163,8 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             Add more sections here by copying the pattern
-             ═══════════════════════════════════════════════ -->
-
     </div>
 
-    <!-- JS Dependencies -->
     <script src="../assets/js/core/libs.min.js"></script>
     <script src="../assets/js/hope-ui.js"></script>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
