@@ -468,8 +468,9 @@ function fetchRegistrationQueue() {
             } else {
                 tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients found.</td></tr>';
             }
-            // Always update processed count if it came back
-            if (statCompCount && data.clientsProcessed !== undefined) {
+            // Only update processed count when fetching the registration queue
+            // (checked-in tab re-fetches return a different context and should not overwrite it)
+            if (currentTab !== 'checked-in' && statCompCount && data.clientsProcessed !== undefined) {
                 statCompCount.innerText = data.clientsProcessed;
             }
             // Update service progress bars based on API data
@@ -903,18 +904,15 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 // Close check-in modal
                 closeModalAnimated();
 
-                // Show standby notification if any services were placed on standby
-                if (data.standbyServices && data.standbyServices.length > 0) {
-                    const standbyMsg = data.standbyMessage || 'Some services are on standby.';
-                    const isStandbyFull = data.standbyFull && data.standbyFull.length > 0;
+                // Only alert if the standby list is now full
+                const isStandbyFull = data.standbyFull && data.standbyFull.length > 0;
+                if (isStandbyFull) {
                     Swal.fire({
-                        icon: 'info',
-                        title: 'On Standby',
-                        html: `<p>${standbyMsg}</p>` +
-                              `<p class="text-muted small mb-0">They are still checked in and will be served once others ahead of them are done.</p>` +
-                              (isStandbyFull ? '<p class="text-danger fw-bold mt-2">Standby list is full for some services.</p>' : ''),
+                        icon: 'warning',
+                        title: 'Standby Full',
+                        text: 'The standby list is now full for one or more services.',
                         confirmButtonColor: '#174593',
-                        timer: 6000,
+                        timer: 5000,
                         timerProgressBar: true
                     });
                 }

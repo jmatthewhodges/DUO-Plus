@@ -77,6 +77,10 @@ $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = 's' . str_repeat('s', count($serviceIDs)); // ClientID + each ServiceID
 $params = array_merge([$ClientID], $serviceIDs);
 
+// Begin transaction + row lock so simultaneous scans for the same client
+// cannot both pass the status checks and produce duplicate In-Progress rows.
+$mysqli->begin_transaction();
+
 $sql = "
     SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode, v.EventID
     FROM tblVisitServices vs
@@ -86,6 +90,7 @@ $sql = "
       AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Standby')
     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending', 'Standby')
     LIMIT 1
+    FOR UPDATE
 ";
 
 $stmt = $mysqli->prepare($sql);
@@ -94,6 +99,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
+    $mysqli->rollback();
     http_response_code(404);
     echo json_encode([
         'success' => false,
@@ -124,6 +130,7 @@ if ($currentStatus === 'Pending' || $currentStatus === 'Standby') {
     $ipRow = $ipCheck->get_result()->fetch_assoc();
     $ipCheck->close();
     if ($ipRow) {
+        $mysqli->rollback();
         http_response_code(409);
         echo json_encode([
             'success' => false,
@@ -146,6 +153,7 @@ if ($currentStatus === 'Pending' || $currentStatus === 'Standby') {
             $maxSeats = (int)$seatRow['MaxSeats'];
             $seatsInUse = (int)$seatRow['SeatsInProgress'];
             if ($maxSeats > 0 && $seatsInUse >= $maxSeats) {
+                $mysqli->rollback();
                 http_response_code(409);
                 echo json_encode([
                     'success' => false,
@@ -207,6 +215,9 @@ $logStmt = $mysqli->prepare("
 $logStmt->bind_param('ssss', $LogID, $VisitServiceID, $action, $now);
 $logStmt->execute();
 $logStmt->close();
+
+// Commit the transaction — all changes are now atomic
+$mysqli->commit();
 
 // Return success
 echo json_encode([

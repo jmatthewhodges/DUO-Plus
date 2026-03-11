@@ -467,16 +467,18 @@ if ($fastTrackLimit > 0) {
 }
 error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false'));
 
-// Update clientsProcessed stat in tblAnalytics
-$statKey = 'clientsProcessed';
-$updateStat = $mysqli->prepare(
-    "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
-     WHERE EventID = ? AND StatID = ?"
-);
-if ($updateStat) {
-    $updateStat->bind_param('ss', $eventID, $statKey);
-    $updateStat->execute();
-    $updateStat->close();
+// Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
+if (!$alreadyCheckedIn) {
+    $statKey = 'clientsProcessed';
+    $updateStat = $mysqli->prepare(
+        "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
+         WHERE EventID = ? AND StatID = ?"
+    );
+    if ($updateStat) {
+        $updateStat->bind_param('ss', $eventID, $statKey);
+        $updateStat->execute();
+        $updateStat->close();
+    }
 }
 
 // Fetch updated clientsProcessed to return to frontend

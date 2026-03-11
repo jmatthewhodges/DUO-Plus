@@ -134,6 +134,7 @@ let isScanning = false;
 let currentOverlay = null;
 let currentServiceKey = null;  // Track current service for client operations
 let isClientScan = false;  // Flag to distinguish between service and client QR scans
+let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
 
 // Show a specific service's content section
 function showService(serviceKey) {
@@ -804,6 +805,9 @@ function stopClientQRScanning() {
 //   4. If client is already completed or not found, show appropriate message
 //   5. Refresh data from GrabService after each action
 async function handleClientQRScan(qrData) {
+    if (isProcessing) return;
+    isProcessing = true;
+
     console.log('=== CLIENT QR SCAN START ===');
     console.log('Raw QR data:', JSON.stringify(qrData));
     console.log('Current service key:', currentServiceKey);
@@ -904,6 +908,8 @@ async function handleClientQRScan(qrData) {
         console.error('QR scan error:', e);
         Swal.fire('Error', 'Could not process QR code scan', 'warning');
         startClientQRScanning();
+    } finally {
+        isProcessing = false;
     }
 }
 
@@ -963,6 +969,9 @@ function showCheckInOutModal(clientId) {
 // Process client action via ServiceScan.php API
 // ServiceScan auto-progresses: Pending → In-Progress, In-Progress → Complete
 async function processClientAction(clientId, action) {
+    if (isProcessing) return;
+    isProcessing = true;
+
     const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
     const serviceTitle = service ? service.name : 'Service';
 
@@ -1021,6 +1030,8 @@ async function processClientAction(clientId, action) {
             text: 'Unable to reach the server. Please try again.',
             confirmButtonText: 'OK'
         });
+    } finally {
+        isProcessing = false;
     }
 }
 
