@@ -55,12 +55,27 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     const errors = [];
     const t = getLang();
 
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
+    const emailValid = VALIDATION_PATTERNS.email.test(emailInput.value.trim());
+    const passValid = VALIDATION_PATTERNS.password.test(passInput.value.trim());
+
+    if (!emailValid) {
         errors.push(t.loginValidEmail);
+        emailInput.classList.add('is-invalid');
+        emailInput.classList.remove('is-valid');
+        emailInput.setAttribute('aria-invalid', 'true');
+    } else {
+        emailInput.classList.remove('is-invalid');
+        emailInput.removeAttribute('aria-invalid');
     }
 
-    if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
+    if (!passValid) {
         errors.push(t.loginEnterPassword);
+        passInput.classList.add('is-invalid');
+        passInput.classList.remove('is-valid');
+        passInput.setAttribute('aria-invalid', 'true');
+    } else {
+        passInput.classList.remove('is-invalid');
+        passInput.removeAttribute('aria-invalid');
     }
 
     if (errors.length > 0) {
@@ -106,6 +121,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
                 // Failed - clear password and show error
                 passInput.value = '';
                 passInput.classList.remove('is-valid', 'is-invalid');
+                passInput.removeAttribute('aria-invalid');
 
                 Swal.fire({
                     icon: 'error',
@@ -130,6 +146,17 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             btn.disabled = false;
             btn.innerHTML = t.btnClientLogin || 'Login';
         })
+});
+
+// Clear invalid state as soon as the user starts correcting a field
+document.getElementById('txtClientEmail').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    this.removeAttribute('aria-invalid');
+});
+
+document.getElementById('txtClientPassword').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    this.removeAttribute('aria-invalid');
 });
 
 // Enter key on email field triggers login

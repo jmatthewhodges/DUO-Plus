@@ -55,12 +55,14 @@
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="txtClientEmail" class="form-control" required>
+            <input type="email" name="email" id="txtClientEmail" class="form-control" required
+              autocomplete="email">
           </div>
 
           <div class="mb-3 text-start">
             <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" id="txtClientPassword" class="form-control" required>
+            <input type="password" name="password" id="txtClientPassword" class="form-control" required
+              autocomplete="current-password">
           </div>
 
           <!-- Main Login Button -->
@@ -83,7 +85,7 @@
           class="fw-semibold text-decoration-none text-center text-nowrap">Register</a>
 
         <!-- Horizontal Line -->
-        <hr class="w-75 my-1" style="height:1px; background-color:#ccc; border:none;">
+        <hr class="w-75 my-1" style="height:2px; background-color:#174593; border:none; opacity:0.3;">
 
       <!-- Forget Password Link -->
         <a id="btn2ForgetPass" href="pages/forgetpass.html" style="color: #174593;"

@@ -87,8 +87,7 @@
                                     class="form-label fw-semibold">Email <span class="text-danger"
                                         aria-hidden="true">*</span></label>
                                 <input type="email" id="clientRegisterEmail" class="form-control input-black" required
-                                    placeholder="john.doe@gmail.com">
-
+                                    placeholder="john.doe@gmail.com" autocomplete="email">
                             </div>
 
                             <!-- Password -->
@@ -97,7 +96,7 @@
                                     class="form-label fw-semibold">Password <span class="text-danger"
                                         aria-hidden="true">*</span></label>
                                 <input type="password" id="clientRegisterPass" class="form-control input-black" required
-                                    aria-describedby="passwordHint">
+                                    autocomplete="new-password" aria-describedby="passwordHint">
                                 <div class="form-text text-muted" id="passwordHint">
                                     8+ characters, 1 uppercase, 1 lowercase, and 1 number.
                                 </div>
@@ -123,7 +122,7 @@
                                     class="form-label fw-semibold">First Name <span class="text-danger"
                                         aria-hidden="true">*</span></label>
                                 <input type="text" id="clientFirstName" class="form-control input-black" required
-                                    maxlength="50">
+                                    maxlength="50" autocomplete="given-name">
                             </div>
 
                             <!-- Middle Initial (optional) -->
@@ -132,7 +131,7 @@
                                     class="form-label fw-semibold">Middle Initial <span
                                         class="text-muted fw-normal small">(optional)</span></label>
                                 <input type="text" id="clientMiddleInitial" class="form-control input-black"
-                                    maxlength="1">
+                                    maxlength="1" autocomplete="additional-name">
                             </div>
 
                             <!-- Last Name -->
@@ -140,14 +139,15 @@
                                 <label id="clientLastNameLabel" for="clientLastName" class="form-label fw-semibold">Last
                                     Name <span class="text-danger" aria-hidden="true">*</span></label>
                                 <input type="text" id="clientLastName" class="form-control input-black" required
-                                    maxlength="50">
+                                    maxlength="50" autocomplete="family-name">
                             </div>
 
                             <!-- Sex -->
                             <div class="mb-3 text-start">
                                 <label class="form-label fw-semibold d-block" id="sexLabel">Sex <span
                                         class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Select your sex." aria-required="true">
+                                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Select your sex."
+                                    aria-required="true" id="sexRadioGroup">
                                     <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
                                         required>
                                     <label class="btn btn-outline-primary" id="btnSexMaleLabel"
@@ -163,7 +163,6 @@
                                     <label class="btn btn-outline-primary" id="btnSexIntersexLabel"
                                         for="btnSexIntersex">Intersex</label>
                                 </div>
-
                             </div>
 
                             <!-- Date of Birth -->
@@ -179,7 +178,7 @@
                                 <label id="clientPhoneLabel" for="clientPhone" class="form-label fw-semibold">Phone
                                     <span class="text-muted fw-normal small">(optional)</span></label>
                                 <input type="tel" id="clientPhone" class="form-control input-black"
-                                    placeholder="(999) 999-9999">
+                                    placeholder="(999) 999-9999" autocomplete="tel">
                             </div>
 
                             <!-- Buttons -->
@@ -218,7 +217,7 @@
                                 <label for="clientAddress1" id="clientAddress1Label"
                                     class="form-label fw-semibold">Street Address 1</label>
                                 <input type="text" id="clientAddress1" class="form-control input-black" required
-                                    aria-label="Street Address 1" placeholder="123 Main St">
+                                    placeholder="123 Main St" autocomplete="address-line1">
                             </div>
 
                             <!-- Street Address 2 (optional) -->
@@ -226,21 +225,22 @@
                                 <label id="clientAddress2Label" for="clientAddress2"
                                     class="form-label fw-semibold">Street Address 2</label>
                                 <input type="text" id="clientAddress2" class="form-control input-black"
-                                    aria-label="Street Address 2" placeholder="Apt, Suite, Unit">
+                                    placeholder="Apt, Suite, Unit" autocomplete="address-line2">
                             </div>
 
                             <!-- City -->
                             <div class="mb-3 text-start">
                                 <label id="clientCityLabel" for="clientCity" class="form-label fw-semibold">City</label>
                                 <input type="text" id="clientCity" class="form-control input-black" required
-                                    aria-label="City">
+                                    autocomplete="address-level2">
                             </div>
 
                             <!-- State -->
                             <div class="mb-3 text-start">
                                 <label id="selectStateLabel" for="selectState"
                                     class="form-label fw-semibold">State</label>
-                                <select class="form-select" id="selectState" required>
+                                <select class="form-select" id="selectState" required
+                                    autocomplete="address-level1">
                                     <option selected disabled value="" id="stateChoose">Choose...</option>
                                     <option value="AL">Alabama</option>
                                     <option value="AK">Alaska</option>
@@ -310,7 +310,8 @@
                                 <label id="clientZipCodeLabel" for="clientZipCode" class="form-label fw-semibold">Zip
                                     Code</label>
                                 <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
-                                    id="clientZipCode" class="form-control input-black" required aria-label="Zip Code">
+                                    id="clientZipCode" class="form-control input-black" required
+                                    autocomplete="postal-code">
                             </div>
 
                             <!-- Buttons -->
@@ -350,7 +351,7 @@
                                     class="form-label fw-semibold">Contact First
                                     Name</label>
                                 <input type="text" id="emergencyContactFirstName" class="form-control input-black"
-                                    required aria-label="Emergency Contact First Name">
+                                    required>
                             </div>
 
                             <!-- Contact Last Name -->
@@ -359,7 +360,7 @@
                                     class="form-label fw-semibold">Contact Last
                                     Name</label>
                                 <input type="text" id="emergencyContactLastName" class="form-control input-black"
-                                    required aria-label="Emergency Contact Last Name">
+                                    required>
                             </div>
 
                             <!-- Contact Phone -->
@@ -367,7 +368,7 @@
                                 <label id="emergencyContactPhoneLabel" for="emergencyContactPhone"
                                     class="form-label fw-semibold">Contact Phone</label>
                                 <input type="tel" id="emergencyContactPhone" class="form-control input-black" required
-                                    aria-label="Emergency Contact Phone" placeholder="(999) 999-9999">
+                                    placeholder="(999) 999-9999">
                             </div>
 
                             <!-- Buttons -->

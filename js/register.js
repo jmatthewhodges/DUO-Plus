@@ -74,6 +74,19 @@ function setFieldValidation(field, isValid) {
     }
 }
 
+// Mark a field invalid with red border and aria-invalid
+function markInvalid(field) {
+    field.classList.add('is-invalid');
+    field.classList.remove('is-valid');
+    field.setAttribute('aria-invalid', 'true');
+}
+
+// Clear invalid state from a field
+function clearInvalid(field) {
+    field.classList.remove('is-invalid');
+    field.removeAttribute('aria-invalid');
+}
+
 // Format phone as (123) 456-7890
 function formatPhoneNumber(value) {
     let digits = value.replace(INPUT_FILTERS.nonDigit, '');
@@ -256,12 +269,21 @@ function stepOneSubmit() {
     const errors = [];
     const t = getLang();
 
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
+    const emailValid = VALIDATION_PATTERNS.email.test(emailInput.value.trim());
+    const passValid = VALIDATION_PATTERNS.password.test(passInput.value);
+
+    if (!emailValid) {
         errors.push(t.registerValidEmail);
+        markInvalid(emailInput);
+    } else {
+        clearInvalid(emailInput);
     }
 
-    if (!VALIDATION_PATTERNS.password.test(passInput.value)) {
+    if (!passValid) {
         errors.push(t.registerValidPassword);
+        markInvalid(passInput);
+    } else {
+        clearInvalid(passInput);
     }
 
     if (errors.length > 0) {
@@ -304,25 +326,36 @@ function stepTwoSubmit() {
     const dob = document.getElementById('clientDOB');
     const phone = document.getElementById('clientPhone');
     const sexRadios = document.querySelectorAll('input[name="clientSex"]');
+    const sexRadioGroup = document.getElementById('sexRadioGroup');
     const errors = [];
     const t = getLang();
 
     if (!firstName.value.trim()) {
         errors.push(t.registerFirstName);
+        markInvalid(firstName);
+    } else {
+        clearInvalid(firstName);
     }
 
     if (!lastName.value.trim()) {
         errors.push(t.registerLastName);
+        markInvalid(lastName);
+    } else {
+        clearInvalid(lastName);
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
     if (!sexSelected) {
         errors.push(t.registerSex);
+        if (sexRadioGroup) sexRadioGroup.setAttribute('aria-invalid', 'true');
+    } else {
+        if (sexRadioGroup) sexRadioGroup.removeAttribute('aria-invalid');
     }
 
     // DOB 18+ validation
     if (!dob.value || !dobMask.masked.isComplete) {
         errors.push(t.registerDOB);
+        markInvalid(dob);
     } else {
         const parts = dob.value.split('/');
         const currentLang = sessionStorage.getItem('lang') || 'en';
@@ -336,12 +369,18 @@ function stepTwoSubmit() {
         const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         if (enteredDate > minAgeDate) {
             errors.push(t.registerAge);
+            markInvalid(dob);
+        } else {
+            clearInvalid(dob);
         }
     }
 
     // Phone optional but must match format if provided
     if (phone.value.length > 0 && !VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
         errors.push(t.registerPhone);
+        markInvalid(phone);
+    } else {
+        clearInvalid(phone);
     }
 
     if (errors.length > 0) {
@@ -427,23 +466,35 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
     const t = getLang();
 
     const address1 = document.getElementById('clientAddress1');
-    if (!address1.value.trim() || address1.value.trim().length < 5) {
+    if (address1.value.trim().length < 5) {
         errors.push(t.registerAddress);
+        markInvalid(address1);
+    } else {
+        clearInvalid(address1);
     }
 
     const city = document.getElementById('clientCity');
-    if (!city.value.trim() || city.value.trim().length < 2) {
+    if (city.value.trim().length < 2) {
         errors.push(t.registerCity);
+        markInvalid(city);
+    } else {
+        clearInvalid(city);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
         errors.push(t.registerState);
+        markInvalid(state);
+    } else {
+        clearInvalid(state);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
         errors.push(t.registerZip);
+        markInvalid(zipCode);
+    } else {
+        clearInvalid(zipCode);
     }
 
     if (errors.length > 0) {
@@ -495,6 +546,7 @@ noEmergencyContactCheckbox.addEventListener('change', function () {
             container.style.display = 'none';
             field.removeAttribute('required');
             field.classList.remove('is-invalid');
+            field.removeAttribute('aria-invalid');
         } else {
             container.style.display = 'block';
             field.setAttribute('required', '');
@@ -517,16 +569,25 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
         errors.push(t.registerContactFirstName);
+        markInvalid(firstName);
+    } else {
+        clearInvalid(firstName);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
         errors.push(t.registerContactLastName);
+        markInvalid(lastName);
+    } else {
+        clearInvalid(lastName);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
     if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
         errors.push(t.registerContactPhone);
+        markInvalid(phone);
+    } else {
+        clearInvalid(phone);
     }
 
     if (errors.length > 0) {
@@ -587,6 +648,7 @@ document.getElementById('clientRegisterEmail').addEventListener('blur', function
     if (VALIDATION_PATTERNS.email.test(this.value.trim())) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
     } else {
         this.classList.remove('is-valid');
         this.classList.remove('is-invalid');
@@ -597,10 +659,20 @@ document.getElementById('clientRegisterPass').addEventListener('blur', function 
     if (VALIDATION_PATTERNS.password.test(this.value)) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
     } else {
         this.classList.remove('is-valid');
         this.classList.remove('is-invalid');
     }
+});
+
+// Step 1 - Clear invalid state as user types
+document.getElementById('clientRegisterEmail').addEventListener('input', function () {
+    clearInvalid(this);
+});
+
+document.getElementById('clientRegisterPass').addEventListener('input', function () {
+    clearInvalid(this);
 });
 
 // Step 2 - Valid feedback on blur
@@ -659,10 +731,25 @@ document.getElementById('clientPhone').addEventListener('blur', function () {
     } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
     } else {
         // Partially filled — just go neutral, don't punish them yet
         this.classList.remove('is-valid', 'is-invalid');
     }
+});
+
+// Step 2 - Clear invalid state as user types / selects
+document.getElementById('clientFirstName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientLastName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientDOB').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientPhone').addEventListener('input', function () { clearInvalid(this); });
+
+// Clear sex invalid state when user selects a radio
+document.querySelectorAll('input[name="clientSex"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+        const sexRadioGroup = document.getElementById('sexRadioGroup');
+        if (sexRadioGroup) sexRadioGroup.removeAttribute('aria-invalid');
+    });
 });
 
 // Names - letters, hyphens, apostrophes only
@@ -744,10 +831,17 @@ document.getElementById('clientZipCode').addEventListener('blur', function () {
     if (this.value.match(VALIDATION_PATTERNS.zipCode)) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
     } else {
         this.classList.remove('is-valid', 'is-invalid');
     }
 });
+
+// Step 3 - Clear invalid state as user types / selects
+document.getElementById('clientAddress1').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientCity').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('selectState').addEventListener('change', function () { clearInvalid(this); });
+document.getElementById('clientZipCode').addEventListener('input', function () { clearInvalid(this); });
 
 // Emergency contact names
 document.getElementById('emergencyContactFirstName').addEventListener('input', function (e) {
@@ -783,10 +877,16 @@ document.getElementById('emergencyContactPhone').addEventListener('blur', functi
     } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
         this.classList.add('is-valid');
         this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
     } else {
         this.classList.remove('is-valid', 'is-invalid');
     }
 });
+
+// Step 4 - Clear invalid state as user types
+document.getElementById('emergencyContactFirstName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('emergencyContactLastName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('emergencyContactPhone').addEventListener('input', function () { clearInvalid(this); });
 
 
 // Waiver modal & form submission
