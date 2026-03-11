@@ -61,6 +61,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: env(safe-area-inset-top);
+}
+
+h2 {
+    margin-top: 0;
 }
 
 /* Blur will be applied by JavaScript when PIN modal is active */
