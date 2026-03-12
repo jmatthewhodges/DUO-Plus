@@ -40,25 +40,73 @@
                     <i class="bi bi-chevron-down collapse-icon"></i>
                 </div>
                 <div class="collapse show" id="collapse-pincode">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-end gap-3">
-                            <div class="flex-grow-1">
-                                <label class="form-label fw-semibold small">Current PIN</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="inputPinCode" maxlength="6"
-                                        inputmode="numeric" placeholder="------"
-                                        style="letter-spacing: 0.5rem; font-weight: 700; font-size: 1.2rem;">
-                                    <button class="btn btn-outline-secondary" type="button" id="btnTogglePinVisibility"
-                                        title="Show/hide PIN">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
+                    <div class="card-body p-3 d-flex flex-column gap-3">
+
+                        <!-- General PIN -->
+                        <div>
+                            <label class="form-label fw-semibold small text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05rem;">General PIN <span class="fw-normal">&mdash; all other pages</span></label>
+                            <div class="d-flex align-items-end gap-3">
+                                <div class="flex-grow-1">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="inputPinCode" maxlength="6"
+                                            inputmode="numeric" placeholder="------"
+                                            style="letter-spacing: 0.5rem; font-weight: 700; font-size: 1.2rem;">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnTogglePinVisibility"
+                                            title="Show/hide PIN">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
+                                <button class="btn btn-primary align-self-stretch" id="btnSavePin">
+                                    <i class="bi bi-check-lg me-1"></i>Save
+                                </button>
                             </div>
-                            <button class="btn btn-primary" id="btnSavePin">
-                                <i class="bi bi-check-lg me-1"></i>Save
-                            </button>
+                            <small class="text-muted" id="pinLastUpdated"></small>
                         </div>
-                        <small class="text-muted" id="pinLastUpdated"></small>
+
+                        <hr class="my-0">
+
+                        <!-- Admin PIN -->
+                        <div>
+                            <label class="form-label fw-semibold small text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05rem;">Admin PIN <span class="fw-normal">&mdash; this dashboard only</span></label>
+                            <div class="d-flex align-items-end gap-3">
+                                <div class="flex-grow-1">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="inputAdminPinCode" maxlength="6"
+                                            inputmode="numeric" placeholder="------"
+                                            style="letter-spacing: 0.5rem; font-weight: 700; font-size: 1.2rem;">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnToggleAdminPinVisibility"
+                                            title="Show/hide Admin PIN">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary align-self-stretch" id="btnSaveAdminPin">
+                                    <i class="bi bi-check-lg me-1"></i>Save
+                                </button>
+                            </div>
+                            <small class="text-muted" id="adminPinLastUpdated"></small>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fast Track -->
+        <div class="admin-section" id="section-fast-track">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-fast-track">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-lightning-charge text-primary" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold">Fast Track</h6>
+                    </div>
+                    <i class="bi bi-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse show" id="collapse-fast-track">
+                    <div class="card-body" id="fastTrackSection">
+                        <!-- Populated by admin.js -->
                     </div>
                 </div>
             </div>
@@ -80,22 +128,6 @@
                         <div id="serviceList">
                             <div class="text-center p-4 text-muted">Loading services...</div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Fast Track -->
-        <div class="admin-section" id="section-fast-track">
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
-                    data-bs-toggle="collapse" data-bs-target="#collapse-fast-track">
-                    <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Fast Track (Dental)</h5>
-                    <i class="bi bi-chevron-down"></i>
-                </div>
-                <div class="collapse show" id="collapse-fast-track">
-                    <div class="card-body" id="fastTrackSection">
-                        <!-- Populated by admin.js -->
                     </div>
                 </div>
             </div>

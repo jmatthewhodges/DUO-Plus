@@ -13,9 +13,17 @@
  * ============================================================
  */
 
-require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
+
+// Admin pages require the admin PIN session, not the general one
+session_start();
+if (!isset($_SESSION['admin_pin_verified']) || $_SESSION['admin_pin_verified'] !== true) {
+    header('Content-Type: application/json');
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized - Admin PIN verification required']);
+    exit;
+}
 
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
@@ -26,13 +34,22 @@ $mysqli = $GLOBALS['mysqli'];
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $response = [];
 
-    // --- Pin Code ---
-    $pinStmt = $mysqli->prepare("SELECT PinID, PinValue, LastUpdated FROM tblPinCode LIMIT 1");
+    // --- Pin Code (general) ---
+    $pinStmt = $mysqli->prepare("SELECT PinID, PinValue, LastUpdated FROM tblPinCode WHERE PinType = 'general' LIMIT 1");
     if ($pinStmt) {
         $pinStmt->execute();
         $pin = $pinStmt->get_result()->fetch_assoc();
         $pinStmt->close();
         $response['pinCode'] = $pin ?: null;
+    }
+
+    // --- Admin Pin Code ---
+    $adminPinStmt = $mysqli->prepare("SELECT PinID, PinValue, LastUpdated FROM tblPinCode WHERE PinType = 'admin' LIMIT 1");
+    if ($adminPinStmt) {
+        $adminPinStmt->execute();
+        $adminPin = $adminPinStmt->get_result()->fetch_assoc();
+        $adminPinStmt->close();
+        $response['adminPinCode'] = $adminPin ?: null;
     }
 
     // --- Event (hardcoded) ---
@@ -123,7 +140,7 @@ $action = $body['action'] ?? '';
 // ─── Action Router (modular — add new cases as needed) ──────
 switch ($action) {
 
-    // ── Update PIN Code ──────────────────────────────────────
+    // ── Update General PIN Code ──────────────────────────────
     case 'updatePin':
         $newPin = $body['pinValue'] ?? '';
         if (!is_string($newPin) || strlen($newPin) !== 6 || !ctype_digit($newPin)) {
@@ -132,12 +149,29 @@ switch ($action) {
             exit;
         }
 
-        $stmt = $mysqli->prepare("UPDATE tblPinCode SET PinValue = ?, LastUpdated = NOW() LIMIT 1");
+        $stmt = $mysqli->prepare("UPDATE tblPinCode SET PinValue = ?, LastUpdated = NOW() WHERE PinType = 'general'");
         $stmt->bind_param('s', $newPin);
         $stmt->execute();
         $stmt->close();
 
-        echo json_encode(['success' => true, 'message' => 'PIN updated.']);
+        echo json_encode(['success' => true, 'message' => 'General PIN updated.']);
+        break;
+
+    // ── Update Admin PIN Code ────────────────────────────────
+    case 'updateAdminPin':
+        $newPin = $body['pinValue'] ?? '';
+        if (!is_string($newPin) || strlen($newPin) !== 6 || !ctype_digit($newPin)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'PIN must be exactly 6 digits.']);
+            exit;
+        }
+
+        $stmt = $mysqli->prepare("UPDATE tblPinCode SET PinValue = ?, LastUpdated = NOW() WHERE PinType = 'admin'");
+        $stmt->bind_param('s', $newPin);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(['success' => true, 'message' => 'Admin PIN updated.']);
         break;
 
     // ── Update Event Setting ─────────────────────────────────

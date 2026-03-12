@@ -30,8 +30,11 @@ function logError(string $context, string $detail): void {
 session_start();
 
 // Handle GET request: Check if user has valid session
+// ?type=admin checks the admin session key; all others check the general key
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $verified = isset($_SESSION['pin_verified']) && $_SESSION['pin_verified'] === true;
+    $checkType   = $_GET['type'] ?? 'general';
+    $sessionKey  = ($checkType === 'admin') ? 'admin_pin_verified' : 'pin_verified';
+    $verified    = isset($_SESSION[$sessionKey]) && $_SESSION[$sessionKey] === true;
     respond(200, ['verified' => $verified]);
 }
 
@@ -50,6 +53,12 @@ if (!is_array($input)) {
 $pin      = $input['pin']      ?? null;
 $name     = trim($input['name']     ?? '');
 $pageName = trim($input['pageName'] ?? '');
+$pinType  = trim($input['pinType']  ?? 'general');
+
+// Only allow known pin types
+if (!in_array($pinType, ['general', 'admin'], true)) {
+    $pinType = 'general';
+}
 
 // Validate PIN format (must be exactly 6 digits)
 if (!$pin || !is_string($pin) || strlen($pin) !== 6 || !ctype_digit($pin)) {
@@ -88,16 +97,17 @@ if (!$mysqli || mysqli_connect_error()) {
     respond(503, ['success' => false, 'error' => 'Service temporarily unavailable. Please try again.']);
 }
 
-// Fetch PIN from database
+// Fetch PIN from database, matched by PinType
 $correctPin = null;
 $pinId      = null;
 
-$stmt = $mysqli->prepare("SELECT PinID, PinValue FROM tblPinCode LIMIT 1");
+$stmt = $mysqli->prepare("SELECT PinID, PinValue FROM tblPinCode WHERE PinType = ? LIMIT 1");
 if (!$stmt) {
     logError('prepare tblPinCode', $mysqli->error);
     respond(500, ['success' => false, 'error' => 'Internal server error.']);
 }
 
+$stmt->bind_param('s', $pinType);
 if (!$stmt->execute()) {
     logError('execute tblPinCode', $stmt->error);
     $stmt->close();
@@ -136,9 +146,10 @@ if ($pin !== $correctPin) {
 $_SESSION[$rateLimitKey]['count'] = 0;
 
 // ---------------------------------------------------------------
-// 7. Set secure session flag
+// 7. Set secure session flag — keyed by pin type
 // ---------------------------------------------------------------
-$_SESSION['pin_verified'] = true;
+$sessionKey = ($pinType === 'admin') ? 'admin_pin_verified' : 'pin_verified';
+$_SESSION[$sessionKey] = true;
 session_write_close();  // Ensure session is saved before responding
 
 // Debug: Log what we just set

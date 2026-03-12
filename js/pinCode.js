@@ -83,10 +83,14 @@ function initializePINModal() {
     // Track PIN verification in this session (frontend only - real verification is server-side)
     let pinVerified = false;
 
-    // Check if user already has a valid server session
+    // Determine pin type based on page — admin page uses the admin PIN
+    const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
+    const pinType  = (pageName === 'admin') ? 'admin' : 'general';
+
+    // Check if user already has a valid server session for this pin type
     async function checkServerSession() {
         try {
-            const response = await fetch('/api/VerifyPin.php');
+            const response = await fetch('/api/VerifyPin.php?type=' + pinType);
             const data = await response.json();
             return data.verified === true;
         } catch (e) {
@@ -213,7 +217,6 @@ function initializePINModal() {
         e.preventDefault();
         const pin = Array.from(inputs).map(i => i.value).join('');
         const name = nameInput.value.trim();
-        const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
 
         // Client-side validation: PIN first, then name
         const pinComplete = pin.length === 6 && /^\d{6}$/.test(pin);
@@ -252,11 +255,11 @@ function initializePINModal() {
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
 
         try {
-            // BACKEND REQUEST: Send PIN, name, and page name to /api/verify-pin.php for validation
+            // BACKEND REQUEST: Send PIN, name, page name, and pin type for validation
             const response = await fetch('/api/VerifyPin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: pin, name: name, pageName: pageName })
+                body: JSON.stringify({ pin: pin, name: name, pageName: pageName, pinType: pinType })
             });
 
             const data = await response.json();

@@ -18,6 +18,19 @@ const API = '/api/admin.php';
 // ─── State ──────────────────────────────────────────────────
 let adminData = null;
 
+// Format a UTC datetime string from MySQL into a human-readable America/Chicago timestamp
+function formatChicagoTime(utcString) {
+    if (!utcString) return '';
+    // MySQL returns naive strings like "2026-03-12 19:41:59" — append Z to treat as UTC
+    const date = new Date(utcString.replace(' ', 'T') + 'Z');
+    return date.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+}
+
+// Current local time formatted in America/Chicago
+function nowChicago() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+}
+
 // ─── Bootstrap Icons commonly used for services ─────────────
 const AVAILABLE_ICONS = [
     'bi-heart-pulse', 'bi-hospital', 'bi-bandaid', 'bi-capsule',
@@ -84,12 +97,24 @@ function renderPinSection() {
         input.value = pin.PinValue;
         input.type = 'password';
         if (pin.LastUpdated) {
-            lastUpdated.textContent = 'Last updated: ' + new Date(pin.LastUpdated).toLocaleString();
+            lastUpdated.textContent = 'Last updated: ' + formatChicagoTime(pin.LastUpdated);
+        }
+    }
+
+    const adminPin = adminData.adminPinCode;
+    const adminInput = document.getElementById('inputAdminPinCode');
+    const adminLastUpdated = document.getElementById('adminPinLastUpdated');
+
+    if (adminPin) {
+        adminInput.value = adminPin.PinValue;
+        adminInput.type = 'password';
+        if (adminPin.LastUpdated) {
+            adminLastUpdated.textContent = 'Last updated: ' + formatChicagoTime(adminPin.LastUpdated);
         }
     }
 }
 
-// Toggle PIN visibility
+// Toggle general PIN visibility
 document.getElementById('btnTogglePinVisibility').addEventListener('click', () => {
     const input = document.getElementById('inputPinCode');
     const icon = document.querySelector('#btnTogglePinVisibility i');
@@ -102,7 +127,20 @@ document.getElementById('btnTogglePinVisibility').addEventListener('click', () =
     }
 });
 
-// Save PIN
+// Toggle admin PIN visibility
+document.getElementById('btnToggleAdminPinVisibility').addEventListener('click', () => {
+    const input = document.getElementById('inputAdminPinCode');
+    const icon = document.querySelector('#btnToggleAdminPinVisibility i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+});
+
+// Save general PIN
 document.getElementById('btnSavePin').addEventListener('click', async () => {
     const newPin = document.getElementById('inputPinCode').value.trim();
 
@@ -114,8 +152,30 @@ document.getElementById('btnSavePin').addEventListener('click', async () => {
     try {
         const result = await adminPost({ action: 'updatePin', pinValue: newPin });
         if (result.success) {
-            Swal.fire({ icon: 'success', title: 'Saved', text: 'PIN updated.', timer: 1500, showConfirmButton: false });
-            document.getElementById('pinLastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString();
+            Swal.fire({ icon: 'success', title: 'Saved', text: 'General PIN updated.', timer: 1500, showConfirmButton: false });
+            document.getElementById('pinLastUpdated').textContent = 'Last updated: ' + nowChicago();
+        } else {
+            throw new Error(result.error || 'Update failed');
+        }
+    } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+});
+
+// Save admin PIN
+document.getElementById('btnSaveAdminPin').addEventListener('click', async () => {
+    const newPin = document.getElementById('inputAdminPinCode').value.trim();
+
+    if (!/^\d{6}$/.test(newPin)) {
+        Swal.fire({ icon: 'warning', title: 'Invalid PIN', text: 'PIN must be exactly 6 digits.' });
+        return;
+    }
+
+    try {
+        const result = await adminPost({ action: 'updateAdminPin', pinValue: newPin });
+        if (result.success) {
+            Swal.fire({ icon: 'success', title: 'Saved', text: 'Admin PIN updated.', timer: 1500, showConfirmButton: false });
+            document.getElementById('adminPinLastUpdated').textContent = 'Last updated: ' + nowChicago();
         } else {
             throw new Error(result.error || 'Update failed');
         }
@@ -563,9 +623,8 @@ function renderFastTrackSection() {
                     value="${limit}" min="0" max="50" inputmode="numeric" style="max-width: 100px;">
             </div>
             <div>
-                <span class="badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-warning text-dark' : 'bg-info'}"
-                    style="font-size: 0.8rem; margin-bottom: 6px; display: inline-block;">
-                    ⚡ ${used}/${limit} used
+                <span class="badge status-badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-warning text-dark' : 'bg-success'}">
+                    ${used}/${limit} used
                 </span>
             </div>
             <div>
