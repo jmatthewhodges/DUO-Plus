@@ -288,7 +288,7 @@ function stepOneSubmit() {
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
@@ -385,7 +385,7 @@ function stepTwoSubmit() {
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
@@ -499,7 +499,7 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
@@ -592,7 +592,7 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
@@ -623,7 +623,7 @@ document.getElementById('btnRegisterNext5').addEventListener('click', function (
     if (services.length === 0) {
         const t = getLang();
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: `• ${t.registerService}`,
             confirmButtonColor: '#174593'
@@ -909,7 +909,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     if (!waiverCheckbox.checked) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.waiverRequiredTitle,
             text: t.waiverRequiredText,
             confirmButtonColor: '#174593'

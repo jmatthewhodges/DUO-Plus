@@ -224,7 +224,7 @@ function initializePINModal() {
         if (!pinComplete) {
             if (document.activeElement) document.activeElement.blur();
             Swal.fire({
-                icon: 'warning',
+                icon: 'error',
                 title: 'PIN Required',
                 text: 'Please enter the 6-digit PIN',
                 confirmButtonText: 'OK',
@@ -239,7 +239,7 @@ function initializePINModal() {
         if (!name) {
             if (document.activeElement) document.activeElement.blur();
             Swal.fire({
-                icon: 'warning',
+                icon: 'error',
                 title: 'Name Required',
                 text: 'Please enter your name',
                 confirmButtonText: 'OK',

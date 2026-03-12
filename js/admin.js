@@ -145,7 +145,7 @@ document.getElementById('btnSavePin').addEventListener('click', async () => {
     const newPin = document.getElementById('inputPinCode').value.trim();
 
     if (!/^\d{6}$/.test(newPin)) {
-        Swal.fire({ icon: 'warning', title: 'Invalid PIN', text: 'PIN must be exactly 6 digits.' });
+        Swal.fire({ icon: 'error', title: 'Invalid PIN', text: 'PIN must be exactly 6 digits.' });
         return;
     }
 
@@ -167,7 +167,7 @@ document.getElementById('btnSaveAdminPin').addEventListener('click', async () =>
     const newPin = document.getElementById('inputAdminPinCode').value.trim();
 
     if (!/^\d{6}$/.test(newPin)) {
-        Swal.fire({ icon: 'warning', title: 'Invalid PIN', text: 'PIN must be exactly 6 digits.' });
+        Swal.fire({ icon: 'error', title: 'Invalid PIN', text: 'PIN must be exactly 6 digits.' });
         return;
     }
 
@@ -391,7 +391,7 @@ async function handleRemoveService(e) {
     const serviceID = row.dataset.serviceId;
 
     const confirm = await Swal.fire({
-        icon: 'warning',
+        icon: 'error',
         title: 'Remove Service?',
         text: `Are you sure you want to remove "${serviceID}"? This cannot be undone.`,
         showCancelButton: true,
@@ -562,17 +562,17 @@ document.getElementById('addServiceForm').addEventListener('submit', async (e) =
     const sortOrder = parseInt(document.getElementById('newSortOrder').value) || 0;
 
     if (!serviceID || !serviceName) {
-        Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'Service ID and Name are required.' });
+        Swal.fire({ icon: 'error', title: 'Missing Fields', text: 'Service ID and Name are required.' });
         return;
     }
 
     if (!iconTag) {
-        Swal.fire({ icon: 'warning', title: 'No Icon', text: 'Please select an icon for the service.' });
+        Swal.fire({ icon: 'error', title: 'No Icon', text: 'Please select an icon for the service.' });
         return;
     }
 
     if (serviceType === 'operational' && !parentServiceID) {
-        Swal.fire({ icon: 'warning', title: 'Missing Parent', text: 'Operational services must have a parent category.' });
+        Swal.fire({ icon: 'error', title: 'Missing Parent', text: 'Operational services must have a parent category.' });
         return;
     }
 

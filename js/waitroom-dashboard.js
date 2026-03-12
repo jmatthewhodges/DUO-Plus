@@ -67,7 +67,7 @@ async function skipNowServingClient(clientId) {
     const result = await Swal.fire({
         title: 'Skip this client?',
         text: 'They will be skipped this turn.',
-        icon: 'warning',
+        icon: 'error',
         showCancelButton: true,
         confirmButtonText: 'Skip',
         confirmButtonColor: '#dc3545',

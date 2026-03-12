@@ -562,7 +562,7 @@ function handleQRScan(qrData) {
         // Check if URL is for service-scan page
         if (!pathname.includes('service-scan')) {
             console.error('Not a service-scan URL');
-            Swal.fire('Invalid QR', 'QR code is not for service selection', 'warning');
+            Swal.fire('Invalid QR', 'QR code is not for service selection', 'error');
             startQRScanning();
             return;
         }
@@ -570,7 +570,7 @@ function handleQRScan(qrData) {
         // Check if ServiceID is present
         if (!serviceID) {
             console.error('Missing ServiceID in QR');
-            Swal.fire('Invalid QR', 'QR code missing station information', 'warning');
+            Swal.fire('Invalid QR', 'QR code missing station information', 'error');
             startQRScanning();
             return;
         }
@@ -578,7 +578,7 @@ function handleQRScan(qrData) {
         // Check if station exists in SERVICES config
         if (!SERVICES[serviceID.toLowerCase()]) {
             console.error('Unknown station:', serviceID);
-            Swal.fire('Invalid QR', 'Unknown station: ' + serviceID, 'warning');
+            Swal.fire('Invalid QR', 'Unknown station: ' + serviceID, 'error');
             startQRScanning();
             return;
         }
@@ -590,7 +590,7 @@ function handleQRScan(qrData) {
 
     } catch (e) {
         console.error('QR parse error:', e);
-        Swal.fire('Invalid QR', 'Could not parse QR code', 'warning');
+        Swal.fire('Invalid QR', 'Could not parse QR code', 'error');
         startQRScanning();
     }
 }
@@ -625,7 +625,7 @@ function handleServiceSelection(serviceID) {
     // Check if station exists in SERVICES config
     if (!SERVICES[serviceKey]) {
         console.error('Unknown station:', serviceID);
-        Swal.fire('Invalid Station', 'Unknown station: ' + serviceID, 'warning');
+        Swal.fire('Invalid Station', 'Unknown station: ' + serviceID, 'error');
         startQRScanning();
         return;
     }
@@ -773,7 +773,7 @@ function startClientQRScanning() {
         isClientScan = false;
         console.error('Camera error:', err);
         showCameraRecommendation();
-        Swal.fire('Camera Error', 'Unable to access camera.', 'warning');
+        Swal.fire('Camera Error', 'Unable to access camera.', 'error');
     });
 }
 
@@ -828,7 +828,7 @@ async function handleClientQRScan(qrData) {
 
         if (!clientId) {
             console.error('No clientId found in QR code');
-            Swal.fire('Invalid QR', 'QR code does not contain a valid client ID', 'warning');
+            Swal.fire('Invalid QR', 'QR code does not contain a valid client ID', 'error');
             startClientQRScanning();
             return;
         }
@@ -906,7 +906,7 @@ async function handleClientQRScan(qrData) {
 
     } catch (e) {
         console.error('QR scan error:', e);
-        Swal.fire('Error', 'Could not process QR code scan', 'warning');
+        Swal.fire('Error', 'Could not process QR code scan', 'error');
         startClientQRScanning();
     } finally {
         isProcessing = false;

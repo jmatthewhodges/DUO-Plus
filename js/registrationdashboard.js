@@ -839,7 +839,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
             const selected = document.querySelector(`input[name="${radioName}"]:checked`);
             if (!selected) {
                 Swal.fire({
-                    icon: 'warning',
+                    icon: 'error',
                     title: 'Selection Required',
                     text: `Please select a ${cat.ServiceName} sub-service to proceed.`,
                     confirmButtonColor: '#174593'
@@ -859,7 +859,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
     const medicalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('medical'));
     if (dentalCat && medicalCat && categoryStates[dentalCat.ServiceID] && !categoryStates[medicalCat.ServiceID]) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: 'Medical Required',
             text: 'Dental patients must also be checked into a Medical service.',
             confirmButtonColor: '#174593'
@@ -871,7 +871,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
     const opticalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('optical'));
     if (dentalCat && opticalCat && categoryStates[dentalCat.ServiceID] && categoryStates[opticalCat.ServiceID]) {
         const result = await Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: 'Dental & Optical Selected',
             text: 'This patient has both Dental and Optical selected. Please confirm they have permission to receive both services.',
             showCancelButton: true,
@@ -908,7 +908,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 const isStandbyFull = data.standbyFull && data.standbyFull.length > 0;
                 if (isStandbyFull) {
                     Swal.fire({
-                        icon: 'warning',
+                        icon: 'error',
                         title: 'Standby Full',
                         text: 'The standby list is now full for one or more services.',
                         confirmButtonColor: '#174593',

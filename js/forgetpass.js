@@ -235,7 +235,7 @@ async function handleVerifyAccount() {
 
     if (errors.length) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('loginCheckInfoTitle', 'Check your info'),
             html: errors.map(e => `• ${e}`).join('<br>')
         });
@@ -285,7 +285,7 @@ async function handleResetPassword() {
 
     if (!verifiedIdentity) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('verifyFirstTitle', 'Verify First'),
             text: getText('verifyFirstText', 'Please verify first.')
         });
@@ -312,7 +312,7 @@ async function handleResetPassword() {
 
     if (errors.length) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('loginCheckInfoTitle', 'Check your info'),
             html: errors.map(e => `• ${e}`).join('<br>')
         });

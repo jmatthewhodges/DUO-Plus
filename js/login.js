@@ -80,7 +80,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
