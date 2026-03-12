@@ -73,6 +73,9 @@ function formatDOB(dateString) {
 // Service configuration — loaded from API at init, populated by loadServiceHierarchy()
 let SERVICES = {};
 
+// Raw hierarchy array from /api/services.php — used for availability bar rendering
+let serviceHierarchyRaw = [];
+
 // In-memory waitlist per service station (keyed by category ServiceID)
 let SERVICE_WAITLISTS = {};
 
@@ -92,6 +95,7 @@ async function loadServiceHierarchy() {
         SERVICES = {};
         SERVICE_WAITLISTS = {};
         SUB_SERVICE_LABELS = {};
+        serviceHierarchyRaw = json.hierarchy;
 
         json.hierarchy.forEach(cat => {
             const key = cat.ServiceID;
@@ -214,10 +218,14 @@ async function fetchServiceData(serviceKey) {
         if (stat2ValueEl) stat2ValueEl.textContent = data.inProgressCount;
         if (stat3ValueEl) stat3ValueEl.textContent = data.completedCount;
 
-        // Update average service time
+        // Update average service times
         const avgTimeEl = document.getElementById('avgTime');
         if (avgTimeEl) {
-            avgTimeEl.textContent = data.avgServiceTime ? `${data.avgServiceTime} minutes` : 'N/A';
+            avgTimeEl.textContent = data.avgServiceTime != null ? `${data.avgServiceTime} min` : 'N/A';
+        }
+        const pastAvgTimeEl = document.getElementById('pastAvgTime');
+        if (pastAvgTimeEl) {
+            pastAvgTimeEl.textContent = data.pastAvgServiceTime != null ? `${data.pastAvgServiceTime} min` : 'N/A';
         }
 
         // Normalize API waitlist into local format and populate table
@@ -239,6 +247,7 @@ async function fetchServiceData(serviceKey) {
         });
 
         populateWaitlist();
+        fetchAllAvailability();
         console.log(`Service data updated for ${serviceKey}`);
     } catch (error) {
         console.error('Error fetching service data:', error);
@@ -1176,10 +1185,110 @@ function updateStatsDisplay() {
     if (stat3ValueEl) stat3ValueEl.textContent = completedCount;
 }
 
+// ── Availability Bars ────────────────────────────────────────────────────────
+
+// Fetch capacity data for all services and render the availability bars
+async function fetchAllAvailability() {
+    try {
+        const res = await fetch('/api/registration-dashboard.php?RegistrationStatus=Registered');
+        const data = await res.json();
+        if (data.success && data.services) {
+            renderAvailabilityBars(data.services);
+        }
+    } catch (err) {
+        console.error('Error fetching availability data:', err);
+    }
+}
+
+// Build one progress-bar row element for a single service slot
+function buildAvailabilityRow(label, data) {
+    const maxCapacity = data ? (data.maxCapacity || 0) : 0;
+    const currentAssigned = data ? (data.currentAssigned || 0) : 0;
+    const standbyCount = data ? (data.standbyCount || 0) : 0;
+    const standbyLimit = data ? (data.standbyLimit || 0) : 0;
+
+    const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+
+    let barClass = 'bg-secondary';
+    if (maxCapacity > 0) {
+        if (percentage > 100)      barClass = 'bg-danger';
+        else if (percentage <= 50) barClass = 'bg-success';
+        else if (percentage < 80)  barClass = 'bg-warning';
+        else                       barClass = 'bg-danger';
+    }
+
+    let countStyle = 'background-color:#e9ecef;color:#495057;';
+    if (currentAssigned > maxCapacity) countStyle = 'background-color:#fd7e14;color:#fff;';
+
+    let standbyHTML = '';
+    if (standbyCount > 0) {
+        const standbyColor = (standbyLimit > 0 && standbyCount >= standbyLimit) ? '#dc3545' : '#fd7e14';
+        standbyHTML = `<span class="badge fw-bold ms-1" style="font-size:0.7rem;background-color:${standbyColor};color:#fff;">${standbyCount} standby</span>`;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'border rounded p-2 px-3 mb-2';
+    div.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="fw-bold" style="font-size:0.9rem;color:black;">${label}</span>
+            <div class="d-flex align-items-center gap-1">
+                <span class="badge fw-bold" style="font-size:0.8rem;${countStyle}">${currentAssigned}/${maxCapacity}</span>
+                ${standbyHTML}
+            </div>
+        </div>
+        <div class="progress" style="height:6px;border-radius:3px;">
+            <div class="progress-bar ${barClass}" role="progressbar" style="width:${Math.min(percentage, 100)}%;border-radius:3px;"></div>
+        </div>`;
+    return div;
+}
+
+// Render availability bars for the currently active service only.
+// If the service has sub-services (e.g. Medical → Exam / Follow Up), one bar per sub-service is shown.
+// Standalone services get a single bar.
+// The container is hidden entirely when there is nothing meaningful to show.
+function renderAvailabilityBars(servicesData) {
+    const container = document.getElementById('availabilityContainer');
+    if (!container) return;
+
+    if (!servicesData || !serviceHierarchyRaw.length || !currentServiceKey) {
+        container.classList.add('d-none');
+        return;
+    }
+
+    const capLookup = {};
+    servicesData.forEach(s => { capLookup[s.serviceID] = s; });
+
+    const cat = serviceHierarchyRaw.find(c => c.ServiceID.toLowerCase() === currentServiceKey.toLowerCase());
+    if (!cat) { container.classList.add('d-none'); return; }
+
+    container.innerHTML = '';
+
+    const hasChildren = cat.children && cat.children.length > 0;
+
+    if (hasChildren) {
+        cat.children.forEach(child => {
+            let shortLabel = child.ServiceName;
+            if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+            }
+            container.appendChild(buildAvailabilityRow(shortLabel || child.ServiceName, capLookup[child.ServiceID]));
+        });
+    } else {
+        container.appendChild(buildAvailabilityRow(cat.ServiceName, capLookup[cat.ServiceID]));
+    }
+
+    container.classList.remove('d-none');
+}
+
 // Refresh button
 const refreshServiceBtn = document.getElementById('refreshServiceBtn');
 if (refreshServiceBtn) {
     refreshServiceBtn.addEventListener('click', () => {
-        if (currentServiceKey) spinRefreshBtn(refreshServiceBtn, fetchServiceData(currentServiceKey));
+        if (currentServiceKey) {
+            spinRefreshBtn(refreshServiceBtn, Promise.all([
+                fetchServiceData(currentServiceKey),
+                fetchAllAvailability()
+            ]));
+        }
     });
 }

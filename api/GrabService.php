@@ -65,25 +65,54 @@ foreach ($countRows as $row) {
 }
 
 // --- Average service time from movement logs ---
-// Pairs "Seated" → "Completed" actions per VisitServiceID
+// Actions are logged as "{ServiceID}CheckIn" and "{ServiceID}CheckOut" by ServiceScan.php.
+// "Today" avg: scoped to the current event only.
+// "Past" avg: all-time historical average across every event.
+$currentEventID = '4cbde538985861b9';
+
 $avgStmt = $mysqli->prepare(
-    "SELECT AVG(TIMESTAMPDIFF(MINUTE, seated.Timestamp, completed.Timestamp)) AS avgMinutes
-     FROM tblMovementLogs seated
-     JOIN tblMovementLogs completed
-       ON completed.VisitServiceID = seated.VisitServiceID
-       AND completed.Action = 'Completed'
-     JOIN tblVisitServices vs ON vs.VisitServiceID = seated.VisitServiceID
-     WHERE seated.Action = 'Seated'
-     AND vs.ServiceID IN ($placeholders)"
+    "SELECT AVG(TIMESTAMPDIFF(MINUTE, ci.Timestamp, co.Timestamp)) AS avgMinutes
+     FROM tblVisitServices vs
+     JOIN tblVisits v ON v.VisitID = vs.VisitID
+     JOIN tblMovementLogs ci
+       ON ci.VisitServiceID = vs.VisitServiceID
+       AND ci.Action = CONCAT(vs.ServiceID, 'CheckIn')
+     JOIN tblMovementLogs co
+       ON co.VisitServiceID = vs.VisitServiceID
+       AND co.Action = CONCAT(vs.ServiceID, 'CheckOut')
+     WHERE vs.ServiceID IN ($placeholders)
+       AND v.EventID = ?"
 );
 $avgServiceTime = null;
 if ($avgStmt) {
-    $avgStmt->bind_param($types, ...$serviceIDs);
+    $avgStmt->bind_param($types . 's', ...[...$serviceIDs, $currentEventID]);
     $avgStmt->execute();
     $avgRow = $avgStmt->get_result()->fetch_assoc();
     $avgStmt->close();
-    if ($avgRow && $avgRow['avgMinutes'] !== 0) {
+    if ($avgRow && $avgRow['avgMinutes'] !== null) {
         $avgServiceTime = round((float)$avgRow['avgMinutes']);
+    }
+}
+
+$pastAvgStmt = $mysqli->prepare(
+    "SELECT AVG(TIMESTAMPDIFF(MINUTE, ci.Timestamp, co.Timestamp)) AS avgMinutes
+     FROM tblVisitServices vs
+     JOIN tblMovementLogs ci
+       ON ci.VisitServiceID = vs.VisitServiceID
+       AND ci.Action = CONCAT(vs.ServiceID, 'CheckIn')
+     JOIN tblMovementLogs co
+       ON co.VisitServiceID = vs.VisitServiceID
+       AND co.Action = CONCAT(vs.ServiceID, 'CheckOut')
+     WHERE vs.ServiceID IN ($placeholders)"
+);
+$pastAvgServiceTime = null;
+if ($pastAvgStmt) {
+    $pastAvgStmt->bind_param($types, ...$serviceIDs);
+    $pastAvgStmt->execute();
+    $pastAvgRow = $pastAvgStmt->get_result()->fetch_assoc();
+    $pastAvgStmt->close();
+    if ($pastAvgRow && $pastAvgRow['avgMinutes'] !== null) {
+        $pastAvgServiceTime = round((float)$pastAvgRow['avgMinutes']);
     }
 }
 
@@ -110,10 +139,11 @@ $waitStmt->close();
 // --- Response ---
 http_response_code(200);
 echo json_encode([
-    'success'        => true,
-    'pendingCount'   => $counts['Pending'],
-    'inProgressCount'=> $counts['In-Progress'],
-    'completedCount' => $counts['Complete'],
-    'avgServiceTime' => $avgServiceTime,
-    'waitList'       => $waitList,
+    'success'          => true,
+    'pendingCount'     => $counts['Pending'],
+    'inProgressCount'  => $counts['In-Progress'],
+    'completedCount'   => $counts['Complete'],
+    'avgServiceTime'   => $avgServiceTime,
+    'pastAvgServiceTime' => $pastAvgServiceTime,
+    'waitList'         => $waitList,
 ]);
