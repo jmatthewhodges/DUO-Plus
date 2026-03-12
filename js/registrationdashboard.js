@@ -853,18 +853,60 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
         }
     }
 
-    // ── Validation: Dental requires Medical ─────────────────────
-    // If any dental category is selected, at least one medical category must also be selected
+    // ── Warning: Dental selected without Medical ─────────────────────
     const dentalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('dental'));
     const medicalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('medical'));
     if (dentalCat && medicalCat && categoryStates[dentalCat.ServiceID] && !categoryStates[medicalCat.ServiceID]) {
-        Swal.fire({
+        const result = await Swal.fire({
             icon: 'error',
-            title: 'Medical Required',
-            text: 'Dental patients must also be checked into a Medical service.',
-            confirmButtonColor: '#174593'
+            title: 'No Medical Selected',
+            html: 'This client has <strong>Dental</strong> selected without a <strong>Medical</strong> service. Please confirm they have permission to receive Dental only.',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Continue',
+            denyButtonText: 'Add Medical',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#174593',
+            denyButtonColor: '#198754'
         });
-        return;
+        if (result.isDenied) {
+            // Auto-select the medical button in the row
+            const medBtn = currentRowToUpdate.querySelector(`[title="${medicalCat.ServiceName}"]`);
+            if (medBtn && parseInt(medBtn.getAttribute('data-state')) === 0) {
+                medBtn.setAttribute('data-state', '1');
+                medBtn.classList.replace('btn-grey', 'btn-success');
+                const medIcon = medBtn.querySelector('i, .svg-icon');
+                if (medIcon) medIcon.classList.add('text-white');
+            }
+            // Inject the medical sub-service section into the modal if not already present
+            const subSvcContainer = document.getElementById('modalSubServiceSections');
+            const alreadyShown = subSvcContainer.querySelector(`[data-category="${medicalCat.ServiceID}"]`);
+            if (!alreadyShown && medicalCat.children && medicalCat.children.length > 0) {
+                const radioName = `${medicalCat.ServiceID}Choice`;
+                let radiosHTML = medicalCat.children.map(child => {
+                    let shortLabel = child.ServiceName;
+                    if (shortLabel.toLowerCase().startsWith(medicalCat.ServiceName.toLowerCase())) {
+                        shortLabel = shortLabel.substring(medicalCat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    return `
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="${radioName}"
+                            id="${child.ServiceID}" value="${child.ServiceID}">
+                        <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                    </div>`;
+                }).join('');
+                const newSection = document.createElement('div');
+                newSection.className = 'mb-4 p-3 border rounded bg-light sub-service-section';
+                newSection.dataset.category = medicalCat.ServiceID;
+                newSection.innerHTML = `
+                    <label class="fw-bold mb-2 text-primary">Select ${medicalCat.ServiceName} Service:</label>
+                    <p class="text-muted small mb-2">Choose Exam if this is the patient's first time, Follow Up if they've been here before.</p>
+                    <div class="d-flex gap-4">${radiosHTML}</div>`;
+                subSvcContainer.insertBefore(newSection, subSvcContainer.firstChild);
+            }
+            return;
+        }
+        if (!result.isConfirmed) return;
     }
 
     // ── Warning: Dental + Optical both selected ─────────────────
@@ -873,7 +915,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
         const result = await Swal.fire({
             icon: 'error',
             title: 'Dental & Optical Selected',
-            text: 'This patient has both Dental and Optical selected. Please confirm they have permission to receive both services.',
+            html: 'This client has both <strong>Dental</strong> and <strong>Optical</strong> selected. Please confirm they have permission to receive both services.',
             showCancelButton: true,
             confirmButtonText: 'Continue',
             cancelButtonText: 'Cancel',
