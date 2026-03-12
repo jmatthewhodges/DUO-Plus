@@ -108,15 +108,20 @@ if (!$lockResult) {
 }
 $lockedVisitID = $lockResult['VisitID'];
 
-// Step 2: Now that we hold the visit lock, re-check for any In-Progress service.
-// Any concurrent request that got here first will have already committed by now.
+// Step 2: Now that we hold the visit lock, re-check for any In-Progress service
+// that is NOT one of the services currently being scanned.
+// If the client is In-Progress at one of the scanned services, that's a checkout — allow it.
+// Only block if they're In-Progress at a *different* service.
+$ipPlaceholders = implode(',', array_fill(0, count($serviceIDs), '?'));
+$ipTypes = 's' . str_repeat('s', count($serviceIDs));
+$ipParams = array_merge([$lockedVisitID], $serviceIDs);
 $ipCheck = $mysqli->prepare(
     "SELECT vs.ServiceID, s.ServiceName
      FROM tblVisitServices vs
      JOIN tblServices s ON s.ServiceID = vs.ServiceID
-     WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
+     WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' AND vs.ServiceID NOT IN ($ipPlaceholders) LIMIT 1"
 );
-$ipCheck->bind_param('s', $lockedVisitID);
+$ipCheck->bind_param($ipTypes, ...$ipParams);
 $ipCheck->execute();
 $ipRow = $ipCheck->get_result()->fetch_assoc();
 $ipCheck->close();
