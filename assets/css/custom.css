@@ -626,10 +626,10 @@ body.v-center-page {
 }
 
 /* ==========================================
-   DEV NAVIGATION BAR (testing only)
+   DEV MODE — step jumper bar (register.html)
    ========================================== */
 
-/* Shared pill wrapper used on index.html and register.html */
+/* Shared pill wrapper (register.html step jumper) */
 .dev-bar {
     display: inline-flex;
     flex-wrap: wrap;
@@ -642,7 +642,6 @@ body.v-center-page {
     padding: 6px 12px;
 }
 
-/* "Dev" label inside the bar */
 .dev-bar-label {
     font-size: 0.65rem;
     color: #aaa;
@@ -651,21 +650,180 @@ body.v-center-page {
     text-transform: uppercase;
 }
 
-/* Anchor chip (used in index.html) */
-.dev-link {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #4a72b8;
-    text-decoration: none;
-    background: rgba(23, 69, 147, 0.08);
-    border-radius: 10px;
-    padding: 2px 9px;
-    transition: background 0.15s, color 0.15s;
+/* ==========================================
+   DEV MODE — floating toolbar
+   ========================================== */
+
+#devToolbar {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    font-family: system-ui, sans-serif;
 }
 
-.dev-link:hover {
-    background: rgba(23, 69, 147, 0.18);
+#devFab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #174593;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(23, 69, 147, 0.45);
+    transition: background 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.03em;
+}
+
+#devFab:hover {
+    background: #10326e;
+    box-shadow: 0 6px 22px rgba(23, 69, 147, 0.55);
+}
+
+#devPanel {
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    min-width: 240px;
+}
+
+#devPanel.dev-panel-open {
+    display: flex;
+}
+
+.dev-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 13px 18px;
+}
+
+.dev-panel-title {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-panel-links {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.dev-panel-section {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    padding: 6px 18px 3px;
+}
+
+.dev-panel-links a {
+    font-size: 0.92rem;
+    font-weight: 500;
     color: #174593;
+    text-decoration: none;
+    padding: 9px 18px;
+    transition: background 0.12s;
+}
+
+.dev-panel-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
+}
+
+/* ── Inline dev panel on index.html (under Life Church logo) ── */
+.dev-inline-panel {
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+    overflow: hidden;
+    text-align: left;
+    font-family: system-ui, sans-serif;
+}
+
+.dev-inline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 11px 16px;
+}
+
+.dev-inline-header span {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devIndexDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devIndexDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-inline-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 6px 4px;
+}
+
+.dev-inline-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #174593;
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    transition: background 0.12s;
+}
+
+.dev-inline-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
 }
 
 /* Register link hover */

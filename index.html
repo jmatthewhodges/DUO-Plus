@@ -95,27 +95,34 @@
       <!-- Life Church Logo -->
       <div class="d-flex flex-column align-items-center">
         <img src="assets/images/lifeChurchLogo.webp" alt="Life Church - Partner Organization" class="mb-3" style="width: 200px;">
+
+        <!-- Dev mode panel — shown only when dev mode is active -->
+        <div id="devIndexPanel" class="dev-only d-none w-100">
+          <div class="dev-inline-panel">
+            <div class="dev-inline-header">
+              <span>Developer Mode</span>
+              <button id="devIndexDisableBtn">Disable</button>
+            </div>
+            <div class="dev-inline-links">
+              <a href="/portal/">API Portal</a>
+              <a href="pages/registration-dashboard.html">Reg. Dashboard</a>
+              <a href="pages/waitingroom.html">Waiting Room</a>
+              <a href="pages/service-scan.html">Service Scan</a>
+              <a href="pages/food-truck.html">Food Truck</a>
+              <a href="pages/admin.html">Admin</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Dev Links -->
-    <div class="text-center mt-2 mb-1">
-      <div class="dev-bar">
-        <span class="dev-bar-label">Dev</span>
-        <a href="/portal/" class="dev-link">API Portal</a>
-        <a href="pages/registration-dashboard.html" class="dev-link">Reg. Dashboard</a>
-        <a href="pages/waitingroom.html" class="dev-link">Waiting Room</a>
-        <a href="pages/service-scan.html" class="dev-link">Service Scan</a>
-        <a href="pages/food-truck.html" class="dev-link">Food Truck</a>
-        <a href="pages/admin.html" class="dev-link">Admin</a>
-      </div>
-    </div>
   </div>
 
   <!-- JS Dependencies -->
   <script src="assets/js/alerts/sweetalert2.all.min.js"></script>
   <script src="js/login.js"></script>
   <script src="js/lang.js"></script>
+  <script src="js/devMode.js"></script>
 </body>
 
 </html>
