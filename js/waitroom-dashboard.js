@@ -165,7 +165,7 @@ function populateWaitListTable(patients) {
         if (allDone) {
             statusBadge = '<span class="badge bg-success ms-2" style="font-size: 0.7rem;">All Done</span>';
         } else if (atService) {
-            statusBadge = `<span class="badge bg-info ms-2" style="font-size: 0.7rem;">At ${atService}</span>`;
+            statusBadge = `<span class="badge bg-info" style="font-size: 0.7rem;">${atService}</span>`;
         }
         if (hasStandby && !allDone) {
             statusBadge += '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Standby</span>';
@@ -185,9 +185,9 @@ function populateWaitListTable(patients) {
                         <div class="rounded-circle border d-flex align-items-center justify-content-center ${avatarClass} flex-shrink-0" style="width: 30px; height: 30px;">
                             <i class="bi ${avatarIcon}"></i>
                         </div>
-                        <div class="d-flex flex-wrap align-items-center gap-1" style="min-width: 0;">
+                        <div class="d-flex flex-column gap-1" style="min-width: 0;">
                             <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}</span>
-                            ${statusBadge}
+                            ${statusBadge ? `<div class="d-flex flex-wrap gap-1">${statusBadge}</div>` : ''}
                         </div>
                     </div>
                 </td>
