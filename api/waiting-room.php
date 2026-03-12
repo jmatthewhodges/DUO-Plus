@@ -133,83 +133,47 @@ if (!empty($visitIDs)) {
     $placeholders = implode(',', array_fill(0, count($visitIDs), '?'));
     $types = str_repeat('s', count($visitIDs));
 
-    // All visit services (any status) — for the update modal
+    // Single query replacing the previous 4 separate tblVisitServices queries.
+    // PHP then partitions the rows into the structures each section needs.
     $allVsStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.VisitServiceID, vs.ServiceID, vs.ServiceStatus, s.ServiceName
+        "SELECT vs.VisitID, vs.VisitServiceID, vs.ServiceID, vs.ServiceStatus,
+                vs.IsFastTracked, s.ServiceName, s.ParentServiceID
          FROM tblVisitServices vs
          JOIN tblServices s ON s.ServiceID = vs.ServiceID
          WHERE vs.VisitID IN ($placeholders)"
     );
-    $allVisitServiceMap = []; // VisitID => [ { ServiceID, ServiceStatus, ... } ]
-    if ($allVsStmt) {
-        $allVsStmt->bind_param($types, ...$visitIDs);
-        $allVsStmt->execute();
-        $allVsRows = $allVsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $allVsStmt->close();
-        foreach ($allVsRows as $avs) {
-            $allVisitServiceMap[$avs['VisitID']][] = $avs;
-        }
-    }
-
-    // Pending + Standby — for queue logic (include ParentServiceID for category-based rules)
-    $vsStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName, vs.IsFastTracked, s.ParentServiceID, vs.ServiceStatus
-         FROM tblVisitServices vs
-         JOIN tblServices s ON s.ServiceID = vs.ServiceID
-         WHERE vs.VisitID IN ($placeholders)
-         AND vs.ServiceStatus IN ('Pending','Standby')"
-    );
-    if (!$vsStmt) {
+    if (!$allVsStmt) {
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to prepare visit-services query: ' . $mysqli->error]);
         exit;
     }
-    $vsStmt->bind_param($types, ...$visitIDs);
-    $vsStmt->execute();
-    $vsRows = $vsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $vsStmt->close();
+    $allVsStmt->bind_param($types, ...$visitIDs);
+    $allVsStmt->execute();
+    $allVsRows = $allVsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $allVsStmt->close();
 
-    foreach ($vsRows as $vs) {
-        $visitServiceMap[$vs['VisitID']][] = $vs;
-    }
+    $allVisitServiceMap = []; // VisitID => all rows (for update modal)
+    $remainingMap       = []; // VisitID => count of Pending + Standby + In-Progress
+    $visitsInProgress   = []; // VisitID => { ServiceID, ServiceName }
 
-    // Count remaining (Pending + Standby + In-Progress) services per visit
-    $vsRemainStmt = $mysqli->prepare(
-        "SELECT vs.VisitID,
-                SUM(CASE WHEN vs.ServiceStatus IN ('Pending','Standby','In-Progress') THEN 1 ELSE 0 END) AS RemainingCount
-         FROM tblVisitServices vs
-         WHERE vs.VisitID IN ($placeholders)
-         GROUP BY vs.VisitID"
-    );
-    $remainingMap = [];
-    if ($vsRemainStmt) {
-        $vsRemainStmt->bind_param($types, ...$visitIDs);
-        $vsRemainStmt->execute();
-        $remainRows = $vsRemainStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $vsRemainStmt->close();
-        foreach ($remainRows as $rr) {
-            $remainingMap[$rr['VisitID']] = (int)$rr['RemainingCount'];
+    foreach ($allVsRows as $row) {
+        $vid    = $row['VisitID'];
+        $status = $row['ServiceStatus'];
+
+        $allVisitServiceMap[$vid][] = $row;
+
+        if (in_array($status, ['Pending', 'Standby'])) {
+            $visitServiceMap[$vid][] = $row;
         }
-    }
 
-    // Track which visits currently have an In-Progress service (client is at a station)
-    $inProgressStmt = $mysqli->prepare(
-        "SELECT vs.VisitID, vs.ServiceID, s.ServiceName
-         FROM tblVisitServices vs
-         JOIN tblServices s ON s.ServiceID = vs.ServiceID
-         WHERE vs.VisitID IN ($placeholders)
-           AND vs.ServiceStatus = 'In-Progress'"
-    );
-    $visitsInProgress = [];
-    if ($inProgressStmt) {
-        $inProgressStmt->bind_param($types, ...$visitIDs);
-        $inProgressStmt->execute();
-        $ipRows = $inProgressStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $inProgressStmt->close();
-        foreach ($ipRows as $ipRow) {
-            $visitsInProgress[$ipRow['VisitID']] = [
-                'ServiceID'   => $ipRow['ServiceID'],
-                'ServiceName' => $ipRow['ServiceName'],
+        if (in_array($status, ['Pending', 'Standby', 'In-Progress'])) {
+            $remainingMap[$vid] = ($remainingMap[$vid] ?? 0) + 1;
+        }
+
+        if ($status === 'In-Progress') {
+            $visitsInProgress[$vid] = [
+                'ServiceID'   => $row['ServiceID'],
+                'ServiceName' => $row['ServiceName'],
             ];
         }
     }

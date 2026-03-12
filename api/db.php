@@ -27,9 +27,12 @@ $dbUser = $_ENV['DB_USER'];
 $dbPass = $_ENV['DB_PASS'];
 $dbPort = $_ENV['DB_PORT'];
 
-// Connect to database
+// Connect to database using a persistent connection (p: prefix reuses the socket across
+// PHP-FPM workers instead of opening a new TCP handshake to AWS RDS on every request).
 try {
-    $GLOBALS['mysqli'] = new mysqli($dbHost, $dbUser, $dbPass, $dbName, (int)$dbPort);
+    $GLOBALS['mysqli'] = new mysqli('p:' . $dbHost, $dbUser, $dbPass, $dbName, (int)$dbPort);
+    // Reset any leftover state from a reused connection (e.g. stale transactions)
+    $GLOBALS['mysqli']->query('ROLLBACK');
 } catch (\Throwable $th) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $th->getMessage()]);
 }

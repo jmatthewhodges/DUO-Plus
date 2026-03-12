@@ -224,9 +224,7 @@ async function fetchServiceData(serviceKey) {
             avgTimeEl.textContent = data.avgServiceTime != null ? `${data.avgServiceTime} min` : 'N/A';
         }
         const pastAvgTimeEl = document.getElementById('pastAvgTime');
-        if (pastAvgTimeEl) {
-            pastAvgTimeEl.textContent = data.pastAvgServiceTime != null ? `${data.pastAvgServiceTime} min` : 'N/A';
-        }
+        if (pastAvgTimeEl) pastAvgTimeEl.textContent = 'N/A';
 
         // Normalize API waitlist into local format and populate table
         SERVICE_WAITLISTS[serviceKey] = {};
@@ -234,7 +232,6 @@ async function fetchServiceData(serviceKey) {
             const fullName = [client.FirstName, client.MiddleInitial, client.LastName]
                 .filter(Boolean)
                 .join(' ');
-            // Map API ServiceStatus to local status
             let status = 'waiting';
             if (client.ServiceStatus === 'In-Progress') status = 'in-progress';
             SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
@@ -247,7 +244,8 @@ async function fetchServiceData(serviceKey) {
         });
 
         populateWaitlist();
-        fetchAllAvailability();
+        // Capacity data is now bundled in this same response — no second HTTP request needed
+        renderAvailabilityBars(data.capacityData || []);
         console.log(`Service data updated for ${serviceKey}`);
     } catch (error) {
         console.error('Error fetching service data:', error);
@@ -1187,19 +1185,6 @@ function updateStatsDisplay() {
 
 // ── Availability Bars ────────────────────────────────────────────────────────
 
-// Fetch capacity data for all services and render the availability bars
-async function fetchAllAvailability() {
-    try {
-        const res = await fetch('/api/registration-dashboard.php?RegistrationStatus=Registered');
-        const data = await res.json();
-        if (data.success && data.services) {
-            renderAvailabilityBars(data.services);
-        }
-    } catch (err) {
-        console.error('Error fetching availability data:', err);
-    }
-}
-
 // Build one progress-bar row element for a single service slot
 function buildAvailabilityRow(label, data) {
     const maxCapacity = data ? (data.maxCapacity || 0) : 0;
@@ -1280,15 +1265,10 @@ function renderAvailabilityBars(servicesData) {
     container.classList.remove('d-none');
 }
 
-// Refresh button
+// Refresh button — capacity data is now bundled inside fetchServiceData, so one call does everything
 const refreshServiceBtn = document.getElementById('refreshServiceBtn');
 if (refreshServiceBtn) {
     refreshServiceBtn.addEventListener('click', () => {
-        if (currentServiceKey) {
-            spinRefreshBtn(refreshServiceBtn, Promise.all([
-                fetchServiceData(currentServiceKey),
-                fetchAllAvailability()
-            ]));
-        }
+        if (currentServiceKey) spinRefreshBtn(refreshServiceBtn, fetchServiceData(currentServiceKey));
     });
 }

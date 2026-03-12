@@ -46,41 +46,45 @@ if ($view === 'categories') {
     $categories = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // If we have an active event, check if ALL children of a category are closed
-    // If so, mark the category as closed so registration can hide it
+    // Mark categories as closed when appropriate.
+    // Single query replaces the previous N+1 loop (one query per category).
     if ($activeEventID) {
-        foreach ($categories as &$cat) {
-            // Check children
-            $childStmt = $mysqli->prepare(
-                "SELECT s.ServiceID, COALESCE(es.IsClosed, 0) AS IsClosed
-                 FROM tblServices s
-                 LEFT JOIN tblEventServices es ON es.ServiceID = s.ServiceID AND es.EventID = ?
-                 WHERE s.ParentServiceID = ?"
-            );
-            $childStmt->bind_param('ss', $activeEventID, $cat['ServiceID']);
-            $childStmt->execute();
-            $childRows = $childStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-            $childStmt->close();
+        $catIDs = array_column($categories, 'ServiceID');
+        $catPlaceholders = implode(',', array_fill(0, count($catIDs), '?'));
+        $catTypes = str_repeat('s', count($catIDs));
 
-            if (!empty($childRows)) {
-                // Category has children — closed if ALL are closed
-                $allClosed = true;
-                foreach ($childRows as $cr) {
-                    if (!(int)$cr['IsClosed']) { $allClosed = false; break; }
-                }
-                $cat['IsClosed'] = $allClosed;
+        // Fetch IsClosed for every child and standalone service in one shot
+        $closedStmt = $mysqli->prepare(
+            "SELECT s.ServiceID, s.ParentServiceID, COALESCE(es.IsClosed, 0) AS IsClosed
+             FROM tblServices s
+             LEFT JOIN tblEventServices es ON es.ServiceID = s.ServiceID AND es.EventID = ?
+             WHERE s.ParentServiceID IN ($catPlaceholders)
+                OR (s.ServiceID IN ($catPlaceholders) AND s.ServiceType = 'category')"
+        );
+        // bind: eventID, child parent IDs, standalone category IDs
+        $closedStmt->bind_param('s' . $catTypes . $catTypes, $activeEventID, ...$catIDs, ...$catIDs);
+        $closedStmt->execute();
+        $closedRows = $closedStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $closedStmt->close();
+
+        // Group results: parentID → [childIsClosed, ...] ; standalone → isClosed
+        $childClosedMap = []; // parentServiceID => [isClosed, ...]
+        $selfClosedMap  = []; // serviceID => isClosed (standalone categories)
+        foreach ($closedRows as $cr) {
+            if ($cr['ParentServiceID'] !== null) {
+                $childClosedMap[$cr['ParentServiceID']][] = (int)$cr['IsClosed'];
             } else {
-                // Standalone category — check its own IsClosed
-                $selfStmt = $mysqli->prepare(
-                    "SELECT COALESCE(es.IsClosed, 0) AS IsClosed
-                     FROM tblEventServices es
-                     WHERE es.ServiceID = ? AND es.EventID = ?"
-                );
-                $selfStmt->bind_param('ss', $cat['ServiceID'], $activeEventID);
-                $selfStmt->execute();
-                $selfRow = $selfStmt->get_result()->fetch_assoc();
-                $selfStmt->close();
-                $cat['IsClosed'] = $selfRow ? (bool)(int)$selfRow['IsClosed'] : false;
+                $selfClosedMap[$cr['ServiceID']] = (int)$cr['IsClosed'];
+            }
+        }
+
+        foreach ($categories as &$cat) {
+            $sid = $cat['ServiceID'];
+            if (isset($childClosedMap[$sid])) {
+                // Has children — closed only if ALL children are closed
+                $cat['IsClosed'] = !in_array(0, $childClosedMap[$sid]);
+            } else {
+                $cat['IsClosed'] = (bool)($selfClosedMap[$sid] ?? false);
             }
         }
         unset($cat);
