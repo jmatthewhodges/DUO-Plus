@@ -140,6 +140,14 @@ let currentServiceKey = null;  // Track current service for client operations
 let isClientScan = false;  // Flag to distinguish between service and client QR scans
 let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
 
+// Hardcoded historical past averages per service (in minutes)
+const PAST_AVG_MINUTES = {
+    medical: 5,
+    dental:  6,
+    optical: 4,
+    haircut: 4,
+};
+
 // Show a specific service's content section
 function showService(serviceKey) {
     console.log(`showService called with: ${serviceKey}`);
@@ -174,6 +182,13 @@ function showService(serviceKey) {
     // Update waitlist title
     const waitlistTitleEl = document.getElementById('waitlistTitle');
     if (waitlistTitleEl) waitlistTitleEl.textContent = `${service.name} - Waitlist`;
+
+    // Set hardcoded past average for this service
+    const pastAvgEl = document.getElementById('pastAvgTime');
+    if (pastAvgEl) {
+        const pastMin = PAST_AVG_MINUTES[serviceKey.toLowerCase()];
+        pastAvgEl.textContent = pastMin != null ? `${pastMin} min` : 'N/A';
+    }
 
     // Fetch live stats and waitlist from GrabService API
     fetchServiceData(serviceKey);
@@ -223,8 +238,7 @@ async function fetchServiceData(serviceKey) {
         if (avgTimeEl) {
             avgTimeEl.textContent = data.avgServiceTime != null ? `${data.avgServiceTime} min` : 'N/A';
         }
-        const pastAvgTimeEl = document.getElementById('pastAvgTime');
-        if (pastAvgTimeEl) pastAvgTimeEl.textContent = 'N/A';
+        // Past avg is hardcoded per service — set once in showService(), not overwritten here
 
         // Normalize API waitlist into local format and populate table
         SERVICE_WAITLISTS[serviceKey] = {};
