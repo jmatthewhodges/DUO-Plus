@@ -160,18 +160,20 @@ function populateWaitListTable(patients) {
         const allDone = patient.AllServicesComplete;
         const atService = patient.CurrentServiceName;
         const wasSkipped = patient.WasSkipped;
-        const hasStandby = (patient.VisitServices || []).some(v => v.ServiceStatus === 'Standby');
+        const standbyServices = (patient.VisitServices || []).filter(v => v.ServiceStatus === 'Standby');
         let statusBadge = '';
         if (allDone) {
-            statusBadge = '<span class="badge bg-success ms-2" style="font-size: 0.7rem;">All Done</span>';
+            statusBadge = '<span class="badge bg-success" style="font-size: 0.7rem;">All Done</span>';
         } else if (atService) {
             statusBadge = `<span class="badge bg-info" style="font-size: 0.7rem;">${atService}</span>`;
         }
-        if (hasStandby && !allDone) {
-            statusBadge += '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Standby</span>';
+        if (standbyServices.length > 0 && !allDone) {
+            standbyServices.forEach(svc => {
+                statusBadge += `<span class="badge bg-warning text-dark" style="font-size: 0.7rem;">${svc.ServiceName} Standby</span>`;
+            });
         }
         if (wasSkipped) {
-            statusBadge += '<i class="bi bi-skip-forward-fill text-warning ms-2" title="Skipped" style="font-size: 0.9rem;"></i>';
+            statusBadge += '<i class="bi bi-skip-forward-fill text-warning" title="Skipped" style="font-size: 0.9rem;"></i>';
         }
         const avatarClass = allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light');
         const avatarIcon = allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person');

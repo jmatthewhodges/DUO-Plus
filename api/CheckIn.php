@@ -303,7 +303,7 @@ if ($alreadyCheckedIn) {
             // Log addition to tblMovementLogs
             $logID = uniqid('log_', true);
             $logStmt = $mysqli->prepare(
-                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'CheckedIn', ?)"
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'RegistrationCheckIn', ?)"
             );
             if ($logStmt) {
                 $logStmt->bind_param('sss', $logID, $visitServiceID, $now);
@@ -366,7 +366,7 @@ if ($alreadyCheckedIn) {
             // Log to tblMovementLogs
             $logID = uniqid('log_', true);
             $logStmt = $mysqli->prepare(
-                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'CheckedIn', ?)"
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'RegistrationCheckIn', ?)"
             );
             if ($logStmt) {
                 $logStmt->bind_param('sss', $logID, $visitServiceID, $now);

@@ -249,14 +249,15 @@ if ($action === 'add') {
     $clearSkip->execute();
     $clearSkip->close();
 
-    // Log to tblMovementLogs
+    // Log to tblMovementLogs — action follows the pattern {ServiceID}CheckIn
     $logID = uniqid('log_', true);
     $now = date('Y-m-d H:i:s');
+    $checkInAction = $serviceID . 'CheckIn';
     $logStmt = $mysqli->prepare(
-        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Seated', ?)"
+        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, ?, ?)"
     );
     if ($logStmt) {
-        $logStmt->bind_param('sss', $logID, $vs['VisitServiceID'], $now);
+        $logStmt->bind_param('ssss', $logID, $vs['VisitServiceID'], $checkInAction, $now);
         $logStmt->execute();
         $logStmt->close();
     }
@@ -294,14 +295,15 @@ if ($action === 'add') {
     $decSeats->execute();
     $decSeats->close();
 
-    // Log to tblMovementLogs
+    // Log to tblMovementLogs — action follows the pattern {ServiceID}CheckOut
     $logID = uniqid('log_', true);
     $now = date('Y-m-d H:i:s');
+    $checkOutAction = $serviceID . 'CheckOut';
     $logStmt = $mysqli->prepare(
-        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Completed', ?)"
+        "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, ?, ?)"
     );
     if ($logStmt) {
-        $logStmt->bind_param('sss', $logID, $vs['VisitServiceID'], $now);
+        $logStmt->bind_param('ssss', $logID, $vs['VisitServiceID'], $checkOutAction, $now);
         $logStmt->execute();
         $logStmt->close();
     }
