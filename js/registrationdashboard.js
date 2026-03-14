@@ -917,10 +917,30 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
             title: 'Dental & Optical Selected',
             html: 'This client has both <strong>Dental</strong> and <strong>Optical</strong> selected. Please confirm they have permission to receive both services.',
             showCancelButton: true,
+            showDenyButton: true,
             confirmButtonText: 'Continue',
+            denyButtonText: 'Remove Optical',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#174593'
+            confirmButtonColor: '#174593',
+            denyButtonColor: '#dc3545'
         });
+        if (result.isDenied) {
+            // Deselect the optical button in the modal
+            const optBtn = currentRowToUpdate.querySelector(`[title="${opticalCat.ServiceName}"]`);
+            if (optBtn) {
+                optBtn.setAttribute('data-state', '0');
+                optBtn.classList.replace('btn-success', 'btn-grey');
+                const optIcon = optBtn.querySelector('i, .svg-icon');
+                if (optIcon) optIcon.classList.remove('text-white');
+            }
+            // Remove optical sub-service section from modal
+            const subSvcContainer = document.getElementById('modalSubServiceSections');
+            const opticalSection = subSvcContainer.querySelector(`[data-category="${opticalCat.ServiceID}"]`);
+            if (opticalSection) opticalSection.remove();
+            // Clear the category state so the next check-in attempt skips this warning
+            categoryStates[opticalCat.ServiceID] = 0;
+            return;
+        }
         if (!result.isConfirmed) return;
     }
 
