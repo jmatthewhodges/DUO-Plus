@@ -51,6 +51,7 @@ $clientID = $_POST['clientID'] ?? null;
 
 if ($clientID) {
     $mysqli->begin_transaction();
+    try {
     // EXISTING USER - UPDATE
     
     // Only update personal info if fields were actually submitted (logged-in users doing
@@ -364,6 +365,14 @@ if ($clientID) {
     echo $msg;
     error_log($msg);
 
+    } catch (\Throwable $e) {
+        try { $mysqli->rollback(); } catch (\Throwable $re) {}
+        http_response_code(500);
+        error_log('register.php existing-user error: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'A database error occurred. Please try again.']);
+        exit;
+    }
+
 } else {
     // NEW USER - INSERT
 
@@ -414,6 +423,7 @@ if ($clientID) {
 
     // Insert client
     $mysqli->begin_transaction();
+    try {
     $clientCreation = $mysqli->prepare("INSERT INTO tblClients(ClientID, FirstName, MiddleInitial, LastName, DOB, Sex, Phone, DateCreated, TranslatorNeeded) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$clientCreation) {
         $mysqli->rollback();
@@ -607,4 +617,24 @@ if ($clientID) {
     ]);
     echo $msg;
     error_log($msg);
+
+    } catch (\mysqli_sql_exception $e) {
+        try { $mysqli->rollback(); } catch (\Throwable $re) {}
+        error_log('register.php new-user DB error: ' . $e->getMessage());
+        if ($e->getCode() === 1062) {
+            // Duplicate entry — most likely the email already exists
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'An account with that email already exists.']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'A database error occurred. Please try again.']);
+        }
+        exit;
+    } catch (\Throwable $e) {
+        try { $mysqli->rollback(); } catch (\Throwable $re) {}
+        error_log('register.php new-user error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'A database error occurred. Please try again.']);
+        exit;
+    }
 }
