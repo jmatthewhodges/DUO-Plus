@@ -105,7 +105,7 @@ foreach ($svcRows as $row) {
 */
 $clientsStmt = $mysqli->prepare(
     "SELECT v.VisitID, v.ClientID, v.FirstCheckedIn, v.EnteredWaitingRoom,
-            v.SkipCount, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
+            v.SkipCount, v.IsAbandoned, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
      FROM tblVisits v
      JOIN tblClients c ON c.ClientID = v.ClientID
      WHERE v.EventID = ? AND v.RegistrationStatus = 'CheckedIn'
@@ -198,6 +198,9 @@ foreach ($clients as $client) {
     // Skip clients who are currently being served at a station
     if (isset($visitsInProgress[$visitID])) continue;
 
+    // Skip abandoned clients — they are permanently excluded from NowServing
+    if ((int)($client['IsAbandoned'] ?? 0) === 1) continue;
+
     // Skip clients with SkipCount > 0 (they lose one turn)
     if ((int)($client['SkipCount'] ?? 0) > 0) {
         $skippedVisitIDs[] = $visitID;
@@ -282,6 +285,8 @@ foreach ($clients as $client) {
     // Client is marked as skipped if SkipCount > 0
     $wasSkipped = (int)($client['SkipCount'] ?? 0) > 0;
 
+    $isAbandoned = (int)($client['IsAbandoned'] ?? 0) === 1;
+
     $entry = [
         'ClientID'            => $client['ClientID'],
         'VisitID'             => $client['VisitID'],
@@ -291,6 +296,7 @@ foreach ($clients as $client) {
         'DOB'                 => $client['DOB'],
         'ServiceSelections'   => implode(',', $serviceIDs),
         'AllServicesComplete' => $remaining === 0,
+        'IsAbandoned'         => $isAbandoned,
         'CurrentServiceName'  => null,
         'WasSkipped'          => $wasSkipped,
         'VisitServices'       => $allVisitServiceMap[$client['VisitID']] ?? [],

@@ -94,6 +94,40 @@ async function skipNowServingClient(clientId) {
     }
 }
 
+async function abandonClient(clientId) {
+    const result = await Swal.fire({
+        title: 'Mark as Abandoned?',
+        html: 'This client will be moved to the bottom of the list and <strong>will not be called</strong> to any service for the rest of the event.',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'Abandon',
+        confirmButtonColor: '#dc3545',
+        cancelButtonText: 'Cancel',
+        allowOutsideClick: false
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch('../api/AbandonClient.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId })
+        });
+        const data = await response.json();
+        if (data.success) {
+            updateModal.classList.add('d-none');
+            updateModal.classList.remove('d-flex');
+            Swal.fire({ icon: 'success', title: 'Client Abandoned', text: 'They have been moved to the bottom of the waitlist.', timer: 1500, showConfirmButton: false });
+            fetchQueueData();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Could not abandon client.' });
+        }
+    } catch (error) {
+        console.error('Abandon error:', error);
+        Swal.fire({ icon: 'error', title: 'Network Error', text: 'Unable to reach the server.' });
+    }
+}
+
 //================================================================================
 // 4. DATA FETCHING & RENDERING
 
@@ -143,8 +177,10 @@ function populateWaitListTable(patients) {
     // Sort: clients with all services complete go to the bottom
     if (patients && patients.length > 0) {
         patients = [...patients].sort((a, b) => {
-            if (a.AllServicesComplete && !b.AllServicesComplete) return 1;
-            if (!a.AllServicesComplete && b.AllServicesComplete) return -1;
+            const aBottom = a.AllServicesComplete || a.IsAbandoned;
+            const bBottom = b.AllServicesComplete || b.IsAbandoned;
+            if (aBottom && !bBottom) return 1;
+            if (!aBottom && bBottom) return -1;
             return 0;
         });
     }
@@ -158,28 +194,31 @@ function populateWaitListTable(patients) {
     patients.forEach((patient) => {
         const formattedDOB = formatDOB(patient.DOB);
         const allDone = patient.AllServicesComplete;
+        const isAbandoned = patient.IsAbandoned;
         const atService = patient.CurrentServiceName;
         const wasSkipped = patient.WasSkipped;
         const standbyServices = (patient.VisitServices || []).filter(v => v.ServiceStatus === 'Standby');
         let statusBadge = '';
-        if (allDone) {
+        if (isAbandoned) {
+            statusBadge = '<span class="badge bg-danger" style="font-size: 0.7rem;">Abandoned</span>';
+        } else if (allDone) {
             statusBadge = '<span class="badge bg-success" style="font-size: 0.7rem;">All Done</span>';
         } else if (atService) {
             statusBadge = `<span class="badge bg-info" style="font-size: 0.7rem;">${atService}</span>`;
         }
-        if (standbyServices.length > 0 && !allDone) {
+        if (!isAbandoned && standbyServices.length > 0 && !allDone) {
             standbyServices.forEach(svc => {
                 statusBadge += `<span class="badge bg-warning text-dark" style="font-size: 0.7rem;">${svc.ServiceName} Standby</span>`;
             });
         }
-        if (wasSkipped) {
+        if (!isAbandoned && wasSkipped) {
             statusBadge += '<i class="bi bi-skip-forward-fill text-warning" title="Skipped" style="font-size: 0.9rem;"></i>';
         }
-        const avatarClass = allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light');
-        const avatarIcon = allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person');
+        const avatarClass = isAbandoned ? 'bg-danger text-white' : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light'));
+        const avatarIcon  = isAbandoned ? 'bi-person-x' : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person'));
         const isNowServing = patient.ClientID == nowServingClientId;
-        const btnClass = allDone ? 'btn-outline-secondary' : 'btn-primary';
-        const btnText = allDone ? 'Done' : 'Update';
+        const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
+        const btnText  = allDone ? 'Done' : (isAbandoned ? 'View' : 'Update');
         const rowHTML = `
             <tr class="border-bottom" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
@@ -243,10 +282,36 @@ function renderServiceToggles(patient) {
     const container = document.getElementById('modalServiceToggles');
     container.innerHTML = '';
 
+    // Show/hide the abandon section based on whether the client is already abandoned or all done
+    const abandonSection = document.getElementById('abandonSection');
+    if (abandonSection) {
+        const canAbandon = !patient.IsAbandoned && !patient.AllServicesComplete;
+        abandonSection.classList.toggle('d-none', !canAbandon);
+    }
+
     const visitServices = patient.VisitServices || [];
 
     if (visitServices.length === 0) {
         container.innerHTML = '<p class="text-muted small mb-0">No services assigned to this patient.</p>';
+        return;
+    }
+
+    // Abandoned clients — show services read-only with a notice, no action buttons
+    if (patient.IsAbandoned) {
+        container.innerHTML = `<div class="alert alert-danger py-2 px-3 mb-2" style="font-size:0.85rem;">
+            <i class="bi bi-person-x me-1"></i>This client has been marked as <strong>abandoned</strong> and will not be called to a service.
+        </div>`;
+        visitServices.forEach(vs => {
+            const statusInfo = getServiceStatusLabel(vs.ServiceStatus);
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center justify-content-between px-3 py-2 rounded-2 border';
+            row.innerHTML = `
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
+                    <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
+                </div>`;
+            container.appendChild(row);
+        });
         return;
     }
 
@@ -341,6 +406,10 @@ async function handleServiceToggle(e) {
 }
 
 document.getElementById('cancelUpdateBtn').addEventListener('click', closeUpdateModal);
+
+document.getElementById('abandonClientBtn').addEventListener('click', () => {
+    if (currentClientId) abandonClient(currentClientId);
+});
 
 // Search filter
 const waitlistSearchInput = document.getElementById('waitlist-search');

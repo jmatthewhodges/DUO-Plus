@@ -85,6 +85,13 @@
                 </div>
                 <p class="text-muted small mb-3">Toggle services for this patient</p>
                 <div id="modalServiceToggles" class="d-flex flex-column gap-2"></div>
+
+                <!-- Abandon section — shown only for active (non-abandoned, non-complete) clients -->
+                <div id="abandonSection" class="mt-3 pt-3 border-top d-none">
+                    <button id="abandonClientBtn" class="btn btn-outline-danger btn-sm w-100">
+                        <i class="bi bi-person-x me-1"></i>Mark as Abandoned
+                    </button>
+                </div>
             </div>
         </div>
     </div>
