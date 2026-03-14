@@ -11,7 +11,7 @@
 */
 
 
-// Database connection from other file
+require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 
 // Get header type, request type for JSON data (Array merges POST with jsonData)
