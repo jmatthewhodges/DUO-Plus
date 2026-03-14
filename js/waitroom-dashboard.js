@@ -452,4 +452,12 @@ function init() {
     if (refreshBtn) refreshBtn.addEventListener('click', () => spinRefreshBtn(refreshBtn, fetchQueueData()));
 }
 
-init();
+// Wait for PIN verification before loading any data
+document.addEventListener('pinVerified', init);
+
+// Also handle the case where the session was already verified before this script ran
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.body.classList.contains('pin-verified')) {
+        init();
+    }
+});
