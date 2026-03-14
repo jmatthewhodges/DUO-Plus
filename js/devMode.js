@@ -145,6 +145,8 @@
             confirmButtonText: 'Enable',
             cancelButtonText: 'Cancel',
             confirmButtonColor: '#174593',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             preConfirm: (value) => {
                 if (!value || value.trim() === '') {
                     Swal.showValidationMessage('Please enter the PIN.');
