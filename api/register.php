@@ -251,6 +251,62 @@ if ($clientID) {
         }
     }
 
+    // Ensure a visit record exists BEFORE writing service selections (avoids FK issues
+    // and guarantees CheckIn.php can always find the visit row afterwards).
+    $checkVisit = $mysqli->prepare("SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1");
+    if (!$checkVisit) {
+        $mysqli->rollback();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+        exit;
+    }
+    $checkVisit->bind_param("ss", $clientID, $EventID);
+    $checkVisit->execute();
+    $visitResult = $checkVisit->get_result();
+    $checkVisit->close();
+
+    if ($visitResult->num_rows > 0) {
+        // Visit exists — reset status to Registered so it reappears in the registration queue
+        $existingVisit = $visitResult->fetch_assoc();
+        $existingVisitID = $existingVisit['VisitID'];
+        $visitUpdate = $mysqli->prepare("UPDATE tblVisits SET RegistrationStatus = 'Registered' WHERE VisitID = ?");
+        if (!$visitUpdate) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
+        $visitUpdate->bind_param("s", $existingVisitID);
+        if (!$visitUpdate->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update visit: ' . $visitUpdate->error]);
+            exit;
+        }
+        $visitUpdate->close();
+    } else {
+        // No visit yet — create one so service selections have a valid visit to attach to
+        $newVisitID = bin2hex(random_bytes(8));
+        $visitInsert = $mysqli->prepare(
+            "INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, QR_Code_Data)
+             VALUES (?, ?, ?, 'Registered', NULL)"
+        );
+        if (!$visitInsert) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+            exit;
+        }
+        $visitInsert->bind_param("sss", $newVisitID, $clientID, $EventID);
+        if (!$visitInsert->execute()) {
+            $mysqli->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to create visit record: ' . $visitInsert->error]);
+            exit;
+        }
+        $visitInsert->close();
+    }
+
     // Remove previous selections for this client/event
     $deleteOld = $mysqli->prepare("DELETE FROM tblVisitServiceSelections WHERE ClientID = ? AND EventID = ?");
     if (!$deleteOld) {
@@ -266,6 +322,7 @@ if ($clientID) {
         echo json_encode(['success' => false, 'message' => 'Failed to clear previous service selections: ' . $deleteOld->error]);
         exit;
     }
+    $deleteOld->close();
 
     // Insert new selections
     foreach ($services as $service) {
@@ -284,34 +341,7 @@ if ($clientID) {
             echo json_encode(['success' => false, 'message' => 'Failed to insert service selection: ' . $stmt->error]);
             exit;
         }
-    }
-
-    // Insert/Update visit record to put client in registration queue
-    $checkVisit = $mysqli->prepare("SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ?");
-    $checkVisit->bind_param("ss", $clientID, $EventID);
-    $checkVisit->execute();
-    $visitResult = $checkVisit->get_result();
-
-    if ($visitResult->num_rows > 0) {
-        // Visit already exists — update status back to Registered
-        $existingVisit = $visitResult->fetch_assoc();
-        $existingVisitID = $existingVisit['VisitID'];
-        $visitUpdate = $mysqli->prepare("UPDATE tblVisits SET RegistrationStatus = 'Registered' WHERE VisitID = ?");
-        if ($visitUpdate) {
-            $visitUpdate->bind_param("s", $existingVisitID);
-            $visitUpdate->execute();
-        }
-    } else {
-        // No visit record yet — insert one
-        $visitID = bin2hex(random_bytes(8));
-        $registrationStatus = 'Registered';
-        $checkInTime = null;
-        $qrCodeData = null;
-        $visitInsert = $mysqli->prepare("INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, CheckInTime, QR_Code_Data) VALUES (?, ?, ?, ?, ?, ?)");
-        if ($visitInsert) {
-            $visitInsert->bind_param("ssssss", $visitID, $clientID, $EventID, $registrationStatus, $checkInTime, $qrCodeData);
-            $visitInsert->execute();
-        }
+        $stmt->close();
     }
 
     $mysqli->commit();
