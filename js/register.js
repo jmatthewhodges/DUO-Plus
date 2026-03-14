@@ -275,6 +275,11 @@ function stepOneSubmit() {
     if (!emailValid) {
         errors.push(t.registerValidEmail);
         markInvalid(emailInput);
+    } else if (emailIsDuplicate) {
+        // Duplicate detected by the blur check — re-surface the inline message without
+        // adding another bullet to the Swal list (the field already shows it).
+        markInvalid(emailInput);
+        errors.push('That email is already registered. Please sign in instead.');
     } else {
         clearInvalid(emailInput);
     }
@@ -643,14 +648,50 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
 });
 
 // Input masks
-// Step 1 - Valid feedback on blur (green checkmark when leaving field)
-document.getElementById('clientRegisterEmail').addEventListener('blur', function () {
-    if (VALIDATION_PATTERNS.email.test(this.value.trim())) {
+// Tracks whether the email in the field is already registered
+let emailIsDuplicate = false;
+
+// Step 1 - Email blur: validate format then async-check uniqueness
+document.getElementById('clientRegisterEmail').addEventListener('blur', async function () {
+    const val = this.value.trim();
+    const statusEl  = document.getElementById('emailCheckStatus');
+    const feedbackEl = document.getElementById('emailInvalidFeedback');
+
+    if (!VALIDATION_PATTERNS.email.test(val)) {
+        this.classList.remove('is-valid', 'is-invalid');
+        statusEl.style.display = 'none';
+        emailIsDuplicate = false;
+        return;
+    }
+
+    // Format is valid — check uniqueness
+    statusEl.style.display = '';
+    this.classList.remove('is-valid', 'is-invalid');
+
+    try {
+        const res  = await fetch(`../api/CheckEmail.php?email=${encodeURIComponent(val)}`);
+        const data = await res.json();
+
+        statusEl.style.display = 'none';
+
+        if (data.exists) {
+            emailIsDuplicate = true;
+            feedbackEl.innerHTML = 'An account with this email already exists. <a href="../index.html" class="text-danger fw-semibold">Sign in instead →</a>';
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+            this.setAttribute('aria-invalid', 'true');
+        } else {
+            emailIsDuplicate = false;
+            feedbackEl.innerHTML = '';
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            this.removeAttribute('aria-invalid');
+        }
+    } catch {
+        // Network error — don't block the user, just clear the status
+        statusEl.style.display = 'none';
+        emailIsDuplicate = false;
         this.classList.add('is-valid');
-        this.classList.remove('is-invalid');
-        this.removeAttribute('aria-invalid');
-    } else {
-        this.classList.remove('is-valid');
         this.classList.remove('is-invalid');
     }
 });
@@ -666,9 +707,12 @@ document.getElementById('clientRegisterPass').addEventListener('blur', function 
     }
 });
 
-// Step 1 - Clear invalid state as user types
+// Step 1 - Clear invalid state as user types (also reset duplicate flag so blur re-checks)
 document.getElementById('clientRegisterEmail').addEventListener('input', function () {
     clearInvalid(this);
+    emailIsDuplicate = false;
+    document.getElementById('emailInvalidFeedback').innerHTML = '';
+    document.getElementById('emailCheckStatus').style.display = 'none';
 });
 
 document.getElementById('clientRegisterPass').addEventListener('input', function () {
