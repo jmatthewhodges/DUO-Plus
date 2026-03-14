@@ -96,14 +96,15 @@ async function skipNowServingClient(clientId) {
 
 async function abandonClient(clientId) {
     const result = await Swal.fire({
-        title: 'Mark as Abandoned?',
-        html: 'This client will be moved to the bottom of the list and <strong>will not be called</strong> to any service for the rest of the event.',
+        title: 'This cannot be undone.',
+        html: 'Marking this client as abandoned will <strong>permanently remove them from the queue</strong>. They will <strong>not be called to any service</strong> for the rest of the event and <strong>cannot be re-added</strong>.',
         icon: 'error',
         showCancelButton: true,
-        confirmButtonText: 'Abandon',
+        confirmButtonText: 'Yes, Abandon',
         confirmButtonColor: '#dc3545',
-        cancelButtonText: 'Cancel',
-        allowOutsideClick: false
+        cancelButtonText: 'Go Back',
+        allowOutsideClick: false,
+        reverseButtons: true
     });
     if (!result.isConfirmed) return;
 
@@ -117,7 +118,7 @@ async function abandonClient(clientId) {
         if (data.success) {
             updateModal.classList.add('d-none');
             updateModal.classList.remove('d-flex');
-            Swal.fire({ icon: 'success', title: 'Client Abandoned', text: 'They have been moved to the bottom of the waitlist.', timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Client Abandoned', text: 'This client has been permanently removed from the queue.', timer: 1500, showConfirmButton: false });
             fetchQueueData();
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Could not abandon client.' });
@@ -217,14 +218,20 @@ function populateWaitListTable(patients) {
         const avatarClass = isAbandoned ? 'bg-danger text-white' : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light'));
         const avatarIcon  = isAbandoned ? 'bi-person-x' : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person'));
         const isNowServing = patient.ClientID == nowServingClientId;
+        if (isNowServing) {
+            statusBadge = `<span class="badge text-dark" style="background-color: #ffe066; font-size: 0.7rem;">Now Serving</span>` + statusBadge;
+        }
+        const finalAvatarClass = isNowServing ? 'text-dark' : avatarClass;
+        const finalAvatarIcon  = isNowServing ? 'bi-bell-fill' : avatarIcon;
+        const finalAvatarStyle = isNowServing ? 'background-color: #ffe066;' : '';
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
-        const btnText  = allDone ? 'Done' : (isAbandoned ? 'View' : 'Update');
+        const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
         const rowHTML = `
-            <tr class="border-bottom" data-client-id="${patient.ClientID}">
+            <tr class="border-bottom" style="${isNowServing ? 'background-color: #eef4ff;' : ''}" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
                     <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${avatarClass} flex-shrink-0" style="width: 30px; height: 30px;">
-                            <i class="bi ${avatarIcon}"></i>
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">
+                            <i class="bi ${finalAvatarIcon}"></i>
                         </div>
                         <div class="d-flex flex-column gap-1" style="min-width: 0;">
                             <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}</span>
