@@ -4,8 +4,8 @@
  * Description:    Handles managing the registration dashboard.
  *
  * Last Modified By:  Cameron
- * Last Modified On:  Mar 1 @ 9:00 PM
- * Changes Made:      Removed duplicate pinCode.js call
+ * Last Modified On:  Mar 3 @ 12:00 PM
+ * Changes Made:      
  * ============================================================
 !-->
 <!DOCTYPE html>
@@ -14,7 +14,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#174593">
     <title>DUO+ | Registration Dashboard</title>
     <script src="../js/pinCode.js"></script>
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
@@ -43,6 +42,8 @@
                             <button id="btn-registration" class="toggle-btn active p-0">Registration</button>
                             <div class="divider"></div>
                             <button id="btn-checked-in" class="toggle-btn p-0">Checked In</button>
+                            <div class="divider"></div>
+                            <button id="btn-reset-password" class="toggle-btn p-0">Reset Password</button>
                         </div>
                         <div class="d-flex align-items-center ms-auto gap-2" style="min-width: 0;">
                             <div class="input-group input-group-sm" style="max-width: 280px;">
@@ -302,6 +303,89 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" id="closeQrBtn">
                     Done
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="changePasswordModal"
+        class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none justify-content-center align-items-center"
+        style="z-index: 1060;">
+        <div class="card shadow-lg" style="width: 920px; max-width: 98vw; max-height: 94vh; overflow: hidden;">
+            <div class="card-header bg-primary text-white p-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white fw-bold">Change User Password</h5>
+                <button type="button" class="btn btn-sm btn-light" id="closeChangePasswordModalBtn">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="card-body p-4" style="overflow-y: auto;">
+                <div id="passwordSearchSection">
+                    <label for="userPasswordSearch" class="form-label fw-bold text-dark">Search Users</label>
+                    <div class="text-muted small mb-2">Click anywhere on a user's row to select them.</div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="userPasswordSearch"
+                            placeholder="Search by name or email..." autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearUserPasswordSearchBtn"
+                            style="display: none;">Clear</button>
+                    </div>
+
+                    <div class="table-responsive border rounded" style="max-height: 520px; overflow-y: auto;">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">DOB</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col" style="width: 120px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="passwordUserTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted p-3">Search for users to begin.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="passwordResetSection" class="d-none">
+                    <h6 class="fw-bold text-primary mb-3">Selected User</h6>
+                    <div class="border rounded p-3 mb-4 bg-light">
+                        <div class="fw-bold text-dark" id="selectedPasswordUserName">-</div>
+                        <div class="text-secondary" id="selectedPasswordUserDob">DOB: -</div>
+                        <div class="text-secondary" id="selectedPasswordUserEmail">Email: -</div>
+                    </div>
+
+                    <div class="form-text mb-2">Password requirements: 8+ characters, 1 uppercase, 1 lowercase, and 1 number.</div>
+
+                    <div class="mb-3">
+                        <label for="newUserPassword" class="form-label fw-bold text-dark">New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newUserPassword" autocomplete="new-password"
+                                placeholder="Enter new password">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleNewUserPasswordBtn" title="Show password" aria-label="Show password">
+                                <i class="bi bi-eye" id="newUserPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="confirmUserPassword" class="form-label fw-bold text-dark">Confirm Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirmUserPassword" autocomplete="new-password"
+                                placeholder="Confirm new password">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmUserPasswordBtn" title="Show password" aria-label="Show password">
+                                <i class="bi bi-eye" id="confirmUserPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-primary" id="backToUserSearchBtn">Back</button>
+                        <button type="button" class="btn bg-primary text-white" id="saveUserPasswordBtn">Reset Password</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

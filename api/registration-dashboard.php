@@ -19,7 +19,8 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/pin-required.php';
 
 // Get header type, set POST request type for JSON data (Array merges GET with jsonData)
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') !== false) {
     $jsonData = json_decode(file_get_contents('php://input'), true) ?? [];
     $_GET = array_merge($_GET, $jsonData);
 }
@@ -29,6 +30,117 @@ header('Content-Type: application/json');
 
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
+
+$action = $_GET['action'] ?? null;
+
+if ($action === 'searchUsers') {
+    $query = trim($_GET['query'] ?? '');
+    $like = '%' . $query . '%';
+
+    $searchStmt = $mysqli->prepare(
+        "SELECT
+            c.ClientID,
+            c.FirstName,
+            c.MiddleInitial,
+            c.LastName,
+            c.DOB,
+            a.Email
+         FROM tblClients c
+         INNER JOIN tblClientAuth a ON c.ClientID = a.ClientID
+         WHERE
+            (? = '') OR
+            (c.FirstName LIKE ?) OR
+            (c.LastName LIKE ?) OR
+            (CONCAT(c.FirstName, ' ', c.LastName) LIKE ?) OR
+            (a.Email LIKE ?)
+         ORDER BY c.LastName ASC, c.FirstName ASC
+         LIMIT 100"
+    );
+
+    if (!$searchStmt) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error while preparing search.']);
+        exit;
+    }
+
+    $searchStmt->bind_param('sssss', $query, $like, $like, $like, $like);
+    if (!$searchStmt->execute()) {
+        $searchStmt->close();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error while searching users.']);
+        exit;
+    }
+
+    $result = $searchStmt->get_result();
+    $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    $searchStmt->close();
+
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'count' => count($rows),
+        'data' => $rows
+    ]);
+    exit;
+}
+
+if ($action === 'resetUserPassword') {
+    $clientID = trim($_GET['clientID'] ?? '');
+    $password = $_GET['password'] ?? '';
+
+    if ($clientID === '' || $password === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'clientID and password are required.']);
+        exit;
+    }
+
+    if (!preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/', $password)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Password does not meet requirements.']);
+        exit;
+    }
+
+    $checkStmt = $mysqli->prepare('SELECT ClientID FROM tblClientAuth WHERE ClientID = ? LIMIT 1');
+    if (!$checkStmt) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error while verifying user.']);
+        exit;
+    }
+
+    $checkStmt->bind_param('s', $clientID);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+    $exists = $checkResult && $checkResult->num_rows > 0;
+    $checkStmt->close();
+
+    if (!$exists) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'User not found in authentication records.']);
+        exit;
+    }
+
+    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+    $updateStmt = $mysqli->prepare('UPDATE tblClientAuth SET Password = ? WHERE ClientID = ?');
+    if (!$updateStmt) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database error while preparing password update.']);
+        exit;
+    }
+
+    $updateStmt->bind_param('ss', $passwordHash, $clientID);
+    if (!$updateStmt->execute()) {
+        $updateStmt->close();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to update password.']);
+        exit;
+    }
+
+    $updateStmt->close();
+
+    http_response_code(200);
+    echo json_encode(['success' => true, 'message' => 'Password reset successful.']);
+    exit;
+}
 
 // Get the queue parameter from GET request
 $queue = $_GET['RegistrationStatus'] ?? null;

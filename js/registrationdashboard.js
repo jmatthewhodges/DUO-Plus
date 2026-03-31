@@ -35,12 +35,36 @@ const serviceMapping = {
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
+let selectedPasswordUser = null;
+let passwordSearchDebounceTimer = null;
 
 // Search elements
 const searchInput = document.getElementById('registrationSearch');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
 const noSearchResults = document.getElementById('noSearchResults');
 const noSearchTerm = document.getElementById('noSearchTerm');
+
+// Password reset modal elements
+const btnResetPassword = document.getElementById('btn-reset-password');
+const changePasswordModal = document.getElementById('changePasswordModal');
+const closeChangePasswordModalBtn = document.getElementById('closeChangePasswordModalBtn');
+const passwordSearchSection = document.getElementById('passwordSearchSection');
+const passwordResetSection = document.getElementById('passwordResetSection');
+const userPasswordSearch = document.getElementById('userPasswordSearch');
+const clearUserPasswordSearchBtn = document.getElementById('clearUserPasswordSearchBtn');
+const passwordUserTableBody = document.getElementById('passwordUserTableBody');
+const selectedPasswordUserName = document.getElementById('selectedPasswordUserName');
+const selectedPasswordUserDob = document.getElementById('selectedPasswordUserDob');
+const selectedPasswordUserEmail = document.getElementById('selectedPasswordUserEmail');
+const newUserPassword = document.getElementById('newUserPassword');
+const toggleNewUserPasswordBtn = document.getElementById('toggleNewUserPasswordBtn');
+const newUserPasswordIcon = document.getElementById('newUserPasswordIcon');
+const confirmUserPassword = document.getElementById('confirmUserPassword');
+const toggleConfirmUserPasswordBtn = document.getElementById('toggleConfirmUserPasswordBtn');
+const confirmUserPasswordIcon = document.getElementById('confirmUserPasswordIcon');
+const backToUserSearchBtn = document.getElementById('backToUserSearchBtn');
+const saveUserPasswordBtn = document.getElementById('saveUserPasswordBtn');
+const PASSWORD_PATTERN = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/;
 
 //================================================================================
 // 2. DOM REFERENCES
@@ -73,11 +97,82 @@ btnCheckedIn.addEventListener('click', () => {
     fetchRegistrationQueue(); // Re-fetch for checked-in queue
 });
 
+if (btnResetPassword) {
+    btnResetPassword.addEventListener('click', () => {
+        openChangePasswordModal();
+    });
+}
+
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function setFieldInvalidState(field, isInvalid) {
+    if (!field) return;
+    field.classList.toggle('is-invalid', isInvalid);
+}
+
+function validatePasswordFieldsLive(requireBoth = false) {
+    const password = newUserPassword ? newUserPassword.value : '';
+    const confirm = confirmUserPassword ? confirmUserPassword.value : '';
+
+    const hasPassword = password.length > 0;
+    const hasConfirm = confirm.length > 0;
+    const invalidFormat = hasPassword && !PASSWORD_PATTERN.test(password);
+    const mismatch = hasPassword && hasConfirm && password !== confirm;
+
+    const passwordInvalid =
+        (requireBoth && !hasPassword) ||
+        invalidFormat ||
+        mismatch;
+
+    const confirmInvalid =
+        (requireBoth && !hasConfirm) ||
+        mismatch;
+
+    setFieldInvalidState(newUserPassword, passwordInvalid);
+    setFieldInvalidState(confirmUserPassword, confirmInvalid);
+
+    return { hasPassword, hasConfirm, invalidFormat, mismatch };
+}
+
+function resetNewPasswordVisibility() {
+    if (newUserPassword) {
+        newUserPassword.type = 'password';
+    }
+    if (newUserPasswordIcon) {
+        newUserPasswordIcon.classList.remove('bi-eye-slash');
+        newUserPasswordIcon.classList.add('bi-eye');
+    }
+    if (toggleNewUserPasswordBtn) {
+        toggleNewUserPasswordBtn.setAttribute('title', 'Show password');
+        toggleNewUserPasswordBtn.setAttribute('aria-label', 'Show password');
+    }
+
+    if (confirmUserPassword) {
+        confirmUserPassword.type = 'password';
+    }
+    if (confirmUserPasswordIcon) {
+        confirmUserPasswordIcon.classList.remove('bi-eye-slash');
+        confirmUserPasswordIcon.classList.add('bi-eye');
+    }
+    if (toggleConfirmUserPasswordBtn) {
+        toggleConfirmUserPasswordBtn.setAttribute('title', 'Show password');
+        toggleConfirmUserPasswordBtn.setAttribute('aria-label', 'Show password');
+    }
 }
 
 //updates the service progress bars based on availability data from API
@@ -238,6 +333,326 @@ clearSearchBtn.addEventListener('click', () => {
     applySearch();
     searchInput.focus();
 });
+
+function resetChangePasswordModalState() {
+    selectedPasswordUser = null;
+    passwordSearchSection.classList.remove('d-none');
+    passwordResetSection.classList.add('d-none');
+    selectedPasswordUserName.innerText = '-';
+    selectedPasswordUserDob.innerText = 'DOB: -';
+    selectedPasswordUserEmail.innerText = 'Email: -';
+    newUserPassword.value = '';
+    confirmUserPassword.value = '';
+    resetNewPasswordVisibility();
+    setFieldInvalidState(newUserPassword, false);
+    setFieldInvalidState(confirmUserPassword, false);
+}
+
+function openChangePasswordModal() {
+    resetChangePasswordModalState();
+    userPasswordSearch.value = '';
+    clearUserPasswordSearchBtn.style.display = 'none';
+    changePasswordModal.classList.remove('d-none');
+    changePasswordModal.classList.add('d-flex');
+    fetchPasswordUsers('');
+}
+
+function closeChangePasswordModal() {
+    changePasswordModal.classList.add('d-none');
+    changePasswordModal.classList.remove('d-flex');
+}
+
+function renderPasswordUsers(users) {
+    if (!Array.isArray(users) || users.length === 0) {
+        passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+        return;
+    }
+
+    passwordUserTableBody.innerHTML = users.map(user => {
+        const middleInitial = user.MiddleInitial ? ` ${escapeHtml(user.MiddleInitial)}.` : '';
+        const fullName = `${escapeHtml(user.FirstName)}${middleInitial} ${escapeHtml(user.LastName)}`;
+        const dob = formatDOB(user.DOB);
+        return `
+            <tr class="select-password-user-row" style="cursor: pointer;"
+                data-client-id="${escapeHtml(user.ClientID)}"
+                data-name="${fullName}"
+                data-dob="${escapeHtml(dob)}"
+                data-email="${escapeHtml(user.Email)}">
+                <td class="fw-semibold text-dark">${fullName}</td>
+                <td class="text-secondary">${dob}</td>
+                <td class="text-secondary">${escapeHtml(user.Email)}</td>
+                <td>
+                    <button type="button" class="btn btn-sm bg-primary text-white select-password-user-btn"
+                        data-client-id="${escapeHtml(user.ClientID)}"
+                        data-name="${fullName}"
+                        data-dob="${escapeHtml(dob)}"
+                        data-email="${escapeHtml(user.Email)}">
+                        Select
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function selectPasswordUserFromElement(sourceEl) {
+    if (!sourceEl) return;
+
+    selectedPasswordUser = {
+        clientID: sourceEl.getAttribute('data-client-id'),
+        name: sourceEl.getAttribute('data-name'),
+        dob: sourceEl.getAttribute('data-dob'),
+        email: sourceEl.getAttribute('data-email')
+    };
+
+    selectedPasswordUserName.innerText = selectedPasswordUser.name;
+    selectedPasswordUserDob.innerText = `DOB: ${selectedPasswordUser.dob}`;
+    selectedPasswordUserEmail.innerText = `Email: ${selectedPasswordUser.email}`;
+    newUserPassword.value = '';
+    confirmUserPassword.value = '';
+    resetNewPasswordVisibility();
+    setFieldInvalidState(newUserPassword, false);
+    setFieldInvalidState(confirmUserPassword, false);
+
+    passwordSearchSection.classList.add('d-none');
+    passwordResetSection.classList.remove('d-none');
+}
+
+function fetchPasswordUsers(query) {
+    passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Loading users...</td></tr>';
+
+    fetch('../api/registration-dashboard.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'searchUsers',
+            query: query || ''
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Search Failed',
+                    text: data.message || 'Unable to search users.',
+                    confirmButtonColor: '#174593'
+                });
+                return;
+            }
+
+            renderPasswordUsers(data.data || []);
+        })
+        .catch(error => {
+            console.error('Error searching users:', error);
+            passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'Unable to connect to the server. Please try again.',
+                confirmButtonColor: '#174593'
+            });
+        });
+}
+
+if (closeChangePasswordModalBtn) {
+    closeChangePasswordModalBtn.addEventListener('click', () => {
+        closeChangePasswordModal();
+    });
+}
+
+if (changePasswordModal) {
+    changePasswordModal.addEventListener('click', (event) => {
+        if (event.target === changePasswordModal) {
+            closeChangePasswordModal();
+        }
+    });
+}
+
+if (userPasswordSearch) {
+    userPasswordSearch.addEventListener('input', () => {
+        const query = userPasswordSearch.value.trim();
+        clearUserPasswordSearchBtn.style.display = query ? '' : 'none';
+
+        if (passwordSearchDebounceTimer) {
+            clearTimeout(passwordSearchDebounceTimer);
+        }
+
+        passwordSearchDebounceTimer = setTimeout(() => {
+            fetchPasswordUsers(query);
+        }, 250);
+    });
+}
+
+if (clearUserPasswordSearchBtn) {
+    clearUserPasswordSearchBtn.addEventListener('click', () => {
+        userPasswordSearch.value = '';
+        clearUserPasswordSearchBtn.style.display = 'none';
+        fetchPasswordUsers('');
+        userPasswordSearch.focus();
+    });
+}
+
+if (newUserPassword) {
+    newUserPassword.addEventListener('input', () => {
+        validatePasswordFieldsLive(false);
+    });
+}
+
+if (toggleNewUserPasswordBtn && newUserPassword) {
+    toggleNewUserPasswordBtn.addEventListener('click', () => {
+        const isPassword = newUserPassword.type === 'password';
+        newUserPassword.type = isPassword ? 'text' : 'password';
+
+        if (newUserPasswordIcon) {
+            newUserPasswordIcon.classList.toggle('bi-eye', !isPassword);
+            newUserPasswordIcon.classList.toggle('bi-eye-slash', isPassword);
+        }
+
+        toggleNewUserPasswordBtn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        toggleNewUserPasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+}
+
+if (toggleConfirmUserPasswordBtn && confirmUserPassword) {
+    toggleConfirmUserPasswordBtn.addEventListener('click', () => {
+        const isPassword = confirmUserPassword.type === 'password';
+        confirmUserPassword.type = isPassword ? 'text' : 'password';
+
+        if (confirmUserPasswordIcon) {
+            confirmUserPasswordIcon.classList.toggle('bi-eye', !isPassword);
+            confirmUserPasswordIcon.classList.toggle('bi-eye-slash', isPassword);
+        }
+
+        toggleConfirmUserPasswordBtn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        toggleConfirmUserPasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+}
+
+if (confirmUserPassword) {
+    confirmUserPassword.addEventListener('input', () => {
+        validatePasswordFieldsLive(false);
+    });
+}
+
+if (passwordUserTableBody) {
+    passwordUserTableBody.addEventListener('click', (event) => {
+        const selectBtn = event.target.closest('.select-password-user-btn');
+        if (selectBtn) {
+            selectPasswordUserFromElement(selectBtn);
+            return;
+        }
+
+        const selectRow = event.target.closest('.select-password-user-row');
+        if (selectRow) {
+            selectPasswordUserFromElement(selectRow);
+        }
+    });
+}
+
+if (backToUserSearchBtn) {
+    backToUserSearchBtn.addEventListener('click', () => {
+        passwordResetSection.classList.add('d-none');
+        passwordSearchSection.classList.remove('d-none');
+    });
+}
+
+if (saveUserPasswordBtn) {
+    saveUserPasswordBtn.addEventListener('click', function () {
+        if (!selectedPasswordUser || !selectedPasswordUser.clientID) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No User Selected',
+                text: 'Please select a user before resetting password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        const password = newUserPassword.value;
+        const validation = validatePasswordFieldsLive(true);
+
+        if (!validation.hasPassword || !validation.hasConfirm) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Password',
+                text: 'Please enter and confirm the new password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        if (validation.mismatch) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Passwords Do Not Match',
+                text: 'The new password and confirmation must match.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        if (validation.invalidFormat) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Password',
+                text: 'Please enter a valid password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+
+        fetch('../api/registration-dashboard.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'resetUserPassword',
+                clientID: selectedPasswordUser.clientID,
+                password
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Reset Failed',
+                        text: data.message || 'Unable to reset password.',
+                        confirmButtonColor: '#174593'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Password Updated',
+                    text: 'The user password has been reset successfully.',
+                    confirmButtonColor: '#174593'
+                });
+
+                closeChangePasswordModal();
+            })
+            .catch(error => {
+                console.error('Error resetting password:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'Unable to connect to the server. Please try again.',
+                    confirmButtonColor: '#174593'
+                });
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+    });
+}
 
 //================================================================================
 // 4. DATA FETCHING & TABLE RENDERING
