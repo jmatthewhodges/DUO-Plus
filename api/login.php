@@ -2,16 +2,17 @@
 /**
  * ============================================================
  *  File:        Login.php
- *  Description: Handles user authentication. Validates
+ *  Purpose:     Handles user authentication. Validates
  *               credentials against the database and returns
  *               client data on successful login.
  * 
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 19 @ 9:34 PM
- *  Changes Made:      Update for new DB
+ *  Last Modified On:  Feb 24 @ 6:44 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
- */
+*/
 
+// Set content-type
 header('Content-Type: application/json');
 
 // Request method check
@@ -66,6 +67,7 @@ if (!$loginGrab) {
     echo json_encode(['success' => false, 'message' => 'Database error.']);
     exit;
 }
+
 $loginGrab->bind_param("s", $email);
 $loginGrab->execute();
 $loginGrab->bind_result($clientID, $hashedPassword);

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#174593">
+    <title>DUO+ | Admin Dashboard</title>
+    <script src="../js/pinCode.js"></script>
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
+    <link href="../assets/css/custom.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="bg-light py-4">
+    <div class="container-fluid" style="max-width: 800px;">
+
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <a href="../index.html" class="back-link"><i class="bi bi-arrow-left me-1"></i>Back</a>
+                <h4 class="fw-bold text-dark mt-2 mb-0">Admin Dashboard</h4>
+                <small class="text-muted">Manage system settings</small>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" id="btnRefreshAll" title="Refresh all settings">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+        </div>
+
+        <!-- PIN Code -->
+        <div class="admin-section" id="section-pincode">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-pincode">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-lock text-primary" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold">PIN Code</h6>
+                    </div>
+                    <i class="bi bi-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse show" id="collapse-pincode">
+                    <div class="card-body p-3 d-flex flex-column gap-3">
+
+                        <!-- General PIN -->
+                        <div>
+                            <label class="form-label fw-semibold small text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05rem;">General PIN <span class="fw-normal">&mdash; all other pages</span></label>
+                            <div class="d-flex align-items-end gap-3">
+                                <div class="flex-grow-1">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="inputPinCode" maxlength="6"
+                                            inputmode="numeric" placeholder="------"
+                                            style="letter-spacing: 0.5rem; font-weight: 700; font-size: 1.2rem;">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnTogglePinVisibility"
+                                            title="Show/hide PIN">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary align-self-stretch" id="btnSavePin">
+                                    <i class="bi bi-check-lg me-1"></i>Save
+                                </button>
+                            </div>
+                            <small class="text-muted" id="pinLastUpdated"></small>
+                        </div>
+
+                        <hr class="my-0">
+
+                        <!-- Admin PIN -->
+                        <div>
+                            <label class="form-label fw-semibold small text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05rem;">Admin PIN <span class="fw-normal">&mdash; this dashboard only</span></label>
+                            <div class="d-flex align-items-end gap-3">
+                                <div class="flex-grow-1">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="inputAdminPinCode" maxlength="6"
+                                            inputmode="numeric" placeholder="------"
+                                            style="letter-spacing: 0.5rem; font-weight: 700; font-size: 1.2rem;">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnToggleAdminPinVisibility"
+                                            title="Show/hide Admin PIN">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary align-self-stretch" id="btnSaveAdminPin">
+                                    <i class="bi bi-check-lg me-1"></i>Save
+                                </button>
+                            </div>
+                            <small class="text-muted" id="adminPinLastUpdated"></small>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fast Track -->
+        <div class="admin-section" id="section-fast-track">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-fast-track">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-lightning-charge text-primary" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold">Fast Track</h6>
+                    </div>
+                    <i class="bi bi-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse show" id="collapse-fast-track">
+                    <div class="card-body" id="fastTrackSection">
+                        <!-- Populated by admin.js -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services -->
+        <div class="admin-section" id="section-services">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-services">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-gear text-primary" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold">Services</h6>
+                    </div>
+                    <i class="bi bi-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse show" id="collapse-services">
+                    <div class="card-body p-0">
+                        <div id="serviceList">
+                            <div class="text-center p-4 text-muted">Loading services...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Service -->
+        <div class="admin-section" id="section-add-service">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-add-service">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle text-primary" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold">Add New Service</h6>
+                    </div>
+                    <i class="bi bi-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse" id="collapse-add-service">
+                    <div class="card-body p-3">
+                        <form id="addServiceForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Service Type</label>
+                                    <select class="form-select" id="newServiceType">
+                                        <option value="category">Category (shown at registration)</option>
+                                        <option value="operational">Operational (sub-service)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6" id="parentServiceGroup" style="display:none;">
+                                    <label class="form-label fw-semibold small">Parent Category</label>
+                                    <select class="form-select" id="newParentServiceID">
+                                        <option value="">— Select parent —</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Service ID</label>
+                                    <input type="text" class="form-control" id="newServiceID"
+                                        placeholder="e.g. mentalHealth" maxlength="64">
+                                    <small class="text-muted">camelCase, no spaces</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Service Name</label>
+                                    <input type="text" class="form-control" id="newServiceName"
+                                        placeholder="e.g. Mental Health" maxlength="100">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Sort Order</label>
+                                    <input type="number" class="form-control" id="newSortOrder" value="0" min="0"
+                                        inputmode="numeric">
+                                    <small class="text-muted">Lower = higher priority</small>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold small">Choose Icon</label>
+                                    <div class="icon-picker-grid border rounded" id="iconPicker"></div>
+                                    <input type="hidden" id="newServiceIcon" value="">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-plus-lg me-1"></i>Add Service
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="../assets/js/core/libs.min.js"></script>
+    <script src="../assets/js/hope-ui.js"></script>
+    <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/devMode.js"></script>
+</body>
+
+</html>

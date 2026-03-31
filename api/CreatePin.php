@@ -2,15 +2,15 @@
 /**
  * ============================================================
  *  File:        CreatePin.php
- *  Description: Handles creating a new PIN code entry in tblPinCode.
+ *  Purpose:     Handles creating a new PIN code entry in tblPinCode.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 22 11:00 AM
- *  Changes Made:      Fixed to match tblPinCode structure
- *                     (PinID, PinValue, LastUpdated)
+ *  Last Modified On:  Feb 24 @ 6:41 PM
+ *  Changes Made:      Code cleanup
  * ============================================================
- */
+*/
 
+// Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 

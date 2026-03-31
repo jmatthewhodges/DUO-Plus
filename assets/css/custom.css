@@ -1,3 +1,14 @@
+/*
+ ============================================================
+  File:        custom.css
+  Description: Overall page design.
+
+  Last Modified By:  Lauren
+  Last Modified On:  March 5 @ 4:31 PM
+  Changes Made:      Made the language button round
+ ============================================================
+*/
+
 /* ==========================================
    1. GLOBAL VARIABLES & BOOTSTRAP OVERRIDES
    ========================================== */
@@ -22,12 +33,18 @@
     border-color: #174593;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:active,
 .btn-outline-primary:focus {
     background-color: #174593 !important;
     border-color: #174593 !important;
     color: #ffffff !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-primary:hover {
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+        color: #ffffff !important;
+    }
 }
 
 /* ==========================================
@@ -44,6 +61,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: env(safe-area-inset-top);
+}
+
+h2 {
+    margin-top: 0;
 }
 
 /* Blur will be applied by JavaScript when PIN modal is active */
@@ -70,11 +92,48 @@ hr {
     opacity: 0.25;
 }
 
+/* Base state: Protected from Bootstrap's default focus overrides */
+.btn-outline-navy {
+    color: #174593 !important;
+    background-color: transparent !important;
+    border: 2px solid #174593 !important;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Checked state */
+.btn-check:checked+.btn-outline-navy {
+    color: #ffffff !important;
+    background-color: #174593 !important;
+    border-color: #174593 !important;
+}
+
+/* Hover only on devices that truly support it (not touch) */
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-navy:hover {
+        color: #ffffff !important;
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+    }
+}
+
+/* Focus state: Adds a custom soft navy ring when clicked/tabbed */
+.btn-check:focus+.btn-outline-navy {
+    box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
+}
+
+/* Equal-height service selection buttons */
+#serviceSelectionGrid .service-btn-label {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+}
+
+
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
-    overflow: hidden;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* Set max width for login and dashboard containers */
@@ -86,6 +145,7 @@ body.v-center-page {
 
 /* Wider on tablets */
 @media (min-width: 768px) {
+
     .login-container,
     .dashboard-container {
         max-width: 500px;
@@ -94,6 +154,7 @@ body.v-center-page {
 
 /* Even wider on large screens */
 @media (min-width: 1200px) {
+
     .login-container,
     .dashboard-container {
         max-width: 550px;
@@ -105,17 +166,20 @@ body.v-center-page {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    background-color: #174593 !important; /* New Color */
+    background-color: #174593 !important;
+    /* New Color */
     border-color: #174593 !important;
     color: white;
 }
 
-/* Primary button hover effect */
-.btn-primary:hover {
-    background-color: #10326e !important; /* Slightly darker shade of #174593 */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px #10326e !important;
-    cursor: pointer;
+/* Primary button hover effect — only on mouse devices */
+@media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+        background-color: #10326e !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px #10326e !important;
+        cursor: pointer;
+    }
 }
 
 /* Fade transition for step switching */
@@ -125,7 +189,8 @@ body.v-center-page {
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
-    display: none; /* Hide completely */
+    display: none;
+    /* Hide completely */
 }
 
 .step-visible {
@@ -142,32 +207,53 @@ body.v-center-page {
 
 /* Form label color */
 .form-label {
-    color: #174593; /* New Color */
+    color: #212529;
+    /* New Color */
+}
+
+/* Placeholder styling */
+.form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+    font-style: italic;
 }
 
 /* Card title style */
+/* Step card header */
 .card-title {
-    font-weight: bold;
-    font-size: x-large;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #174593;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid #174593;
+    margin-bottom: 1.25rem;
 }
 
 /* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: block !important; /* Changed from inline-flex to block to reserve space */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
     width: 5rem;
     height: 5rem;
     background: #fff;
     border: 3px solid black;
     border-radius: 20%;
-    /* Ensure the icon inside is centered even in a block container */
-    line-height: 5rem; 
+    line-height: 5rem;
     text-align: center;
+}
+
+.qr-icon-border.qr-icon-empty {
+    border: 2.5px dashed #c0c0c0;
+    background: #fafafa;
 }
 
 /* Add a wrapper style for the icons in your HTML if you want better spacing control */
 #qrCodeModal .d-flex.justify-content-center.gap-3.mt-3 {
-    min-height: 5.5rem; /* Prevents layout shifting */
+    min-height: 5.5rem;
+    /* Prevents layout shifting */
 }
+
 /* PIN Code Modal Styling */
 .pin-input-group {
     flex-wrap: nowrap;
@@ -181,26 +267,32 @@ body.v-center-page {
     text-align: center;
     font-size: 24px;
     font-weight: bold;
-    color: #174593; /* New Color */
+    color: #174593;
+    /* New Color */
     background-color: #f9f9f9;
     transition: all 0.3s ease;
-    caret-color: #174593; /* New Color */
+    caret-color: #174593;
+    /* New Color */
 }
 
 .pin-input:hover {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #fff;
 }
 
 .pin-input:focus {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(23, 69, 147, 0.1); /* Updated RGB for shadow */
+    box-shadow: 0 0 0 3px rgba(23, 69, 147, 0.1);
+    /* Updated RGB for shadow */
     outline: none;
 }
 
 .pin-input.filled {
-    border-color: #174593; /* New Color */
+    border-color: #174593;
+    /* New Color */
     background-color: #f0f7ff;
 }
 
@@ -224,13 +316,12 @@ body.v-center-page {
 .btn-grey {
     /* lighter base so stripes show more clearly */
     background-color: #adb5bd;
-    color: white; /* darker text for better contrast on lighter bg */
+    color: white;
+    /* darker text for better contrast on lighter bg */
     /* clearer diagonal stripes (lighter stripe + subtle darker band) */
-    background-image: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.28) 0 6px,
-        rgba(0, 0, 0, 0.04) 6px 12px
-    );
+    background-image: repeating-linear-gradient(135deg,
+            rgba(255, 255, 255, 0.28) 0 6px,
+            rgba(0, 0, 0, 0.04) 6px 12px);
 
     background-blend-mode: normal;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -239,13 +330,12 @@ body.v-center-page {
 
 .btn-grey:hover,
 .btn-grey:focus {
-    background-color: #98a3ab; /* slightly darker on hover */
+    background-color: #98a3ab;
+    /* slightly darker on hover */
     border-color: rgba(255, 255, 255, 1);
-    background-image: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.32) 0 6px,
-        rgba(0, 0, 0, 0.06) 6px 12px
-    );
+    background-image: repeating-linear-gradient(135deg,
+            rgba(255, 255, 255, 0.32) 0 6px,
+            rgba(0, 0, 0, 0.06) 6px 12px);
     box-shadow: 0 2px 8px rgba(11, 36, 48, 0.06);
     color: white;
     transform: translateY(-1px);
@@ -256,21 +346,47 @@ body.v-center-page {
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Make warning progress more yellow and remove orange gradient */
-.progress-bar.bg-warning,
-.bg-warning {
-    background-color: #e2b212 !important; /* lighter/more yellow */
-    background-image: none !important; /* remove any orange gradient */
-    color: #212529;
-    border-color: rgba(0, 0, 0, 0.04);
+/* Basic progress bar styling */
+#wholeProgressBar .progress-bar {
+    background-color: #174593 !important;
+    background-image: none !important;
 }
 
-/* Language Select */
+/* Language Toggle */
 #divLanguageSwitch {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 1050;
+}
+
+.lang-toggle {
+    display: inline-flex;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 2px solid #174593;
+    background: #fff;
+}
+
+.lang-btn {
+    border: none;
+    background: #fff;
+    color: #174593;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    line-height: 1.2;
+}
+
+.lang-btn.active {
+    background: #174593;
+    color: #fff;
+}
+
+.lang-btn:hover:not(.active) {
+    background: #e9ecef;
 }
 
 /* ==========================================
@@ -279,8 +395,13 @@ body.v-center-page {
 
 /* 1. Fade in the dark background overlay */
 @keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* 2. Scale and drop the card in with a slight "spring" bounce */
@@ -289,6 +410,7 @@ body.v-center-page {
         opacity: 0;
         transform: scale(0.85) translateY(-30px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -306,7 +428,8 @@ body.v-center-page {
 
 /* Custom locked state to preserve btn-grey styling */
 .locked-btn {
-    pointer-events: none; /* Prevents all mouse clicks */
+    pointer-events: none;
+    /* Prevents all mouse clicks */
 }
 
 /* ==========================================
@@ -315,8 +438,13 @@ body.v-center-page {
 
 /* Fade out the dark background */
 @keyframes modalFadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* Shrink and fade the card out */
@@ -325,6 +453,7 @@ body.v-center-page {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+
     to {
         opacity: 0;
         transform: scale(0.85) translateY(-30px);
@@ -344,21 +473,576 @@ body.v-center-page {
    REGISTRATION DASHBOARD
    ========================================== */
 
-/* Hide scrollbar but keep scroll functionality */
-.card-body::-webkit-scrollbar {
-    display: none;
-}
-.card-body {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
 /* Check-in button hover */
 .check-in-btn {
     transition: all 0.2s ease;
 }
+
 .check-in-btn:hover {
-    background-color: #10326e !important; /* Darker shade of new color */
+    background-color: #10326e !important;
+    /* Darker shade of new color */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(236, 192, 192, 0.15);
+}
+
+/* ==========================================
+   WAITING ROOM & GENERAL SCROLLING
+   ========================================== */
+
+/* Fixed table layout for consistent column widths */
+.waitlist-table {
+    table-layout: fixed;
+}
+
+.waitlist-table td {
+    vertical-align: middle;
+}
+
+/* Name column: contain text, wrap long words (overrides hope-ui's white-space:nowrap on td) */
+.waitlist-table td:first-child {
+    overflow: hidden;
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+.waitlist-table td:first-child .d-flex {
+    min-width: 0;
+}
+
+.waitlist-table td:first-child .fw-bold {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   REFRESH BUTTON SPIN ANIMATION
+   ========================================== */
+
+@keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Applied to the icon inside a refresh button while loading */
+.spin-refresh {
+    display: inline-block;
+    animation: refresh-spin 0.7s linear infinite;
+    pointer-events: none;
+}
+
+/* ==========================================
+   SERVICE SCAN — MOBILE
+   ========================================== */
+
+/* Stat labels shrink to fit 3-across layout */
+.service-stat-label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* On very small screens, abbreviate "In Progress" label via content override */
+@media (max-width: 380px) {
+    #stat2Label {
+        font-size: 0.65rem;
+    }
+}
+
+/* Table max-height: shorter on mobile so the whole page doesn't scroll awkwardly */
+@media (max-width: 575px) {
+    .table-responsive {
+        max-height: calc(100dvh - 420px) !important;
+        min-height: 180px;
+    }
+
+    /* Tighter padding in table cells on mobile */
+    .waitlist-table td {
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    /* Icon-only button on mobile — keep it square */
+    .waitlist-table td:last-child .btn {
+        min-width: 34px;
+    }
+
+    /* Search input wider on small screens */
+    #searchInput {
+        width: 100px !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .waitlist-table col:nth-child(1) { width: 48% !important; }
+    .waitlist-table col:nth-child(2) { width: 27% !important; }
+    .waitlist-table col:nth-child(3) { width: 25% !important; }
+    .waitlist-table .badge { font-size: 0.6rem !important; }
+}
+
+/* Hide scrollbar while keeping functionality */
+.custom-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scroll {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* --- Dashboard Header Toggles --- */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    /* Dimmed white for inactive */
+    font-size: 1.25rem;
+    /* Matches your h4 sizing */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.divider {
+    width: 1px;
+    height: 22px;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin: 0 12px;
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* ==========================================
+   DEV MODE — step jumper bar (register.html)
+   ========================================== */
+
+/* Shared pill wrapper (register.html step jumper) */
+.dev-bar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    background: rgba(23, 69, 147, 0.06);
+    border: 1px solid rgba(23, 69, 147, 0.12);
+    border-radius: 20px;
+    padding: 6px 12px;
+}
+
+.dev-bar-label {
+    font-size: 0.65rem;
+    color: #aaa;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* ==========================================
+   DEV MODE — floating toolbar
+   ========================================== */
+
+#devToolbar {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    font-family: system-ui, sans-serif;
+}
+
+#devFab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #174593;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(23, 69, 147, 0.45);
+    transition: background 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.03em;
+}
+
+#devFab:hover {
+    background: #10326e;
+    box-shadow: 0 6px 22px rgba(23, 69, 147, 0.55);
+}
+
+#devPanel {
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    min-width: 240px;
+}
+
+#devPanel.dev-panel-open {
+    display: flex;
+}
+
+.dev-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 13px 18px;
+}
+
+.dev-panel-title {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-panel-links {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.dev-panel-section {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    padding: 6px 18px 3px;
+}
+
+.dev-panel-links a {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #174593;
+    text-decoration: none;
+    padding: 9px 18px;
+    transition: background 0.12s;
+}
+
+.dev-panel-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
+}
+
+/* ── Inline dev panel on index.html (under Life Church logo) ── */
+.dev-inline-panel {
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+    overflow: hidden;
+    text-align: left;
+    font-family: system-ui, sans-serif;
+}
+
+.dev-inline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 11px 16px;
+}
+
+.dev-inline-header span {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devIndexDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devIndexDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-inline-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 6px 4px;
+}
+
+.dev-inline-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #174593;
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    transition: background 0.12s;
+}
+
+.dev-inline-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
+}
+
+/* Register link hover */
+#btn2Register {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2Register:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
+#btn2ForgetPass {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2ForgetPass:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
+/* Button chip (used in register.html step-jumper) */
+.dev-step-btn {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4a72b8;
+    background: rgba(23, 69, 147, 0.08);
+    border: none;
+    border-radius: 10px;
+    padding: 2px 9px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dev-step-btn:hover {
+    background: rgba(23, 69, 147, 0.18);
+    color: #174593;
+}
+
+/* Lock scroll on dashboard page only */
+body.no-scroll {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Hide scrollbar on the table card-body while keeping it scrollable */
+body.no-scroll .card-body[style*="overflow-y"]::-webkit-scrollbar {
+    display: none;
+}
+
+body.no-scroll .card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.card-body[style*="overflow-y"] {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+
+/* ==========================================
+   ADMIN DASHBOARD
+   ========================================== */
+
+.admin-section {
+    margin-bottom: 1.5rem;
+}
+
+.admin-section .card-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.admin-section .card-header .collapse-icon {
+    transition: transform 0.2s;
+}
+
+.admin-section .card-header.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.back-link {
+    color: #174593;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.service-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.service-row:last-child {
+    border-bottom: none;
+}
+
+.service-icon-preview {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f4ff;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    color: #174593;
+}
+
+.service-fields {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.service-fields .form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+}
+
+.service-fields .form-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+.service-fields input {
+    width: 90px;
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.icon-picker-item {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.15s;
+}
+
+.icon-picker-item:hover,
+.icon-picker-item.selected {
+    border-color: #174593;
+    background: #f0f4ff;
+    color: #174593;
+}
+
+.icon-editable {
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+
+.icon-editable:hover {
+    box-shadow: 0 0 0 2px #174593;
+}
+
+.icon-edit-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #174593;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+
+.icon-editable:hover .icon-edit-badge {
+    opacity: 1;
+}
+
+.svg-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.svg-icon svg {
+    width: 1.25em;
+    height: 1.25em;
+    fill: currentColor;
 }

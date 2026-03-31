@@ -4,25 +4,185 @@
  * Description:    Handles managing the registration dashboard.
  *
  * Last Modified By:  Matthew
- * Last Modified On:  Feb 21 @ 5:05 PM
- * Changes Made:      Updated for new DB structure.
+ * Last Modified On:  Feb 28 @ 12:12 PM
+ * Changes Made:      Removed automatic refresh
  * ============================================================
 */
 
 // 1. GLOBAL SETTINGS & STATE
 
-// Service availability. Will likely be attached to API response in the future, but hardcoded for now
-const serviceAvailability = {
-    medical: true,
-    dental: true,
-    optical: true,
-    haircut: true
-};
+// Spin a refresh button's arrow icon while a promise is pending, then restore it
+function spinRefreshBtn(btn, promise) {
+    if (!btn) return promise;
+    const icon = btn.querySelector('.bi-arrow-clockwise');
+    btn.disabled = true;
+    if (icon) icon.classList.add('spin-refresh');
+    const minDelay = new Promise(r => setTimeout(r, 600));
+    return Promise.all([promise, minDelay]).finally(() => {
+        if (icon) icon.classList.remove('spin-refresh');
+        btn.disabled = false;
+    });
+}
+
+// Service hierarchy — loaded from API at init
+let serviceCategories = [];   // [{ ServiceID, ServiceName, IconTag, SortOrder, children: [...] }]
+let serviceAvailability = {};  // { categoryServiceID: true/false }
+let serviceMapping = {};       // { childServiceID: { containerId, displayName } }
+
+// SVG-aware icon renderer (shared helper)
+function renderIcon(iconTag, extraClass = '', style = '') {
+    if (!iconTag) iconTag = 'bi-circle';
+    if (iconTag.trim().startsWith('<')) {
+        return `<span class="svg-icon ${extraClass}" style="display:inline-flex;align-items:center;justify-content:center;${style}">${iconTag.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor"')}</span>`;
+    }
+    return `<i class="bi ${iconTag} ${extraClass}" style="${style}"></i>`;
+}
+
+// Loads the service hierarchy and builds serviceCategories, serviceAvailability, serviceMapping
+async function loadServiceHierarchyForDashboard() {
+    try {
+        const res = await fetch('/api/services.php?view=hierarchy');
+        const json = await res.json();
+        if (!json.success || !json.hierarchy) return;
+
+        // Filter out closed services from hierarchy
+        // Remove closed children, and remove categories where all children are closed
+        const filtered = json.hierarchy.map(cat => {
+            if (cat.children && cat.children.length > 0) {
+                const openChildren = cat.children.filter(c => !c.IsClosed);
+                if (openChildren.length === 0) return null; // all children closed — hide category
+                return { ...cat, children: openChildren };
+            }
+            return cat; // standalone category — keep (availability handles closure)
+        }).filter(Boolean);
+
+        serviceCategories = filtered;
+        serviceAvailability = {};
+        serviceMapping = {};
+
+        serviceCategories.forEach(cat => {
+            serviceAvailability[cat.ServiceID] = true; // updated by API availability later
+
+            if (cat.children && cat.children.length > 0) {
+                cat.children.forEach(child => {
+                    const containerId = 'service-' + child.ServiceID.replace(/([A-Z])/g, '-$1').toLowerCase();
+                    // Strip parent name prefix from child (e.g. "Medical Exam" → "Exam")
+                    let shortName = child.ServiceName;
+                    if (shortName.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                        shortName = shortName.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    serviceMapping[child.ServiceID] = {
+                        containerId: containerId,
+                        displayName: cat.ServiceName + ' - ' + (shortName || child.ServiceName),
+                    };
+                });
+            } else {
+                // Standalone category (no children)
+                const containerId = 'service-' + cat.ServiceID;
+                serviceMapping[cat.ServiceID] = {
+                    containerId: containerId,
+                    displayName: cat.ServiceName,
+                };
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load service hierarchy:', err);
+    }
+}
+
+// Builds the service progress bar elements in the Availability card
+function buildServiceProgressBars() {
+    const container = document.getElementById('serviceProgressContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    Object.entries(serviceMapping).forEach(([serviceID, mapping]) => {
+        // Find the icon from the hierarchy — check children first, then standalone categories
+        let iconTag = '';
+        for (const cat of serviceCategories) {
+            if (cat.children && cat.children.length > 0) {
+                const child = cat.children.find(c => c.ServiceID === serviceID);
+                if (child) { iconTag = child.IconTag || cat.IconTag || ''; break; }
+            } else if (cat.ServiceID === serviceID) {
+                iconTag = cat.IconTag || ''; break;
+            }
+        }
+
+        const div = document.createElement('div');
+        div.id = mapping.containerId;
+        div.className = 'border rounded p-2 px-3';
+        div.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between mb-1">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-primary" style="font-size: 1.1rem;"></span>
+                    <span class="fw-bold" style="font-size: 0.9rem; color:black;"></span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
+                    <span class="badge standby-badge fw-bold d-none" style="font-size: 0.7rem; background-color: #fd7e14; color: #fff !important;">0 standby</span>
+                </div>
+            </div>
+            <div class="progress" style="height: 6px; border-radius: 3px;">
+                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 3px;"></div>
+            </div>`;
+        // Set icon (SVG-aware)
+        const iconContainer = div.querySelector('span.text-primary');
+        iconContainer.innerHTML = renderIcon(iconTag, 'text-primary');
+        div.querySelector('span.fw-bold').textContent = mapping.displayName;
+        container.appendChild(div);
+    });
+}
+
+// Builds fixed-position icon slots for the QR badge.
+// Always renders one slot per service category in hierarchy order.
+// Selected services show the icon with a border; unselected show an invisible placeholder.
+function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
+    container.innerHTML = '';
+    // Map selected operational service IDs back to their parent category ID,
+    // keeping track of which specific child was selected so we use its icon.
+    const selectedCategoryMap = {}; // { categoryID: childServiceID }
+    selectedServiceIDs.forEach(svcID => {
+        // Check if the ID is a category itself
+        const directCat = serviceCategories.find(c => c.ServiceID === svcID);
+        if (directCat) { selectedCategoryMap[svcID] = svcID; return; }
+        // Otherwise find the parent category
+        for (const cat of serviceCategories) {
+            if (cat.children && cat.children.some(ch => ch.ServiceID === svcID)) {
+                selectedCategoryMap[cat.ServiceID] = svcID;
+                return;
+            }
+        }
+    });
+
+    serviceCategories.forEach(cat => {
+        const wrapper = document.createElement('span');
+        wrapper.style.fontSize = '2.5rem';
+        wrapper.style.display = 'inline-flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.justifyContent = 'center';
+
+        const selectedChildID = selectedCategoryMap[cat.ServiceID];
+        if (selectedChildID) {
+            wrapper.className = 'qr-icon-border';
+            wrapper.style.color = 'black';
+            wrapper.innerHTML = renderIcon(iconLookup[selectedChildID] || iconLookup[cat.ServiceID] || 'bi-circle');
+        } else {
+            wrapper.className = 'qr-icon-border qr-icon-empty';
+        }
+        container.appendChild(wrapper);
+    });
+}
 
 // Active check-in state
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
+
+// Search elements
+const searchInput = document.getElementById('registrationSearch');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const noSearchResults = document.getElementById('noSearchResults');
+const noSearchTerm = document.getElementById('noSearchTerm');
 
 //================================================================================
 // 2. DOM REFERENCES
@@ -34,11 +194,153 @@ const statCompCount = document.getElementById('stat-comp-count'); // Link to "Pr
 //================================================================================
 // 3. HELPERS
 
+// --- Tab State & Elements ---
+let currentTab = 'registration'; // Tracks if we are viewing 'registration' or 'checked-in'
+const btnRegistration = document.getElementById('btn-registration');
+const btnCheckedIn = document.getElementById('btn-checked-in');
+
+btnRegistration.addEventListener('click', () => {
+    if (currentTab === 'registration') return;
+    currentTab = 'registration';
+    btnRegistration.classList.add('active');
+    btnCheckedIn.classList.remove('active');
+    fetchRegistrationQueue(); // Re-fetch for registration queue
+});
+
+btnCheckedIn.addEventListener('click', () => {
+    if (currentTab === 'checked-in') return;
+    currentTab = 'checked-in';
+    btnCheckedIn.classList.add('active');
+    btnRegistration.classList.remove('active');
+    fetchRegistrationQueue(); // Re-fetch for checked-in queue
+});
+
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+// Fetch only service stats and update progress bars (lightweight call after check-in)
+function refreshServiceStats() {
+    fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.services && Array.isArray(data.services)) {
+                updateServiceProgressBars(data.services);
+            }
+        })
+        .catch(error => console.error('Error refreshing service stats:', error));
+}
+
+//updates the service progress bars based on availability data from API
+function updateServiceProgressBars(servicesData) {
+    if (!servicesData || !Array.isArray(servicesData)) return;
+
+    // Build a lookup of operational service closed status
+    const closedLookup = {};
+    servicesData.forEach(s => { closedLookup[s.serviceID] = !!s.isClosed; });
+
+    // Update serviceAvailability per category: available if any child (or self) is not closed
+    serviceCategories.forEach(cat => {
+        if (cat.children && cat.children.length > 0) {
+            serviceAvailability[cat.ServiceID] = cat.children.some(
+                child => closedLookup[child.ServiceID] === false
+            );
+        } else {
+            serviceAvailability[cat.ServiceID] = closedLookup[cat.ServiceID] === false;
+        }
+    });
+
+    // Initialize all service containers first (optional - for services not in API response)
+    Object.values(serviceMapping).forEach(mapping => {
+        const container = document.getElementById(mapping.containerId);
+        if (container) {
+            const countSpan = container.querySelector('.service-count');
+            const progressBar = container.querySelector('.progress-bar');
+            const standbyBadge = container.querySelector('.standby-badge');
+            if (countSpan) countSpan.textContent = '0/0';
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+            if (standbyBadge) standbyBadge.classList.add('d-none');
+        }
+    });
+
+    // Update services based on API data
+    servicesData.forEach(service => {
+        const serviceID = service.serviceID || '';
+        const mapping = serviceMapping[serviceID];
+
+        if (!mapping) return; // Skip if we don't have a mapping for this service
+
+        const container = document.getElementById(mapping.containerId);
+        if (!container) return;
+
+        const countSpan = container.querySelector('.service-count');
+        const progressBar = container.querySelector('.progress-bar');
+        const standbyBadge = container.querySelector('.standby-badge');
+
+        const maxCapacity = service.maxCapacity || 0;
+        const currentAssigned = service.currentAssigned || 0;
+        const standbyCount = service.standbyCount || 0;
+        const standbyLimit = service.standbyLimit || 0;
+
+        // Calculate percentage (avoid division by zero)
+        const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+
+        // Update display text — show actual assigned / max capacity
+        if (countSpan) {
+            countSpan.textContent = `${currentAssigned}/${maxCapacity}`;
+            // If over capacity, tint the count badge orange
+            if (currentAssigned > maxCapacity) {
+                countSpan.style.backgroundColor = '#fd7e14';
+                countSpan.style.color = '#fff';
+            } else {
+                countSpan.style.backgroundColor = '#e9ecef';
+                countSpan.style.color = '#495057';
+            }
+        }
+
+        // Update standby badge
+        if (standbyBadge) {
+            if (standbyCount > 0) {
+                standbyBadge.classList.remove('d-none');
+                standbyBadge.textContent = `${standbyCount} standby`;
+                // Red tint when standby limit is exceeded
+                if (standbyLimit > 0 && standbyCount >= standbyLimit) {
+                    standbyBadge.style.backgroundColor = '#dc3545';
+                } else {
+                    standbyBadge.style.backgroundColor = '#fd7e14';
+                }
+            } else {
+                standbyBadge.classList.add('d-none');
+            }
+        }
+
+        // Update progress bar width and color based on capacity
+        if (progressBar) {
+            progressBar.style.width = Math.min(percentage, 100) + '%';
+
+            // Remove all color classes
+            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+
+            // Add color based on percentage
+            if (percentage > 100) {
+                progressBar.classList.add('bg-danger');    // Red: over capacity (standby)
+            } else if (percentage <= 50) {
+                progressBar.classList.add('bg-success');   // Green: under 50%
+            } else if (percentage < 80) {
+                progressBar.classList.add('bg-warning');   // Yellow: 50-80%
+            } else {
+                progressBar.classList.add('bg-danger');    // Red: 80%+
+            }
+        }
+    });
 }
 
 //updates the stats in the dashboard header. Type can be 'registration' or 'completed'. Value is the number to update.
@@ -96,20 +398,60 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
         <button class="btn ${colorClass} btn-sm rounded-2 service-btn" 
                 data-state="${state}" ${disabledAttr} title="${serviceType}" 
                 style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-            <i class="bi ${iconClass} ${iconColor}"></i>
+            ${renderIcon(iconClass, iconColor)}
         </button>
     `;
 }
+
+// Filters the visible table rows based on the current search query.
+// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
+// Shows a "no results" message when nothing matches.
+function applySearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = tableBody.querySelectorAll('tr[data-client-id]');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const nameEl = row.querySelector('.fw-bold.text-dark');
+        if (!nameEl) return;
+        const name = nameEl.innerText.toLowerCase();
+        const matches = name.includes(query);
+        row.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+    });
+
+    // Toggle "no results" message
+    if (query && visibleCount === 0) {
+        noSearchResults.classList.remove('d-none');
+        noSearchTerm.textContent = searchInput.value.trim();
+    } else {
+        noSearchResults.classList.add('d-none');
+    }
+
+    // Show/hide the clear (X) button
+    clearSearchBtn.style.display = query ? '' : 'none';
+}
+
+// Search input: filter on every keystroke
+searchInput.addEventListener('input', applySearch);
+
+// Clear button: reset search and re-show all rows
+clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    applySearch();
+    searchInput.focus();
+});
 
 //================================================================================
 // 4. DATA FETCHING & TABLE RENDERING
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading registration queue...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">Loading...</td></tr>';
 
-    //fetch queue data from API
-    fetch('../api/GrabQueue.php?RegistrationStatus=Registered', {
+    const status = currentTab === 'checked-in' ? 'CheckedIn' : 'Registered';
+
+    return fetch(`../api/registration-dashboard.php?RegistrationStatus=${status}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -117,14 +459,23 @@ function fetchRegistrationQueue() {
         .then(data => {
             if (data.success) {
                 const clients = (data.data || []).filter(item => item.ClientID);
-                populateRegistrationTable(clients);
-                updateStats('registration', clients.length);
+                if (currentTab === 'checked-in') {
+                    populateCheckedInTable(clients);
+                } else {
+                    populateRegistrationTable(clients);
+                    updateStats('registration', clients.length);
+                }
             } else {
-                tableBody.innerHTML = 'No patients currently in queue.';
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients found.</td></tr>';
             }
-            // Always update processed count if it came back
-            if (statCompCount && data.clientsProcessed !== undefined) {
+            // Only update processed count when fetching the registration queue
+            // (checked-in tab re-fetches return a different context and should not overwrite it)
+            if (currentTab !== 'checked-in' && statCompCount && data.clientsProcessed !== undefined) {
                 statCompCount.innerText = data.clientsProcessed;
+            }
+            // Update service progress bars based on API data
+            if (data.services && Array.isArray(data.services)) {
+                updateServiceProgressBars(data.services);
             }
         })
         .catch(error => {
@@ -138,7 +489,6 @@ function fetchRegistrationQueue() {
 function populateRegistrationTable(patientsData) {
     tableBody.innerHTML = '';
 
-    // If no patients are in the queue, displayed message instead of empty table
     if (patientsData.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients currently in queue.</td></tr>';
         return;
@@ -146,15 +496,15 @@ function populateRegistrationTable(patientsData) {
 
     // Sort patients by Last Name, then First Name (both case-insensitive)
     patientsData.sort((a, b) => {
-        
+
         //Compare Last Names (Case-insensitive)
         const lastNameComparison = a.LastName.localeCompare(b.LastName);
-        
+
         // If Last Names are different, use that order
         if (lastNameComparison !== 0) {
             return lastNameComparison;
         }
-        
+
         // If Last Names are identical (e.g., two "Smiths"), sort by First Name
         return a.FirstName.localeCompare(b.FirstName);
     });
@@ -167,15 +517,16 @@ function populateRegistrationTable(patientsData) {
         }
         const formattedDOB = formatDOB(patient.DOB);
 
-        // Map services array to individual fields
+        // Build service buttons dynamically from serviceCategories
         const serviceSet = new Set(patient.services || []);
-        patient.Medical = serviceSet.has('medical') ? 1 : 0;
-        patient.Dental = serviceSet.has('dental') ? 1 : 0;
-        patient.Optical = serviceSet.has('optical') ? 1 : 0;
-        patient.Hair = serviceSet.has('haircut') ? 1 : 0;
+        let serviceButtonsHTML = '';
+        serviceCategories.forEach(cat => {
+            const state = serviceSet.has(cat.ServiceID) ? 1 : 0;
+            serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
+        });
 
         const rowHTML = `
-            <tr class="align-middle" data-client-id="${patient.ClientID}">
+            <tr class="align-middle" data-client-id="${patient.ClientID}" data-translator="${patient.TranslatorNeeded || 0}">
                 <td class="ps-4">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
@@ -188,10 +539,7 @@ function populateRegistrationTable(patientsData) {
                 <td>
                     <div class="d-flex justify-content-between align-items-center pe-3">
                         <div class="d-flex gap-3">
-                            ${buildServiceButton('Medical', patient.Medical, 'bi-heart-pulse', 'medical')}
-                            ${buildServiceButton('Dental', patient.Dental, 'bi-shield-shaded', 'dental')}
-                            ${buildServiceButton('Optical', patient.Optical, 'bi-eye', 'optical')}
-                            ${buildServiceButton('Haircut', patient.Hair, 'bi-scissors', 'haircut')}
+                            ${serviceButtonsHTML}
                         </div>
                         <button class="btn bg-primary text-white btn-sm check-in-btn">Check In</button>
                     </div>
@@ -200,6 +548,173 @@ function populateRegistrationTable(patientsData) {
         `;
         tableBody.insertAdjacentHTML('beforeend', rowHTML);
     });
+
+    // Re-apply any active search filter after table repopulates
+    if (searchInput.value.trim()) {
+        applySearch();
+    }
+}
+
+// ── Checked-In Table ────────────────────────────────────────
+// Renders the checked-in table with service icons and Reprint/Edit buttons.
+function populateCheckedInTable(patientsData) {
+    tableBody.innerHTML = '';
+
+    if (patientsData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No checked-in patients yet.</td></tr>';
+        return;
+    }
+
+    // Build lookup: child service ID → parent category ID
+    const childToCategory = {};
+    serviceCategories.forEach(cat => {
+        childToCategory[cat.ServiceID] = cat.ServiceID; // standalone
+        if (cat.children) {
+            cat.children.forEach(child => {
+                childToCategory[child.ServiceID] = cat.ServiceID;
+            });
+        }
+    });
+
+    // Sort by Last Name, then First Name
+    patientsData.sort((a, b) => {
+        const lastCmp = (a.LastName || '').localeCompare(b.LastName || '', undefined, { sensitivity: 'base' });
+        return lastCmp !== 0 ? lastCmp : (a.FirstName || '').localeCompare(b.FirstName || '', undefined, { sensitivity: 'base' });
+    });
+
+    patientsData.forEach(patient => {
+        let fullName = `${patient.FirstName} ${patient.LastName}`;
+        if (patient.MiddleInitial) {
+            fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
+        }
+
+        // Determine which parent categories are active for this client
+        const activeCategoryIDs = new Set();
+        (patient.services || []).forEach(svcID => {
+            const catID = childToCategory[svcID];
+            if (catID) activeCategoryIDs.add(catID);
+        });
+
+        // Build service icon buttons (interactive — same as registration)
+        let serviceButtonsHTML = '';
+        serviceCategories.forEach(cat => {
+            const state = activeCategoryIDs.has(cat.ServiceID) ? 1 : 0;
+            serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
+        });
+
+        const translatorBadge = patient.TranslatorNeeded == 1
+            ? '<i class="bi bi-chat-dots text-muted ms-2" title="Needs translator" style="font-size: 1rem;"></i>'
+            : '';
+
+        const rowHTML = `
+        <tr class="align-middle" data-client-id="${patient.ClientID}"
+            data-first-name="${patient.FirstName}"
+            data-last-name="${patient.LastName}"
+            data-services='${JSON.stringify(patient.services || [])}'
+            data-translator="${patient.TranslatorNeeded || 0}">
+            <td class="ps-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
+                        <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
+                    </div>
+                    <span class="fw-bold text-dark">${fullName}${translatorBadge}</span>
+                </div>
+            </td>
+            <td class="fw-medium text-secondary">${formatDOB(patient.DOB)}</td>
+            <td>
+                <div class="d-flex justify-content-between align-items-center pe-3">
+                    <div class="d-flex gap-3">
+                        ${serviceButtonsHTML}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary btn-reprint-qr" title="Reprint QR Badge">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+        tableBody.insertAdjacentHTML('beforeend', rowHTML);
+    });
+
+    // Attach reprint handlers
+    tableBody.querySelectorAll('.btn-reprint-qr').forEach(btn => {
+        btn.addEventListener('click', handleReprintQR);
+    });
+
+    // Re-apply search
+    if (searchInput.value.trim()) {
+        applySearch();
+    }
+}
+
+// ── Reprint / Re-Check-In ───────────────────────────────────
+// Opens the same check-in modal as registration so the user can
+// adjust services, pick sub-services, set translator, and re-check-in.
+function handleReprintQR(e) {
+    const row = e.target.closest('tr');
+    currentRowToUpdate = row;
+    currentClientId = row.dataset.clientId;
+    currentClientName = row.querySelector('.fw-bold.text-dark').innerText;
+
+    // --- Build sub-service sections dynamically (same as registration check-in) ---
+    const subSvcContainer = document.getElementById('modalSubServiceSections');
+    subSvcContainer.innerHTML = '';
+
+    const categoryDescriptions = {
+        'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
+        'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+    };
+
+    // Parse existing operational service IDs so we can pre-select radio buttons
+    let existingServices = [];
+    try { existingServices = JSON.parse(row.dataset.services || '[]'); } catch (_) {}
+    const existingSet = new Set(existingServices);
+
+    serviceCategories.forEach(cat => {
+        const btn = row.querySelector(`[title="${cat.ServiceName}"]`);
+        if (!btn) return;
+        const state = parseInt(btn.getAttribute('data-state'));
+        const isAvailable = serviceAvailability[cat.ServiceID];
+
+        if (state === 1 && isAvailable && cat.children && cat.children.length > 0) {
+            const radioName = `${cat.ServiceID}Choice`;
+            let radiosHTML = cat.children.map(child => {
+                let shortLabel = child.ServiceName;
+                if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                    shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                }
+                const checked = existingSet.has(child.ServiceID) ? 'checked' : '';
+                return `
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="${radioName}" 
+                        id="${child.ServiceID}" value="${child.ServiceID}" ${checked}>
+                    <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                </div>`;
+            }).join('');
+
+            const descHTML = categoryDescriptions[cat.ServiceID]
+                ? `<p class="text-muted small mb-2">${categoryDescriptions[cat.ServiceID]}</p>`
+                : '';
+
+            subSvcContainer.innerHTML += `
+                <div class="mb-4 p-3 border rounded bg-light sub-service-section" data-category="${cat.ServiceID}">
+                    <label class="fw-bold mb-2 text-primary">Select ${cat.ServiceName} Service:</label>
+                    ${descHTML}
+                    <div class="d-flex gap-4">${radiosHTML}</div>
+                </div>`;
+        }
+    });
+
+    // Pre-fill translator checkbox
+    const translatorNeeded = row.dataset.translator;
+    document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
+
+    document.getElementById('modalPatientName').innerText = currentClientName;
+
+    const modal = document.getElementById('checkInModal');
+    modal.classList.remove('d-none');
+    modal.classList.add('d-flex');
 }
 
 //================================================================================
@@ -214,17 +729,17 @@ tableBody.addEventListener('click', function (event) {
 
         // Toggle service state between 1 (selected) and 0 (not selected)
         let currentState = parseInt(serviceBtn.getAttribute('data-state'));
-        const icon = serviceBtn.querySelector('i');
+        const icon = serviceBtn.querySelector('i, .svg-icon');
 
         // If the service is currently selected, deselect it. If it's not selected, select it. Update button styles accordingly.
         if (currentState === 1) {
             serviceBtn.setAttribute('data-state', '0');
             serviceBtn.classList.replace('btn-success', 'btn-grey');
-            icon.classList.remove('text-white');
+            if (icon) icon.classList.remove('text-white');
         } else if (currentState === 0) {
             serviceBtn.setAttribute('data-state', '1');
             serviceBtn.classList.replace('btn-grey', 'btn-success');
-            icon.classList.add('text-white');
+            if (icon) icon.classList.add('text-white');
         }
         return;
     }
@@ -236,34 +751,54 @@ tableBody.addEventListener('click', function (event) {
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
 
-        // --- Dental section ---
-        const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-        const dentalState = parseInt(dentalBtn.getAttribute('data-state'));
+        // --- Build sub-service sections dynamically ---
+        const subSvcContainer = document.getElementById('modalSubServiceSections');
+        subSvcContainer.innerHTML = '';
 
-        document.getElementById('translatorCheck').checked = false;
-        document.getElementById('dentalHygiene').checked = false;
-        document.getElementById('dentalExtraction').checked = false;
+        // Help text shown below the label in the check-in modal for categories with sub-services
+        const categoryDescriptions = {
+            'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
+            'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+        };
 
-        const dentalSection = document.getElementById('modalDentalSection');
-        if (dentalState === 1 && serviceAvailability.dental) {
-            dentalSection.classList.remove('d-none');
-        } else {
-            dentalSection.classList.add('d-none');
-        }
+        serviceCategories.forEach(cat => {
+            const btn = currentRowToUpdate.querySelector(`[title="${cat.ServiceName}"]`);
+            if (!btn) return;
+            const state = parseInt(btn.getAttribute('data-state'));
+            const isAvailable = serviceAvailability[cat.ServiceID];
 
-        // --- Medical section ---
-        const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-        const medicalState = parseInt(medicalBtn.getAttribute('data-state'));
+            if (state === 1 && isAvailable && cat.children && cat.children.length > 0) {
+                // Build radio group for sub-services with short labels (strip parent name prefix)
+                const radioName = `${cat.ServiceID}Choice`;
+                let radiosHTML = cat.children.map(child => {
+                    let shortLabel = child.ServiceName;
+                    if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+                        shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    return `
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="${radioName}" 
+                            id="${child.ServiceID}" value="${child.ServiceID}">
+                        <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                    </div>`;
+                }).join('');
 
-        document.getElementById('medicalExam').checked = false;
-        document.getElementById('medicalFollowUp').checked = false;
+                const descHTML = categoryDescriptions[cat.ServiceID]
+                    ? `<p class="text-muted small mb-2">${categoryDescriptions[cat.ServiceID]}</p>`
+                    : '';
 
-        const medicalSection = document.getElementById('modalMedicalSection');
-        if (medicalState === 1 && serviceAvailability.medical) {
-            medicalSection.classList.remove('d-none');
-        } else {
-            medicalSection.classList.add('d-none');
-        }
+                subSvcContainer.innerHTML += `
+                    <div class="mb-4 p-3 border rounded bg-light sub-service-section" data-category="${cat.ServiceID}">
+                        <label class="fw-bold mb-2 text-primary">Select ${cat.ServiceName} Service:</label>
+                        ${descHTML}
+                        <div class="d-flex gap-4">${radiosHTML}</div>
+                    </div>`;
+            }
+        });
+
+        // Auto-toggle translator checkbox if client was flagged as needing one (e.g. registered in Spanish)
+        const translatorNeeded = currentRowToUpdate.getAttribute('data-translator');
+        document.getElementById('translatorCheck').checked = (translatorNeeded === '1');
 
         document.getElementById('modalPatientName').innerText = currentClientName;
 
@@ -282,62 +817,132 @@ document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
     closeModalAnimated();
 });
 
-document.getElementById('finalizeCheckInBtn').addEventListener('click', function () {
+document.getElementById('finalizeCheckInBtn').addEventListener('click', async function () {
     const btn = this;
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
 
-    // Build services array from selected buttons
+    // Build services array dynamically from category buttons and sub-service selections
     const services = [];
+    const categoryStates = {}; // track which categories are selected for QR card
 
-    // --- Medical: requires sub-selection (Exam or Follow Up) ---
-    const medicalSection = document.getElementById('modalMedicalSection');
-    const selectedMedical = document.querySelector('input[name="medicalChoice"]:checked');
+    for (const cat of serviceCategories) {
+        const catBtn = currentRowToUpdate.querySelector(`[title="${cat.ServiceName}"]`);
+        if (!catBtn) continue;
+        const state = parseInt(catBtn.getAttribute('data-state'));
+        categoryStates[cat.ServiceID] = (state === 1);
 
-    if (!medicalSection.classList.contains('d-none')) {
-        if (!selectedMedical) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Exam or Follow Up to proceed.',
-                confirmButtonColor: '#174593'
-            });
-            return;
+        if (state !== 1) continue;
+
+        if (cat.children && cat.children.length > 0) {
+            // Category has sub-services — require radio selection
+            const radioName = `${cat.ServiceID}Choice`;
+            const selected = document.querySelector(`input[name="${radioName}"]:checked`);
+            if (!selected) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Selection Required',
+                    text: `Please select a ${cat.ServiceName} sub-service to proceed.`,
+                    confirmButtonColor: '#174593'
+                });
+                return;
+            }
+            services.push(selected.value);
+        } else {
+            // Standalone category (no children) — use category ID directly
+            services.push(cat.ServiceID);
         }
-        services.push(selectedMedical.value);
     }
 
-    // --- Optical ---
-    const opticalBtn = currentRowToUpdate.querySelector('[title="Optical"]');
-    if (parseInt(opticalBtn.getAttribute('data-state')) === 1) services.push('optical');
-
-    // --- Haircut ---
-    const hairBtn = currentRowToUpdate.querySelector('[title="Haircut"]');
-    if (parseInt(hairBtn.getAttribute('data-state')) === 1) services.push('haircut');
-
-    // --- Dental: requires sub-selection (Hygiene or Extraction) ---
-    const dentalSection = document.getElementById('modalDentalSection');
-    const selectedDental = document.querySelector('input[name="dentalChoice"]:checked');
-
-    if (!dentalSection.classList.contains('d-none')) {
-        if (!selectedDental) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Selection Required',
-                text: 'Please select either Hygiene or Extraction to proceed.',
-                confirmButtonColor: '#174593'
-            });
+    // ── Warning: Dental selected without Medical ─────────────────────
+    const dentalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('dental'));
+    const medicalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('medical'));
+    if (dentalCat && medicalCat && categoryStates[dentalCat.ServiceID] && !categoryStates[medicalCat.ServiceID]) {
+        const result = await Swal.fire({
+            icon: 'error',
+            title: 'No Medical Selected',
+            html: 'This client has <strong>Dental</strong> selected without a <strong>Medical</strong> service. Please confirm they have permission to receive Dental only.',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Continue',
+            denyButtonText: 'Add Medical',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#174593',
+            denyButtonColor: '#198754'
+        });
+        if (result.isDenied) {
+            // Auto-select the medical button in the row
+            const medBtn = currentRowToUpdate.querySelector(`[title="${medicalCat.ServiceName}"]`);
+            if (medBtn && parseInt(medBtn.getAttribute('data-state')) === 0) {
+                medBtn.setAttribute('data-state', '1');
+                medBtn.classList.replace('btn-grey', 'btn-success');
+                const medIcon = medBtn.querySelector('i, .svg-icon');
+                if (medIcon) medIcon.classList.add('text-white');
+            }
+            // Inject the medical sub-service section into the modal if not already present
+            const subSvcContainer = document.getElementById('modalSubServiceSections');
+            const alreadyShown = subSvcContainer.querySelector(`[data-category="${medicalCat.ServiceID}"]`);
+            if (!alreadyShown && medicalCat.children && medicalCat.children.length > 0) {
+                const radioName = `${medicalCat.ServiceID}Choice`;
+                let radiosHTML = medicalCat.children.map(child => {
+                    let shortLabel = child.ServiceName;
+                    if (shortLabel.toLowerCase().startsWith(medicalCat.ServiceName.toLowerCase())) {
+                        shortLabel = shortLabel.substring(medicalCat.ServiceName.length).replace(/^[\s\-–—]+/, '');
+                    }
+                    return `
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="${radioName}"
+                            id="${child.ServiceID}" value="${child.ServiceID}">
+                        <label class="form-check-label text-dark" for="${child.ServiceID}">${shortLabel || child.ServiceName}</label>
+                    </div>`;
+                }).join('');
+                const newSection = document.createElement('div');
+                newSection.className = 'mb-4 p-3 border rounded bg-light sub-service-section';
+                newSection.dataset.category = medicalCat.ServiceID;
+                newSection.innerHTML = `
+                    <label class="fw-bold mb-2 text-primary">Select ${medicalCat.ServiceName} Service:</label>
+                    <p class="text-muted small mb-2">Choose Exam if this is the patient's first time, Follow Up if they've been here before.</p>
+                    <div class="d-flex gap-4">${radiosHTML}</div>`;
+                subSvcContainer.insertBefore(newSection, subSvcContainer.firstChild);
+            }
             return;
         }
-        services.push(selectedDental.value);
+        if (!result.isConfirmed) return;
     }
 
-    // Capture service states for QR card NOW (while DOM still exists)
-    const dentalBtn = currentRowToUpdate.querySelector('[title="Dental"]');
-    const medicalBtn = currentRowToUpdate.querySelector('[title="Medical"]');
-    const hasDental  = dentalBtn  && dentalBtn.getAttribute('data-state')  === '1';
-    const hasMedical = medicalBtn && medicalBtn.getAttribute('data-state') === '1';
-    const hasOptical = opticalBtn && opticalBtn.getAttribute('data-state') === '1';
-    const hasHaircut = hairBtn    && hairBtn.getAttribute('data-state')    === '1';
+    // ── Warning: Dental + Optical both selected ─────────────────
+    const opticalCat = serviceCategories.find(c => c.ServiceName.toLowerCase().includes('optical'));
+    if (dentalCat && opticalCat && categoryStates[dentalCat.ServiceID] && categoryStates[opticalCat.ServiceID]) {
+        const result = await Swal.fire({
+            icon: 'error',
+            title: 'Dental & Optical Selected',
+            html: 'This client has both <strong>Dental</strong> and <strong>Optical</strong> selected. Please confirm they have permission to receive both services.',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Continue',
+            denyButtonText: 'Remove Optical',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#174593',
+            denyButtonColor: '#dc3545'
+        });
+        if (result.isDenied) {
+            // Deselect the optical button in the modal
+            const optBtn = currentRowToUpdate.querySelector(`[title="${opticalCat.ServiceName}"]`);
+            if (optBtn) {
+                optBtn.setAttribute('data-state', '0');
+                optBtn.classList.replace('btn-success', 'btn-grey');
+                const optIcon = optBtn.querySelector('i, .svg-icon');
+                if (optIcon) optIcon.classList.remove('text-white');
+            }
+            // Remove optical sub-service section from modal
+            const subSvcContainer = document.getElementById('modalSubServiceSections');
+            const opticalSection = subSvcContainer.querySelector(`[data-category="${opticalCat.ServiceID}"]`);
+            if (opticalSection) opticalSection.remove();
+            // Clear the category state so the next check-in attempt skips this warning
+            categoryStates[opticalCat.ServiceID] = 0;
+            return;
+        }
+        if (!result.isConfirmed) return;
+    }
 
     // Loading state
     const originalText = btn.innerHTML;
@@ -355,41 +960,88 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
         })
     })
         .then(response => response.json())
-        .then(data => {
+        .then(async data => {
             if (data.success) {
-                // Success! Now it is safe to remove the row and show QR.
-                
+
                 // Close check-in modal
                 closeModalAnimated();
 
-                // Remove patient from queue table
-                if (currentRowToUpdate) {
+                // Only alert if the standby list is now full
+                const isStandbyFull = data.standbyFull && data.standbyFull.length > 0;
+                if (isStandbyFull) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Standby Full',
+                        text: 'The standby list is now full for one or more services.',
+                        confirmButtonColor: '#174593',
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
+                }
+
+                // Remove patient from queue table (registration tab) or refresh (checked-in tab)
+                if (currentTab === 'checked-in') {
+                    // Re-fetch the checked-in list so the row updates with new services
+                    fetchRegistrationQueue();
+                } else if (currentRowToUpdate) {
                     currentRowToUpdate.remove();
                 }
 
-                // Update Stats
-                // Decrement registration count
-                let currentReg = parseInt(statRegCount.innerText) || 0;
-                statRegCount.innerText = Math.max(0, currentReg - 1);
+                // Update Stats (only when coming from registration tab)
+                if (currentTab !== 'checked-in') {
+                    // Decrement registration count
+                    let currentReg = parseInt(statRegCount.innerText) || 0;
+                    statRegCount.innerText = Math.max(0, currentReg - 1);
 
-                // Update processed count from API (source of truth is the DB)
-                if (statCompCount && data.clientsProcessed !== undefined) {
-                    statCompCount.innerText = data.clientsProcessed;
-                } else if (statCompCount) {
-                    // Fallback: increment locally if API didn't return updated count
-                    statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    // Update processed count from API (source of truth is the DB)
+                    if (statCompCount && data.clientsProcessed !== undefined) {
+                        statCompCount.innerText = data.clientsProcessed;
+                    } else if (statCompCount) {
+                        // Fallback: increment locally if API didn't return updated count
+                        statCompCount.innerText = (parseInt(statCompCount.innerText) || 0) + 1;
+                    }
                 }
 
-                // Show QR modal
+                // Refresh service progress bars with latest counts
+                refreshServiceStats();
+
+                // Show QR modal (print disabled until fully rendered)
                 const qrModal = document.getElementById('qrCodeModal');
+                const printBtn = document.getElementById('printQrBtn');
+                printBtn.disabled = true;
                 qrModal.classList.remove('d-none');
                 qrModal.classList.add('d-flex');
 
-                // Split name and convert First Name to BOLD and ALL CAPS
+                // Split name and convert First Name to ALL CAPS
                 const nameParts = currentClientName.split(' ');
                 const firstName = nameParts[0].toUpperCase();
                 const lastName = nameParts.slice(1).join(' ');
-                document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
+
+                // Get the name elements
+                const firstNameEl = document.getElementById('qrCardFirstName');
+                const lastNameEl = document.getElementById('qrCardLastName');
+
+                // Scale font size down based on character length; never truncate.
+                // Long names wrap naturally at the minimum size.
+                function scaledName(name, maxSize, minSize) {
+                    const len = name.length;
+                    if (len <= 6)  return { text: name, size: maxSize };
+                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
+                    if (len <= 10) return { text: name, size: maxSize * 0.70 };
+                    if (len <= 12) return { text: name, size: maxSize * 0.58 };
+                    if (len <= 14) return { text: name, size: maxSize * 0.50 };
+                    if (len <= 18) return { text: name, size: maxSize * 0.42 };
+                    return { text: name, size: minSize };
+                }
+
+                const first = scaledName(firstName, 2.5, 1.1);
+                const last = scaledName(lastName, 1.5, 0.8);
+
+                firstNameEl.innerText = first.text;
+                firstNameEl.style.fontSize = first.size + 'rem';
+
+                lastNameEl.innerText = last.text;
+                lastNameEl.style.fontSize = last.size + 'rem';
 
                 // Generate QR Code (QRious library)
                 new QRious({
@@ -398,25 +1050,41 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
                     size: 200,
                 });
 
-                // Reset all QR card icons to be invisible but still occupy their "slot" (using visibility)
-                const qrIcons = ['qrCardMedicalIcon', 'qrCardDentalIcon', 'qrCardOpticalIcon', 'qrCardHaircutIcon'];
-                qrIcons.forEach(id => {
-                    const iconEl = document.getElementById(id);
-                    iconEl.style.visibility = 'hidden';
-                    iconEl.style.display = 'inline-flex';
+                // Build QR card icons BEFORE re-fetching hierarchy, so closed
+                // children (e.g. medicalExam at capacity) are still in the lookup.
+                const iconLookup = {};
+                serviceCategories.forEach(cat => {
+                    iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+                    if (cat.children) {
+                        cat.children.forEach(child => {
+                            iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+                        });
+                    }
                 });
+
+                const qrIconsContainer = document.getElementById('qrCardIcons');
+                buildQrIconSlots(qrIconsContainer, services, iconLookup);
+
+                // Re-fetch service hierarchy to pick up any icon/capacity changes
+                await loadServiceHierarchyForDashboard();
                 document.getElementById('qrCardTranslator').style.display = 'none';
 
-                // Show icons for selected services by making them visible (preserves their fixed positions)
-                if (hasMedical) document.getElementById('qrCardMedicalIcon').style.visibility = 'visible';
-                if (hasDental)  document.getElementById('qrCardDentalIcon').style.visibility  = 'visible';
-                if (hasOptical) document.getElementById('qrCardOpticalIcon').style.visibility = 'visible';
-                if (hasHaircut) document.getElementById('qrCardHaircutIcon').style.visibility = 'visible';
-
-                // Translator badge
+                // Translator badge: show the icon pinned to top-right of the name area
                 if (isInterpreterNeeded) {
                     document.getElementById('qrCardTranslator').style.display = 'block';
                 }
+
+                // Fast Track badge: show if API flagged this client as fast-tracked
+                const ftBadge = document.getElementById('qrCardFastTrack');
+                console.log('[FastTrack] data.isFastTracked =', data.isFastTracked, '| badge element =', ftBadge);
+                if (ftBadge) {
+                    ftBadge.style.display = data.isFastTracked ? 'block' : 'none';
+                }
+
+                // Allow a frame for the browser to paint, then enable print
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { printBtn.disabled = false; });
+                });
 
             } else {
                 // Check-in failed logic
@@ -454,39 +1122,82 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
     const style = document.createElement('style');
     style.textContent = `
         @media print {
-            @page { margin: 0; size: auto; }
-            html, body { 
-                width: 100%; 
-                height: 100%; 
+            @page {
+                size: 2.3125in 4in; /* Width x Height */
                 margin: 0; 
-                padding: 0; 
-                overflow: hidden;
-                background: white;
             }
-            body > *:not(#qrCodeModal) {
-                display: none !important;
-            }
-            #qrCodeModal {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                background: white !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+
+            /* LOCK the document height so invisible elements don't create blank pages */
+            html, body {
+                height: 4in !important;
+                overflow: hidden !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            #qrCodeModal .card {
-                width: 450px;
-                margin: auto;
-                box-shadow: none;
+
+            body * {
+                visibility: hidden;
             }
-            #printQrBtn,
-            #closeQrBtn { 
+            
+            #qrCodeModal, #qrCodeModal * {
+                visibility: visible;
+            }
+
+            #qrCodeModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 2.3125in !important;
+                height: 4in !important;
+                background: white !important;
+                padding: 0.1in !important;
+                display: flex !important;
+                align-items: flex-start !important;
+                margin: 0 !important;
+            }
+
+            #qrCodeModal .card {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #printQrBtn, #closeQrBtn {
                 display: none !important;
+            }
+
+            /* --- UPDATED: Icon Sizing & Borders --- */
+            
+            #qrCodeModal .qr-icon-border {
+                flex-shrink: 0 !important; 
+                font-size: 2rem !important;
+                width: 46px !important;
+                height: 46px !important;
+                border: 2px solid black !important;
+                border-radius: 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: #fff !important;
+            }
+
+            #qrCodeModal .qr-icon-border.qr-icon-empty {
+                border: 2px dashed #c0c0c0 !important;
+                background: #f5f5f5 !important;
+            }
+
+            /* Tighten the gap even more so the larger icons don't overflow the label */
+            #qrCodeModal .gap-3 {
+                gap: 0.25rem !important; 
+            }
+            
+            #qrCodeModal canvas {
+                max-width: 1.8in !important;
+                height: auto !important;
             }
         }
     `;
@@ -507,13 +1218,13 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 
 //================================================================================
 // 8. INITIALIZATION
-fetchRegistrationQueue();
+(async () => {
+    await loadServiceHierarchyForDashboard();
+    buildServiceProgressBars();
+    fetchRegistrationQueue();
 
-// Auto-refresh every 30 seconds (unless checkIn modal is open)
-setInterval(() => {
-    const checkInOpen = !document.getElementById('checkInModal').classList.contains('d-none');
-    const qrOpen = !document.getElementById('qrCodeModal').classList.contains('d-none');
-    if (!checkInOpen && !qrOpen) {
-        fetchRegistrationQueue();
+    const refreshQueueBtn = document.getElementById('refreshQueueBtn');
+    if (refreshQueueBtn) {
+        refreshQueueBtn.addEventListener('click', () => spinRefreshBtn(refreshQueueBtn, fetchRegistrationQueue()));
     }
-}, 30000);
+})();

@@ -7,18 +7,30 @@
  *               both new and returning users.
  *
  *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 18 @ 2:58 PM
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ *  Last Modified On:  March 4 @ 11:30 AM
+ *  Changes Made:      Updated wavier modal to use SweetAlert for validation
  * ============================================================
 */
+
+let dobMask;
+
+// SVG-aware icon renderer (shared helper)
+function renderIcon(iconTag, extraClass = '', style = '') {
+    if (!iconTag) iconTag = 'bi-circle';
+    if (iconTag.trim().startsWith('<')) {
+        // Constrain SVG to 1em so it scales with font-size like Bootstrap Icons
+        return `<span class="svg-icon ${extraClass}" style="display:inline-flex;align-items:center;justify-content:center;${style}">${iconTag.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor"')}</span>`;
+    }
+    return `<i class="bi ${iconTag} ${extraClass}" style="${style}"></i>`;
+}
 
 // Config
 const TRANSITION_DURATION = 500; // ms for step fade animation
 
 // Validation regex patterns
 const VALIDATION_PATTERNS = {
-    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
-    password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/,  // 8+ chars, upper, lower, number
+    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i,
+    password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/,  // 8+ non-space chars, upper, lower, number
     phone: /^[\d\s\-\(\)]{10,}$/,
     phoneFormatted: /^\(\d{3}\) \d{3}-\d{4}$/,
     zipCode: /^[0-9]{5}$/
@@ -62,6 +74,19 @@ function setFieldValidation(field, isValid) {
     }
 }
 
+// Mark a field invalid with red border and aria-invalid
+function markInvalid(field) {
+    field.classList.add('is-invalid');
+    field.classList.remove('is-valid');
+    field.setAttribute('aria-invalid', 'true');
+}
+
+// Clear invalid state from a field
+function clearInvalid(field) {
+    field.classList.remove('is-invalid');
+    field.removeAttribute('aria-invalid');
+}
+
 // Format phone as (123) 456-7890
 function formatPhoneNumber(value) {
     let digits = value.replace(INPUT_FILTERS.nonDigit, '');
@@ -81,141 +106,202 @@ function formatPhoneNumber(value) {
     }
 }
 
-// DOB 18+
-const dobInput = document.getElementById('clientDOB');
-const today = new Date();
-const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-dobInput.max = minAgeDate.toISOString().split('T')[0];
-
-
 // Progress bar
 function updateProgressBar(step) {
     const progressBar = document.getElementById('progressBarTop');
-    let percentage = 1;
-    switch (step) {
-        case 1: percentage = 0; break;
-        case 2: percentage = 25; break;
-        case 3: percentage = 50; break;
-        case 4: percentage = 75; break;
-        case 5: percentage = 99; break;
-        default: percentage = 0;
-    }
+    const percentages = { 1: 17, 2: 34, 3: 51, 4: 68, 5: 85 };
+    const percentage = percentages[step] ?? 17;
+
     progressBar.style.width = percentage + '%';
-    progressBar.textContent = percentage + '%';
+    progressBar.textContent = ''; // Remove the "0%" text
     progressBar.setAttribute('aria-valuenow', percentage);
+    progressBar.setAttribute('aria-label', `Registration progress, step ${step} of 5`);
+}
+
+// Create or recreate DOB mask based on language
+// EN = MM/DD/YYYY, ES = DD/MM/YYYY
+function createDobMask(lang) {
+    const dobInput = document.getElementById('clientDOB');
+    const isSpanish = (lang === 'es');
+
+    // Preserve current value before destroying
+    const currentValue = dobMask ? dobMask.value : '';
+    if (dobMask) dobMask.destroy();
+
+    dobMask = IMask(dobInput, {
+        mask: Date,
+        pattern: isSpanish ? 'd/`m/`Y' : 'm/`d/`Y',
+        blocks: {
+            d: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
+            m: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
+            Y: { mask: IMask.MaskedRange, from: 1900, to: new Date().getFullYear() }
+        },
+        format: (date) => {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return isSpanish ? `${d}/${m}/${y}` : `${m}/${d}/${y}`;
+        },
+        parse: (str) => {
+            const parts = str.split('/');
+            if (isSpanish) {
+                const [d, m, y] = parts;
+                return new Date(y, m - 1, d);
+            } else {
+                const [m, d, y] = parts;
+                return new Date(y, m - 1, d);
+            }
+        },
+        min: new Date(1900, 0, 1),
+        max: new Date(),
+        lazy: true,
+        autofix: true,
+    });
+
+    // Update placeholder to match format
+    dobInput.placeholder = isSpanish ? 'DD/MM/AAAA' : 'MM/DD/YYYY';
+
+    // Restore value if switching language mid-form
+    if (currentValue) {
+        try { dobMask.value = currentValue; } catch (e) { /* clear if incompatible */ dobMask.value = ''; }
+    }
+}
+
+// Stored categories from API for QR card icon rendering
+let registrationCategories = [];
+
+// Load service categories from API and render Step 5 checkboxes dynamically
+async function loadServiceCategories() {
+    const grid = document.getElementById('serviceSelectionGrid');
+    try {
+        const res = await fetch('/api/services.php?view=categories');
+        const json = await res.json();
+        const t = getLang();
+        if (!json.success || !json.categories || json.categories.length === 0) {
+            grid.innerHTML = `<div class="text-center p-3 text-danger">${t.noServicesAvailable}</div>`;
+            return;
+        }
+
+        registrationCategories = json.categories;
+
+        // Filter out closed services
+        const openCategories = json.categories.filter(cat => !cat.IsClosed);
+
+        if (openCategories.length === 0) {
+            grid.innerHTML = `<div class="text-center p-3 text-muted">${t.noServicesAvailable}</div>`;
+            return;
+        }
+
+        // Build a 2-column grid of checkboxes with equal-height buttons
+        let items = '';
+        openCategories.forEach((cat) => {
+            const id = `btnService_${cat.ServiceID}`;
+            items += `
+                <div class="col-6 mb-3 d-flex">
+                    <input type="checkbox" class="btn-check" name="clientServices"
+                        id="${id}" value="${cat.ServiceID}" autocomplete="off"
+                        aria-label="${cat.ServiceName}">
+                    <label class="btn btn-outline-navy w-100 text-start p-3 service-btn-label"
+                        for="${id}">
+                        ${renderIcon(cat.IconTag, 'me-2')} ${cat.ServiceName}
+                    </label>
+                </div>`;
+        });
+
+        grid.innerHTML = `
+            <legend class="visually-hidden">Select the services you need</legend>
+            ${items}`;
+    } catch (err) {
+        console.error('Failed to load service categories:', err);
+        const t = getLang();
+        grid.innerHTML = `<div class="text-center p-3 text-danger">${t.failedToLoadServices}</div>`;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    // Initialize DOB mask with saved language (or default to English)
+    const savedLang = sessionStorage.getItem('lang') || 'en';
+    createDobMask(savedLang);
 
-    // Only prefill if user is logged in
-    if (userData) {
-        // Step 1 - Login Info
-        const emailInput = document.getElementById('clientRegisterEmail');
-        const passInput = document.getElementById('clientRegisterPass');
+    // Re-create mask when language changes
+    document.getElementById('selLanguageSwitch').addEventListener('change', function () {
+        createDobMask(this.value);
+    });
 
-        console.log(userData);
+    // Load service categories from API for Step 5
+    loadServiceCategories();
 
-        emailInput.value = userData.Email || '';
-        emailInput.disabled = true;
+    // Check if returning user via URL param (e.g. ?clientID=abc123)
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientIDFromUrl = urlParams.get('clientID');
 
-        passInput.value = userData.Password || '';
-        passInput.disabled = true;
-
-        // Disable back button on step 2 for logged in users
-        document.getElementById('btnRegisterBack2').disabled = true;
-
-        // Step 2 - Personal Info
-        document.getElementById('clientFirstName').value = userData.FirstName || '';
-        document.getElementById('clientMiddleInitial').value = userData.MiddleInitial || '';
-        document.getElementById('clientLastName').value = userData.LastName || '';
-        document.getElementById('clientDOB').value = userData.DOB || '';
-
-        // Format phone if exists
-        if (userData.Phone) {
-            const digits = userData.Phone.replace(/\D/g, '');
-            document.getElementById('clientPhone').value = formatPhoneNumber(digits);
-        }
-
-        // Set sex radio button
-        if (userData.Sex) {
-            const normalizedSex = userData.Sex.trim().toLowerCase();
-            const sexRadio = document.querySelector(`input[name="clientSex"][value="${normalizedSex}"]`);
-            if (sexRadio) sexRadio.checked = true;
-        }
-
-        // Step 3 - Address Info
-        if (userData.Street1) {
-            document.getElementById('noAddress').checked = false;
-            document.getElementById('clientAddress1').value = userData.Street1 || '';
-            document.getElementById('clientAddress2').value = userData.Street2 || '';
-            document.getElementById('clientCity').value = userData.City || '';
-            document.getElementById('selectState').value = userData.State || '';
-            document.getElementById('clientZipCode').value = userData.ZIP || '';
-        } else {
-            document.getElementById('noAddress').checked = true;
-            document.getElementById('noAddress').dispatchEvent(new Event('change'));
-        }
-
-        // Step 4 - Emergency Contact
-        if (userData.EmergencyName) {
-            document.getElementById('noEmergencyContact').checked = false;
-            // Split emergency name into first and last
-            const nameParts = userData.EmergencyName.split(' ');
-            document.getElementById('emergencyContactFirstName').value = nameParts[0] || '';
-            document.getElementById('emergencyContactLastName').value = nameParts.slice(1).join(' ') || '';
-
-            if (userData.EmergencyPhone) {
-                const emergencyDigits = userData.EmergencyPhone.replace(/\D/g, '');
-                document.getElementById('emergencyContactPhone').value = formatPhoneNumber(emergencyDigits);
+    // If already logged in, jump instantly to Step 5 (service selection only)
+    // Use direct show/hide instead of the animated transition so Step 1 never flickers
+    if (clientIDFromUrl) {
+        document.getElementById('btnRegisterBack5').style.display = 'none';
+        ['divStepOne', 'divStepTwo', 'divStepThree', 'divStepFour', 'divStepFive'].forEach((id, i) => {
+            const step = document.getElementById(id);
+            if (i === 4) {
+                step.classList.remove('step-hidden');
+                step.classList.add('step-visible');
+                step.style.opacity = '1';
+            } else {
+                step.classList.remove('step-visible');
+                step.classList.add('step-hidden');
+                step.style.opacity = '0';
             }
-        } else {
-            document.getElementById('noEmergencyContact').checked = true;
-            document.getElementById('noEmergencyContact').dispatchEvent(new Event('change'));
-        }
-
-        goToStepTwo();
+        });
+        updateProgressBar(5);
     }
-
 });
 
 //  Step 1 - Login Info
 function goToStepTwo() {
     const stepOne = document.getElementById('divStepOne');
     const stepTwo = document.getElementById('divStepTwo');
-    document.getElementById('sexError').style.display = 'none';
     transitionToStep(stepOne, stepTwo, 2);
 }
 
 function stepOneSubmit() {
-    // Skip validation if user is already logged in
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
-    if (userData) {
-        goToStepTwo();
-        return;
-    }
 
     const emailInput = document.getElementById('clientRegisterEmail');
     const passInput = document.getElementById('clientRegisterPass');
-    let isValid = true;
+    const errors = [];
+    const t = getLang();
 
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value)) {
-        setFieldValidation(emailInput, false);
-        isValid = false;
+    const emailValid = VALIDATION_PATTERNS.email.test(emailInput.value.trim());
+    const passValid = VALIDATION_PATTERNS.password.test(passInput.value);
+
+    if (!emailValid) {
+        errors.push(t.registerValidEmail);
+        markInvalid(emailInput);
+    } else if (emailIsDuplicate) {
+        // Duplicate detected by the blur check — re-surface the inline message without
+        // adding another bullet to the Swal list (the field already shows it).
+        markInvalid(emailInput);
+        errors.push('That email is already registered. Please sign in instead.');
     } else {
-        setFieldValidation(emailInput, true);
+        clearInvalid(emailInput);
     }
 
-    if (!VALIDATION_PATTERNS.password.test(passInput.value)) {
-        setFieldValidation(passInput, false);
-        isValid = false;
+    if (!passValid) {
+        errors.push(t.registerValidPassword);
+        markInvalid(passInput);
     } else {
-        setFieldValidation(passInput, true);
+        clearInvalid(passInput);
     }
 
-    if (isValid) {
-        goToStepTwo();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: t.checkYourInfo,
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepTwo();
 }
 
 // Step 1 event listeners
@@ -232,12 +318,6 @@ document.getElementById('btnRegisterBack1').addEventListener('click', function (
     window.location.href = '../index.html';
 });
 
-document.getElementById('toggleClientRegisterPass').addEventListener('change', function () {
-    const passwordInput = document.getElementById('clientRegisterPass');
-    passwordInput.type = this.checked ? 'text' : 'password';
-});
-
-
 // Step 2 - Personal Info
 function goToStepThree() {
     const stepTwo = document.getElementById('divStepTwo');
@@ -251,69 +331,74 @@ function stepTwoSubmit() {
     const dob = document.getElementById('clientDOB');
     const phone = document.getElementById('clientPhone');
     const sexRadios = document.querySelectorAll('input[name="clientSex"]');
-    const sexError = document.getElementById('sexError');
-
-    let isValid = true;
+    const sexRadioGroup = document.getElementById('sexRadioGroup');
+    const errors = [];
+    const t = getLang();
 
     if (!firstName.value.trim()) {
-        setFieldValidation(firstName, false);
-        isValid = false;
+        errors.push(t.registerFirstName);
+        markInvalid(firstName);
     } else {
-        setFieldValidation(firstName, true);
+        clearInvalid(firstName);
     }
 
     if (!lastName.value.trim()) {
-        setFieldValidation(lastName, false);
-        isValid = false;
+        errors.push(t.registerLastName);
+        markInvalid(lastName);
     } else {
-        setFieldValidation(lastName, true);
-    }
-
-    // DOB 18+ validation
-    if (!dob.value) {
-        setFieldValidation(dob, false);
-        isValid = false;
-    } else {
-        // Check if DOB is at least 18 years ago
-        const enteredDate = new Date(dob.value);
-        const today = new Date();
-        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-        if (enteredDate > minAgeDate) {
-            setFieldValidation(dob, false);
-            isValid = false;
-            // Optionally show a message:
-            dob.setCustomValidity('You must be at least 18 years old.');
-            dob.reportValidity();
-        } else {
-            setFieldValidation(dob, true);
-            dob.setCustomValidity('');
-        }
+        clearInvalid(lastName);
     }
 
     const sexSelected = Array.from(sexRadios).some(radio => radio.checked);
     if (!sexSelected) {
-        sexError.style.display = 'block';
-        isValid = false;
+        errors.push(t.registerSex);
+        if (sexRadioGroup) sexRadioGroup.setAttribute('aria-invalid', 'true');
     } else {
-        sexError.style.display = 'none'; // Always hide if valid
+        if (sexRadioGroup) sexRadioGroup.removeAttribute('aria-invalid');
     }
 
-    // Phone is optional but must be full and formatted if provided
-    if (phone.value.length > 0) {
-        // Require exactly (999) 999-9999 format
-        if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-            setFieldValidation(phone, false);
-            isValid = false;
+    // DOB 18+ validation
+    if (!dob.value || !dobMask.masked.isComplete) {
+        errors.push(t.registerDOB);
+        markInvalid(dob);
+    } else {
+        const parts = dob.value.split('/');
+        const currentLang = sessionStorage.getItem('lang') || 'en';
+        let enteredDate;
+        if (currentLang === 'es') {
+            enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
         } else {
-            setFieldValidation(phone, true);
+            enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
         }
-    } else {
-        setFieldValidation(phone, true); // Optional, so valid if empty
+        const today = new Date();
+        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        if (enteredDate > minAgeDate) {
+            errors.push(t.registerAge);
+            markInvalid(dob);
+        } else {
+            clearInvalid(dob);
+        }
     }
 
-    if (isValid) {
-        goToStepThree();
+    // Phone optional but must match format if provided
+    if (phone.value.length > 0 && !VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
+        errors.push(t.registerPhone);
+        markInvalid(phone);
+    } else {
+        clearInvalid(phone);
     }
+
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: t.checkYourInfo,
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
+    goToStepThree();
 }
 
 // Step 2 event listeners
@@ -382,43 +467,52 @@ document.getElementById('btnRegisterNext3').addEventListener('click', function (
         return;
     }
 
-    let isValid = true;
+    const errors = [];
+    const t = getLang();
 
     const address1 = document.getElementById('clientAddress1');
-    if (!address1.value.trim()) {
-        setFieldValidation(address1, false);
-        isValid = false;
+    if (address1.value.trim().length < 5) {
+        errors.push(t.registerAddress);
+        markInvalid(address1);
     } else {
-        setFieldValidation(address1, true);
+        clearInvalid(address1);
     }
 
     const city = document.getElementById('clientCity');
-    if (!city.value.trim()) {
-        setFieldValidation(city, false);
-        isValid = false;
+    if (city.value.trim().length < 2) {
+        errors.push(t.registerCity);
+        markInvalid(city);
     } else {
-        setFieldValidation(city, true);
+        clearInvalid(city);
     }
 
     const state = document.getElementById('selectState');
     if (!state.value) {
-        setFieldValidation(state, false);
-        isValid = false;
+        errors.push(t.registerState);
+        markInvalid(state);
     } else {
-        setFieldValidation(state, true);
+        clearInvalid(state);
     }
 
     const zipCode = document.getElementById('clientZipCode');
     if (!zipCode.value.match(VALIDATION_PATTERNS.zipCode)) {
-        setFieldValidation(zipCode, false);
-        isValid = false;
+        errors.push(t.registerZip);
+        markInvalid(zipCode);
     } else {
-        setFieldValidation(zipCode, true);
+        clearInvalid(zipCode);
     }
 
-    if (isValid) {
-        goToStepFour();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: t.checkYourInfo,
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepFour();
 });
 
 document.getElementById('btnRegisterBack3').addEventListener('click', function () {
@@ -457,6 +551,7 @@ noEmergencyContactCheckbox.addEventListener('change', function () {
             container.style.display = 'none';
             field.removeAttribute('required');
             field.classList.remove('is-invalid');
+            field.removeAttribute('aria-invalid');
         } else {
             container.style.display = 'block';
             field.setAttribute('required', '');
@@ -473,36 +568,44 @@ document.getElementById('btnRegisterNext4').addEventListener('click', function (
         return;
     }
 
-    let isValid = true;
+    const errors = [];
+    const t = getLang();
 
     const firstName = document.getElementById('emergencyContactFirstName');
     if (!firstName.value.trim()) {
-        setFieldValidation(firstName, false);
-        isValid = false;
+        errors.push(t.registerContactFirstName);
+        markInvalid(firstName);
     } else {
-        setFieldValidation(firstName, true);
+        clearInvalid(firstName);
     }
 
     const lastName = document.getElementById('emergencyContactLastName');
     if (!lastName.value.trim()) {
-        setFieldValidation(lastName, false);
-        isValid = false;
+        errors.push(t.registerContactLastName);
+        markInvalid(lastName);
     } else {
-        setFieldValidation(lastName, true);
+        clearInvalid(lastName);
     }
 
     const phone = document.getElementById('emergencyContactPhone');
-    // Phone is required and must be full and formatted
     if (!VALIDATION_PATTERNS.phoneFormatted.test(phone.value)) {
-        setFieldValidation(phone, false);
-        isValid = false;
+        errors.push(t.registerContactPhone);
+        markInvalid(phone);
     } else {
-        setFieldValidation(phone, true);
+        clearInvalid(phone);
     }
 
-    if (isValid) {
-        goToStepFive();
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: t.checkYourInfo,
+            html: errors.map(e => `• ${e}`).join('<br>'),
+            confirmButtonColor: '#174593'
+        });
+        return;
     }
+
+    goToStepFive();
 });
 
 document.getElementById('btnRegisterBack4').addEventListener('click', function () {
@@ -521,14 +624,17 @@ document.getElementById('clientRegisterFormStep4').addEventListener('keydown', f
 // Step 5 - Service Selection
 document.getElementById('btnRegisterNext5').addEventListener('click', function () {
     const services = document.querySelectorAll('input[name="clientServices"]:checked');
-    const serviceError = document.getElementById('serviceError');
 
     if (services.length === 0) {
-        serviceError.style.display = 'block';
+        const t = getLang();
+        Swal.fire({
+            icon: 'error',
+            title: t.checkYourInfo,
+            html: `• ${t.registerService}`,
+            confirmButtonColor: '#174593'
+        });
         return;
     }
-
-    serviceError.style.display = 'none';
 
     // Show waiver modal
     const modal = new bootstrap.Modal(document.getElementById('registrationCompleteModal'));
@@ -542,6 +648,154 @@ document.getElementById('btnRegisterBack5').addEventListener('click', function (
 });
 
 // Input masks
+// Tracks whether the email in the field is already registered
+let emailIsDuplicate = false;
+
+// Step 1 - Email blur: validate format then async-check uniqueness
+document.getElementById('clientRegisterEmail').addEventListener('blur', async function () {
+    const val = this.value.trim();
+    const statusEl  = document.getElementById('emailCheckStatus');
+    const feedbackEl = document.getElementById('emailInvalidFeedback');
+
+    if (!VALIDATION_PATTERNS.email.test(val)) {
+        this.classList.remove('is-valid', 'is-invalid');
+        statusEl.style.display = 'none';
+        emailIsDuplicate = false;
+        return;
+    }
+
+    // Format is valid — check uniqueness
+    statusEl.style.display = '';
+    this.classList.remove('is-valid', 'is-invalid');
+
+    try {
+        const res  = await fetch(`../api/CheckEmail.php?email=${encodeURIComponent(val)}`);
+        const data = await res.json();
+
+        statusEl.style.display = 'none';
+
+        if (data.exists) {
+            emailIsDuplicate = true;
+            feedbackEl.innerHTML = 'An account with this email already exists. <a href="../index.html" class="text-danger fw-semibold">Sign in instead →</a>';
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+            this.setAttribute('aria-invalid', 'true');
+        } else {
+            emailIsDuplicate = false;
+            feedbackEl.innerHTML = '';
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            this.removeAttribute('aria-invalid');
+        }
+    } catch {
+        // Network error — don't block the user, just clear the status
+        statusEl.style.display = 'none';
+        emailIsDuplicate = false;
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
+
+document.getElementById('clientRegisterPass').addEventListener('blur', function () {
+    if (VALIDATION_PATTERNS.password.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
+    } else {
+        this.classList.remove('is-valid');
+        this.classList.remove('is-invalid');
+    }
+});
+
+// Step 1 - Clear invalid state as user types (also reset duplicate flag so blur re-checks)
+document.getElementById('clientRegisterEmail').addEventListener('input', function () {
+    clearInvalid(this);
+    emailIsDuplicate = false;
+    document.getElementById('emailInvalidFeedback').innerHTML = '';
+    document.getElementById('emailCheckStatus').style.display = 'none';
+});
+
+document.getElementById('clientRegisterPass').addEventListener('input', function () {
+    clearInvalid(this);
+});
+
+// Step 2 - Valid feedback on blur
+document.getElementById('clientFirstName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+    }
+    this.classList.remove('is-invalid');
+});
+
+document.getElementById('clientMiddleInitial').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientLastName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+    }
+    this.classList.remove('is-invalid');
+});
+
+document.getElementById('clientDOB').addEventListener('blur', function () {
+    if (!this.value || !dobMask.masked.isComplete) {
+        this.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+    const parts = this.value.split('/');
+    const currentLang = sessionStorage.getItem('lang') || 'en';
+    let enteredDate;
+    if (currentLang === 'es') {
+        enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else {
+        enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
+    }
+    const today = new Date();
+    const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (enteredDate <= minAgeDate) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientPhone').addEventListener('blur', function () {
+    if (this.value.length === 0) {
+        this.classList.remove('is-valid', 'is-invalid');
+    } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
+    } else {
+        // Partially filled — just go neutral, don't punish them yet
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+// Step 2 - Clear invalid state as user types / selects
+document.getElementById('clientFirstName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientLastName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientDOB').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientPhone').addEventListener('input', function () { clearInvalid(this); });
+
+// Clear sex invalid state when user selects a radio
+document.querySelectorAll('input[name="clientSex"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+        const sexRadioGroup = document.getElementById('sexRadioGroup');
+        if (sexRadioGroup) sexRadioGroup.removeAttribute('aria-invalid');
+    });
+});
+
 // Names - letters, hyphens, apostrophes only
 document.getElementById('clientFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
@@ -581,6 +835,58 @@ document.getElementById('clientAddress2').addEventListener('input', function () 
     this.value = this.value.replace(INPUT_FILTERS.address, '');
 });
 
+// Step 3 blur handlers — green checkmark on valid input
+document.getElementById('clientAddress1').addEventListener('blur', function () {
+    if (this.value.trim().length >= 5) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientAddress2').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientCity').addEventListener('blur', function () {
+    if (this.value.trim().length >= 2) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('selectState').addEventListener('change', function () {
+    if (this.value) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('clientZipCode').addEventListener('blur', function () {
+    if (this.value.match(VALIDATION_PATTERNS.zipCode)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+// Step 3 - Clear invalid state as user types / selects
+document.getElementById('clientAddress1').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('clientCity').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('selectState').addEventListener('change', function () { clearInvalid(this); });
+document.getElementById('clientZipCode').addEventListener('input', function () { clearInvalid(this); });
+
 // Emergency contact names
 document.getElementById('emergencyContactFirstName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
@@ -589,6 +895,42 @@ document.getElementById('emergencyContactFirstName').addEventListener('input', f
 document.getElementById('emergencyContactLastName').addEventListener('input', function (e) {
     e.target.value = e.target.value.replace(INPUT_FILTERS.name, '');
 });
+
+// Step 4 blur handlers — green checkmark on valid input
+document.getElementById('emergencyContactFirstName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('emergencyContactLastName').addEventListener('blur', function () {
+    if (this.value.trim()) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+document.getElementById('emergencyContactPhone').addEventListener('blur', function () {
+    if (this.value.length === 0) {
+        this.classList.remove('is-valid', 'is-invalid');
+    } else if (VALIDATION_PATTERNS.phoneFormatted.test(this.value)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+        this.removeAttribute('aria-invalid');
+    } else {
+        this.classList.remove('is-valid', 'is-invalid');
+    }
+});
+
+// Step 4 - Clear invalid state as user types
+document.getElementById('emergencyContactFirstName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('emergencyContactLastName').addEventListener('input', function () { clearInvalid(this); });
+document.getElementById('emergencyContactPhone').addEventListener('input', function () { clearInvalid(this); });
 
 
 // Waiver modal & form submission
@@ -605,67 +947,78 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
 
     // Disable button and show spinner
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${t.submitting}`;
 
     const waiverCheckbox = document.getElementById('waiverAgree');
-    const waiverError = document.getElementById('waiverError');
 
     if (!waiverCheckbox.checked) {
-        waiverError.style.display = 'block';
+        Swal.fire({
+            icon: 'error',
+            title: t.waiverRequiredTitle,
+            text: t.waiverRequiredText,
+            confirmButtonColor: '#174593'
+        });
         btn.disabled = false;
         btn.innerHTML = originalContent;
         return;
     }
 
-    waiverError.style.display = 'none';
+    // Check if returning user via URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientIDFromUrl = urlParams.get('clientID');
 
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    // Collect form data — logged-in users only update services, new users send full registration
+    let formData;
 
-    // Collect all form data
-    const formData = {
-        // If we have ClientID, send it
-        clientID: userData?.ClientID || null,
-
-        // Step 1
-        // email: document.getElementById('clientRegisterEmail').value,
-        // password: document.getElementById('clientRegisterPass').value,
-
-        // Step 2
-        firstName: document.getElementById('clientFirstName').value,
-        middleInitial: document.getElementById('clientMiddleInitial').value,
-        lastName: document.getElementById('clientLastName').value,
-        dob: document.getElementById('clientDOB').value,
-        // Remove phone input mask before sending
-        phone: document.getElementById('clientPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
-        sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
-
-        // Step 3
-        noAddress: document.getElementById('noAddress').checked,
-        address1: document.getElementById('clientAddress1').value,
-        address2: document.getElementById('clientAddress2').value,
-        city: document.getElementById('clientCity').value,
-        state: document.getElementById('selectState').value,
-        zipCode: document.getElementById('clientZipCode').value,
-
-        // Step 4
-        noEmergencyContact: document.getElementById('noEmergencyContact').checked,
-        emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
-        emergencyLastName: document.getElementById('emergencyContactLastName').value,
-        // Remove phone input mask before sending
-        emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
-
-        // Hard code event ID (for now)
-        EventID: "4cbde538985861b9",
-
-        // Step 5
-        services: Array.from(
-            document.querySelectorAll('input[name="clientServices"]:checked')
-        ).map(s => s.value),
-    };
-
-    if (!userData?.ClientID) {
-        formData.email = document.getElementById('clientRegisterEmail').value;
-        formData.password = document.getElementById('clientRegisterPass').value;
+    if (clientIDFromUrl) {
+        // Existing user: only send what's needed for service selection
+        formData = {
+            clientID: clientIDFromUrl,
+            noAddress: true,
+            noEmergencyContact: true,
+            EventID: "4cbde538985861b9",
+            services: Array.from(
+                document.querySelectorAll('input[name="clientServices"]:checked')
+            ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
+        };
+    } else {
+        // New user: send full registration payload
+        formData = {
+            clientID: null,
+            email: document.getElementById('clientRegisterEmail').value,
+            password: document.getElementById('clientRegisterPass').value,
+            firstName: document.getElementById('clientFirstName').value,
+            middleInitial: document.getElementById('clientMiddleInitial').value,
+            lastName: document.getElementById('clientLastName').value,
+            dob: (() => {
+                const maskedDate = dobMask?.typedValue;
+                if (maskedDate instanceof Date && !isNaN(maskedDate)) {
+                    const y = maskedDate.getFullYear();
+                    const m = String(maskedDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(maskedDate.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return document.getElementById('clientDOB').value;
+            })(),
+            phone: document.getElementById('clientPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+            sex: document.querySelector('input[name="clientSex"]:checked')?.value || '',
+            noAddress: document.getElementById('noAddress').checked,
+            address1: document.getElementById('clientAddress1').value,
+            address2: document.getElementById('clientAddress2').value,
+            city: document.getElementById('clientCity').value,
+            state: document.getElementById('selectState').value,
+            zipCode: document.getElementById('clientZipCode').value,
+            noEmergencyContact: document.getElementById('noEmergencyContact').checked,
+            emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
+            emergencyLastName: document.getElementById('emergencyContactLastName').value,
+            emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+            EventID: "4cbde538985861b9",
+            services: Array.from(
+                document.querySelectorAll('input[name="clientServices"]:checked')
+            ).map(s => s.value),
+            language: sessionStorage.getItem('lang') || 'en',
+        };
     }
 
     // Send to API
@@ -679,17 +1032,54 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             const modal = bootstrap.Modal.getInstance(document.getElementById('registrationCompleteModal'));
             modal.hide();
 
-            // Clear userData after successful registration/update
-            sessionStorage.removeItem('userData');
-
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
                     title: t.registrationSuccessTitle,
                     text: t.registrationSuccessText,
-                    confirmButtonColor: '#174593',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
                 }).then(() => {
-                    window.location.href = '../index.html';
+                    // Hide the registration card and progress bar
+                    document.getElementById('divStepOne').closest('.card').style.display = 'none';
+                    document.getElementById('wholeProgressBar').style.display = 'none';
+                    const devBar = document.querySelector('.dev-bar');
+                    if (devBar) devBar.closest('.text-center').style.display = 'none';
+
+                    // Show QR code card
+                    const qrContainer = document.getElementById('divQRCode');
+                    qrContainer.classList.remove('d-none');
+                    qrContainer.classList.add('d-flex');
+
+                    // Set name — FIRST NAME in bold uppercase, last name normal
+                    const firstName = (data.firstName || '').toUpperCase();
+                    const lastName = data.lastName || '';
+                    document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
+
+                    // Generate QR Code from clientID
+                    new QRious({
+                        element: document.getElementById('qr'),
+                        value: data.clientID,
+                        size: 200,
+                    });
+
+                    // Build QR card icons dynamically from loaded categories
+                    const qrIconsContainer = document.getElementById('qrCardIcons');
+                    qrIconsContainer.innerHTML = '';
+                    const selectedServices = data.services || [];
+                    registrationCategories.forEach(cat => {
+                        const wrapper = document.createElement('span');
+                        wrapper.className = 'qr-icon-border';
+                        wrapper.style.fontSize = '3rem';
+                        wrapper.style.color = 'black';
+                        wrapper.style.display = 'inline-flex';
+                        wrapper.style.visibility = selectedServices.includes(cat.ServiceID) ? 'visible' : 'hidden';
+                        wrapper.setAttribute('aria-hidden', 'true');
+                        wrapper.innerHTML = renderIcon(cat.IconTag);
+                        qrIconsContainer.appendChild(wrapper);
+                    });
                 });
             } else {
                 Swal.fire({
