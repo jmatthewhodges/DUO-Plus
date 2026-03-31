@@ -79,6 +79,22 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
+function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
+    const safeFallback = fallbackBi || 'bi-person';
+    const cls = extraClasses ? ` ${extraClasses}` : '';
+    if (iconTag && typeof iconTag === 'string') {
+        const trimmed = iconTag.trim();
+        if (trimmed.includes('<svg')) {
+            const svg = trimmed.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor;"');
+            return `<span class="svg-icon${cls}" style="display:inline-flex;align-items:center;justify-content:center;">${svg}</span>`;
+        }
+        if (trimmed.startsWith('bi-')) {
+            return `<i class="bi ${trimmed}${cls}"></i>`;
+        }
+    }
+    return `<i class="bi ${safeFallback}${cls}"></i>`;
+}
+
 // Service configuration — loaded from API at init, populated by loadServiceHierarchy()
 let SERVICES = {};
 
@@ -92,6 +108,7 @@ let SERVICE_WAITLISTS = {};
 let SUB_SERVICE_LABELS = {};
 let SERVICE_PRIORITY = {};
 let SERVICE_NAME_BY_ID = {};
+let SERVICE_ICON_BY_ID = {};
 
 // Loads service hierarchy from /api/services.php and builds SERVICES, SERVICE_WAITLISTS, and SUB_SERVICE_LABELS
 async function loadServiceHierarchy() {
@@ -108,6 +125,7 @@ async function loadServiceHierarchy() {
         SUB_SERVICE_LABELS = {};
         SERVICE_PRIORITY = {};
         SERVICE_NAME_BY_ID = {};
+        SERVICE_ICON_BY_ID = {};
         serviceHierarchyRaw = json.hierarchy;
 
         let priorityIndex = 0;
@@ -130,6 +148,7 @@ async function loadServiceHierarchy() {
             };
             SERVICE_PRIORITY[key] = priorityIndex++;
             SERVICE_NAME_BY_ID[key] = cat.ServiceName;
+            SERVICE_ICON_BY_ID[key] = cat.IconTag || 'bi-circle';
 
             SERVICE_WAITLISTS[key] = {};
 
@@ -143,6 +162,7 @@ async function loadServiceHierarchy() {
                 SUB_SERVICE_LABELS[child.ServiceID] = label || child.ServiceName;
                 SERVICE_PRIORITY[child.ServiceID] = priorityIndex++;
                 SERVICE_NAME_BY_ID[child.ServiceID] = child.ServiceName;
+                SERVICE_ICON_BY_ID[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
             });
         });
 
@@ -1026,12 +1046,16 @@ function showCheckInOutModal(clientId) {
            </button>`;
 
     Swal.fire({
-        title: clientName,
+        title: false,
         html: `
-            <div style="text-align: left; margin-bottom: 20px;">
+            <div style="text-align: left;">
+                <div class="fw-bold fs-5 mb-3">${escapeHtml(clientName)}</div>
+                <div style="margin-bottom: 20px;">
+                <p><strong>DOB:</strong> ${formatDOB(client ? client.dob : '')}</p>
                 <p><strong>Client ID:</strong> ${clientId}</p>
                 <p><strong>Service:</strong> ${serviceTitle}</p>
                 <p><strong>Status:</strong> ${isInProgress ? 'In Progress' : 'Waiting'}</p>
+                </div>
             </div>
             <div class="d-grid gap-3">
                 ${actionButton}
@@ -1158,7 +1182,7 @@ function populateWaitlist(clientsToShow = null) {
     if (clientsArray.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="3" class="text-center py-4 text-muted">
+            <td colspan="2" class="text-center py-4 text-muted">
                 <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                 No clients in waitlist
             </td>
@@ -1180,49 +1204,67 @@ function populateWaitlist(clientsToShow = null) {
         const inProgressServiceName = inProgressService
             ? (SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || inProgressService.id)
             : '';
+        const inProgressIconTag = inProgressService
+            ? (SERVICE_ICON_BY_ID[inProgressService.id] || '')
+            : '';
         const avatarClass = inProgressAtOtherService
             ? 'bg-info text-white'
-            : (isCompleted ? 'bg-success text-white' : (isInProgress ? 'text-dark' : 'bg-light'));
-        const avatarStyle = inProgressAtOtherService
-            ? ''
-            : (isInProgress ? ' background-color: #ffe066;' : '');
-        const avatarIcon = inProgressAtOtherService
-            ? 'bi-arrow-right-circle'
-            : (isCompleted ? 'bi-check-lg' : (isInProgress ? 'bi-person-fill-check' : 'bi-person'));
+            : (inProgressAtCurrentService ? 'text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light'));
+        const avatarStyle = inProgressAtCurrentService
+            ? ' background-color: #ffe066;'
+            : '';
+        const avatarIconHTML = inProgressAtOtherService
+            ? renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white')
+            : (isCompleted
+                ? '<i class="bi bi-check-lg"></i>'
+                : (inProgressAtCurrentService
+                    ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
+                    : '<i class="bi bi-person"></i>'));
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
-        const statusBadge = '';
         // Show sub-service label only for stations with multiple serviceIDs
         const hasMultiple = currentServiceKey && SERVICES[currentServiceKey] && SERVICES[currentServiceKey].serviceIDs.length > 1;
         const subLabel = hasMultiple && client.serviceID && SUB_SERVICE_LABELS[client.serviceID]
             ? `<span class="text-muted small"> · ${SUB_SERVICE_LABELS[client.serviceID]}</span>`
             : '';
-        // Build secondary info line (sub-label and/or badge)
-        const secondaryInfo = (subLabel || statusBadge)
-            ? `<span class="small">${subLabel}${statusBadge}</span>`
+        const headerLine = `
+            <div class="d-flex flex-column" style="min-width:0;">
+                <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
+                ${subLabel}
+            </div>`;
+        const currentlyAtCells = (inProgressAtOtherService || inProgressAtCurrentService)
+            ? (inProgressAtOtherService
+                ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">
+                        <span class="badge border" style="${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;">
+                            ${escapeHtml(inProgressServiceName)}
+                        </span>
+                    </div>`
+                : `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">
+                        <span class="badge border" style="${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;">
+                            ${escapeHtml(inProgressServiceName)}
+                        </span>
+                    </div>`)
             : '';
-        const locationIndicator = inProgressAtOtherService
-            ? `<div class="small fw-semibold mt-1" style="color:#0b5ed7;">
-                    Currently At: ${escapeHtml(inProgressServiceName)}
-               </div>`
-            : (inProgressAtCurrentService
-                ? `<div class="small fw-semibold mt-1" style="color:#9c6f00;">
-                        <i class="bi bi-pin-map-fill me-1"></i>Currently At This Station
-                   </div>`
-                : '');
-        const assignedServices = (client.assignedServices || [])
-            .map(service => {
-                let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
-                if (service.status === 'In-Progress') {
-                    // In-progress services stand out in yellow with a stronger border.
-                    servicePillStyle = `${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;`;
-                } else if (service.status === 'Complete') {
-                    servicePillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
-                }
-                return `<span class="badge border" style="${servicePillStyle}">${escapeHtml(service.name)}</span>`;
-            })
-            .join('');
-        const assignedServicesHTML = assignedServices
-            ? `<div class="d-flex flex-wrap gap-1 mt-1 align-items-center" style="margin-left: 0; padding-left: 0; justify-content: flex-start;">${assignedServices}</div>`
+        const otherServicesRaw = (client.assignedServices || [])
+            .filter(s => s.status !== 'In-Progress');
+        const incompleteOther = otherServicesRaw
+            .filter(s => s.status !== 'Complete')
+            .sort((a, b) => (SERVICE_PRIORITY[a.id] ?? 999) - (SERVICE_PRIORITY[b.id] ?? 999));
+        const completeOther = otherServicesRaw
+            .filter(s => s.status === 'Complete')
+            .sort((a, b) => (SERVICE_PRIORITY[a.id] ?? 999) - (SERVICE_PRIORITY[b.id] ?? 999));
+        const orderedOtherServices = [...incompleteOther, ...completeOther];
+        const assignedServices = orderedOtherServices.map(service => {
+            let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+            if (service.status === 'Complete') {
+                servicePillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+            }
+            return `<span class="badge border" style="${servicePillStyle}">${escapeHtml(service.name)}</span>`;
+        }).join('');
+        const nextCells = assignedServices
+            ? `<span class="small service-waitlist-label-text">Services:</span><div class="service-waitlist-badges-wrap">${assignedServices}</div>`
+            : '';
+        const groupedStatusHTML = (currentlyAtCells || nextCells)
+            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}${nextCells}</div>`
             : '';
         const rowButtonClass = isInProgress ? 'btn-primary' : (isCompleted ? 'btn-outline-secondary' : 'btn-primary');
         const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
@@ -1244,17 +1286,14 @@ function populateWaitlist(clientsToShow = null) {
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                     <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}">
-                        <i class="bi ${avatarIcon}"></i>
+                        ${avatarIconHTML}
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">
-                        <span class="fw-bold text-dark">${client.name}</span>
-                        ${secondaryInfo}
-                        ${locationIndicator}
-                        ${assignedServicesHTML}
+                        ${headerLine}
+                        ${groupedStatusHTML}
                     </div>
                 </div>
             </td>
-            <td class="fw-medium text-nowrap py-3">${formatDOB(client.dob)}</td>
             <td class="text-end pe-3 py-3">
                 ${actionCellHTML}
             </td>

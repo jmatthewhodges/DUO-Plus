@@ -826,6 +826,37 @@ body.v-center-page {
     background: rgba(23, 69, 147, 0.07);
 }
 
+/* Waiting room: animate current "Now Serving" client name */
+.waitlist-now-serving-name {
+    animation: waitlist-now-serving-pulse 1s ease-in-out infinite;
+}
+
+@keyframes waitlist-now-serving-pulse {
+    0%, 100% {
+        opacity: 1;
+        color: #174593;
+    }
+    50% {
+        opacity: 0.45;
+        color: #0d6efd;
+    }
+}
+
+.waitlist-now-serving-bell {
+    animation: waitlist-now-serving-bell-pulse 1s ease-in-out infinite;
+}
+
+@keyframes waitlist-now-serving-bell-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.16);
+    }
+}
+
 /* Register link hover */
 #btn2Register {
     display: inline-block;
@@ -1045,4 +1076,29 @@ body.no-scroll .card-body[style*="overflow-y"] {
     width: 1.25em;
     height: 1.25em;
     fill: currentColor;
+}
+
+/* Service scan waitlist: [label | badges] — labels left-aligned with name; badge column lines up across rows */
+.service-waitlist-status-block {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 0.35rem;
+    row-gap: 0.35rem;
+    align-items: center;
+}
+
+.service-waitlist-label-text {
+    color: #4a5568;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.service-waitlist-badges-wrap {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
 }

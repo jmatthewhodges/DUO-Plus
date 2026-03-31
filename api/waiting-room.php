@@ -58,7 +58,7 @@ $eventStmt->close();
 if (!$eventResult) {
     // No active event — return empty sets
     http_response_code(200);
-    echo json_encode(['success' => true, 'NowServing' => [], 'WaitList' => [], 'Services' => []]);
+    echo json_encode(['success' => true, 'NowServing' => [], 'WaitList' => [], 'Services' => [], 'ServicePriority' => []]);
     exit;
 }
 $activeEventID = $eventResult['EventID'];
@@ -138,7 +138,7 @@ if (!empty($visitIDs)) {
     // PHP then partitions the rows into the structures each section needs.
     $allVsStmt = $mysqli->prepare(
         "SELECT vs.VisitID, vs.VisitServiceID, vs.ServiceID, vs.ServiceStatus,
-                vs.IsFastTracked, s.ServiceName, s.ParentServiceID
+                vs.IsFastTracked, s.ServiceName, s.ParentServiceID, s.IconTag
          FROM tblVisitServices vs
          JOIN tblServices s ON s.ServiceID = vs.ServiceID
          WHERE vs.VisitID IN ($placeholders)"
@@ -321,4 +321,5 @@ echo json_encode([
     'NowServing' => $nowServing ? [$nowServing] : [],
     'WaitList'   => $waitList,
     'Services'   => $servicesList,
+    'ServicePriority' => $serviceHierarchy,
 ]);

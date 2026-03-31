@@ -8,6 +8,7 @@
 // 1. GLOBAL SETTINGS & STATE
 let waitListData = [];
 let availableServices = [];
+let servicePriorityMap = {};
 let currentRowToUpdate = null;
 let currentClientId = null;
 let currentVisitId = null;
@@ -46,6 +47,22 @@ function formatDOB(dateString) {
         return `${parts[1]}/${parts[2]}/${parts[0]}`;
     }
     return dateString;
+}
+
+function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
+    const safeFallback = fallbackBi || 'bi-person';
+    const cls = extraClasses ? ` ${extraClasses}` : '';
+    if (iconTag && typeof iconTag === 'string') {
+        const trimmed = iconTag.trim();
+        if (trimmed.includes('<svg')) {
+            const svg = trimmed.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor;"');
+            return `<span class="svg-icon${cls}" style="display:inline-flex;align-items:center;justify-content:center;">${svg}</span>`;
+        }
+        if (trimmed.startsWith('bi-')) {
+            return `<i class="bi ${trimmed}${cls}"></i>`;
+        }
+    }
+    return `<i class="bi ${safeFallback}${cls}"></i>`;
 }
 
 function closeUpdateModal() {
@@ -140,6 +157,7 @@ async function fetchQueueData() {
         if (data.success) {
             waitListData = data.WaitList;
             availableServices = data.Services || [];
+            servicePriorityMap = data.ServicePriority || {};
 
             // 1. Update Now Serving safely
             const skipBtn = document.getElementById('skipNowServingBtn');
@@ -197,33 +215,48 @@ function populateWaitListTable(patients) {
         const allDone = patient.AllServicesComplete;
         const isAbandoned = patient.IsAbandoned;
         const atService = patient.CurrentServiceName;
+        const inProgressService = (patient.VisitServices || []).find(v => v.ServiceStatus === 'In-Progress');
+        const inProgressIconTag = inProgressService ? (inProgressService.IconTag || '') : '';
         const wasSkipped = patient.WasSkipped;
-        const standbyServices = (patient.VisitServices || []).filter(v => v.ServiceStatus === 'Standby');
-        let statusBadge = '';
+        const orderedVisitServices = [...(patient.VisitServices || [])].sort((a, b) => {
+            const pa = servicePriorityMap[a.ServiceID] ?? 999;
+            const pb = servicePriorityMap[b.ServiceID] ?? 999;
+            if (pa !== pb) return pa - pb;
+            return String(a.ServiceName || '').localeCompare(String(b.ServiceName || ''));
+        });
+        const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
+        const completedPillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+        const inProgressOtherPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
+        const pendingPillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+        const nowServingPillStyle = `${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;`;
+        let metaBadges = '';
         if (isAbandoned) {
-            statusBadge = '<span class="badge bg-danger" style="font-size: 0.7rem;">Abandoned</span>';
-        } else if (allDone) {
-            statusBadge = '<span class="badge bg-success" style="font-size: 0.7rem;">All Done</span>';
-        } else if (atService) {
-            statusBadge = `<span class="badge bg-info" style="font-size: 0.7rem;">${atService}</span>`;
-        }
-        if (!isAbandoned && standbyServices.length > 0 && !allDone) {
-            standbyServices.forEach(svc => {
-                statusBadge += `<span class="badge bg-warning text-dark" style="font-size: 0.7rem;">${svc.ServiceName} Standby</span>`;
-            });
+            metaBadges = '<span class="badge bg-danger" style="font-size: 0.7rem;">Abandoned</span>';
         }
         if (!isAbandoned && wasSkipped) {
-            statusBadge += '<i class="bi bi-skip-forward-fill text-warning" title="Skipped" style="font-size: 0.9rem;"></i>';
+            metaBadges += '<i class="bi bi-skip-forward-fill text-warning" title="Skipped" style="font-size: 0.9rem;"></i>';
         }
-        const avatarClass = isAbandoned ? 'bg-danger text-white' : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light'));
-        const avatarIcon  = isAbandoned ? 'bi-person-x' : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person'));
+        const servicePills = orderedVisitServices.map(vs => {
+            let pillStyle = pendingPillStyle;
+            if (vs.ServiceStatus === 'In-Progress') pillStyle = inProgressOtherPillStyle;
+            else if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
+            return `<span class="badge border" style="${pillStyle}">${vs.ServiceName}</span>`;
+        }).join('');
+        const avatarClass = isAbandoned
+            ? 'bg-danger text-white'
+            : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light'));
+        const avatarIcon  = isAbandoned
+            ? 'bi-person-x'
+            : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person'));
         const isNowServing = patient.ClientID == nowServingClientId;
-        if (isNowServing) {
-            statusBadge = `<span class="badge text-dark" style="background-color: #ffe066; font-size: 0.7rem;">Now Serving</span>` + statusBadge;
-        }
         const finalAvatarClass = isNowServing ? 'text-dark' : avatarClass;
-        const finalAvatarIcon  = isNowServing ? 'bi-bell-fill' : avatarIcon;
+        const finalAvatarIconHTML = isNowServing
+            ? '<i class="bi bi-bell-fill waitlist-now-serving-bell"></i>'
+            : (atService
+                ? renderAvatarIconMarkup(inProgressIconTag, avatarIcon, 'text-white')
+                : `<i class="bi ${avatarIcon}"></i>`);
         const finalAvatarStyle = isNowServing ? 'background-color: #ffe066;' : '';
+        const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
         const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
         const rowHTML = `
@@ -231,11 +264,12 @@ function populateWaitListTable(patients) {
                 <td class="ps-3 py-3">
                     <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                         <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">
-                            <i class="bi ${finalAvatarIcon}"></i>
+                            ${finalAvatarIconHTML}
                         </div>
                         <div class="d-flex flex-column gap-1" style="min-width: 0;">
-                            <span class="fw-bold text-dark">${patient.FirstName} ${patient.LastName}</span>
-                            ${statusBadge ? `<div class="d-flex flex-wrap gap-1">${statusBadge}</div>` : ''}
+                            <span class="fw-bold text-dark ${nameClass}">${patient.FirstName} ${patient.LastName}</span>
+                            ${metaBadges ? `<div class="d-flex flex-wrap gap-1">${metaBadges}</div>` : ''}
+                            ${servicePills ? `<div class="d-flex flex-wrap gap-1">${servicePills}</div>` : ''}
                         </div>
                     </div>
                 </td>
@@ -288,6 +322,12 @@ tableBody.addEventListener('click', (event) => {
 function renderServiceToggles(patient) {
     const container = document.getElementById('modalServiceToggles');
     container.innerHTML = '';
+    const chipBaseStyle = 'font-size: 0.62rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.5rem; line-height: 1.2;';
+    const getStatusPillStyle = (status) => {
+        if (status === 'In-Progress') return `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
+        if (status === 'Complete') return `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+        return `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+    };
 
     // Show/hide the abandon section based on whether the client is already abandoned or all done
     const abandonSection = document.getElementById('abandonSection');
@@ -315,7 +355,7 @@ function renderServiceToggles(patient) {
             row.innerHTML = `
                 <div class="d-flex align-items-center gap-2">
                     <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
-                    <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
+                    <span class="badge border" style="${getStatusPillStyle(vs.ServiceStatus)}">${statusInfo.text}</span>
                 </div>`;
             container.appendChild(row);
         });
@@ -360,7 +400,7 @@ function renderServiceToggles(patient) {
             <div class="d-flex flex-column">
                 <div class="d-flex align-items-center gap-2">
                     <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
-                    <span class="badge ${statusInfo.class}" style="font-size: 0.6rem;">${statusInfo.text}</span>
+                    <span class="badge border" style="${getStatusPillStyle(vs.ServiceStatus)}">${statusInfo.text}</span>
                 </div>
                 ${isStandby ? '<span class="text-muted" style="font-size: 0.7rem;">If available only</span>' : ''}
             </div>
