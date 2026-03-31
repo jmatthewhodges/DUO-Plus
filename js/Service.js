@@ -70,6 +70,15 @@ function formatDOB(dateString) {
     return dateString;
 }
 
+function escapeHtml(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Service configuration — loaded from API at init, populated by loadServiceHierarchy()
 let SERVICES = {};
 
@@ -81,6 +90,8 @@ let SERVICE_WAITLISTS = {};
 
 // Friendly short labels for sub-services (built from API data)
 let SUB_SERVICE_LABELS = {};
+let SERVICE_PRIORITY = {};
+let SERVICE_NAME_BY_ID = {};
 
 // Loads service hierarchy from /api/services.php and builds SERVICES, SERVICE_WAITLISTS, and SUB_SERVICE_LABELS
 async function loadServiceHierarchy() {
@@ -95,7 +106,11 @@ async function loadServiceHierarchy() {
         SERVICES = {};
         SERVICE_WAITLISTS = {};
         SUB_SERVICE_LABELS = {};
+        SERVICE_PRIORITY = {};
+        SERVICE_NAME_BY_ID = {};
         serviceHierarchyRaw = json.hierarchy;
+
+        let priorityIndex = 0;
 
         json.hierarchy.forEach(cat => {
             const key = cat.ServiceID;
@@ -113,6 +128,8 @@ async function loadServiceHierarchy() {
                 color: 'primary',
                 serviceIDs: serviceIDs,
             };
+            SERVICE_PRIORITY[key] = priorityIndex++;
+            SERVICE_NAME_BY_ID[key] = cat.ServiceName;
 
             SERVICE_WAITLISTS[key] = {};
 
@@ -124,6 +141,8 @@ async function loadServiceHierarchy() {
                     label = label.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
                 }
                 SUB_SERVICE_LABELS[child.ServiceID] = label || child.ServiceName;
+                SERVICE_PRIORITY[child.ServiceID] = priorityIndex++;
+                SERVICE_NAME_BY_ID[child.ServiceID] = child.ServiceName;
             });
         });
 
@@ -240,21 +259,71 @@ async function fetchServiceData(serviceKey) {
         }
         // Past avg is hardcoded per service — set once in showService(), not overwritten here
 
-        // Normalize API waitlist into local format and populate table
+        // Normalize API waitlist into local format and populate table.
+        // Rows may include the same client multiple times (one per service),
+        // so we aggregate into one client card with full assigned services.
         SERVICE_WAITLISTS[serviceKey] = {};
         (data.waitList || []).forEach(client => {
             const fullName = [client.FirstName, client.MiddleInitial, client.LastName]
                 .filter(Boolean)
                 .join(' ');
-            let status = 'waiting';
-            if (client.ServiceStatus === 'In-Progress') status = 'in-progress';
-            SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
-                id: client.ClientID,
-                name: fullName,
-                dob: client.DOB,
-                status: status,
-                serviceID: client.ServiceID
+
+            if (!SERVICE_WAITLISTS[serviceKey][client.ClientID]) {
+                SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
+                    id: client.ClientID,
+                    name: fullName,
+                    dob: client.DOB,
+                    status: 'waiting',
+                    serviceID: client.ServiceID,
+                    assignedServices: []
+                };
+            }
+
+            // Promote status by priority so one client card reflects the strongest state.
+            const statusPriority = { waiting: 1, completed: 2, 'in-progress': 3 };
+            let normalizedStatus = 'waiting';
+            if (client.ServiceStatus === 'In-Progress') normalizedStatus = 'in-progress';
+            else if (client.ServiceStatus === 'Complete') normalizedStatus = 'completed';
+            const currentStatus = SERVICE_WAITLISTS[serviceKey][client.ClientID].status;
+            if ((statusPriority[normalizedStatus] || 0) > (statusPriority[currentStatus] || 0)) {
+                SERVICE_WAITLISTS[serviceKey][client.ClientID].status = normalizedStatus;
+            }
+
+            // Keep the current row's service for sub-label behavior.
+            SERVICE_WAITLISTS[serviceKey][client.ClientID].serviceID = client.ServiceID;
+
+            const serviceStatusPriority = {
+                'In-Progress': 4,
+                'Complete': 3,
+                'Pending': 2,
+                'Standby': 1
             };
+            const existingMap = new Map(
+                (SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices || []).map(s => [s.name, s])
+            );
+            const assigned = (client.AssignedServiceDetails || '')
+                .split('||')
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            assigned.forEach(item => {
+                const [serviceIdRaw, name, statusRaw] = item.split('::');
+                const serviceId = (serviceIdRaw || '').trim();
+                const serviceName = (name || '').trim();
+                const serviceStatus = (statusRaw || '').trim() || 'Pending';
+                if (!serviceName) return;
+
+                const existing = existingMap.get(serviceName);
+                if (!existing || (serviceStatusPriority[serviceStatus] || 0) > (serviceStatusPriority[existing.status] || 0)) {
+                    existingMap.set(serviceName, { id: serviceId, name: serviceName, status: serviceStatus });
+                }
+            });
+            SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices = Array.from(existingMap.values()).sort((a, b) => {
+                const aPriority = SERVICE_PRIORITY[a.id] ?? Number.MAX_SAFE_INTEGER;
+                const bPriority = SERVICE_PRIORITY[b.id] ?? Number.MAX_SAFE_INTEGER;
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                return a.name.localeCompare(b.name);
+            });
         });
 
         populateWaitlist();
@@ -1068,10 +1137,19 @@ function populateWaitlist(clientsToShow = null) {
     if (clientsToShow) {
         clientsArray = Object.values(clientsToShow);
     } else {
-        // Show only active clients (waiting or in-progress) in the current service's waitlist
+        // Show all clients in this service table, including completed.
         clientsArray = currentServiceKey ?
-            Object.values(SERVICE_WAITLISTS[currentServiceKey]).filter(c => c.status !== 'completed') : [];
+            Object.values(SERVICE_WAITLISTS[currentServiceKey]) : [];
     }
+
+    // Keep original order, but move completed clients to the bottom.
+    clientsArray = clientsArray.sort((a, b) => {
+        const aCompleted = a.status === 'completed';
+        const bCompleted = b.status === 'completed';
+        if (aCompleted && !bCompleted) return 1;
+        if (!aCompleted && bCompleted) return -1;
+        return 0;
+    });
 
     // Clear existing rows
     waitlistBody.innerHTML = '';
@@ -1092,9 +1170,27 @@ function populateWaitlist(clientsToShow = null) {
     // Populate with client data
     clientsArray.forEach(client => {
         const isInProgress = client.status === 'in-progress';
-        const statusBadge = isInProgress
-            ? '<span class="badge text-dark ms-1" style="background-color: #ffe066; font-size: 0.7rem;">In Progress</span>'
+        const isCompleted = client.status === 'completed';
+        const currentServiceIDs = (currentServiceKey && SERVICES[currentServiceKey])
+            ? SERVICES[currentServiceKey].serviceIDs
+            : [];
+        const inProgressService = (client.assignedServices || []).find(s => s.status === 'In-Progress');
+        const inProgressAtCurrentService = !!(inProgressService && currentServiceIDs.includes(inProgressService.id));
+        const inProgressAtOtherService = !!(inProgressService && !currentServiceIDs.includes(inProgressService.id));
+        const inProgressServiceName = inProgressService
+            ? (SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || inProgressService.id)
             : '';
+        const avatarClass = inProgressAtOtherService
+            ? 'bg-info text-white'
+            : (isCompleted ? 'bg-success text-white' : (isInProgress ? 'text-dark' : 'bg-light'));
+        const avatarStyle = inProgressAtOtherService
+            ? ''
+            : (isInProgress ? ' background-color: #ffe066;' : '');
+        const avatarIcon = inProgressAtOtherService
+            ? 'bi-arrow-right-circle'
+            : (isCompleted ? 'bi-check-lg' : (isInProgress ? 'bi-person-fill-check' : 'bi-person'));
+        const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
+        const statusBadge = '';
         // Show sub-service label only for stations with multiple serviceIDs
         const hasMultiple = currentServiceKey && SERVICES[currentServiceKey] && SERVICES[currentServiceKey].serviceIDs.length > 1;
         const subLabel = hasMultiple && client.serviceID && SUB_SERVICE_LABELS[client.serviceID]
@@ -1104,26 +1200,63 @@ function populateWaitlist(clientsToShow = null) {
         const secondaryInfo = (subLabel || statusBadge)
             ? `<span class="small">${subLabel}${statusBadge}</span>`
             : '';
+        const locationIndicator = inProgressAtOtherService
+            ? `<div class="small fw-semibold mt-1" style="color:#0b5ed7;">
+                    Currently At: ${escapeHtml(inProgressServiceName)}
+               </div>`
+            : (inProgressAtCurrentService
+                ? `<div class="small fw-semibold mt-1" style="color:#9c6f00;">
+                        <i class="bi bi-pin-map-fill me-1"></i>Currently At This Station
+                   </div>`
+                : '');
+        const assignedServices = (client.assignedServices || [])
+            .map(service => {
+                let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+                if (service.status === 'In-Progress') {
+                    // In-progress services stand out in yellow with a stronger border.
+                    servicePillStyle = `${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;`;
+                } else if (service.status === 'Complete') {
+                    servicePillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+                }
+                return `<span class="badge border" style="${servicePillStyle}">${escapeHtml(service.name)}</span>`;
+            })
+            .join('');
+        const assignedServicesHTML = assignedServices
+            ? `<div class="d-flex flex-wrap gap-1 mt-1 align-items-center" style="margin-left: 0; padding-left: 0; justify-content: flex-start;">${assignedServices}</div>`
+            : '';
+        const rowButtonClass = isInProgress ? 'btn-primary' : (isCompleted ? 'btn-outline-secondary' : 'btn-primary');
+        const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
+        const rowButtonLabel = isInProgress ? 'Update' : (isCompleted ? 'Completed' : 'Update');
+        const rowButtonDisabled = isCompleted ? 'disabled' : '';
+        const actionCellHTML = isCompleted
+            ? ''
+            : `<button class="btn ${rowButtonClass} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${rowButtonLabel}" ${rowButtonDisabled}>
+                    <i class="bi ${rowButtonIcon} d-sm-none" style="font-size: 1rem; line-height: 1;"></i>
+                    <span class="d-none d-sm-inline text-nowrap">${rowButtonLabel}</span>
+                </button>`;
         const row = document.createElement('tr');
         row.className = 'border-bottom';
+        if (inProgressAtCurrentService) {
+            row.style.backgroundColor = '#fff9e6';
+            row.style.boxShadow = 'inset 4px 0 0 #d4aa00';
+        }
         row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${isInProgress ? 'text-dark' : 'bg-light'}" style="width: 30px; height: 30px;${isInProgress ? ' background-color: #ffe066;' : ''}">
-                        <i class="bi ${isInProgress ? 'bi-person-fill-check' : 'bi-person'}"></i>
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}">
+                        <i class="bi ${avatarIcon}"></i>
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">
                         <span class="fw-bold text-dark">${client.name}</span>
                         ${secondaryInfo}
+                        ${locationIndicator}
+                        ${assignedServicesHTML}
                     </div>
                 </div>
             </td>
             <td class="fw-medium text-nowrap py-3">${formatDOB(client.dob)}</td>
             <td class="text-end pe-3 py-3">
-                <button class="btn ${isInProgress ? 'btn-success' : 'btn-primary'} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${isInProgress ? 'Complete' : 'Update'}">
-                    <i class="bi ${isInProgress ? 'bi-check-lg' : 'bi-arrow-right'} d-sm-none" style="font-size: 1rem; line-height: 1;"></i>
-                    <span class="d-none d-sm-inline text-nowrap">${isInProgress ? 'Complete' : 'Update'}</span>
-                </button>
+                ${actionCellHTML}
             </td>
         `;
         waitlistBody.appendChild(row);

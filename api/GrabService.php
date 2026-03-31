@@ -45,12 +45,31 @@ $currentEventID = '4cbde538985861b9';
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
 $dataStmt = $mysqli->prepare(
     "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB,
-            vs.ServiceID, vs.ServiceStatus
+            vs.ServiceID, vs.ServiceStatus, v.FirstCheckedIn,
+            assigned.AssignedServiceDetails
      FROM tblVisitServices vs
      JOIN tblVisits v ON v.VisitID = vs.VisitID
      JOIN tblClients c ON c.ClientID = v.ClientID
+     LEFT JOIN (
+         SELECT vs2.VisitID,
+                GROUP_CONCAT(
+                    CONCAT(
+                        REPLACE(vs2.ServiceID, '::', ''),
+                        '::',
+                        REPLACE(s2.ServiceName, '::', ''),
+                        '::',
+                        REPLACE(vs2.ServiceStatus, '::', '')
+                    )
+                    ORDER BY s2.ServiceName
+                    SEPARATOR '||'
+                ) AS AssignedServiceDetails
+         FROM tblVisitServices vs2
+         JOIN tblServices s2 ON s2.ServiceID = vs2.ServiceID
+         GROUP BY vs2.VisitID
+     ) assigned ON assigned.VisitID = v.VisitID
      WHERE vs.ServiceID IN ($placeholders)
-     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending'), vs.QueuePriority ASC"
+       AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Complete', 'Standby')
+     ORDER BY v.FirstCheckedIn ASC, vs.QueuePriority ASC"
 );
 if (!$dataStmt) {
     http_response_code(500);
@@ -72,7 +91,7 @@ foreach ($allRows as $row) {
         $countedClients[$clientKey] = true;
         if (isset($counts[$status])) $counts[$status]++;
     }
-    if ($status === 'Pending' || $status === 'In-Progress') {
+    if (in_array($status, ['Pending', 'In-Progress', 'Complete', 'Standby'], true)) {
         $waitList[] = $row;
     }
 }
