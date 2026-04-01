@@ -1216,6 +1216,8 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     fetchRegistrationQueue();
 });
 
+
+
 //================================================================================
 // 8. PRINT VOLUNTEER BADGE
 
@@ -1378,6 +1380,10 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
     }, 100);
 });
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 //================================================================================
 // 9. INITIALIZATION
 (async () => {
