@@ -13,12 +13,22 @@ let currentRowToUpdate = null;
 let currentClientId = null;
 let currentVisitId = null;
 let nowServingClientId = null;
+let currentQueueFilter = 'all';
+let currentSearchTerm = '';
+const QUEUE_FILTER_SERVICE_IDS = {
+    all: [],
+    dental: ['dentalHygiene', 'dentalExtraction'],
+    optical: ['optical'],
+    medical: ['medicalExam', 'medicalFollowUp'],
+    haircut: ['haircut'],
+};
 
 //================================================================================
 // 2. DOM REFERENCES
 const tableBody = document.querySelector('tbody');
 const updateModal = document.getElementById('updateStatusModal');
 const waitListCountLabel = document.getElementById('waitlist-header-count');
+const queueFilterButtons = document.querySelectorAll('.queue-filter-btn');
 
 // Grab the single element for Now Serving
 const nowServingNameEl = document.querySelector('.queue-name');
@@ -68,6 +78,32 @@ function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
 function closeUpdateModal() {
     updateModal.classList.add('d-none');
     updateModal.classList.remove('d-flex');
+}
+
+function matchesQueueFilter(patient, filterKey) {
+    if (filterKey === 'all') return true;
+    const allowed = QUEUE_FILTER_SERVICE_IDS[filterKey] || [];
+    if (!allowed.length) return true;
+    const visitServices = patient.VisitServices || [];
+    return visitServices.some(vs => {
+        const inTargetServices = allowed.includes(vs.ServiceID);
+        const stillRelevant = ['Pending', 'Standby', 'In-Progress', 'Complete'].includes(vs.ServiceStatus);
+        return inTargetServices && stillRelevant;
+    });
+}
+
+function matchesSearch(patient, term) {
+    if (!term) return true;
+    const name = `${patient.FirstName} ${patient.MiddleInitial || ''} ${patient.LastName}`.toLowerCase();
+    const id = String(patient.ClientID || '').toLowerCase();
+    return name.includes(term) || id.includes(term);
+}
+
+function applyTableFiltersAndRender() {
+    const filtered = (waitListData || []).filter(patient =>
+        matchesQueueFilter(patient, currentQueueFilter) && matchesSearch(patient, currentSearchTerm)
+    );
+    populateWaitListTable(filtered);
 }
 
 function getServiceStatusLabel(status) {
@@ -180,7 +216,7 @@ async function fetchQueueData() {
             }
 
             // 2. Populate the table
-            populateWaitListTable(waitListData);
+            applyTableFiltersAndRender();
         } else {
             console.error("Database Error:", data.error);
             Swal.fire({ icon: 'error', title: 'Data Error', text: 'Could not load waiting room data.' });
@@ -462,18 +498,24 @@ document.getElementById('abandonClientBtn').addEventListener('click', () => {
 const waitlistSearchInput = document.getElementById('waitlist-search');
 if (waitlistSearchInput) {
     waitlistSearchInput.addEventListener('input', function () {
-        const term = this.value.trim().toLowerCase();
-        if (!term) {
-            populateWaitListTable(waitListData);
-            return;
-        }
-        const filtered = waitListData.filter(p => {
-            const name = `${p.FirstName} ${p.MiddleInitial || ''} ${p.LastName}`.toLowerCase();
-            return name.includes(term);
-        });
-        populateWaitListTable(filtered);
+        currentSearchTerm = this.value.trim().toLowerCase();
+        applyTableFiltersAndRender();
     });
 }
+
+queueFilterButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
+        const selected = this.getAttribute('data-filter') || 'all';
+        currentQueueFilter = selected;
+        queueFilterButtons.forEach(b => {
+            const isActive = b.getAttribute('data-filter') === selected;
+            b.classList.toggle('active', isActive);
+            b.classList.toggle('btn-primary', isActive);
+            b.classList.toggle('btn-outline-primary', !isActive);
+        });
+        applyTableFiltersAndRender();
+    });
+});
 
 // Skip Now Serving button (in the Now Serving header area)
 document.getElementById('skipNowServingBtn').addEventListener('click', function () {

@@ -53,6 +53,25 @@
                 <h5 class="text-white mb-0 fw-bold" id="waitlist-header-count">Wait List - 0</h5>
                 <input type="text" class="form-control form-control-sm w-50" placeholder="Search" id="waitlist-search">
             </div>
+            <div class="px-3 py-2 border-bottom bg-light">
+                <div class="d-flex flex-wrap gap-2" id="queueViewFilters">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill queue-filter-btn active" data-filter="all">
+                        All
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="dental" title="Dental queue view">
+                        <i class="bi bi-emoji-smile me-1"></i>Dental
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="optical" title="Optical queue view">
+                        <i class="bi bi-eyeglasses me-1"></i>Optical
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="medical" title="Medical queue view">
+                        <i class="bi bi-clipboard2-pulse me-1"></i>Medical
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="haircut" title="Haircut queue view">
+                        <i class="bi bi-scissors me-1"></i>Haircut
+                    </button>
+                </div>
+            </div>
             
             <div class="card-body p-0 position-relative">
                 <div class="table-responsive custom-scroll" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
