@@ -1260,11 +1260,18 @@ function populateWaitlist(clientsToShow = null) {
             }
             return `<span class="badge border" style="${servicePillStyle}">${escapeHtml(service.name)}</span>`;
         }).join('');
+        const hasCurrentlyAt = !!currentlyAtCells;
+        const servicesLabelClass = hasCurrentlyAt
+            ? 'small service-waitlist-label-text'
+            : 'small service-waitlist-label-text service-waitlist-label-services-only';
+        const statusBlockClass = hasCurrentlyAt
+            ? 'service-waitlist-status-block mt-1'
+            : 'service-waitlist-status-block service-waitlist-services-only mt-1';
         const nextCells = assignedServices
-            ? `<span class="small service-waitlist-label-text">Services:</span><div class="service-waitlist-badges-wrap">${assignedServices}</div>`
+            ? `<span class="${servicesLabelClass}">Services:</span><div class="service-waitlist-badges-wrap">${assignedServices}</div>`
             : '';
         const groupedStatusHTML = (currentlyAtCells || nextCells)
-            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}${nextCells}</div>`
+            ? `<div class="${statusBlockClass}">${currentlyAtCells}${nextCells}</div>`
             : '';
         const rowButtonClass = isInProgress ? 'btn-primary' : (isCompleted ? 'btn-outline-secondary' : 'btn-primary');
         const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
