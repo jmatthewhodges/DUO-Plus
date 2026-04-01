@@ -3,9 +3,9 @@
  * File:           registrationdashboard.html
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  Mar 1 @ 9:00 PM
- * Changes Made:      Removed duplicate pinCode.js call
+ * Last Modified By:  Lauren
+ * Last Modified On:  March 31st @ 10:11 PM
+ * Changes Made:      Added volunteer printing button.
  * ============================================================
 !-->
 <!DOCTYPE html>
@@ -55,6 +55,9 @@
                             </div>
                             <button class="btn btn-sm text-white border-0 p-1 ms-2" id="refreshQueueBtn" title="Refresh queue">
                                 <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
+                            </button>
+                            <button class="btn btn-sm text-white border-0 p-1" id="printVolunteerBadgeBtn" title="Print volunteer badge">
+                                <i class="bi bi-person-badge" style="font-size: 1.25rem;"></i>
                             </button>
                         </div>
                     </div>
@@ -125,6 +128,16 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div id="volunteerPrintLabel" class="d-none" aria-hidden="true">
+        <div class="volunteer-label-shell">
+            <div class="volunteer-label-content">
+                <div class="volunteer-name" id="volunteerLabelName"></div>
+                <div class="volunteer-role">Volunteer</div>
+            </div>
+            <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Volunteer" class="volunteer-label-logo">
         </div>
     </div>
 
