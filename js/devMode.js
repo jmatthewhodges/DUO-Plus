@@ -171,7 +171,6 @@
             const data = await res.json();
             if (data.success) {
                 enableDevMode();
-                Swal.fire({ icon: 'success', title: 'Dev Mode On', text: 'Developer tools are now active for this session.', timer: 1500, showConfirmButton: false });
             } else {
                 Swal.fire({ icon: 'error', title: 'Access Denied', text: data.error || 'Incorrect PIN.' });
             }

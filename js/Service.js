@@ -1220,6 +1220,11 @@ function populateWaitlist(clientsToShow = null) {
                 : (inProgressAtCurrentService
                     ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
                     : '<i class="bi bi-person"></i>'));
+        const avatarMeaning = inProgressAtOtherService
+            ? `Currently at ${inProgressServiceName || 'another service'}`
+            : (inProgressAtCurrentService
+                ? `Currently at ${inProgressServiceName || 'this service'}`
+                : (isCompleted ? 'Service completed' : 'Waiting for service'));
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
         const headerLine = `
             <div class="d-flex flex-column" style="min-width:0;">
@@ -1249,10 +1254,12 @@ function populateWaitlist(clientsToShow = null) {
         const orderedOtherServices = [...incompleteOther, ...completeOther];
         const assignedServices = orderedOtherServices.map(service => {
             let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+            let servicePillContent = `${escapeHtml(service.name)}`;
             if (service.status === 'Complete') {
-                servicePillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+                servicePillStyle = `${chipBaseStyle} background-color: #dff6e7; border-color: #8fd0a8 !important; color: #155f36;`;
+                servicePillContent = `<i class="bi bi-check2 me-1"></i>${escapeHtml(service.name)}`;
             }
-            return `<span class="badge border" style="${servicePillStyle}">${escapeHtml(service.name)}</span>`;
+            return `<span class="badge border" style="${servicePillStyle}">${servicePillContent}</span>`;
         }).join('');
         const hasCurrentlyAt = !!currentlyAtCells;
         const servicesLabelClass = hasCurrentlyAt
@@ -1286,7 +1293,7 @@ function populateWaitlist(clientsToShow = null) {
         row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}" title="${escapeHtml(avatarMeaning)}" aria-label="${escapeHtml(avatarMeaning)}">
                         ${avatarIconHTML}
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">

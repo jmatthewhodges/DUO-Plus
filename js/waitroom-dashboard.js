@@ -312,7 +312,7 @@ function populateWaitListTable(patients) {
             return String(a.ServiceName || '').localeCompare(String(b.ServiceName || ''));
         });
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
-        const completedPillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+        const completedPillStyle = `${chipBaseStyle} background-color: #dff6e7; border-color: #8fd0a8 !important; color: #155f36;`;
         const inProgressOtherPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
         const pendingPillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
         const nowServingPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
@@ -336,8 +336,10 @@ function populateWaitListTable(patients) {
         const otherServices = [...incompleteOtherServices, ...completedOtherServices];
         const servicePills = otherServices.map(vs => {
             let pillStyle = pendingPillStyle;
+            let pillContent = `${escapeHtml(vs.ServiceName)}`;
             if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
-            return `<span class="badge border" style="${pillStyle}">${escapeHtml(vs.ServiceName)}</span>`;
+            if (vs.ServiceStatus === 'Complete') pillContent = `<i class="bi bi-check2 me-1"></i>${escapeHtml(vs.ServiceName)}`;
+            return `<span class="badge border" style="${pillStyle}">${pillContent}</span>`;
         }).join('');
         const currentlyAtCells = currentAtPills
             ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">${currentAtPills}</div>`
@@ -369,6 +371,13 @@ function populateWaitListTable(patients) {
                 ? renderAvatarIconMarkup(inProgressIconTag, avatarIcon, 'text-white')
                 : `<i class="bi ${avatarIcon}"></i>`);
         const finalAvatarStyle = isNowServing ? 'background-color: #ffe066;' : '';
+        const avatarMeaning = isNowServing
+            ? `Now serving${atService ? ` at ${atService}` : ''}`
+            : (isAbandoned
+                ? 'Client marked as abandoned'
+                : (allDone
+                    ? 'All services completed'
+                    : (atService ? `Currently at ${atService}` : 'Waiting in queue')));
         const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
         const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
@@ -376,7 +385,7 @@ function populateWaitListTable(patients) {
             <tr class="border-bottom" style="${isNowServing ? 'background-color: #eef4ff;' : ''}" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
                     <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}" title="${escapeHtml(avatarMeaning)}" aria-label="${escapeHtml(avatarMeaning)}">
                             ${finalAvatarIconHTML}
                         </div>
                         <div class="d-flex flex-column gap-1" style="min-width: 0;">
@@ -441,7 +450,7 @@ function renderServiceToggles(patient) {
     const chipBaseStyle = 'font-size: 0.62rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.5rem; line-height: 1.2;';
     const getStatusPillStyle = (status) => {
         if (status === 'In-Progress') return `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
-        if (status === 'Complete') return `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
+        if (status === 'Complete') return `${chipBaseStyle} background-color: #dff6e7; border-color: #8fd0a8 !important; color: #155f36;`;
         return `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
     };
 

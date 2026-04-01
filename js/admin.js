@@ -250,11 +250,11 @@ function renderServiceRow(svc, isChild) {
             ? '<span class="badge bg-danger status-badge">Closed</span>'
             : '<span class="badge bg-success status-badge">Open</span>')
         : '';
-    const indent = isChild ? 'style="padding-left: 2.5rem; background: #fafbfe;"' : '';
+    const rowClass = isChild ? 'service-row service-row-child' : 'service-row';
     const childIcon = isChild ? '<i class="bi bi-arrow-return-right text-muted me-1" style="font-size:0.75rem;"></i>' : '';
 
     return `
-    <div class="service-row" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}" data-icon-tag="${(svc.IconTag || '').replace(/"/g, '&quot;')}" ${indent}>
+    <div class="${rowClass}" data-service-id="${svc.ServiceID}" data-event-service-id="${svc.EventServiceID || ''}" data-icon-tag="${(svc.IconTag || '').replace(/"/g, '&quot;')}">
         <div class="service-icon-preview icon-editable" title="Click to change icon">
             ${renderIcon(svc.IconTag)}
             <div class="icon-edit-badge"><i class="bi bi-pencil-fill"></i></div>
