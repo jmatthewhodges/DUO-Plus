@@ -17,10 +17,17 @@ let currentQueueFilter = 'all';
 let currentSearchTerm = '';
 const QUEUE_FILTER_SERVICE_IDS = {
     all: [],
-    dental: ['dentalHygiene', 'dentalExtraction'],
+    dental: ['dental', 'dentalHygiene', 'dentalExtraction'],
     optical: ['optical'],
-    medical: ['medicalExam', 'medicalFollowUp'],
+    medical: ['medical', 'medicalExam', 'medicalFollowUp'],
     haircut: ['haircut'],
+};
+
+const QUEUE_FILTER_FALLBACK_ICONS = {
+    dental: 'bi-bandaid',
+    optical: 'bi-eyeglasses',
+    medical: 'bi-clipboard2-pulse',
+    haircut: 'bi-scissors',
 };
 
 //================================================================================
@@ -59,6 +66,15 @@ function formatDOB(dateString) {
     return dateString;
 }
 
+function escapeHtml(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
     const safeFallback = fallbackBi || 'bi-person';
     const cls = extraClasses ? ` ${extraClasses}` : '';
@@ -78,6 +94,42 @@ function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
 function closeUpdateModal() {
     updateModal.classList.add('d-none');
     updateModal.classList.remove('d-flex');
+}
+
+function getFilterIconTag(filterKey, categories) {
+    const allowedServiceIDs = (QUEUE_FILTER_SERVICE_IDS[filterKey] || []).map(id => String(id).toLowerCase());
+    if (!allowedServiceIDs.length) return '';
+    const matched = (categories || []).find(cat => allowedServiceIDs.includes(String(cat.ServiceID || '').toLowerCase()));
+    return matched?.IconTag || '';
+}
+
+function applyQueueFilterIcons(categories) {
+    queueFilterButtons.forEach(btn => {
+        const filterKey = btn.getAttribute('data-filter') || '';
+        if (!filterKey || filterKey === 'all') return;
+
+        const fallback = QUEUE_FILTER_FALLBACK_ICONS[filterKey] || 'bi-circle';
+        const iconTag = getFilterIconTag(filterKey, categories);
+        const iconMarkup = renderAvatarIconMarkup(iconTag, fallback, 'me-1');
+        const existingIcon = btn.querySelector('.bi, .svg-icon');
+
+        if (existingIcon) {
+            existingIcon.outerHTML = iconMarkup;
+        } else {
+            btn.insertAdjacentHTML('afterbegin', iconMarkup);
+        }
+    });
+}
+
+async function loadQueueFilterIcons() {
+    try {
+        const response = await fetch('../api/services.php?view=categories');
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.categories)) return;
+        applyQueueFilterIcons(data.categories);
+    } catch (error) {
+        console.error('Failed to load queue filter icons:', error);
+    }
 }
 
 function matchesQueueFilter(patient, filterKey) {
@@ -241,13 +293,12 @@ function populateWaitListTable(patients) {
     }
 
     if (!patients || patients.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted">No patients in the waiting room.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="2" class="text-center p-3 text-muted">No patients in the waiting room.</td></tr>';
         if (waitListCountLabel) waitListCountLabel.innerText = `Wait List - 0`;
         return;
     }
 
     patients.forEach((patient) => {
-        const formattedDOB = formatDOB(patient.DOB);
         const allDone = patient.AllServicesComplete;
         const isAbandoned = patient.IsAbandoned;
         const atService = patient.CurrentServiceName;
@@ -264,7 +315,7 @@ function populateWaitListTable(patients) {
         const completedPillStyle = `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
         const inProgressOtherPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
         const pendingPillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
-        const nowServingPillStyle = `${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;`;
+        const nowServingPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
         let metaBadges = '';
         if (isAbandoned) {
             metaBadges = '<span class="badge bg-danger" style="font-size: 0.7rem;">Abandoned</span>';
@@ -272,12 +323,35 @@ function populateWaitListTable(patients) {
         if (!isAbandoned && wasSkipped) {
             metaBadges += '<i class="bi bi-skip-forward-fill text-warning" title="Skipped" style="font-size: 0.9rem;"></i>';
         }
-        const servicePills = orderedVisitServices.map(vs => {
+        const currentServiceIDs = orderedVisitServices
+            .filter(vs => vs.ServiceStatus === 'In-Progress')
+            .map(vs => vs.ServiceID);
+        const currentAtPills = orderedVisitServices
+            .filter(vs => currentServiceIDs.includes(vs.ServiceID))
+            .map(vs => `<span class="badge border" style="${nowServingPillStyle}">${escapeHtml(vs.ServiceName)}</span>`)
+            .join('');
+        const otherServices = orderedVisitServices.filter(vs => !currentServiceIDs.includes(vs.ServiceID));
+        const servicePills = otherServices.map(vs => {
             let pillStyle = pendingPillStyle;
-            if (vs.ServiceStatus === 'In-Progress') pillStyle = inProgressOtherPillStyle;
-            else if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
-            return `<span class="badge border" style="${pillStyle}">${vs.ServiceName}</span>`;
+            if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
+            return `<span class="badge border" style="${pillStyle}">${escapeHtml(vs.ServiceName)}</span>`;
         }).join('');
+        const currentlyAtCells = currentAtPills
+            ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">${currentAtPills}</div>`
+            : '';
+        const hasCurrentlyAt = !!currentlyAtCells;
+        const servicesLabelClass = hasCurrentlyAt
+            ? 'small service-waitlist-label-text'
+            : 'small service-waitlist-label-text service-waitlist-label-services-only';
+        const statusBlockClass = hasCurrentlyAt
+            ? 'service-waitlist-status-block mt-1'
+            : 'service-waitlist-status-block service-waitlist-services-only mt-1';
+        const serviceCells = servicePills
+            ? `<span class="${servicesLabelClass}">Services:</span><div class="service-waitlist-badges-wrap">${servicePills}</div>`
+            : '';
+        const groupedStatusHTML = (currentlyAtCells || serviceCells)
+            ? `<div class="${statusBlockClass}">${currentlyAtCells}${serviceCells}</div>`
+            : '';
         const avatarClass = isAbandoned
             ? 'bg-danger text-white'
             : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light'));
@@ -303,13 +377,12 @@ function populateWaitListTable(patients) {
                             ${finalAvatarIconHTML}
                         </div>
                         <div class="d-flex flex-column gap-1" style="min-width: 0;">
-                            <span class="fw-bold text-dark ${nameClass}">${patient.FirstName} ${patient.LastName}</span>
+                            <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
                             ${metaBadges ? `<div class="d-flex flex-wrap gap-1">${metaBadges}</div>` : ''}
-                            ${servicePills ? `<div class="d-flex flex-wrap gap-1">${servicePills}</div>` : ''}
+                            ${groupedStatusHTML}
                         </div>
                     </div>
                 </td>
-                <td class="fw-medium text-nowrap py-3">${formattedDOB}</td>
                 <td class="text-end pe-3 py-3">
                     <button class="btn ${btnClass} btn-sm px-3 rounded-2 update-btn text-nowrap">${btnText}</button>
                 </td>
@@ -347,6 +420,10 @@ tableBody.addEventListener('click', (event) => {
         const patient = waitListData.find(p => p.ClientID == currentClientId);
         currentVisitId = patient.VisitID;
         document.getElementById('modalPatientName').innerText = `${patient.FirstName} ${patient.LastName}`;
+        const modalPatientDob = document.getElementById('modalPatientDOB');
+        if (modalPatientDob) {
+            modalPatientDob.innerText = `DOB: ${formatDOB(patient.DOB)}`;
+        }
 
         renderServiceToggles(patient);
 
@@ -528,6 +605,7 @@ document.getElementById('skipNowServingBtn').addEventListener('click', function 
 // 6. INITIALIZATION
 
 function init() {
+    loadQueueFilterIcons();
     fetchQueueData();
 
     const refreshBtn = document.getElementById('refreshQueueBtn');

@@ -59,7 +59,7 @@
                         All
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="dental" title="Dental queue view">
-                        <i class="bi bi-emoji-smile me-1"></i>Dental
+                        <i class="bi bi-shield-shaded"></i>Dental
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill queue-filter-btn" data-filter="optical" title="Optical queue view">
                         <i class="bi bi-eyeglasses me-1"></i>Optical
@@ -77,14 +77,12 @@
                 <div class="table-responsive custom-scroll" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
                     <table class="table table-borderless align-middle mb-0 waitlist-table">
                         <colgroup>
-                            <col style="width: 50%;">
-                            <col style="width: 28%;">
-                            <col style="width: 22%;">
+                            <col style="width: 76%;">
+                            <col style="width: 24%;">
                         </colgroup>
                         <thead class="sticky-top bg-white d-none" style="z-index: 1;">
                             <tr class="border-bottom">
                                 <th scope="col" class="ps-3">Name</th>
-                                <th scope="col">DOB</th>
                                 <th scope="col" class="text-end pe-3"></th> 
                             </tr>
                         </thead>
@@ -103,6 +101,7 @@
                     <h5 class="fw-bold mb-0 text-dark" id="modalPatientName">Patient Name</h5>
                     <button type="button" class="btn-close" id="cancelUpdateBtn" aria-label="Close"></button>
                 </div>
+                <p class="text-muted small mb-2" id="modalPatientDOB">DOB: N/A</p>
                 <p class="text-muted small mb-3">Toggle services for this patient</p>
                 <div id="modalServiceToggles" class="d-flex flex-column gap-2"></div>
 

@@ -1078,6 +1078,24 @@ body.no-scroll .card-body[style*="overflow-y"] {
     fill: currentColor;
 }
 
+/* Waiting room queue filter buttons: keep DB SVG and BI icons centered with text */
+#queueViewFilters .queue-filter-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+#queueViewFilters .queue-filter-btn .bi,
+#queueViewFilters .queue-filter-btn .svg-icon {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
+#queueViewFilters .queue-filter-btn .svg-icon svg {
+    width: 1em;
+    height: 1em;
+}
+
 /* Service scan waitlist: [label | badges] — labels left-aligned with name; badge column lines up across rows */
 .service-waitlist-status-block {
     display: grid;
