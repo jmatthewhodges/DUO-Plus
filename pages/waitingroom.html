@@ -98,11 +98,13 @@
         <div class="card shadow-lg border-0 rounded-3 overflow-hidden" style="width: 420px; max-width: 90vw;">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0 text-dark" id="modalPatientName">Patient Name</h5>
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark" id="modalPatientName">Patient Name</h5>
+                        <p class="text-muted small mb-0" id="modalPatientDOB">DOB: N/A</p>
+                    </div>
                     <button type="button" class="btn-close" id="cancelUpdateBtn" aria-label="Close"></button>
                 </div>
-                <p class="text-muted small mb-2" id="modalPatientDOB">DOB: N/A</p>
-                <p class="text-muted small mb-3">Toggle services for this patient</p>
+                <p class="text-muted small mb-3">Update client services</p>
                 <div id="modalServiceToggles" class="d-flex flex-column gap-2"></div>
 
                 <!-- Abandon section — shown only for active (non-abandoned, non-complete) clients -->
