@@ -11,6 +11,7 @@
 
 (function () {
     const DEV_KEY = 'duo_dev_mode';
+    const CAMERA_GRANTED_SESSION_KEY = 'duo_camera_permission_granted';
 
     function isDevMode() {
         return sessionStorage.getItem(DEV_KEY) === '1';
@@ -82,6 +83,15 @@
                     <a href="${p}food-truck.html">Food Truck</a>
                     <a href="${p}admin.html">Admin</a>
                 </div>
+                <div class="dev-panel-meta" id="devCameraStatusWrap">
+                    <span class="dev-panel-section">Camera</span>
+                    <div class="dev-meta-row">
+                        <span class="dev-meta-label">Permission</span>
+                        <span id="devCameraStatusBadge" class="dev-status-chip dev-status-unknown">Checking...</span>
+                    </div>
+                    <div class="dev-meta-sub" id="devCameraStatusSub">Checking browser state...</div>
+                    <button id="devCameraStatusRefresh" type="button" class="dev-meta-btn" title="Refresh camera permission status">Refresh</button>
+                </div>
             </div>`;
         document.body.appendChild(toolbar);
 
@@ -96,10 +106,73 @@
             }
         });
 
+        const refreshCameraBtn = document.getElementById('devCameraStatusRefresh');
+        if (refreshCameraBtn) {
+            refreshCameraBtn.addEventListener('click', () => updateCameraStatus());
+        }
+
+        updateCameraStatus();
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) updateCameraStatus();
+        });
+
         // Close panel when clicking outside
         document.addEventListener('click', e => {
             if (!toolbar.contains(e.target)) panel.classList.remove('dev-panel-open');
         });
+    }
+
+    function setCameraStatusUI(status, detail) {
+        const badge = document.getElementById('devCameraStatusBadge');
+        const sub = document.getElementById('devCameraStatusSub');
+        if (!badge || !sub) return;
+
+        badge.className = 'dev-status-chip';
+
+        if (status === 'granted') {
+            badge.classList.add('dev-status-granted');
+            badge.textContent = 'Granted';
+        } else if (status === 'prompt') {
+            badge.classList.add('dev-status-prompt');
+            badge.textContent = 'Prompt';
+        } else if (status === 'denied') {
+            badge.classList.add('dev-status-denied');
+            badge.textContent = 'Denied';
+        } else if (status === 'unsupported') {
+            badge.classList.add('dev-status-unknown');
+            badge.textContent = 'Unsupported';
+        } else {
+            badge.classList.add('dev-status-unknown');
+            badge.textContent = 'Unknown';
+        }
+
+        sub.textContent = detail || '';
+    }
+
+    async function updateCameraStatus() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraStatusUI('unsupported', 'This browser does not expose camera APIs.');
+            return;
+        }
+
+        const sessionGranted = sessionStorage.getItem(CAMERA_GRANTED_SESSION_KEY) === '1';
+
+        if (!navigator.permissions || !navigator.permissions.query) {
+            setCameraStatusUI('unknown', sessionGranted
+                ? 'Permissions API unavailable. Session flag indicates camera was granted.'
+                : 'Permissions API unavailable. Use scan flow to test prompt behavior.');
+            return;
+        }
+
+        try {
+            const permission = await navigator.permissions.query({ name: 'camera' });
+            const extra = sessionGranted ? ' Session camera flag: yes.' : ' Session camera flag: no.';
+            setCameraStatusUI(permission.state, `Browser camera state: ${permission.state}.${extra}`);
+        } catch (err) {
+            setCameraStatusUI('unknown', sessionGranted
+                ? 'Could not query camera permission. Session camera flag: yes.'
+                : 'Could not query camera permission.');
+        }
     }
 
     // Secret trigger: tap/click the DUO+ logo 5 times within 3 seconds

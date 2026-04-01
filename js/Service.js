@@ -178,6 +178,46 @@ let currentOverlay = null;
 let currentServiceKey = null;  // Track current service for client operations
 let isClientScan = false;  // Flag to distinguish between service and client QR scans
 let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
+const CAMERA_GRANTED_SESSION_KEY = 'duo_camera_permission_granted';
+let hasShownCameraPermissionExplainer = false;
+let cameraPermissionGrantedThisSession = sessionStorage.getItem(CAMERA_GRANTED_SESSION_KEY) === '1';
+
+function markCameraPermissionGranted() {
+    cameraPermissionGrantedThisSession = true;
+    try {
+        sessionStorage.setItem(CAMERA_GRANTED_SESSION_KEY, '1');
+    } catch (e) {
+        // Ignore storage failures (private mode, strict settings, etc.)
+    }
+}
+
+function isPermissionDeniedError(err) {
+    const name = err && err.name ? err.name : '';
+    return name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError';
+}
+
+async function getCameraPermissionState() {
+    if (cameraPermissionGrantedThisSession) return 'granted';
+    if (!navigator.permissions || !navigator.permissions.query) return 'unknown';
+
+    try {
+        const permStatus = await navigator.permissions.query({ name: 'camera' });
+        if (permStatus.state === 'granted') {
+            markCameraPermissionGranted();
+        }
+        return permStatus.state;
+    } catch (e) {
+        return 'unknown';
+    }
+}
+
+async function requestCameraStream() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+    });
+    markCameraPermissionGranted();
+    return stream;
+}
 
 // Hardcoded historical past averages per service (in minutes)
 const PAST_AVG_MINUTES = {
@@ -403,15 +443,26 @@ function selectServiceManual(serviceKey) {
 // Show a pre-permission screen explaining why camera access is needed
 // Skips the modal if camera permission is already granted
 async function showCameraPermissionScreen() {
-    try {
-        const permStatus = await navigator.permissions.query({ name: 'camera' });
-        if (permStatus.state === 'granted') {
-            startQRScanning();
-            return;
-        }
-    } catch (e) {
-        // Permissions API not supported — fall through to show the modal
+    const permissionState = await getCameraPermissionState();
+
+    if (permissionState === 'granted') {
+        startQRScanning();
+        return;
     }
+
+    if (permissionState === 'denied') {
+        showCameraRecommendation();
+        showServiceSelectionDropdown(true);
+        return;
+    }
+
+    // Only show the explainer once per page session.
+    // After that, retries should go straight to browser permission prompt.
+    if (hasShownCameraPermissionExplainer) {
+        startQRScanning();
+        return;
+    }
+    hasShownCameraPermissionExplainer = true;
 
     Swal.fire({
         html: `
@@ -457,7 +508,7 @@ async function showCameraPermissionScreen() {
 }
 
 // Start QR code camera scanning
-function startQRScanning() {
+async function startQRScanning() {
     if (isScanning) return;
 
     isScanning = true;
@@ -465,10 +516,9 @@ function startQRScanning() {
     const video = document.createElement('video');
     const container = document.body;
 
-    // Request camera access
-    navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-    }).then(stream => {
+    try {
+        // Request camera access
+        const stream = await requestCameraStream();
         videoStream = stream;
         video.srcObject = stream;
         video.play();
@@ -578,12 +628,14 @@ function startQRScanning() {
             }
         }, 100);
 
-    }).catch(err => {
+    } catch (err) {
         isScanning = false;
         console.error('Camera error:', err);
-        showCameraRecommendation();
+        if (isPermissionDeniedError(err)) {
+            showCameraRecommendation();
+        }
         showServiceSelectionDropdown(true);
-    });
+    }
 }
 
 // Show a persistent banner recommending camera usage for QR scanning
@@ -605,6 +657,7 @@ function showCameraRecommendation() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 // Camera works — stop the test stream and remove the banner
+                markCameraPermissionGranted();
                 stream.getTracks().forEach(track => track.stop());
                 banner.remove();
             })
@@ -774,7 +827,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 // Start scanning for client QR codes
-function startClientQRScanning() {
+async function startClientQRScanning() {
     if (isScanning) return;
 
     isScanning = true;
@@ -783,10 +836,9 @@ function startClientQRScanning() {
     const video = document.createElement('video');
     const container = document.body;
 
-    // Request camera access
-    navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-    }).then(stream => {
+    try {
+        // Request camera access
+        const stream = await requestCameraStream();
         videoStream = stream;
         video.srcObject = stream;
         video.play();
@@ -878,13 +930,15 @@ function startClientQRScanning() {
             }
         }, 100);
 
-    }).catch(err => {
+    } catch (err) {
         isScanning = false;
         isClientScan = false;
         console.error('Camera error:', err);
-        showCameraRecommendation();
+        if (isPermissionDeniedError(err)) {
+            showCameraRecommendation();
+        }
         Swal.fire('Camera Error', 'Unable to access camera.', 'error');
-    });
+    }
 }
 
 // Stop client QR scanning
