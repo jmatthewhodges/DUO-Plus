@@ -1221,15 +1221,9 @@ function populateWaitlist(clientsToShow = null) {
                     ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
                     : '<i class="bi bi-person"></i>'));
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
-        // Show sub-service label only for stations with multiple serviceIDs
-        const hasMultiple = currentServiceKey && SERVICES[currentServiceKey] && SERVICES[currentServiceKey].serviceIDs.length > 1;
-        const subLabel = hasMultiple && client.serviceID && SUB_SERVICE_LABELS[client.serviceID]
-            ? `<span class="text-muted small"> · ${SUB_SERVICE_LABELS[client.serviceID]}</span>`
-            : '';
         const headerLine = `
             <div class="d-flex flex-column" style="min-width:0;">
                 <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
-                ${subLabel}
             </div>`;
         const currentlyAtCells = (inProgressAtOtherService || inProgressAtCurrentService)
             ? (inProgressAtOtherService

@@ -330,7 +330,10 @@ function populateWaitListTable(patients) {
             .filter(vs => currentServiceIDs.includes(vs.ServiceID))
             .map(vs => `<span class="badge border" style="${nowServingPillStyle}">${escapeHtml(vs.ServiceName)}</span>`)
             .join('');
-        const otherServices = orderedVisitServices.filter(vs => !currentServiceIDs.includes(vs.ServiceID));
+        const otherServicesRaw = orderedVisitServices.filter(vs => !currentServiceIDs.includes(vs.ServiceID));
+        const incompleteOtherServices = otherServicesRaw.filter(vs => vs.ServiceStatus !== 'Complete');
+        const completedOtherServices = otherServicesRaw.filter(vs => vs.ServiceStatus === 'Complete');
+        const otherServices = [...incompleteOtherServices, ...completedOtherServices];
         const servicePills = otherServices.map(vs => {
             let pillStyle = pendingPillStyle;
             if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
