@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 28 @ 12:12 PM
- * Changes Made:      Removed automatic refresh
+ * Last Modified By:  Cameron
+ * Last Modified On:  April 1 @ 11:00 PM
+ * Changes Made:      Added reset password functionality.
  * ============================================================
 */
 
@@ -149,6 +149,7 @@ function validatePasswordFieldsLive(requireBoth = false) {
     return { hasPassword, hasConfirm, invalidFormat, mismatch };
 }
 
+// Function to show passwords in reset modal when toggled
 function resetNewPasswordVisibility() {
     if (newUserPassword) {
         newUserPassword.type = 'password';
@@ -296,7 +297,6 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
 }
 
 // Filters the visible table rows based on the current search query.
-// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
 // Shows a "no results" message when nothing matches.
 function applySearch() {
     const query = searchInput.value.trim().toLowerCase();
@@ -334,6 +334,9 @@ clearSearchBtn.addEventListener('click', () => {
     searchInput.focus();
 });
 
+//================================================================================
+// 4. PASSWORD RESET FUNCTIONALITY
+// Resets the state of the change password modal to its initial state, clearing any selected user and input fields.
 function resetChangePasswordModalState() {
     selectedPasswordUser = null;
     passwordSearchSection.classList.remove('d-none');
@@ -348,8 +351,10 @@ function resetChangePasswordModalState() {
     setFieldInvalidState(confirmUserPassword, false);
 }
 
+// Placeholder for searching clients to reset password 
 const PASSWORD_SEARCH_PLACEHOLDER = '<tr><td colspan="4" class="text-center text-muted p-3">Type a name or email to search clients.</td></tr>';
 
+// Opens the change password modal and resets its state to the initial view.
 function openChangePasswordModal() {
     resetChangePasswordModalState();
     userPasswordSearch.value = '';
@@ -359,17 +364,20 @@ function openChangePasswordModal() {
     changePasswordModal.classList.add('d-flex');
 }
 
+// Closes the change password modal and resets its state.
 function closeChangePasswordModal() {
     changePasswordModal.classList.add('d-none');
     changePasswordModal.classList.remove('d-flex');
 }
 
+// Renders the list of users in the password reset search results table. 
 function renderPasswordUsers(users) {
     if (!Array.isArray(users) || users.length === 0) {
         passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No clients found.</td></tr>';
         return;
     }
 
+    // For each user, create a table row with their name, DOB, email, and a select button. 
     passwordUserTableBody.innerHTML = users.map(user => {
         const middleInitial = user.MiddleInitial ? ` ${escapeHtml(user.MiddleInitial)}.` : '';
         const fullName = `${escapeHtml(user.FirstName)}${middleInitial} ${escapeHtml(user.LastName)}`;
@@ -401,6 +409,7 @@ function renderPasswordUsers(users) {
     }).join('');
 }
 
+// When a user is selected from the search results, this function populates the password reset section with their info and shows it.
 function selectPasswordUserFromElement(sourceEl) {
     if (!sourceEl) return;
 
@@ -424,6 +433,7 @@ function selectPasswordUserFromElement(sourceEl) {
     passwordResetSection.classList.remove('d-none');
 }
 
+// Fetches users from the API based on the search query and renders them in the table.
 function fetchPasswordUsers(query) {
     passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Loading users...</td></tr>';
 
@@ -462,12 +472,14 @@ function fetchPasswordUsers(query) {
         });
 }
 
+// closes the change password modal when the close button is clicked or when clicking outside the modal area
 if (closeChangePasswordModalBtn) {
     closeChangePasswordModalBtn.addEventListener('click', () => {
         closeChangePasswordModal();
     });
 }
 
+// Allow clicking outside the modal content to close the change password modal
 if (changePasswordModal) {
     changePasswordModal.addEventListener('click', (event) => {
         if (event.target === changePasswordModal) {
@@ -476,6 +488,7 @@ if (changePasswordModal) {
     });
 }
 
+// a timeout to limit how often we send search requests as the user types in the password reset search field
 if (userPasswordSearch) {
     userPasswordSearch.addEventListener('input', () => {
         const query = userPasswordSearch.value.trim();
@@ -496,6 +509,7 @@ if (userPasswordSearch) {
     });
 }
 
+// resets search field when clear btn is clicked
 if (clearUserPasswordSearchBtn) {
     clearUserPasswordSearchBtn.addEventListener('click', () => {
         userPasswordSearch.value = '';
@@ -505,12 +519,14 @@ if (clearUserPasswordSearchBtn) {
     });
 }
 
+// validates password fields in real-time as the user types, providing immediate feedback on validity and matching status.
 if (newUserPassword) {
     newUserPassword.addEventListener('input', () => {
         validatePasswordFieldsLive(false);
     });
 }
 
+// Functions to toggle password visibility for new password and confirm password fields, updating the input type and icon accordingly.
 if (toggleNewUserPasswordBtn && newUserPassword) {
     toggleNewUserPasswordBtn.addEventListener('click', () => {
         const isPassword = newUserPassword.type === 'password';
@@ -526,6 +542,7 @@ if (toggleNewUserPasswordBtn && newUserPassword) {
     });
 }
 
+// Toggle for confirm password visibility
 if (toggleConfirmUserPasswordBtn && confirmUserPassword) {
     toggleConfirmUserPasswordBtn.addEventListener('click', () => {
         const isPassword = confirmUserPassword.type === 'password';
@@ -541,12 +558,14 @@ if (toggleConfirmUserPasswordBtn && confirmUserPassword) {
     });
 }
 
+// Validates password fields in real-time as the user types, providing immediate feedback on validity and matching status.
 if (confirmUserPassword) {
     confirmUserPassword.addEventListener('input', () => {
         validatePasswordFieldsLive(false);
     });
 }
 
+// allowing user to click on clients row
 if (passwordUserTableBody) {
     passwordUserTableBody.addEventListener('click', (event) => {
         const selectBtn = event.target.closest('.select-password-user-btn');
@@ -562,6 +581,7 @@ if (passwordUserTableBody) {
     });
 }
 
+// Allows user to return to client search bar after getting into password reset
 if (backToUserSearchBtn) {
     backToUserSearchBtn.addEventListener('click', () => {
         passwordResetSection.classList.add('d-none');
@@ -569,7 +589,9 @@ if (backToUserSearchBtn) {
     });
 }
 
+// Error handling for multiple errors
 if (saveUserPasswordBtn) {
+    // Error for when no user is selected
     saveUserPasswordBtn.addEventListener('click', function () {
         if (!selectedPasswordUser || !selectedPasswordUser.clientID) {
             Swal.fire({
@@ -584,6 +606,7 @@ if (saveUserPasswordBtn) {
         const password = newUserPassword.value;
         const validation = validatePasswordFieldsLive(true);
 
+        // Check for missing fields
         if (!validation.hasPassword || !validation.hasConfirm) {
             Swal.fire({
                 icon: 'warning',
@@ -594,6 +617,7 @@ if (saveUserPasswordBtn) {
             return;
         }
 
+        // If the password and confirm password fields do not match, show an error message
         if (validation.mismatch) {
             Swal.fire({
                 icon: 'warning',
@@ -604,6 +628,7 @@ if (saveUserPasswordBtn) {
             return;
         }
 
+        // If the password does not meet the required format, show an error message
         if (validation.invalidFormat) {
             Swal.fire({
                 icon: 'warning',
@@ -619,6 +644,7 @@ if (saveUserPasswordBtn) {
         btn.disabled = true;
         btn.innerHTML = 'Saving...';
 
+        // Send the password reset request to the API
         fetch('../api/registration-dashboard.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -628,6 +654,7 @@ if (saveUserPasswordBtn) {
                 password
             })
         })
+            //swal fire pop ups based on response from API
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
@@ -649,6 +676,7 @@ if (saveUserPasswordBtn) {
 
                 closeChangePasswordModal();
             })
+            // swal fire error if there was a error witht he API request
             .catch(error => {
                 console.error('Error resetting password:', error);
                 Swal.fire({
@@ -666,7 +694,7 @@ if (saveUserPasswordBtn) {
 }
 
 //================================================================================
-// 4. DATA FETCHING & TABLE RENDERING
+// 5. DATA FETCHING & TABLE RENDERING
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
@@ -776,7 +804,7 @@ function populateRegistrationTable(patientsData) {
 }
 
 //================================================================================
-// 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
+// 6. TABLE EVENT LISTENERS (Service Toggles & Check-In)
 
 // Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
@@ -849,7 +877,7 @@ tableBody.addEventListener('click', function (event) {
 });
 
 //================================================================================
-// 6. CHECK-IN MODAL SUBMISSION
+// 7. CHECK-IN MODAL SUBMISSION
 
 // When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
 // and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
@@ -1046,7 +1074,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', function
 });
 
 //================================================================================
-// 7. PRINT QR CODE
+// 8. PRINT QR CODE
 
 // When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
@@ -1144,5 +1172,5 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 });
 
 //================================================================================
-// 8. INITIALIZATION
+// 9. INITIALIZATION
 fetchRegistrationQueue();
