@@ -51,6 +51,20 @@ foreach ($tables as $table) {
 // Re-enable foreign key checks
 $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
 
+// Reset clientsProcessed stat to 0 in tblAnalytics
+$stmt = $mysqli->prepare("UPDATE tblAnalytics SET StatValue = 0 WHERE StatID = 'clientsProcessed'");
+if ($stmt) {
+    $stmt->execute();
+    $stmt->close();
+} else {
+    $errors[] = "Failed to reset clientsProcessed: " . $mysqli->error;
+}
+
+// Reset CurrentAssigned and SeatsInProgress to 0 for all services in tblEventServices
+if (!$mysqli->query("UPDATE tblEventServices SET CurrentAssigned = 0, SeatsInProgress = 0")) {
+    $errors[] = "Failed to reset CurrentAssigned/SeatsInProgress in tblEventServices: " . $mysqli->error;
+}
+
 if (empty($errors)) {
     echo json_encode(['success' => true, 'message' => 'Test/client tables cleared successfully.']);
 } else {

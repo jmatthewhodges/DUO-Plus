@@ -33,12 +33,18 @@
     border-color: #174593;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:active,
 .btn-outline-primary:focus {
     background-color: #174593 !important;
     border-color: #174593 !important;
     color: #ffffff !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-primary:hover {
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+        color: #ffffff !important;
+    }
 }
 
 /* ==========================================
@@ -55,6 +61,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: env(safe-area-inset-top);
+}
+
+h2 {
+    margin-top: 0;
 }
 
 /* Blur will be applied by JavaScript when PIN modal is active */
@@ -90,12 +101,20 @@ hr {
     transition: all 0.2s ease-in-out;
 }
 
-/* Hover and Checked states */
-.btn-outline-navy:hover,
+/* Checked state */
 .btn-check:checked+.btn-outline-navy {
     color: #ffffff !important;
     background-color: #174593 !important;
     border-color: #174593 !important;
+}
+
+/* Hover only on devices that truly support it (not touch) */
+@media (hover: hover) and (pointer: fine) {
+    .btn-outline-navy:hover {
+        color: #ffffff !important;
+        background-color: #174593 !important;
+        border-color: #174593 !important;
+    }
 }
 
 /* Focus state: Adds a custom soft navy ring when clicked/tabbed */
@@ -103,11 +122,18 @@ hr {
     box-shadow: 0 0 0 0.25rem rgba(23, 69, 147, 0.25) !important;
 }
 
+/* Equal-height service selection buttons */
+#serviceSelectionGrid .service-btn-label {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+}
+
 
 /* Center login/dashboard pages vertically */
 body.v-center-page {
     position: relative;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* Set max width for login and dashboard containers */
@@ -146,13 +172,14 @@ body.v-center-page {
     color: white;
 }
 
-/* Primary button hover effect */
-.btn-primary:hover {
-    background-color: #10326e !important;
-    /* Slightly darker shade of #174593 */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px #10326e !important;
-    cursor: pointer;
+/* Primary button hover effect — only on mouse devices */
+@media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+        background-color: #10326e !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px #10326e !important;
+        cursor: pointer;
+    }
 }
 
 /* Fade transition for step switching */
@@ -204,16 +231,21 @@ body.v-center-page {
 
 /* Update the existing icon style to support "slots" */
 .qr-icon-border {
-    display: block !important;
-    /* Changed from inline-flex to block to reserve space */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
     width: 5rem;
     height: 5rem;
     background: #fff;
     border: 3px solid black;
     border-radius: 20%;
-    /* Ensure the icon inside is centered even in a block container */
     line-height: 5rem;
     text-align: center;
+}
+
+.qr-icon-border.qr-icon-empty {
+    border: 2.5px dashed #c0c0c0;
+    background: #fafafa;
 }
 
 /* Add a wrapper style for the icons in your HTML if you want better spacing control */
@@ -320,12 +352,41 @@ body.v-center-page {
     background-image: none !important;
 }
 
-/* Language Select */
+/* Language Toggle */
 #divLanguageSwitch {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 1050;
+}
+
+.lang-toggle {
+    display: inline-flex;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 2px solid #174593;
+    background: #fff;
+}
+
+.lang-btn {
+    border: none;
+    background: #fff;
+    color: #174593;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    line-height: 1.2;
+}
+
+.lang-btn.active {
+    background: #174593;
+    color: #fff;
+}
+
+.lang-btn:hover:not(.active) {
+    background: #e9ecef;
 }
 
 #selLanguageSwitch {
@@ -434,6 +495,97 @@ body.v-center-page {
    WAITING ROOM & GENERAL SCROLLING
    ========================================== */
 
+/* Fixed table layout for consistent column widths */
+.waitlist-table {
+    table-layout: fixed;
+}
+
+.waitlist-table td {
+    vertical-align: middle;
+}
+
+/* Name column: contain text, wrap long words (overrides hope-ui's white-space:nowrap on td) */
+.waitlist-table td:first-child {
+    overflow: hidden;
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+.waitlist-table td:first-child .d-flex {
+    min-width: 0;
+}
+
+.waitlist-table td:first-child .fw-bold {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   REFRESH BUTTON SPIN ANIMATION
+   ========================================== */
+
+@keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Applied to the icon inside a refresh button while loading */
+.spin-refresh {
+    display: inline-block;
+    animation: refresh-spin 0.7s linear infinite;
+    pointer-events: none;
+}
+
+/* ==========================================
+   SERVICE SCAN — MOBILE
+   ========================================== */
+
+/* Stat labels shrink to fit 3-across layout */
+.service-stat-label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* On very small screens, abbreviate "In Progress" label via content override */
+@media (max-width: 380px) {
+    #stat2Label {
+        font-size: 0.65rem;
+    }
+}
+
+/* Table max-height: shorter on mobile so the whole page doesn't scroll awkwardly */
+@media (max-width: 575px) {
+    .table-responsive {
+        max-height: calc(100dvh - 420px) !important;
+        min-height: 180px;
+    }
+
+    /* Tighter padding in table cells on mobile */
+    .waitlist-table td {
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    /* Icon-only button on mobile — keep it square */
+    .waitlist-table td:last-child .btn {
+        min-width: 34px;
+    }
+
+    /* Search input wider on small screens */
+    #searchInput {
+        width: 100px !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .waitlist-table col:nth-child(1) { width: 48% !important; }
+    .waitlist-table col:nth-child(2) { width: 27% !important; }
+    .waitlist-table col:nth-child(3) { width: 25% !important; }
+    .waitlist-table .badge { font-size: 0.6rem !important; }
+}
+
 /* Hide scrollbar while keeping functionality */
 .custom-scroll::-webkit-scrollbar {
     display: none;
@@ -480,10 +632,10 @@ body.v-center-page {
 }
 
 /* ==========================================
-   DEV NAVIGATION BAR (testing only)
+   DEV MODE — step jumper bar (register.html)
    ========================================== */
 
-/* Shared pill wrapper used on index.html and register.html */
+/* Shared pill wrapper (register.html step jumper) */
 .dev-bar {
     display: inline-flex;
     flex-wrap: wrap;
@@ -496,7 +648,6 @@ body.v-center-page {
     padding: 6px 12px;
 }
 
-/* "Dev" label inside the bar */
 .dev-bar-label {
     font-size: 0.65rem;
     color: #aaa;
@@ -505,21 +656,180 @@ body.v-center-page {
     text-transform: uppercase;
 }
 
-/* Anchor chip (used in index.html) */
-.dev-link {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #4a72b8;
-    text-decoration: none;
-    background: rgba(23, 69, 147, 0.08);
-    border-radius: 10px;
-    padding: 2px 9px;
-    transition: background 0.15s, color 0.15s;
+/* ==========================================
+   DEV MODE — floating toolbar
+   ========================================== */
+
+#devToolbar {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    font-family: system-ui, sans-serif;
 }
 
-.dev-link:hover {
-    background: rgba(23, 69, 147, 0.18);
+#devFab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #174593;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(23, 69, 147, 0.45);
+    transition: background 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.03em;
+}
+
+#devFab:hover {
+    background: #10326e;
+    box-shadow: 0 6px 22px rgba(23, 69, 147, 0.55);
+}
+
+#devPanel {
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    min-width: 240px;
+}
+
+#devPanel.dev-panel-open {
+    display: flex;
+}
+
+.dev-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 13px 18px;
+}
+
+.dev-panel-title {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-panel-links {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.dev-panel-section {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    padding: 6px 18px 3px;
+}
+
+.dev-panel-links a {
+    font-size: 0.92rem;
+    font-weight: 500;
     color: #174593;
+    text-decoration: none;
+    padding: 9px 18px;
+    transition: background 0.12s;
+}
+
+.dev-panel-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
+}
+
+/* ── Inline dev panel on index.html (under Life Church logo) ── */
+.dev-inline-panel {
+    background: #fff;
+    border: 1px solid rgba(23, 69, 147, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+    overflow: hidden;
+    text-align: left;
+    font-family: system-ui, sans-serif;
+}
+
+.dev-inline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #174593;
+    padding: 11px 16px;
+}
+
+.dev-inline-header span {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#devIndexDisableBtn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#devIndexDisableBtn:hover {
+    background: rgba(255,255,255,0.28);
+}
+
+.dev-inline-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 6px 4px;
+}
+
+.dev-inline-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #174593;
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    transition: background 0.12s;
+}
+
+.dev-inline-links a:hover {
+    background: rgba(23, 69, 147, 0.07);
 }
 
 /* Register link hover */
@@ -529,6 +839,16 @@ body.v-center-page {
 }
 
 #btn2Register:hover {
+    transform: translateY(-2px);
+    text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
+}
+
+#btn2ForgetPass {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#btn2ForgetPass:hover {
     transform: translateY(-2px);
     text-shadow: 0 4px 12px rgba(23, 69, 147, 0.3);
 }
@@ -572,3 +892,163 @@ body.no-scroll .card-body[style*="overflow-y"] {
     scrollbar-width: none;
 }
 
+
+/* ==========================================
+   ADMIN DASHBOARD
+   ========================================== */
+
+.admin-section {
+    margin-bottom: 1.5rem;
+}
+
+.admin-section .card-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.admin-section .card-header .collapse-icon {
+    transition: transform 0.2s;
+}
+
+.admin-section .card-header.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.back-link {
+    color: #174593;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.service-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.service-row:last-child {
+    border-bottom: none;
+}
+
+.service-icon-preview {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f4ff;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    color: #174593;
+}
+
+.service-fields {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.service-fields .form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+}
+
+.service-fields .form-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+.service-fields input {
+    width: 90px;
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.icon-picker-item {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.15s;
+}
+
+.icon-picker-item:hover,
+.icon-picker-item.selected {
+    border-color: #174593;
+    background: #f0f4ff;
+    color: #174593;
+}
+
+.icon-editable {
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+
+.icon-editable:hover {
+    box-shadow: 0 0 0 2px #174593;
+}
+
+.icon-edit-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #174593;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+
+.icon-editable:hover .icon-edit-badge {
+    opacity: 1;
+}
+
+.svg-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.svg-icon svg {
+    width: 1.25em;
+    height: 1.25em;
+    fill: currentColor;
+}

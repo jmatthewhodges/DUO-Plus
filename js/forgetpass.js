@@ -235,7 +235,7 @@ async function handleVerifyAccount() {
 
     if (errors.length) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('loginCheckInfoTitle', 'Check your info'),
             html: errors.map(e => `• ${e}`).join('<br>')
         });
@@ -285,7 +285,7 @@ async function handleResetPassword() {
 
     if (!verifiedIdentity) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('verifyFirstTitle', 'Verify First'),
             text: getText('verifyFirstText', 'Please verify first.')
         });
@@ -312,7 +312,7 @@ async function handleResetPassword() {
 
     if (errors.length) {
         showAlert({
-            icon: 'warning',
+            icon: 'error',
             title: getText('loginCheckInfoTitle', 'Check your info'),
             html: errors.map(e => `• ${e}`).join('<br>')
         });
@@ -388,6 +388,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.passInput.addEventListener('input', updatePasswordFieldMarkers);
     elements.confirmInput.addEventListener('input', updatePasswordFieldMarkers);
+
+    // Submit on Enter — verify section
+    [elements.emailInput, elements.dobInput].forEach(input => {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleVerifyAccount();
+            }
+        });
+    });
+
+    // Submit on Enter — reset section
+    [elements.passInput, elements.confirmInput].forEach(input => {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleResetPassword();
+            }
+        });
+    });
 
         // Verify button
     elements.verifyBtn.addEventListener('click', function (e) {

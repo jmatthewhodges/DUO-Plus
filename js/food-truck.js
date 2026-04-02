@@ -149,8 +149,18 @@
     setupCounter(clientsServed, clientsPlus, clientsMinus, 'clientsServed');
     setupCounter(volunteersServed, volunteersPlus, volunteersMinus, 'volunteersServed');
 
-    // Initial database load + every minute refresh
-    loadStats();
-    setInterval(loadStats, 40000);
+    // Only load data after PIN is verified
+    function initFoodTruck() {
+        loadStats();
+        setInterval(loadStats, 40000);
+    }
+
+    document.addEventListener('pinVerified', initFoodTruck);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (document.body.classList.contains('pin-verified')) {
+            initFoodTruck();
+        }
+    });
 
 })();

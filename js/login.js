@@ -13,9 +13,15 @@
 
 // Config
 const VALIDATION_PATTERNS = {
-    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+    email: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i,
     password: /.+/ // login just checks presence (not strength)
 };
+
+// Helper to get current language translations
+function getLang() {
+    var lang = sessionStorage.getItem("lang") || "en";
+    return translations[lang];
+}
 
 // Events
 
@@ -47,19 +53,35 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     const emailInput = document.getElementById('txtClientEmail');
     const passInput = document.getElementById('txtClientPassword');
     const errors = [];
+    const t = getLang();
 
-    if (!VALIDATION_PATTERNS.email.test(emailInput.value.trim())) {
-        errors.push('Please enter a valid email address.');
+    const emailValid = VALIDATION_PATTERNS.email.test(emailInput.value.trim());
+    const passValid = VALIDATION_PATTERNS.password.test(passInput.value.trim());
+
+    if (!emailValid) {
+        errors.push(t.loginValidEmail);
+        emailInput.classList.add('is-invalid');
+        emailInput.classList.remove('is-valid');
+        emailInput.setAttribute('aria-invalid', 'true');
+    } else {
+        emailInput.classList.remove('is-invalid');
+        emailInput.removeAttribute('aria-invalid');
     }
 
-    if (!VALIDATION_PATTERNS.password.test(passInput.value.trim())) {
-        errors.push('Please enter your password.');
+    if (!passValid) {
+        errors.push(t.loginEnterPassword);
+        passInput.classList.add('is-invalid');
+        passInput.classList.remove('is-valid');
+        passInput.setAttribute('aria-invalid', 'true');
+    } else {
+        passInput.classList.remove('is-invalid');
+        passInput.removeAttribute('aria-invalid');
     }
 
     if (errors.length > 0) {
         Swal.fire({
-            icon: 'warning',
-            title: 'Check your info',
+            icon: 'error',
+            title: t.checkYourInfo,
             html: errors.map(e => `• ${e}`).join('<br>'),
             confirmButtonColor: '#174593'
         });
@@ -69,7 +91,7 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
     // Loading state
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${t.loggingIn}`;
 
     const email = emailInput.value;
     const password = passInput.value;
@@ -85,8 +107,8 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Welcome Back!',
-                    html: `Hello, <strong>${data.data.FirstName}</strong>! Redirecting you now...`,
+                    title: t.loginWelcomeTitle,
+                    html: `${t.loginWelcomeHello}<strong>${data.data.FirstName}</strong>${t.loginWelcomeRedirect}`,
                     timer: 1500,
                     timerProgressBar: true,
                     showConfirmButton: false,
@@ -99,11 +121,12 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
                 // Failed - clear password and show error
                 passInput.value = '';
                 passInput.classList.remove('is-valid', 'is-invalid');
+                passInput.removeAttribute('aria-invalid');
 
                 Swal.fire({
                     icon: 'error',
-                    title: 'Login Failed',
-                    text: data.message || 'Invalid email or password.',
+                    title: t.loginFailedTitle,
+                    text: data.message || t.loginFailedText,
                     confirmButtonColor: '#174593'
                 });
             }
@@ -113,16 +136,27 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
             console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Connection Error',
-                text: 'Unable to connect to the server.',
+                title: t.loginConnectionErrorTitle,
+                text: t.loginConnectionErrorText,
                 confirmButtonColor: '#174593'
             });
         })
         .finally(() => {
             // Re-enable button after request completes
             btn.disabled = false;
-            btn.innerHTML = 'Login';
+            btn.innerHTML = t.btnClientLogin || 'Login';
         })
+});
+
+// Clear invalid state as soon as the user starts correcting a field
+document.getElementById('txtClientEmail').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    this.removeAttribute('aria-invalid');
+});
+
+document.getElementById('txtClientPassword').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    this.removeAttribute('aria-invalid');
 });
 
 // Enter key on email field triggers login

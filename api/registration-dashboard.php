@@ -194,22 +194,42 @@ if (!$queue) {
     exit;
 }
 
-// Query to get all client data related to the dashboard (client names, DOBs, language flags, and pre-selected services.)
-$clientDataStmt = $mysqli->prepare(
-    "SELECT 
-        c.ClientID, 
-        c.FirstName, 
-        c.MiddleInitial, 
-        c.LastName, 
-        c.DOB, 
-        c.TranslatorNeeded,
-        GROUP_CONCAT(s.ServiceID) AS ServiceSelections
-    FROM tblClients c
-    LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
-    LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
-    WHERE v.RegistrationStatus = ?
-    GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
-);
+// Query to get all client data related to the dashboard (client names, DOBs, language flags, and services.)
+// For CheckedIn clients, use tblVisitServices (actual assigned services).
+// For Registered clients, use tblVisitServiceSelections (pre-registration selections).
+if ($queue === 'CheckedIn') {
+    $clientDataStmt = $mysqli->prepare(
+        "SELECT 
+            c.ClientID, 
+            c.FirstName, 
+            c.MiddleInitial, 
+            c.LastName, 
+            c.DOB, 
+            c.TranslatorNeeded,
+            GROUP_CONCAT(vs.ServiceID) AS ServiceSelections
+        FROM tblClients c
+        LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+        LEFT JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
+        WHERE v.RegistrationStatus = ?
+        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
+    );
+} else {
+    $clientDataStmt = $mysqli->prepare(
+        "SELECT 
+            c.ClientID, 
+            c.FirstName, 
+            c.MiddleInitial, 
+            c.LastName, 
+            c.DOB, 
+            c.TranslatorNeeded,
+            GROUP_CONCAT(s.ServiceID) AS ServiceSelections
+        FROM tblClients c
+        LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
+        LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
+        WHERE v.RegistrationStatus = ?
+        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
+    );
+}
 
 // Checks for if the connection to mysql is a success
 if (!$clientDataStmt) {
@@ -261,7 +281,7 @@ if ($statsStmt) {
 $serviceAvailability = [];
 $serviceQuery = $mysqli->prepare(
     "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed,
-            s.ServiceName
+            es.StandbyLimit, s.ServiceName
      FROM tblEventServices es
      LEFT JOIN tblServices s ON es.ServiceID = s.ServiceID
      WHERE es.EventID = ?"
@@ -273,12 +293,18 @@ if ($serviceQuery) {
     $serviceResult = $serviceQuery->get_result();
     
     while ($serviceRow = $serviceResult->fetch_assoc()) {
+        $maxCap = (int)$serviceRow['MaxCapacity'];
+        $assigned = (int)$serviceRow['CurrentAssigned'];
+        $standbyCount = ($maxCap > 0 && $assigned > $maxCap) ? ($assigned - $maxCap) : 0;
+
         $serviceAvailability[] = [
             'serviceID' => $serviceRow['ServiceID'],
             'serviceName' => $serviceRow['ServiceName'],
-            'maxCapacity' => (int)$serviceRow['MaxCapacity'],
-            'currentAssigned' => (int)$serviceRow['CurrentAssigned'],
-            'isClosed' => (int)$serviceRow['IsClosed']
+            'maxCapacity' => $maxCap,
+            'currentAssigned' => $assigned,
+            'isClosed' => (int)$serviceRow['IsClosed'],
+            'standbyLimit' => (int)$serviceRow['StandbyLimit'],
+            'standbyCount' => $standbyCount
         ];
     }
     $serviceQuery->close();

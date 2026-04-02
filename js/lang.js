@@ -103,6 +103,63 @@ var translations = {
     waiverError: 'You must agree to the waiver to continue.',
     btnWaiverSubmit: 'Submit',
 
+    // Password hint
+    passwordHint: "8+ characters, 1 uppercase, 1 lowercase, and 1 number.",
+
+    // Progress bar labels
+    progressLogin: "Login",
+    progressPersonal: "Personal",
+    progressAddress: "Address",
+    progressEmergency: "Emergency",
+    progressServices: "Services",
+
+    // State dropdown
+    stateChoose: "Choose...",
+
+    // Loading services
+    loadingServices: "Loading services...",
+    noServicesAvailable: "No services available.",
+    failedToLoadServices: "Failed to load services.",
+
+    // QR card
+    backToLogin: "Back to Login",
+
+    // SweetAlert shared
+    checkYourInfo: "Check your info",
+
+    // Login alerts
+    loginValidEmail: "Please enter a valid email address.",
+    loginEnterPassword: "Please enter your password.",
+    loggingIn: "Logging in...",
+    loginWelcomeTitle: "Welcome Back!",
+    loginWelcomeHello: "Hello, ",
+    loginWelcomeRedirect: "! Redirecting you now...",
+    loginFailedTitle: "Login Failed",
+    loginFailedText: "Invalid email or password.",
+    loginConnectionErrorTitle: "Connection Error",
+    loginConnectionErrorText: "Unable to connect to the server.",
+
+    // Register step validation alerts
+    registerValidEmail: "Please enter a valid email address.",
+    registerValidPassword: "Please enter a valid password.",
+    registerFirstName: "Please enter your first name.",
+    registerLastName: "Please enter your last name.",
+    registerSex: "Please select your sex.",
+    registerDOB: "Please enter your date of birth.",
+    registerAge: "You must be at least 18 years old.",
+    registerPhone: "Please enter a valid 10-digit phone number — (123) 456-7890.",
+    registerAddress: "Please enter a street address (at least 5 characters).",
+    registerCity: "Please enter a city (at least 2 characters).",
+    registerState: "Please select a state.",
+    registerZip: "Please enter a valid 5-digit zip code.",
+    registerContactFirstName: "Please enter a first name for your contact.",
+    registerContactLastName: "Please enter a last name for your contact.",
+    registerContactPhone: "Please enter a valid 10-digit phone number — (123) 456-7890.",
+    registerService: "Please select at least one service.",
+    submitting: "Submitting...",
+    waiverRequiredTitle: "Waiver Required",
+    waiverRequiredText: "You must agree to the waiver to continue.",
+
     // Notifications
     registrationSuccessTitle: "Registration Complete!",
     registrationSuccessText: "You have been officially registered.",
@@ -227,6 +284,63 @@ var translations = {
     waiverError: 'Usted debe estar de acuerdo con el acuerdo de renuncia de responsabilidad para continuar.',
     btnWaiverSubmit: 'Enviar',
 
+    // Password hint
+    passwordHint: "8+ caracteres, 1 mayúscula, 1 minúscula y 1 número.",
+
+    // Progress bar labels
+    progressLogin: "Acceso",
+    progressPersonal: "Personal",
+    progressAddress: "Dirección",
+    progressEmergency: "Emergencia",
+    progressServices: "Servicios",
+
+    // State dropdown
+    stateChoose: "Elegir...",
+
+    // Loading services
+    loadingServices: "Cargando servicios...",
+    noServicesAvailable: "No hay servicios disponibles.",
+    failedToLoadServices: "Error al cargar los servicios.",
+
+    // QR card
+    backToLogin: "Volver al inicio de sesión",
+
+    // SweetAlert shared
+    checkYourInfo: "Revise su información",
+
+    // Login alerts
+    loginValidEmail: "Por favor, ingrese una dirección de correo electrónico válida.",
+    loginEnterPassword: "Por favor, ingrese su contraseña.",
+    loggingIn: "Iniciando sesión...",
+    loginWelcomeTitle: "¡Bienvenido de nuevo!",
+    loginWelcomeHello: "Hola, ",
+    loginWelcomeRedirect: "! Redirigiendo ahora...",
+    loginFailedTitle: "Error de inicio de sesión",
+    loginFailedText: "Correo electrónico o contraseña incorrectos.",
+    loginConnectionErrorTitle: "Error de conexión",
+    loginConnectionErrorText: "No se puede conectar al servidor.",
+
+    // Register step validation alerts
+    registerValidEmail: "Por favor, ingrese una dirección de correo electrónico válida.",
+    registerValidPassword: "Por favor, ingrese una contraseña válida.",
+    registerFirstName: "Por favor, ingrese su primer nombre.",
+    registerLastName: "Por favor, ingrese su apellido.",
+    registerSex: "Por favor, seleccione su sexo.",
+    registerDOB: "Por favor, ingrese su fecha de nacimiento.",
+    registerAge: "Debe tener al menos 18 años.",
+    registerPhone: "Por favor, ingrese un número de teléfono válido de 10 dígitos — (123) 456-7890.",
+    registerAddress: "Por favor, ingrese una dirección (mínimo 5 caracteres).",
+    registerCity: "Por favor, ingrese una ciudad (mínimo 2 caracteres).",
+    registerState: "Por favor, seleccione un estado.",
+    registerZip: "Por favor, ingrese un código postal de 5 dígitos.",
+    registerContactFirstName: "Por favor, ingrese el primer nombre de su contacto.",
+    registerContactLastName: "Por favor, ingrese el apellido de su contacto.",
+    registerContactPhone: "Por favor, ingrese un número de teléfono válido de 10 dígitos — (123) 456-7890.",
+    registerService: "Por favor, seleccione por lo menos un servicio.",
+    submitting: "Enviando...",
+    waiverRequiredTitle: "Acuerdo requerido",
+    waiverRequiredText: "Debe aceptar el acuerdo de renuncia para continuar.",
+
     // Notifications
     registrationSuccessTitle: "¡Registro completo!",
     registrationSuccessText: "Su cuenta ha sido creada exitosamente.",
@@ -235,8 +349,7 @@ var translations = {
     registrationConnectionErrorTitle: "Error de conexión",
     registrationConnectionErrorText: "No se puede conectar al servidor. Inténtelo más tarde.",
 
-    // Forget Password Translations 
-    // Note: TEMPORARY!! I NEED TO FIX THE TRANSLATION
+    // Forget Password Translations
     forgetEmailLabel: "Correo electrónico <span class=\"text-danger\" aria-hidden=\"true\">*</span>",
     forgetDOBLabel: 'Fecha de nacimiento <span class="text-danger" aria-hidden="true">*</span>',
     forgetPasswordLabel: "Nueva contraseña",
@@ -247,10 +360,10 @@ var translations = {
     loginCheckInfoTitle: "Revise su información",
     accountFoundTitle: "Verificado",
     accountFoundText: "Identidad verificada.",
-    accountNotFoundTitle: "Informacion incorrecta",
-    accountNotFoundText: "La combinacion de correo electronico y fecha de nacimiento es incorrecta",
-    emailDobIncorrectTitle: "Informacion incorrecta",
-    emailDobIncorrectText: "La combinacion de correo electronico y fecha de nacimiento es incorrecta",
+    accountNotFoundTitle: "Información incorrecta",
+    accountNotFoundText: "La combinación de correo electrónico y fecha de nacimiento es incorrecta.",
+    emailDobIncorrectTitle: "Información incorrecta",
+    emailDobIncorrectText: "La combinación de correo electrónico y fecha de nacimiento es incorrecta.",
     verifyFirstTitle: "Verifique primero",
     verifyFirstText: "Primero verifique su correo electrónico y fecha de nacimiento.",
     confirmPasswordError: "La confirmación de contraseña no coincide.",
@@ -262,7 +375,6 @@ var translations = {
     continueText: "Continuar",
     verifyingText: "Verificando...",
     resettingText: "Restableciendo..."
-    // Seriously, these need to be cleaned up later.
   }
 };
 
@@ -294,4 +406,31 @@ select.addEventListener("change", function () {
     }
   }
 });
+
+// Wire language toggle buttons (EN/ES pill) to the hidden <select>
+(function () {
+  var buttons = document.querySelectorAll('.lang-btn');
+  if (!buttons.length) return;
+  // Sync initial state from saved language
+  var saved = sessionStorage.getItem('lang');
+  if (saved) {
+    buttons.forEach(function (b) {
+      var isActive = b.dataset.lang === saved;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      buttons.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
+      select.value = btn.dataset.lang;
+      select.dispatchEvent(new Event('change'));
+    });
+  });
+})();
 

@@ -39,73 +39,95 @@ if (empty($serviceIDs)) {
 
 $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = str_repeat('s', count($serviceIDs));
+$currentEventID = '4cbde538985861b9';
 
-// --- Counts by status (single query) ---
-$countStmt = $mysqli->prepare(
-    "SELECT vs.ServiceStatus, COUNT(DISTINCT c.ClientID) AS cnt
+// --- Combined counts + waitlist (one query instead of two) ---
+// Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
+$dataStmt = $mysqli->prepare(
+    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB,
+            vs.ServiceID, vs.ServiceStatus
      FROM tblVisitServices vs
      JOIN tblVisits v ON v.VisitID = vs.VisitID
      JOIN tblClients c ON c.ClientID = v.ClientID
      WHERE vs.ServiceID IN ($placeholders)
-     GROUP BY vs.ServiceStatus"
+     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending'), vs.QueuePriority ASC"
 );
-if (!$countStmt) {
+if (!$dataStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
-$countStmt->bind_param($types, ...$serviceIDs);
-$countStmt->execute();
-$countRows = $countStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$countStmt->close();
+$dataStmt->bind_param($types, ...$serviceIDs);
+$dataStmt->execute();
+$allRows = $dataStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$dataStmt->close();
 
 $counts = ['Pending' => 0, 'In-Progress' => 0, 'Complete' => 0, 'Standby' => 0];
-foreach ($countRows as $row) {
-    $counts[$row['ServiceStatus']] = (int)$row['cnt'];
+$waitList = [];
+$countedClients = [];
+foreach ($allRows as $row) {
+    $status = $row['ServiceStatus'];
+    $clientKey = $row['ClientID'] . ':' . $status;
+    if (!isset($countedClients[$clientKey])) {
+        $countedClients[$clientKey] = true;
+        if (isset($counts[$status])) $counts[$status]++;
+    }
+    if ($status === 'Pending' || $status === 'In-Progress') {
+        $waitList[] = $row;
+    }
 }
 
-// --- Average service time from movement logs ---
-// Pairs "Seated" → "Completed" actions per VisitServiceID
+// --- Average service time (current event only) ---
+// Actions logged as "{ServiceID}CheckIn" / "{ServiceID}CheckOut" by ServiceScan.php
 $avgStmt = $mysqli->prepare(
-    "SELECT AVG(TIMESTAMPDIFF(MINUTE, seated.Timestamp, completed.Timestamp)) AS avgMinutes
-     FROM tblMovementLogs seated
-     JOIN tblMovementLogs completed
-       ON completed.VisitServiceID = seated.VisitServiceID
-       AND completed.Action = 'Completed'
-     JOIN tblVisitServices vs ON vs.VisitServiceID = seated.VisitServiceID
-     WHERE seated.Action = 'Seated'
-     AND vs.ServiceID IN ($placeholders)"
+    "SELECT AVG(TIMESTAMPDIFF(MINUTE, ci.Timestamp, co.Timestamp)) AS avgMinutes
+     FROM tblVisitServices vs
+     JOIN tblVisits v ON v.VisitID = vs.VisitID
+     JOIN tblMovementLogs ci
+       ON ci.VisitServiceID = vs.VisitServiceID
+       AND ci.Action = CONCAT(vs.ServiceID, 'CheckIn')
+     JOIN tblMovementLogs co
+       ON co.VisitServiceID = vs.VisitServiceID
+       AND co.Action = CONCAT(vs.ServiceID, 'CheckOut')
+     WHERE vs.ServiceID IN ($placeholders)
+       AND v.EventID = ?"
 );
 $avgServiceTime = null;
 if ($avgStmt) {
-    $avgStmt->bind_param($types, ...$serviceIDs);
+    $avgStmt->bind_param($types . 's', ...[...$serviceIDs, $currentEventID]);
     $avgStmt->execute();
     $avgRow = $avgStmt->get_result()->fetch_assoc();
     $avgStmt->close();
-    if ($avgRow && $avgRow['avgMinutes'] !== 0) {
+    if ($avgRow && $avgRow['avgMinutes'] !== null) {
         $avgServiceTime = round((float)$avgRow['avgMinutes']);
     }
 }
 
-// --- Waitlist (all clients with Pending status for these services) ---
-$waitStmt = $mysqli->prepare(
-    "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB
-     FROM tblVisitServices vs
-     JOIN tblVisits v ON v.VisitID = vs.VisitID
-     JOIN tblClients c ON c.ClientID = v.ClientID
-     WHERE vs.ServiceID IN ($placeholders)
-     AND vs.ServiceStatus = 'Pending'
-     ORDER BY vs.QueuePriority ASC"
+// --- Capacity data for availability bars (avoids a second HTTP request from the client) ---
+$capStmt = $mysqli->prepare(
+    "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed, es.StandbyLimit
+     FROM tblEventServices es
+     WHERE es.EventID = ? AND es.ServiceID IN ($placeholders)"
 );
-if (!$waitStmt) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $mysqli->error]);
-    exit;
+$capacityData = [];
+if ($capStmt) {
+    $capStmt->bind_param('s' . $types, $currentEventID, ...$serviceIDs);
+    $capStmt->execute();
+    $capRows = $capStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $capStmt->close();
+    foreach ($capRows as $cr) {
+        $maxCap   = (int)$cr['MaxCapacity'];
+        $assigned = (int)$cr['CurrentAssigned'];
+        $capacityData[] = [
+            'serviceID'       => $cr['ServiceID'],
+            'maxCapacity'     => $maxCap,
+            'currentAssigned' => $assigned,
+            'isClosed'        => (int)$cr['IsClosed'],
+            'standbyLimit'    => (int)$cr['StandbyLimit'],
+            'standbyCount'    => ($maxCap > 0 && $assigned > $maxCap) ? ($assigned - $maxCap) : 0,
+        ];
+    }
 }
-$waitStmt->bind_param($types, ...$serviceIDs);
-$waitStmt->execute();
-$waitList = $waitStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$waitStmt->close();
 
 // --- Response ---
 http_response_code(200);
@@ -115,5 +137,6 @@ echo json_encode([
     'inProgressCount'=> $counts['In-Progress'],
     'completedCount' => $counts['Complete'],
     'avgServiceTime' => $avgServiceTime,
+    'capacityData'   => $capacityData,
     'waitList'       => $waitList,
 ]);

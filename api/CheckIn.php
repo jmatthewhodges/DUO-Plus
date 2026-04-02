@@ -108,6 +108,25 @@ $visitID          = $visitRow['VisitID'];
 $alreadyCheckedIn = !empty($visitRow['FirstCheckedIn']); // true if they've checked in before
 $now              = date('Y-m-d H:i:s');
 
+// ── Block check-in if client is currently In-Progress at any service ─────
+$ipStmt = $mysqli->prepare(
+    "SELECT vs.ServiceID FROM tblVisitServices vs WHERE vs.VisitID = ? AND vs.ServiceStatus = 'In-Progress' LIMIT 1"
+);
+if ($ipStmt) {
+    $ipStmt->bind_param('s', $visitID);
+    $ipStmt->execute();
+    $ipRow = $ipStmt->get_result()->fetch_assoc();
+    $ipStmt->close();
+    if ($ipRow) {
+        http_response_code(409);
+        echo json_encode([
+            'success' => false,
+            'message' => 'This client is currently being served at a service station and cannot be checked in again until that service is complete.'
+        ]);
+        exit;
+    }
+}
+
 // Update tblVisits:
 //   - EnteredWaitingRoom: always updated (tracks most recent entry)
 //   - FirstCheckedIn: only set if it's null (one-time, never overwritten)
@@ -143,44 +162,323 @@ if (!$updateVisit->execute()) {
 }
 $updateVisit->close();
 
-// Insert rows into tblVisitServices for each service
-$insertService = $mysqli->prepare(
-    "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
-     VALUES (?, ?, ?, 'Pending', ?)"
-);
+// Resolve category IDs to operational IDs.
+// If a serviceID is a category WITH children, expand to its children.
+// If it's a category with no children (e.g. optical), keep it as-is.
+// If it's already operational, keep it as-is.
+$resolvedServices = [];
+foreach ($services as $rawID) {
+    $rawID = trim($rawID);
+    if (empty($rawID)) continue;
 
-if (!$insertService) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
-    exit;
+    $childStmt = $mysqli->prepare(
+        "SELECT ServiceID FROM tblServices WHERE ParentServiceID = ? ORDER BY SortOrder ASC"
+    );
+    $childStmt->bind_param('s', $rawID);
+    $childStmt->execute();
+    $childRows = $childStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $childStmt->close();
+
+    if (!empty($childRows)) {
+        // Category with children — expand
+        foreach ($childRows as $cr) {
+            $resolvedServices[] = $cr['ServiceID'];
+        }
+    } else {
+        // Operational service or standalone category — keep as-is
+        $resolvedServices[] = $rawID;
+    }
 }
+$resolvedServices = array_unique($resolvedServices);
 
-foreach ($services as $serviceID) {
-    $serviceID = trim($serviceID);
-    error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
-    if (empty($serviceID)) continue;
-
-    $visitServiceID = bin2hex(random_bytes(8)); // 16-char hex ID
-    $queuePriority  = date('Y-m-d H:i:s');      // Timestamp = FIFO order
-
-    $insertService->bind_param('ssss', $visitServiceID, $visitID, $serviceID, $queuePriority);
-    if (!$insertService->execute()) {
-        error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
+// ── Load capacity data for standby detection ─────────────────
+$capacityMap = []; // serviceID => { MaxCapacity, CurrentAssigned, StandbyLimit }
+$capStmt = $mysqli->prepare(
+    "SELECT ServiceID, MaxCapacity, CurrentAssigned, StandbyLimit FROM tblEventServices WHERE EventID = ?"
+);
+if ($capStmt) {
+    $capStmt->bind_param('s', $eventID);
+    $capStmt->execute();
+    $capRows = $capStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $capStmt->close();
+    foreach ($capRows as $cr) {
+        $capacityMap[$cr['ServiceID']] = $cr;
     }
 }
 
-$insertService->close();
+// Track which services went to standby and whether standby is full
+$standbyServices = [];  // service IDs that were placed on standby
+$standbyFull = [];      // service IDs where standby limit is also exceeded
 
-// Update clientsProcessed stat in tblAnalytics
-$statKey = 'clientsProcessed';
-$updateStat = $mysqli->prepare(
-    "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
-     WHERE EventID = ? AND StatID = ?"
+// ── Service diff logic for re-check-in ───────────────────────
+// When the client is already checked in, diff existing Pending/Standby services
+// against the newly selected ones: remove deselected, add new ones.
+// Services that are In-Progress or Complete are never touched.
+if ($alreadyCheckedIn) {
+    // Fetch existing visit services for this visit
+    $existingStmt = $mysqli->prepare(
+        "SELECT VisitServiceID, ServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ?"
+    );
+    $existingStmt->bind_param('s', $visitID);
+    $existingStmt->execute();
+    $existingRows = $existingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $existingStmt->close();
+
+    // Build lookup of existing services by ID
+    $existingByServiceID = [];
+    foreach ($existingRows as $row) {
+        $existingByServiceID[$row['ServiceID']] = $row;
+    }
+
+    $existingServiceIDs = array_keys($existingByServiceID);
+    $toAdd    = array_diff($resolvedServices, $existingServiceIDs);
+    $toRemove = array_diff($existingServiceIDs, $resolvedServices);
+
+    // Remove deselected services (only Pending or Standby ones)
+    $decAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = GREATEST(CurrentAssigned - 1, 0) WHERE EventID = ? AND ServiceID = ?"
+    );
+    $delStmt = $mysqli->prepare("DELETE FROM tblVisitServices WHERE VisitServiceID = ?");
+
+    foreach ($toRemove as $svcID) {
+        $row = $existingByServiceID[$svcID];
+        if ($row['ServiceStatus'] !== 'Pending' && $row['ServiceStatus'] !== 'Standby') continue; // don't touch In-Progress or Complete
+
+        $delStmt->bind_param('s', $row['VisitServiceID']);
+        $delStmt->execute();
+
+        // Log removal to tblMovementLogs
+        $logID = uniqid('log_', true);
+        $logStmt = $mysqli->prepare(
+            "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'ServiceRemoved', ?)"
+        );
+        if ($logStmt) {
+            $logStmt->bind_param('sss', $logID, $row['VisitServiceID'], $now);
+            $logStmt->execute();
+            $logStmt->close();
+        }
+
+        if ($decAssigned) {
+            $decAssigned->bind_param('ss', $eventID, $svcID);
+            $decAssigned->execute();
+        }
+        error_log("Re-check-in: Removed service $svcID (Pending) for VisitID=$visitID");
+    }
+    $delStmt->close();
+    if ($decAssigned) $decAssigned->close();
+
+    // Add newly selected services
+    $insertService = $mysqli->prepare(
+        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
+         VALUES (?, ?, ?, ?, ?)"
+    );
+    $incrementAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+
+    foreach ($toAdd as $serviceID) {
+        $serviceID = trim($serviceID);
+        if (empty($serviceID)) continue;
+
+        // Determine status: Standby if at capacity, Pending otherwise
+        $svcStatus = 'Pending';
+        $cap = $capacityMap[$serviceID] ?? null;
+        if ($cap && (int)$cap['MaxCapacity'] > 0 && (int)$cap['CurrentAssigned'] >= (int)$cap['MaxCapacity']) {
+            $svcStatus = 'Standby';
+            $standbyServices[] = $serviceID;
+            $standbyLimit = (int)($cap['StandbyLimit'] ?? 0);
+            $standbyCount = (int)$cap['CurrentAssigned'] - (int)$cap['MaxCapacity'];
+            if ($standbyLimit > 0 && $standbyCount >= $standbyLimit) {
+                $standbyFull[] = $serviceID;
+            }
+        }
+
+        $visitServiceID = bin2hex(random_bytes(8));
+        $queuePriority  = date('Y-m-d H:i:s');
+
+        $insertService->bind_param('sssss', $visitServiceID, $visitID, $serviceID, $svcStatus, $queuePriority);
+        if (!$insertService->execute()) {
+            error_log('Re-check-in: Failed to insert service ' . $serviceID . ': ' . $insertService->error);
+        } else {
+            // Log addition to tblMovementLogs
+            $logID = uniqid('log_', true);
+            $logStmt = $mysqli->prepare(
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'RegistrationCheckIn', ?)"
+            );
+            if ($logStmt) {
+                $logStmt->bind_param('sss', $logID, $visitServiceID, $now);
+                $logStmt->execute();
+                $logStmt->close();
+            }
+            if ($incrementAssigned) {
+                $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+                $incrementAssigned->execute();
+            }
+        }
+        error_log("Re-check-in: Added service $serviceID for VisitID=$visitID");
+    }
+
+    $insertService->close();
+    if ($incrementAssigned) $incrementAssigned->close();
+
+} else {
+    // ── First check-in: insert all services ──────────────────────
+    $insertService = $mysqli->prepare(
+        "INSERT INTO tblVisitServices (VisitServiceID, VisitID, ServiceID, ServiceStatus, QueuePriority)
+         VALUES (?, ?, ?, ?, ?)"
+    );
+
+    if (!$insertService) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+        exit;
+    }
+
+    $incrementAssigned = $mysqli->prepare(
+        "UPDATE tblEventServices SET CurrentAssigned = CurrentAssigned + 1 WHERE EventID = ? AND ServiceID = ?"
+    );
+
+    foreach ($resolvedServices as $serviceID) {
+        $serviceID = trim($serviceID);
+        error_log('Attempting insert — VisitID: ' . $visitID . ' | ServiceID: [' . $serviceID . ']');
+        if (empty($serviceID)) continue;
+
+        // Determine status: Standby if at capacity, Pending otherwise
+        $svcStatus = 'Pending';
+        $cap = $capacityMap[$serviceID] ?? null;
+        if ($cap && (int)$cap['MaxCapacity'] > 0 && (int)$cap['CurrentAssigned'] >= (int)$cap['MaxCapacity']) {
+            $svcStatus = 'Standby';
+            $standbyServices[] = $serviceID;
+            $standbyLimit = (int)($cap['StandbyLimit'] ?? 0);
+            $standbyCount = (int)$cap['CurrentAssigned'] - (int)$cap['MaxCapacity'];
+            if ($standbyLimit > 0 && $standbyCount >= $standbyLimit) {
+                $standbyFull[] = $serviceID;
+            }
+        }
+
+        $visitServiceID = bin2hex(random_bytes(8));
+        $queuePriority  = date('Y-m-d H:i:s');
+
+        $insertService->bind_param('sssss', $visitServiceID, $visitID, $serviceID, $svcStatus, $queuePriority);
+        if (!$insertService->execute()) {
+            error_log('Failed to insert VisitService for ' . $serviceID . ': ' . $insertService->error);
+        } else {
+            // Log to tblMovementLogs
+            $logID = uniqid('log_', true);
+            $logStmt = $mysqli->prepare(
+                "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'RegistrationCheckIn', ?)"
+            );
+            if ($logStmt) {
+                $logStmt->bind_param('sss', $logID, $visitServiceID, $now);
+                $logStmt->execute();
+                $logStmt->close();
+            }
+            if ($incrementAssigned) {
+                $incrementAssigned->bind_param('ss', $eventID, $serviceID);
+                $incrementAssigned->execute();
+            }
+        }
+    }
+
+    $insertService->close();
+    if ($incrementAssigned) $incrementAssigned->close();
+}
+
+// ── Fast Track Logic ─────────────────────────────────────────
+// If this client has dental sub-services, and the fast-track limit hasn't been reached,
+// flag their dental visit-services as IsFastTracked = 1 so they go to dental first.
+$isFastTracked = false;
+
+// 1. Fetch FastTrackLimit setting for this event
+$fastTrackLimit = 0;
+$ftSetting = $mysqli->prepare(
+    "SELECT SettingValue FROM tblEventSettings WHERE EventID = ? AND SettingKey = 'FastTrackLimit' LIMIT 1"
 );
-if ($updateStat) {
-    $updateStat->bind_param('ss', $eventID, $statKey);
-    $updateStat->execute();
-    $updateStat->close();
+if ($ftSetting) {
+    $ftSetting->bind_param('s', $eventID);
+    $ftSetting->execute();
+    $ftResult = $ftSetting->get_result()->fetch_assoc();
+    $ftSetting->close();
+    if ($ftResult) {
+        $fastTrackLimit = (int)$ftResult['SettingValue'];
+    }
+}
+error_log("[FastTrack] Limit=$fastTrackLimit | resolvedServices=" . implode(',', $resolvedServices));
+
+if ($fastTrackLimit > 0) {
+    // 2. Identify which of the resolved services are "dental" (have a dental parent category)
+    $dentalServiceIDs = [];
+    foreach ($resolvedServices as $svcID) {
+        $parentStmt = $mysqli->prepare(
+            "SELECT p.ServiceID AS ParentID, p.ServiceName AS ParentName
+             FROM tblServices s
+             JOIN tblServices p ON p.ServiceID = s.ParentServiceID
+             WHERE s.ServiceID = ? AND p.ServiceType = 'category'"
+        );
+        if ($parentStmt) {
+            $parentStmt->bind_param('s', $svcID);
+            $parentStmt->execute();
+            $parentRow = $parentStmt->get_result()->fetch_assoc();
+            $parentStmt->close();
+            error_log("[FastTrack] Service=$svcID | Parent=" . ($parentRow ? $parentRow['ParentName'] : 'NONE'));
+            if ($parentRow && stripos($parentRow['ParentName'], 'dental') !== false) {
+                $dentalServiceIDs[] = $svcID;
+            }
+        }
+    }
+
+    error_log("[FastTrack] dentalServiceIDs=" . implode(',', $dentalServiceIDs));
+
+    if (!empty($dentalServiceIDs)) {
+        // 3. Count how many distinct visits already have fast-tracked dental services
+        $countStmt = $mysqli->prepare(
+            "SELECT COUNT(DISTINCT vs.VisitID) AS FastTrackedCount
+             FROM tblVisitServices vs
+             JOIN tblVisits v ON v.VisitID = vs.VisitID
+             WHERE v.EventID = ? AND vs.IsFastTracked = 1"
+        );
+        $currentFTCount = 0;
+        if ($countStmt) {
+            $countStmt->bind_param('s', $eventID);
+            $countStmt->execute();
+            $countRow = $countStmt->get_result()->fetch_assoc();
+            $countStmt->close();
+            $currentFTCount = (int)($countRow['FastTrackedCount'] ?? 0);
+        }
+
+        error_log("[FastTrack] currentFTCount=$currentFTCount / limit=$fastTrackLimit");
+
+        // 4. If under the limit, flag this client's dental services
+        if ($currentFTCount < $fastTrackLimit) {
+            foreach ($dentalServiceIDs as $dentalSvcID) {
+                $flagStmt = $mysqli->prepare(
+                    "UPDATE tblVisitServices SET IsFastTracked = 1 WHERE VisitID = ? AND ServiceID = ?"
+                );
+                if ($flagStmt) {
+                    $flagStmt->bind_param('ss', $visitID, $dentalSvcID);
+                    $flagStmt->execute();
+                    error_log("[FastTrack] Flagged VisitID=$visitID ServiceID=$dentalSvcID as fast-tracked");
+                    $flagStmt->close();
+                }
+            }
+            $isFastTracked = true;
+        }
+    }
+}
+error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false'));
+
+// Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
+if (!$alreadyCheckedIn) {
+    $statKey = 'clientsProcessed';
+    $updateStat = $mysqli->prepare(
+        "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
+         WHERE EventID = ? AND StatID = ?"
+    );
+    if ($updateStat) {
+        $updateStat->bind_param('ss', $eventID, $statKey);
+        $updateStat->execute();
+        $updateStat->close();
+    }
 }
 
 // Fetch updated clientsProcessed to return to frontend
@@ -211,6 +509,27 @@ if ($checkedInQuery) {
     $checkedInQuery->close();
 }
 
+// Build standby message if any services went to standby
+$standbyMessage = '';
+if (!empty($standbyServices)) {
+    // Resolve service names for the standby services
+    $standbyNames = [];
+    foreach (array_unique($standbyServices) as $sbID) {
+        $nameStmt = $mysqli->prepare("SELECT ServiceName FROM tblServices WHERE ServiceID = ? LIMIT 1");
+        if ($nameStmt) {
+            $nameStmt->bind_param('s', $sbID);
+            $nameStmt->execute();
+            $nameRow = $nameStmt->get_result()->fetch_assoc();
+            $nameStmt->close();
+            if ($nameRow) $standbyNames[] = $nameRow['ServiceName'];
+        }
+    }
+    $standbyMessage = 'Client placed on STANDBY for: ' . implode(', ', $standbyNames) . '. They are still checked in and in the queue.';
+    if (!empty($standbyFull)) {
+        $standbyMessage .= ' Note: Standby list is full for some services.';
+    }
+}
+
 // Success
 http_response_code(200);
 echo json_encode([
@@ -219,5 +538,9 @@ echo json_encode([
     'visitID'          => $visitID,
     'firstCheckIn'     => !$alreadyCheckedIn,
     'clientsProcessed' => $clientsProcessed,
-    'checkedIn'        => $checkedIn
+    'checkedIn'        => $checkedIn,
+    'isFastTracked'    => $isFastTracked,
+    'standbyServices'  => array_values(array_unique($standbyServices)),
+    'standbyFull'      => array_values(array_unique($standbyFull)),
+    'standbyMessage'   => $standbyMessage
 ]);

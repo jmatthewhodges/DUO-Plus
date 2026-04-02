@@ -83,10 +83,14 @@ function initializePINModal() {
     // Track PIN verification in this session (frontend only - real verification is server-side)
     let pinVerified = false;
 
-    // Check if user already has a valid server session
+    // Determine pin type based on page — admin page uses the admin PIN
+    const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
+    const pinType  = (pageName === 'admin') ? 'admin' : 'general';
+
+    // Check if user already has a valid server session for this pin type
     async function checkServerSession() {
         try {
-            const response = await fetch('/api/VerifyPin.php');
+            const response = await fetch('/api/VerifyPin.php?type=' + pinType);
             const data = await response.json();
             return data.verified === true;
         } catch (e) {
@@ -104,11 +108,11 @@ function initializePINModal() {
     // QR CODE AUTO-FILL: Check for PIN in URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const urlPin = urlParams.get('pin');
-    const stationId = urlParams.get('stationId');
+    const serviceID = urlParams.get('ServiceID');
     
-    // Store stationId globally if provided
-    if (stationId) {
-        window.stationId = stationId;
+    // Store ServiceID globally if provided
+    if (serviceID) {
+        window.serviceID = serviceID;
     }
 
     // ANTI-BYPASS: Prevent modal from closing before PIN verification AND name entry
@@ -213,18 +217,49 @@ function initializePINModal() {
         e.preventDefault();
         const pin = Array.from(inputs).map(i => i.value).join('');
         const name = nameInput.value.trim();
-        const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown';
+
+        // Client-side validation: PIN first, then name
+        const pinComplete = pin.length === 6 && /^\d{6}$/.test(pin);
+
+        if (!pinComplete) {
+            if (document.activeElement) document.activeElement.blur();
+            Swal.fire({
+                icon: 'error',
+                title: 'PIN Required',
+                text: 'Please enter the 6-digit PIN',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                clearInputs(inputs);
+                setTimeout(() => inputs[0].focus(), 300);
+            });
+            return;
+        }
+
+        if (!name) {
+            if (document.activeElement) document.activeElement.blur();
+            Swal.fire({
+                icon: 'error',
+                title: 'Name Required',
+                text: 'Please enter your name',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            }).then(() => {
+                setTimeout(() => nameInput.focus(), 300);
+            });
+            return;
+        }
 
         // UI FEEDBACK: Show loading spinner while verifying
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
 
         try {
-            // BACKEND REQUEST: Send PIN, name, and page name to /api/verify-pin.php for validation
+            // BACKEND REQUEST: Send PIN, name, page name, and pin type for validation
             const response = await fetch('/api/VerifyPin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: pin, name: name, pageName: pageName })
+                body: JSON.stringify({ pin: pin, name: name, pageName: pageName, pinType: pinType })
             });
 
             const data = await response.json();
@@ -255,6 +290,9 @@ function initializePINModal() {
             }, 500);
 
         } catch (err) {
+            // Blur any focused input so the mobile keyboard closes before the alert
+            if (document.activeElement) document.activeElement.blur();
+
             // FAILURE: Display error using SweetAlert
             Swal.fire({
                 icon: 'error',
@@ -263,24 +301,14 @@ function initializePINModal() {
                 confirmButtonText: 'OK',
                 allowOutsideClick: false
             }).then(() => {
-                // Clear only the invalid field - keep the valid one
-                if (err.message === 'Invalid PIN' || err.message === 'Invalid PIN format') {
-                    // PIN is wrong or invalid format, keep name, clear PIN and refocus on PIN
-                    clearInputs(inputs);
-                    inputs[0].focus();
-                } else if (err.message === 'Please enter your name') {
-                    // Name is missing, keep PIN, clear name and refocus on name
-                    nameInput.value = '';
-                    nameInput.focus();
-                } else {
-                    // Other errors (rate limit, etc) - clear name only
-                    nameInput.value = '';
-                    nameInput.focus();
-                }
                 // Re-enable button after alert is dismissed
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Verify PIN';
                 isSubmitting = false; // Allow new submissions
+
+                // PIN was wrong — clear it and reset to first digit
+                clearInputs(inputs);
+                setTimeout(() => inputs[0].focus(), 300);
             });
         } finally {
         }

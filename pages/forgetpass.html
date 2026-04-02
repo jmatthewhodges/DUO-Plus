@@ -25,14 +25,18 @@
     <link href="../assets/css/custom.css" rel="stylesheet">
 </head>
 
-<body class="d-flex align-items-center justify-content-center vh-100 v-center-page">
+<body class="d-flex align-items-center justify-content-center min-vh-100 v-center-page">
 
     <!-- Language switch-->
     <div id="divLanguageSwitch">
-        <select id="selLanguageSwitch" class="btn-primary" aria-label="Language switch">
+        <select id="selLanguageSwitch" class="d-none" aria-hidden="true">
             <option value="en">EN</option>
             <option value="es">ES</option>
         </select>
+        <div class="lang-toggle" role="radiogroup" aria-label="Select language">
+            <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
+            <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
+        </div>
     </div>
 
     <div class="container text-center login-container">
