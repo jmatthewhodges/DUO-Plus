@@ -316,6 +316,8 @@ function resetNewPasswordVisibility() {
         toggleConfirmUserPasswordBtn.setAttribute('title', 'Show password');
         toggleConfirmUserPasswordBtn.setAttribute('aria-label', 'Show password');
     }
+}
+
 // Fetch only service stats and update progress bars (lightweight call after check-in)
 function refreshServiceStats() {
     fetch('../api/registration-dashboard.php?RegistrationStatus=Registered', {
