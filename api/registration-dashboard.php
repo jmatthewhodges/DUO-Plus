@@ -35,35 +35,61 @@ $action = $_GET['action'] ?? null;
 
 if ($action === 'searchUsers') {
     $query = trim($_GET['query'] ?? '');
+
+    // Return empty immediately — do not auto-load all clients
+    if ($query === '') {
+        echo json_encode(['success' => true, 'count' => 0, 'data' => []]);
+        exit;
+    }
+
     $like = '%' . $query . '%';
 
-    $searchStmt = $mysqli->prepare(
-        "SELECT
-            c.ClientID,
-            c.FirstName,
-            c.MiddleInitial,
-            c.LastName,
-            c.DOB,
-            a.Email
-         FROM tblClients c
-         INNER JOIN tblClientAuth a ON c.ClientID = a.ClientID
-         WHERE
-            (? = '') OR
-            (c.FirstName LIKE ?) OR
-            (c.LastName LIKE ?) OR
-            (CONCAT(c.FirstName, ' ', c.LastName) LIKE ?) OR
-            (a.Email LIKE ?)
-         ORDER BY c.LastName ASC, c.FirstName ASC
-         LIMIT 100"
-    );
+    // Split query into words for per-word Soundex matching
+    $words = array_values(array_filter(preg_split('/\s+/', $query), fn($w) => strlen($w) >= 2));
+    $soundexConditions = [];
+    $soundexParams     = [];
+    $soundexTypes      = '';
+    foreach ($words as $word) {
+        $soundexConditions[] = 'SOUNDEX(c.FirstName) = SOUNDEX(?)';
+        $soundexParams[]     = $word;
+        $soundexTypes       .= 's';
+        $soundexConditions[] = 'SOUNDEX(c.LastName) = SOUNDEX(?)';
+        $soundexParams[]     = $word;
+        $soundexTypes       .= 's';
+    }
+    $soundexClause = !empty($soundexConditions)
+        ? ' OR ' . implode(' OR ', $soundexConditions)
+        : '';
 
+    $sql = "SELECT
+                c.ClientID,
+                c.FirstName,
+                c.MiddleInitial,
+                c.LastName,
+                c.DOB,
+                a.Email
+             FROM tblClients c
+             LEFT JOIN tblClientAuth a ON c.ClientID = a.ClientID
+             WHERE
+                c.FirstName LIKE ? OR
+                c.LastName LIKE ? OR
+                CONCAT(c.FirstName, ' ', c.LastName) LIKE ? OR
+                a.Email LIKE ?
+                {$soundexClause}
+             ORDER BY c.LastName ASC, c.FirstName ASC
+             LIMIT 50";
+
+    $searchStmt = $mysqli->prepare($sql);
     if (!$searchStmt) {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Database error while preparing search.']);
         exit;
     }
 
-    $searchStmt->bind_param('sssss', $query, $like, $like, $like, $like);
+    $types  = 'ssss' . $soundexTypes;
+    $params = array_merge([$like, $like, $like, $like], $soundexParams);
+    $searchStmt->bind_param($types, ...$params);
+
     if (!$searchStmt->execute()) {
         $searchStmt->close();
         http_response_code(500);
@@ -78,8 +104,8 @@ if ($action === 'searchUsers') {
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'count' => count($rows),
-        'data' => $rows
+        'count'   => count($rows),
+        'data'    => $rows
     ]);
     exit;
 }
@@ -115,7 +141,7 @@ if ($action === 'resetUserPassword') {
 
     if (!$exists) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'User not found in authentication records.']);
+        echo json_encode(['success' => false, 'message' => 'This client does not have an account set up yet and cannot have their password reset.']);
         exit;
     }
 
@@ -204,9 +230,15 @@ unset($row);
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
 $EventID = "4cbde538985861b9"; // Hardcoded eventID
-$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
-if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$statsRow['StatValue'];
+$statsStmt = $mysqli->prepare("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = ? LIMIT 1");
+if ($statsStmt) {
+    $statsStmt->bind_param('s', $EventID);
+    $statsStmt->execute();
+    $statsResult = $statsStmt->get_result();
+    if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
+        $clientsProcessed = (int)$statsRow['StatValue'];
+    }
+    $statsStmt->close();
 }
 
 // Fetch service availability data from tblEventServices

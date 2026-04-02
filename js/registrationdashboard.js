@@ -348,13 +348,15 @@ function resetChangePasswordModalState() {
     setFieldInvalidState(confirmUserPassword, false);
 }
 
+const PASSWORD_SEARCH_PLACEHOLDER = '<tr><td colspan="4" class="text-center text-muted p-3">Type a name or email to search clients.</td></tr>';
+
 function openChangePasswordModal() {
     resetChangePasswordModalState();
     userPasswordSearch.value = '';
     clearUserPasswordSearchBtn.style.display = 'none';
+    passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
     changePasswordModal.classList.remove('d-none');
     changePasswordModal.classList.add('d-flex');
-    fetchPasswordUsers('');
 }
 
 function closeChangePasswordModal() {
@@ -364,7 +366,7 @@ function closeChangePasswordModal() {
 
 function renderPasswordUsers(users) {
     if (!Array.isArray(users) || users.length === 0) {
-        passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+        passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No clients found.</td></tr>';
         return;
     }
 
@@ -372,21 +374,25 @@ function renderPasswordUsers(users) {
         const middleInitial = user.MiddleInitial ? ` ${escapeHtml(user.MiddleInitial)}.` : '';
         const fullName = `${escapeHtml(user.FirstName)}${middleInitial} ${escapeHtml(user.LastName)}`;
         const dob = formatDOB(user.DOB);
+        const emailRaw = user.Email || '';
+        const emailDisplay = emailRaw
+            ? escapeHtml(emailRaw)
+            : '<span class="text-muted fst-italic">No account</span>';
         return `
             <tr class="select-password-user-row" style="cursor: pointer;"
                 data-client-id="${escapeHtml(user.ClientID)}"
                 data-name="${fullName}"
                 data-dob="${escapeHtml(dob)}"
-                data-email="${escapeHtml(user.Email)}">
+                data-email="${escapeHtml(emailRaw)}">
                 <td class="fw-semibold text-dark">${fullName}</td>
                 <td class="text-secondary">${dob}</td>
-                <td class="text-secondary">${escapeHtml(user.Email)}</td>
+                <td class="text-secondary">${emailDisplay}</td>
                 <td>
                     <button type="button" class="btn btn-sm bg-primary text-white select-password-user-btn"
                         data-client-id="${escapeHtml(user.ClientID)}"
                         data-name="${fullName}"
                         data-dob="${escapeHtml(dob)}"
-                        data-email="${escapeHtml(user.Email)}">
+                        data-email="${escapeHtml(emailRaw)}">
                         Select
                     </button>
                 </td>
@@ -479,9 +485,14 @@ if (userPasswordSearch) {
             clearTimeout(passwordSearchDebounceTimer);
         }
 
+        if (!query) {
+            passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
+            return;
+        }
+
         passwordSearchDebounceTimer = setTimeout(() => {
             fetchPasswordUsers(query);
-        }, 250);
+        }, 300);
     });
 }
 
@@ -489,7 +500,7 @@ if (clearUserPasswordSearchBtn) {
     clearUserPasswordSearchBtn.addEventListener('click', () => {
         userPasswordSearch.value = '';
         clearUserPasswordSearchBtn.style.display = 'none';
-        fetchPasswordUsers('');
+        passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
         userPasswordSearch.focus();
     });
 }
