@@ -976,7 +976,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             clientID: clientIDFromUrl,
             noAddress: true,
             noEmergencyContact: true,
-            EventID: "4cbde538985861b9",
+            EventID: "b7e2d9f4c6a81322",
             services: Array.from(
                 document.querySelectorAll('input[name="clientServices"]:checked')
             ).map(s => s.value),
@@ -1013,7 +1013,7 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
             emergencyFirstName: document.getElementById('emergencyContactFirstName').value,
             emergencyLastName: document.getElementById('emergencyContactLastName').value,
             emergencyPhone: document.getElementById('emergencyContactPhone').value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
-            EventID: "4cbde538985861b9",
+            EventID: "b7e2d9f4c6a81322",
             services: Array.from(
                 document.querySelectorAll('input[name="clientServices"]:checked')
             ).map(s => s.value),

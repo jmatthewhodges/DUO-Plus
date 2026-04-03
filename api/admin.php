@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     // --- Event (hardcoded) ---
-    $activeEventID = '4cbde538985861b9';
+    $activeEventID = 'b7e2d9f4c6a81322';
     $response['activeEvent'] = ['EventID' => $activeEventID];
 
     // --- Services (all defined + event-specific settings) ---
@@ -178,7 +178,7 @@ switch ($action) {
     case 'updateEventSetting':
         $settingKey   = trim($body['settingKey']   ?? '');
         $settingValue = trim($body['settingValue'] ?? '');
-        $settingEventID = '4cbde538985861b9'; // hardcoded for now
+        $settingEventID = 'b7e2d9f4c6a81322'; // hardcoded for now
 
         if (empty($settingKey)) {
             http_response_code(400);
@@ -391,7 +391,7 @@ switch ($action) {
         }
 
         if ($needsEventRow) {
-            $eID = '4cbde538985861b9';
+            $eID = 'b7e2d9f4c6a81322';
             $esID = bin2hex(random_bytes(8));
             $defaultCapacity = 50;
             $defaultSeats = 3;

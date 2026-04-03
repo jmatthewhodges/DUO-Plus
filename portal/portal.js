@@ -104,7 +104,7 @@ const API_METHODS = [
             { name: 'emergencyFirstName', type: 'text', required: false, default: '', description: 'Emergency contact first name' },
             { name: 'emergencyLastName', type: 'text', required: false, default: '', description: 'Emergency contact last name' },
             { name: 'emergencyPhone', type: 'text', required: false, default: '', description: 'Emergency contact phone' },
-            { name: 'EventID', type: 'text', required: true, default: '4cbde538985861b9', description: 'ID of the event attending' },
+            { name: 'EventID', type: 'text', required: true, default: 'b7e2d9f4c6a81322', description: 'ID of the event attending' },
             { name: 'services', type: 'array', required: false, default: '["medical"]', description: 'JSON array of services: medical, optical, dental, haircut' }
         ],
         testData: () => {
@@ -178,7 +178,7 @@ const API_METHODS = [
                 emergencyFirstName: pick(firstNames),
                 emergencyLastName: pick(lastNames),
                 emergencyPhone: `555-${rand(100, 999)}-${rand(1000, 9999)}`,
-                EventID: '4cbde538985861b9',
+                EventID: 'b7e2d9f4c6a81322',
                 services: JSON.stringify(services)
             };
         }
@@ -285,7 +285,7 @@ const API_METHODS = [
         ],
         testData: {
             StatID: 'opticalWaiting',
-            EventID: '4cbde538985861b9',
+            EventID: 'b7e2d9f4c6a81322',
             StatKey: "Optical - Waiting",
             StatValue: 0
         }

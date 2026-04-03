@@ -43,7 +43,7 @@ if (empty($visitID) || empty($serviceID) || !in_array($action, ['add', 'remove',
 }
 
 $mysqli = $GLOBALS['mysqli'];
-$eventID = '4cbde538985861b9';
+$eventID = 'b7e2d9f4c6a81322';
 
 // Verify visit exists
 $visitCheck = $mysqli->prepare("SELECT VisitID FROM tblVisits WHERE VisitID = ? LIMIT 1");

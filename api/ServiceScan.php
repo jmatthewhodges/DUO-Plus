@@ -87,7 +87,7 @@ $mysqli->begin_transaction();
 // Step 1: Lock the visit row for this client.
 // Any concurrent request for the same client will block here until we commit.
 $lockStmt = $mysqli->prepare(
-    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = '4cbde538985861b9' LIMIT 1 FOR UPDATE"
+    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = 'b7e2d9f4c6a81322' LIMIT 1 FOR UPDATE"
 );
 if (!$lockStmt) {
     $mysqli->rollback();

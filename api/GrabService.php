@@ -39,7 +39,7 @@ if (empty($serviceIDs)) {
 
 $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = str_repeat('s', count($serviceIDs));
-$currentEventID = '4cbde538985861b9';
+$currentEventID = 'b7e2d9f4c6a81322';
 
 // --- Combined counts + waitlist (one query instead of two) ---
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.

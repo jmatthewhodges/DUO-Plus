@@ -63,7 +63,7 @@ if (empty($services) || !is_array($services)) {
 }
 
 // Hardcoded EventID for now
-$eventID = '4cbde538985861b9';
+$eventID = 'b7e2d9f4c6a81322';
 
 // Update TranslatorNeeded on tblClients
 $updateClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
@@ -468,7 +468,7 @@ if ($fastTrackLimit > 0) {
 error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false'));
 
 // Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
-if (!$alreadyCheckedIn) {
+/* if (!$alreadyCheckedIn) {
     $statKey = 'clientsProcessed';
     $updateStat = $mysqli->prepare(
         "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
@@ -479,16 +479,36 @@ if (!$alreadyCheckedIn) {
         $updateStat->execute();
         $updateStat->close();
     }
+} */
+
+$eventID = 'b7e2d9f4c6a81322';
+$statKey = 'Clients Processed';
+
+if (!$alreadyCheckedIn) {
+    $updateStat = $mysqli->prepare(
+        "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
+         VALUES (UUID(), ?, ?, 1, NOW())
+         ON DUPLICATE KEY UPDATE StatValue = StatValue + 1, LastUpdated = NOW()"
+    );
+    if ($updateStat) {
+        $updateStat->bind_param('ss', $eventID, $statKey);
+        $updateStat->execute();
+        $updateStat->close();
+    }
 }
 
 // Fetch updated clientsProcessed to return to frontend
 $clientsProcessed = 0;
-$statFetch = $mysqli->query(
-    "SELECT StatValue FROM tblAnalytics WHERE EventID = '$eventID' AND StatID = 'clientsProcessed' LIMIT 1"
+$statFetch = $mysqli->prepare(
+    "SELECT StatValue FROM tblAnalytics WHERE EventID = ? AND StatKey = ? LIMIT 1"
 );
-if ($statFetch && $statRow = $statFetch->fetch_assoc()) {
-    $clientsProcessed = (int)$statRow['StatValue'];
+$statFetch->bind_param('ss', $eventID, $statKey);
+$statFetch->execute();
+$result = $statFetch->get_result();
+if ($row = $result->fetch_assoc()) {
+    $clientsProcessed = (int)$row['StatValue'];
 }
+$statFetch->close();
 
 // Fetch all checked-in clients for this event (for registration table)
 $checkedIn = [];
