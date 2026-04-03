@@ -4,8 +4,8 @@
  * Description:    Handles managing the registration dashboard.
  *
  * Last Modified By:  Lauren
- * Last Modified On:  March 31st @ 10:11 PM
- * Changes Made:      Added volunteer printing functionality.
+ * Last Modified On:  April 3rd @ 2:15 PM
+ * Changes Made:      Added volunteer printing functionality tweaks based on Burchfield feedback.
  * ============================================================
 */
 
