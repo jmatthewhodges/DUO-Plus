@@ -1226,19 +1226,25 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 // Sweet Alert Popups
 document.getElementById('printVolunteerBadgeBtn').addEventListener('click', async function () {
     let trimmedName = '';
-
-    // Swap between input prompt and error messages until we get a valid name
     while (true) {
         const result = await Swal.fire({
             title: 'Print Volunteer Badge',
             input: 'text',
             inputLabel: 'Volunteer name',
-            inputPlaceholder: 'Enter volunteer name',
+            inputPlaceholder: 'Enter first and last name',
+            inputAttributes: {
+                maxlength: '16',
+                'aria-label': 'Volunteer name input (max 16 characters)'
+            },
+            footer: '<span aria-live="polite">Max limit of 16 characters</span>',
             showCancelButton: true,
             confirmButtonText: 'Prepare Badge',
             confirmButtonColor: '#174593',
             cancelButtonText: 'Cancel'
         });
+
+        // Swap between input prompt and error messages until we get a valid name
+
         if (!result.isConfirmed) return;
 
         trimmedName = (result.value || '').trim();
@@ -1251,27 +1257,21 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
             });
             continue;
         }
-        if (trimmedName.length > 20) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Name Too Long',
-                text: 'Please keep the name at 20 characters or fewer.',
-                confirmButtonColor: '#174593'
-            });
-            continue;
-        }
         break;
     }
 
+    // Changes font size depending on length of name.
+
     const getVolunteerNameFontSize = (name) => {
         const length = (name || '').trim().length;
-        if (length <= 10) return 48;
-        if (length <= 14) return 42;
-        if (length <= 17) return 36;
-        return 32;
+        if (length <= 8)  return 48;
+        if (length <= 11) return 42;
+        if (length <= 14) return 36;
+        return 30;
     };
 
-    // Fit name in badge
+    // Fits name on the label.
+
     const labelName = document.getElementById('volunteerLabelName');
     if (!labelName) return;
     labelName.textContent = trimmedName;
@@ -1338,7 +1338,7 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
                     padding-top: 0.18in !important;
-                    padding-right: 0.2in !important;
+                    padding-right: 1.1in !important;
                 }
 
                 #volunteerPrintLabel .volunteer-name {
@@ -1361,13 +1361,14 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
                 }
 
                 #volunteerPrintLabel .volunteer-label-logo {
-                    width: 0.85in !important;
+                    width: 1.0in !important;
                     height: auto !important;
                     object-fit: contain !important;
                     flex: 0 0 auto !important;
                     position: absolute !important;
-                    bottom: 0.12in !important;
-                    right: 0.16in !important;
+                    bottom: 0.06in !important;
+                    right: 0.06in !important;
+                    clip-path: inset(0 14% 0 0) !important;
                 }
             }
     `;
@@ -1380,10 +1381,6 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
     }, 100);
 });
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 //================================================================================
 // 9. INITIALIZATION
 (async () => {
