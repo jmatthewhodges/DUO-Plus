@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  April 1 @ 11:00 PM
- * Changes Made:      Added reset password functionality.
+ * Last Modified By:  Lauren
+ * Last Modified On:  April 3rd @ 2:15 PM
+ * Changes Made:      Added volunteer printing functionality tweaks based on Burchfield feedback.
  * ============================================================
 */
 
@@ -1668,6 +1668,171 @@ document.getElementById('printQrBtn').addEventListener('click', function () {
 document.getElementById('closeQrBtn').addEventListener('click', () => {
     closeQrModal();
     fetchRegistrationQueue();
+});
+
+
+
+//================================================================================
+// 8. PRINT VOLUNTEER BADGE
+
+// When the "Print Volunteer Badge" button is clicked, prompt for a volunteer name, apply print-specific styles so only the volunteer label is printed, then trigger print dialog.
+
+// Sweet Alert Popups
+document.getElementById('printVolunteerBadgeBtn').addEventListener('click', async function () {
+    let trimmedName = '';
+    while (true) {
+        const result = await Swal.fire({
+            title: 'Print Volunteer Badge',
+            input: 'text',
+            inputLabel: 'Volunteer name',
+            inputPlaceholder: 'Enter first and last name',
+            inputAttributes: {
+                maxlength: '16',
+                'aria-label': 'Volunteer name input (max 16 characters)'
+            },
+            footer: '<span aria-live="polite">Max limit of 16 characters</span>',
+            showCancelButton: true,
+            confirmButtonText: 'Prepare Badge',
+            confirmButtonColor: '#174593',
+            cancelButtonText: 'Cancel'
+        });
+
+        // Swap between input prompt and error messages until we get a valid name
+
+        if (!result.isConfirmed) return;
+
+        trimmedName = (result.value || '').trim();
+        if (!trimmedName) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Name Required',
+                text: 'Please enter a volunteer name.',
+                confirmButtonColor: '#174593'
+            });
+            continue;
+        }
+        break;
+    }
+
+    // Changes font size depending on length of name.
+
+    const getVolunteerNameFontSize = (name) => {
+        const length = (name || '').trim().length;
+        if (length <= 8)  return 48;
+        if (length <= 11) return 42;
+        if (length <= 14) return 36;
+        return 30;
+    };
+
+    // Fits name on the label.
+
+    const labelName = document.getElementById('volunteerLabelName');
+    if (!labelName) return;
+    labelName.textContent = trimmedName;
+    labelName.style.fontSize = `${getVolunteerNameFontSize(trimmedName)}px`;
+
+    const style = document.createElement('style');
+    style.textContent = `
+            @media print {
+                @page {
+                    /* DYMO LabelWriter 450 - 30857 Badge label */
+                    size: 4in 2.125in;
+                    margin: 0;
+                }
+
+                /* LOCK the document height so hidden dashboard content doesn't create blank pages */
+                html, body {
+                    width: 4in !important;
+                    height: 2.125in !important;
+                    min-height: 2.125in !important;
+                    max-height: 2.125in !important;
+                    overflow: hidden !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: white !important;
+                }
+
+                body > *:not(#volunteerPrintLabel) {
+                    display: none !important;
+                }
+
+                #volunteerPrintLabel, #volunteerPrintLabel * {
+                    visibility: visible;
+                }
+
+                #volunteerPrintLabel {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 4in !important;
+                    height: 2.125in !important;
+                    padding: 0.12in !important;
+                    display: block !important;
+                    margin: 0 !important;
+                    box-sizing: border-box !important;
+                    font-family: Arial, Helvetica, sans-serif !important;
+                    background: white !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-shell {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    display: flex !important;
+                    align-items: flex-start !important;
+                    justify-content: flex-start !important;
+                    position: relative !important;
+                    padding: 0.12in 0.16in !important;
+                    gap: 0.12in !important;
+                    box-sizing: border-box !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-content {
+                    min-width: 0 !important;
+                    flex: 1 1 auto !important;
+                    padding-top: 0.18in !important;
+                    padding-right: 1.1in !important;
+                }
+
+                #volunteerPrintLabel .volunteer-name {
+                    color: #111 !important;
+                    line-height: 1 !important;
+                    font-weight: 800 !important;
+                    white-space: nowrap !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    width: 100% !important;
+                }
+
+                #volunteerPrintLabel .volunteer-role {
+                    margin-top: 0.08in !important;
+                    color: #333 !important;
+                    font-size: 22px !important;
+                    font-weight: 700 !important;
+                    letter-spacing: 0.02em !important;
+                    text-transform: uppercase !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-logo {
+                    width: 1.0in !important;
+                    height: auto !important;
+                    object-fit: contain !important;
+                    flex: 0 0 auto !important;
+                    position: absolute !important;
+                    bottom: 0.06in !important;
+                    right: 0.06in !important;
+                    clip-path: inset(0 14% 0 0) !important;
+                }
+            }
+    `;
+    document.head.appendChild(style);
+
+    window.print();
+
+    setTimeout(() => {
+        document.head.removeChild(style);
+    }, 100);
 });
 
 //================================================================================
