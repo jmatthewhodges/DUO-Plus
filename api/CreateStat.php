@@ -86,9 +86,9 @@ if ($eventCount == 0) {
     exit;
 }
 
-// Check for duplicate StatID
-$statCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblAnalytics WHERE StatID = ?");
-$statCheck->bind_param("s", $StatID);
+// Check for duplicate StatID within the same event only
+$statCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblAnalytics WHERE StatID = ? AND EventID = ?");
+$statCheck->bind_param("ss", $StatID, $EventID);
 $statCheck->execute();
 $statCheck->bind_result($statCount);
 $statCheck->fetch();
@@ -96,7 +96,7 @@ $statCheck->close();
 
 if ($statCount > 0) {
     http_response_code(409);
-    echo json_encode(['success' => false, 'message' => 'StatID already exists.']);
+    echo json_encode(['success' => false, 'message' => 'StatID already exists for this event.']);
     exit;
 }
 

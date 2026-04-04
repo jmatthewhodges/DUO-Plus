@@ -39,7 +39,33 @@ if (empty($serviceIDs)) {
 
 $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = str_repeat('s', count($serviceIDs));
-$currentEventID = '4cbde538985861b9';
+
+// Resolve active event so service stats and capacity reflect the current event.
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if (!$eventStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to prepare active event query: ' . $mysqli->error]);
+    exit;
+}
+$eventStmt->execute();
+$eventRow = $eventStmt->get_result()->fetch_assoc();
+$eventStmt->close();
+
+if (!$eventRow || empty($eventRow['EventID'])) {
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'pendingCount' => 0,
+        'inProgressCount' => 0,
+        'completedCount' => 0,
+        'avgServiceTime' => null,
+        'capacityData' => [],
+        'waitList' => [],
+    ]);
+    exit;
+}
+
+$currentEventID = $eventRow['EventID'];
 
 // --- Combined counts + waitlist (one query instead of two) ---
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
@@ -68,6 +94,7 @@ $dataStmt = $mysqli->prepare(
          GROUP BY vs2.VisitID
      ) assigned ON assigned.VisitID = v.VisitID
      WHERE vs.ServiceID IN ($placeholders)
+             AND v.EventID = ?
        AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Complete', 'Standby')
      ORDER BY v.FirstCheckedIn ASC, vs.QueuePriority ASC"
 );
@@ -76,7 +103,7 @@ if (!$dataStmt) {
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
-$dataStmt->bind_param($types, ...$serviceIDs);
+$dataStmt->bind_param($types . 's', ...[...$serviceIDs, $currentEventID]);
 $dataStmt->execute();
 $allRows = $dataStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $dataStmt->close();

@@ -30,6 +30,31 @@ header('Content-Type: application/json');
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
 
+// Resolve currently active event so queue data and stats are aligned with check-in.
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if (!$eventStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to prepare active event query: ' . $mysqli->error]);
+    exit;
+}
+$eventStmt->execute();
+$eventRow = $eventStmt->get_result()->fetch_assoc();
+$eventStmt->close();
+
+if (!$eventRow || empty($eventRow['EventID'])) {
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'count' => 0,
+        'data' => [],
+        'clientsProcessed' => 0,
+        'services' => []
+    ]);
+    exit;
+}
+
+$EventID = $eventRow['EventID'];
+
 // Get the queue parameter from GET request
 $queue = $_GET['RegistrationStatus'] ?? null;
 
@@ -56,7 +81,7 @@ if ($queue === 'CheckedIn') {
         FROM tblClients c
         LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
         LEFT JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
-        WHERE v.RegistrationStatus = ?
+        WHERE v.RegistrationStatus = ? AND v.EventID = ?
         GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
     );
 } else {
@@ -72,7 +97,7 @@ if ($queue === 'CheckedIn') {
         FROM tblClients c
         LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
         LEFT JOIN tblVisitServiceSelections s ON c.ClientID = s.ClientID AND v.EventID = s.EventID
-        WHERE v.RegistrationStatus = ?
+        WHERE v.RegistrationStatus = ? AND v.EventID = ?
         GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
     );
 }
@@ -87,7 +112,7 @@ if (!$clientDataStmt) {
 }
 
 // Executes prepared query akin to the mysql connection
-$clientDataStmt->bind_param('s', $queue);
+$clientDataStmt->bind_param('ss', $queue, $EventID);
 if (!$clientDataStmt->execute()) {
     http_response_code(500);
     $msg = json_encode(['success' => false, 'error' => $clientDataStmt->error]);
@@ -111,7 +136,6 @@ unset($row);
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$EventID = "4cbde538985861b9"; // Hardcoded eventID
 $statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
 if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];

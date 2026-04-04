@@ -46,6 +46,25 @@ if (!is_array($_POST)) {
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
+// Always target the currently active event for registrations.
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if (!$eventStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Failed to prepare active event query: ' . $mysqli->error]);
+    exit;
+}
+$eventStmt->execute();
+$eventRow = $eventStmt->get_result()->fetch_assoc();
+$eventStmt->close();
+
+if (!$eventRow || empty($eventRow['EventID'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'No active event found. Please activate an event before registering clients.']);
+    exit;
+}
+
+$activeEventID = $eventRow['EventID'];
+
 // Check if existing user or new user
 $clientID = $_POST['clientID'] ?? null;
 
@@ -207,14 +226,8 @@ if ($clientID) {
     }
 
     // Insert selected services into tblVisitServiceSelections for existing client
-    $EventID = $_POST['EventID'] ?? null; 
+    $EventID = $activeEventID;
     $services = $_POST['services'] ?? [];
-
-    if (!$EventID) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'EventID is required.']);
-        exit;
-    }
 
     if (empty($services) || !is_array($services)) {
         http_response_code(400);
@@ -531,14 +544,8 @@ if ($clientID) {
     }
 
     /// Insert selected services into tblVisitServiceSelections
-    $EventID = $_POST['EventID'] ?? null; 
+    $EventID = $activeEventID;
     $services = $_POST['services'] ?? [];
-
-    if (!$EventID) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'EventID is required.']);
-        exit;
-    }
 
     if (empty($services) || !is_array($services)) {
         http_response_code(400);

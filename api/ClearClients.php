@@ -51,13 +51,26 @@ foreach ($tables as $table) {
 // Re-enable foreign key checks
 $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
 
-// Reset clientsProcessed stat to 0 in tblAnalytics
-$stmt = $mysqli->prepare("UPDATE tblAnalytics SET StatValue = 0 WHERE StatID = 'clientsProcessed'");
-if ($stmt) {
-    $stmt->execute();
-    $stmt->close();
+// Reset clientsProcessed stat to 0 for the active event in tblAnalytics
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if ($eventStmt) {
+    $eventStmt->execute();
+    $eventRow = $eventStmt->get_result()->fetch_assoc();
+    $eventStmt->close();
+
+    if (!empty($eventRow['EventID'])) {
+        $activeEventID = $eventRow['EventID'];
+        $stmt = $mysqli->prepare("UPDATE tblAnalytics SET StatValue = 0 WHERE StatID = 'clientsProcessed' AND EventID = ?");
+        if ($stmt) {
+            $stmt->bind_param('s', $activeEventID);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            $errors[] = "Failed to reset clientsProcessed: " . $mysqli->error;
+        }
+    }
 } else {
-    $errors[] = "Failed to reset clientsProcessed: " . $mysqli->error;
+    $errors[] = "Failed to resolve active event for analytics reset: " . $mysqli->error;
 }
 
 // Reset CurrentAssigned and SeatsInProgress to 0 for all services in tblEventServices

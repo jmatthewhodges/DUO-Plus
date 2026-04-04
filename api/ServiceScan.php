@@ -43,6 +43,25 @@ if (!is_array($_POST)) {
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
+// Resolve currently active event for service scanning.
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if (!$eventStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Failed to prepare active event query: ' . $mysqli->error]);
+    exit;
+}
+$eventStmt->execute();
+$eventRow = $eventStmt->get_result()->fetch_assoc();
+$eventStmt->close();
+
+if (!$eventRow || empty($eventRow['EventID'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'No active event found. Please activate an event before scanning services.']);
+    exit;
+}
+
+$activeEventID = $eventRow['EventID'];
+
 // Validate required fields
 $ClientID = $_POST['ClientID'] ?? '';
 $ServiceID = $_POST['ServiceID'] ?? '';
@@ -87,7 +106,7 @@ $mysqli->begin_transaction();
 // Step 1: Lock the visit row for this client.
 // Any concurrent request for the same client will block here until we commit.
 $lockStmt = $mysqli->prepare(
-    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = '4cbde538985861b9' LIMIT 1 FOR UPDATE"
+    "SELECT VisitID FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1 FOR UPDATE"
 );
 if (!$lockStmt) {
     $mysqli->rollback();
@@ -95,7 +114,7 @@ if (!$lockStmt) {
     echo json_encode(['success' => false, 'message' => 'DB prepare error (lock): ' . $mysqli->error]);
     exit;
 }
-$lockStmt->bind_param('s', $ClientID);
+$lockStmt->bind_param('ss', $ClientID, $activeEventID);
 $lockStmt->execute();
 $lockResult = $lockStmt->get_result()->fetch_assoc();
 $lockStmt->close();
@@ -140,7 +159,7 @@ $sql = "
     SELECT vs.VisitServiceID, vs.VisitID, vs.ServiceID, vs.ServiceStatus, vs.QueuePriority, vs.RegCode, v.EventID
     FROM tblVisitServices vs
     JOIN tblVisits v ON vs.VisitID = v.VisitID
-    WHERE v.ClientID = ?
+        WHERE vs.VisitID = ?
       AND vs.ServiceID IN ($placeholders)
       AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Standby')
     ORDER BY FIELD(vs.ServiceStatus, 'In-Progress', 'Pending', 'Standby')
@@ -148,6 +167,8 @@ $sql = "
 ";
 
 $stmt = $mysqli->prepare($sql);
+$types = 's' . str_repeat('s', count($serviceIDs)); // VisitID + each ServiceID
+$params = array_merge([$lockedVisitID], $serviceIDs);
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();

@@ -62,8 +62,25 @@ if (empty($services) || !is_array($services)) {
     exit;
 }
 
-// Hardcoded EventID for now
-$eventID = '4cbde538985861b9';
+// Resolve active EventID so check-in always targets the current live event.
+$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+if (!$eventStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Failed to prepare active event query: ' . $mysqli->error]);
+    exit;
+}
+
+$eventStmt->execute();
+$eventRow = $eventStmt->get_result()->fetch_assoc();
+$eventStmt->close();
+
+if (!$eventRow || empty($eventRow['EventID'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'No active event found. Please activate an event before check-in.']);
+    exit;
+}
+
+$eventID = $eventRow['EventID'];
 
 // Update TranslatorNeeded on tblClients
 $updateClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
@@ -469,13 +486,17 @@ error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false
 
 // Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
 if (!$alreadyCheckedIn) {
+    $statID = 'clientsProcessed';
     $statKey = 'clientsProcessed';
     $updateStat = $mysqli->prepare(
-        "UPDATE tblAnalytics SET StatValue = StatValue + 1, LastUpdated = NOW()
-         WHERE EventID = ? AND StatID = ?"
+        "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
+         VALUES (?, ?, ?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+           StatValue = StatValue + 1,
+           LastUpdated = NOW()"
     );
     if ($updateStat) {
-        $updateStat->bind_param('ss', $eventID, $statKey);
+        $updateStat->bind_param('sss', $statID, $eventID, $statKey);
         $updateStat->execute();
         $updateStat->close();
     }
