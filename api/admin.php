@@ -13,11 +13,16 @@
  * ============================================================
  */
 
+// Keep API responses JSON-only (avoid HTML warning output breaking JSON.parse)
+ini_set('display_errors', '0');
+
+// Start session before includes to avoid "headers already sent" warnings
+session_start();
+
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
 
 // Admin pages require the admin PIN session, not the general one
-session_start();
 if (!isset($_SESSION['admin_pin_verified']) || $_SESSION['admin_pin_verified'] !== true) {
     header('Content-Type: application/json');
     http_response_code(403);
@@ -29,6 +34,17 @@ header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 
 $mysqli = $GLOBALS['mysqli'];
+
+function getActiveEventId($mysqli) {
+    $stmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+    if (!$stmt) return null;
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row['EventID'] ?? null;
+}
+
+$activeEventID = getActiveEventId($mysqli);
 
 // ─── GET: Load all admin settings ───────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -52,8 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $response['adminPinCode'] = $adminPin ?: null;
     }
 
-    // --- Event (hardcoded) ---
-    $activeEventID = '4cbde538985861b9';
+    if (!$activeEventID) {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => 'No active event found.']);
+        exit;
+    }
+
+    // --- Active Event ---
     $response['activeEvent'] = ['EventID' => $activeEventID];
 
     // --- Services (all defined + event-specific settings) ---
@@ -178,7 +199,13 @@ switch ($action) {
     case 'updateEventSetting':
         $settingKey   = trim($body['settingKey']   ?? '');
         $settingValue = trim($body['settingValue'] ?? '');
-        $settingEventID = '4cbde538985861b9'; // hardcoded for now
+        $settingEventID = $activeEventID;
+
+        if (!$settingEventID) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => 'No active event found.']);
+            exit;
+        }
 
         if (empty($settingKey)) {
             http_response_code(400);
@@ -391,7 +418,12 @@ switch ($action) {
         }
 
         if ($needsEventRow) {
-            $eID = '4cbde538985861b9';
+            $eID = $activeEventID;
+            if (!$eID) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'error' => 'No active event found.']);
+                exit;
+            }
             $esID = bin2hex(random_bytes(8));
             $defaultCapacity = 50;
             $defaultSeats = 3;
