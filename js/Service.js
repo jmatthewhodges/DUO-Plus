@@ -178,46 +178,6 @@ let currentOverlay = null;
 let currentServiceKey = null;  // Track current service for client operations
 let isClientScan = false;  // Flag to distinguish between service and client QR scans
 let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
-const CAMERA_GRANTED_SESSION_KEY = 'duo_camera_permission_granted';
-let hasShownCameraPermissionExplainer = false;
-let cameraPermissionGrantedThisSession = sessionStorage.getItem(CAMERA_GRANTED_SESSION_KEY) === '1';
-
-function markCameraPermissionGranted() {
-    cameraPermissionGrantedThisSession = true;
-    try {
-        sessionStorage.setItem(CAMERA_GRANTED_SESSION_KEY, '1');
-    } catch (e) {
-        // Ignore storage failures (private mode, strict settings, etc.)
-    }
-}
-
-function isPermissionDeniedError(err) {
-    const name = err && err.name ? err.name : '';
-    return name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError';
-}
-
-async function getCameraPermissionState() {
-    if (cameraPermissionGrantedThisSession) return 'granted';
-    if (!navigator.permissions || !navigator.permissions.query) return 'unknown';
-
-    try {
-        const permStatus = await navigator.permissions.query({ name: 'camera' });
-        if (permStatus.state === 'granted') {
-            markCameraPermissionGranted();
-        }
-        return permStatus.state;
-    } catch (e) {
-        return 'unknown';
-    }
-}
-
-async function requestCameraStream() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-    });
-    markCameraPermissionGranted();
-    return stream;
-}
 
 // Hardcoded historical past averages per service (in minutes)
 const PAST_AVG_MINUTES = {
@@ -443,26 +403,15 @@ function selectServiceManual(serviceKey) {
 // Show a pre-permission screen explaining why camera access is needed
 // Skips the modal if camera permission is already granted
 async function showCameraPermissionScreen() {
-    const permissionState = await getCameraPermissionState();
-
-    if (permissionState === 'granted') {
-        startQRScanning();
-        return;
+    try {
+        const permStatus = await navigator.permissions.query({ name: 'camera' });
+        if (permStatus.state === 'granted') {
+            startQRScanning();
+            return;
+        }
+    } catch (e) {
+        // Permissions API not supported — fall through to show the modal
     }
-
-    if (permissionState === 'denied') {
-        showCameraRecommendation();
-        showServiceSelectionDropdown(true);
-        return;
-    }
-
-    // Only show the explainer once per page session.
-    // After that, retries should go straight to browser permission prompt.
-    if (hasShownCameraPermissionExplainer) {
-        startQRScanning();
-        return;
-    }
-    hasShownCameraPermissionExplainer = true;
 
     Swal.fire({
         html: `
@@ -508,7 +457,7 @@ async function showCameraPermissionScreen() {
 }
 
 // Start QR code camera scanning
-async function startQRScanning() {
+function startQRScanning() {
     if (isScanning) return;
 
     isScanning = true;
@@ -516,9 +465,10 @@ async function startQRScanning() {
     const video = document.createElement('video');
     const container = document.body;
 
-    try {
-        // Request camera access
-        const stream = await requestCameraStream();
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+    }).then(stream => {
         videoStream = stream;
         video.srcObject = stream;
         video.play();
@@ -628,14 +578,12 @@ async function startQRScanning() {
             }
         }, 100);
 
-    } catch (err) {
+    }).catch(err => {
         isScanning = false;
         console.error('Camera error:', err);
-        if (isPermissionDeniedError(err)) {
-            showCameraRecommendation();
-        }
+        showCameraRecommendation();
         showServiceSelectionDropdown(true);
-    }
+    });
 }
 
 // Show a persistent banner recommending camera usage for QR scanning
@@ -657,7 +605,6 @@ function showCameraRecommendation() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 // Camera works — stop the test stream and remove the banner
-                markCameraPermissionGranted();
                 stream.getTracks().forEach(track => track.stop());
                 banner.remove();
             })
@@ -827,7 +774,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 // Start scanning for client QR codes
-async function startClientQRScanning() {
+function startClientQRScanning() {
     if (isScanning) return;
 
     isScanning = true;
@@ -836,9 +783,10 @@ async function startClientQRScanning() {
     const video = document.createElement('video');
     const container = document.body;
 
-    try {
-        // Request camera access
-        const stream = await requestCameraStream();
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+    }).then(stream => {
         videoStream = stream;
         video.srcObject = stream;
         video.play();
@@ -930,15 +878,13 @@ async function startClientQRScanning() {
             }
         }, 100);
 
-    } catch (err) {
+    }).catch(err => {
         isScanning = false;
         isClientScan = false;
         console.error('Camera error:', err);
-        if (isPermissionDeniedError(err)) {
-            showCameraRecommendation();
-        }
+        showCameraRecommendation();
         Swal.fire('Camera Error', 'Unable to access camera.', 'error');
-    }
+    });
 }
 
 // Stop client QR scanning
@@ -1274,11 +1220,6 @@ function populateWaitlist(clientsToShow = null) {
                 : (inProgressAtCurrentService
                     ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
                     : '<i class="bi bi-person"></i>'));
-        const avatarMeaning = inProgressAtOtherService
-            ? `Currently at ${inProgressServiceName || 'another service'}`
-            : (inProgressAtCurrentService
-                ? `Currently at ${inProgressServiceName || 'this service'}`
-                : (isCompleted ? 'Service completed' : 'Waiting for service'));
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
         const headerLine = `
             <div class="d-flex flex-column" style="min-width:0;">
@@ -1308,12 +1249,12 @@ function populateWaitlist(clientsToShow = null) {
         const orderedOtherServices = [...incompleteOther, ...completeOther];
         const assignedServices = orderedOtherServices.map(service => {
             let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
-            let servicePillContent = `${escapeHtml(service.name)}`;
+            let pillPrefix = '';
             if (service.status === 'Complete') {
-                servicePillStyle = `${chipBaseStyle} background-color: #dff6e7; border-color: #8fd0a8 !important; color: #155f36;`;
-                servicePillContent = `<i class="bi bi-check2 me-1"></i>${escapeHtml(service.name)}`;
+                servicePillStyle = `${chipBaseStyle} background-color: #e8f6ee; border-color: #b7e4c7 !important; color: #1f7a4d;`;
+                pillPrefix = '<i class="bi bi-check2 me-1" aria-hidden="true"></i>';
             }
-            return `<span class="badge border" style="${servicePillStyle}">${servicePillContent}</span>`;
+            return `<span class="badge border" style="${servicePillStyle}">${pillPrefix}${escapeHtml(service.name)}</span>`;
         }).join('');
         const hasCurrentlyAt = !!currentlyAtCells;
         const servicesLabelClass = hasCurrentlyAt
@@ -1347,7 +1288,7 @@ function populateWaitlist(clientsToShow = null) {
         row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}" title="${escapeHtml(avatarMeaning)}" aria-label="${escapeHtml(avatarMeaning)}">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}">
                         ${avatarIconHTML}
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">
