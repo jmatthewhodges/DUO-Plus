@@ -294,10 +294,13 @@ async function fetchServiceData(serviceKey) {
                     name: fullName,
                     dob: client.DOB,
                     status: 'waiting',
+                    isAbandoned: false,
                     serviceID: client.ServiceID,
                     assignedServices: []
                 };
             }
+
+            SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned = (client.IsAbandoned === 1 || client.IsAbandoned === '1');
 
             // Promote status by priority so one client card reflects the strongest state.
             const statusPriority = { waiting: 1, standby: 2, completed: 3, 'in-progress': 4 };
@@ -308,6 +311,10 @@ async function fetchServiceData(serviceKey) {
             const currentStatus = SERVICE_WAITLISTS[serviceKey][client.ClientID].status;
             if ((statusPriority[normalizedStatus] || 0) > (statusPriority[currentStatus] || 0)) {
                 SERVICE_WAITLISTS[serviceKey][client.ClientID].status = normalizedStatus;
+            }
+
+            if (SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned) {
+                SERVICE_WAITLISTS[serviceKey][client.ClientID].status = 'abandoned';
             }
 
             // Keep the current row's service for sub-label behavior.
@@ -1196,6 +1203,7 @@ function populateWaitlist(clientsToShow = null) {
     clientsArray.forEach(client => {
         const isInProgress = client.status === 'in-progress';
         const isStandby = client.status === 'standby';
+        const isAbandoned = client.status === 'abandoned' || client.isAbandoned;
         const isCompleted = client.status === 'completed';
         const currentServiceIDs = (currentServiceKey && SERVICES[currentServiceKey])
             ? SERVICES[currentServiceKey].serviceIDs
@@ -1211,24 +1219,31 @@ function populateWaitlist(clientsToShow = null) {
             : '';
         const avatarClass = inProgressAtOtherService
             ? 'bg-info text-white'
-            : (inProgressAtCurrentService ? 'text-dark' : (isStandby ? 'bg-warning text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light')));
+            : (inProgressAtCurrentService ? 'text-dark' : (isAbandoned ? 'bg-danger text-white' : (isStandby ? 'bg-warning text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light'))));
         const avatarStyle = inProgressAtCurrentService
             ? ' background-color: #ffe066;'
             : '';
-        const avatarIconHTML = inProgressAtOtherService
-            ? renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white')
-            : (isCompleted
-                ? '<i class="bi bi-check-lg"></i>'
-                : (isStandby
-                    ? '<i class="bi bi-clock-history"></i>'
-                : (inProgressAtCurrentService
-                    ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
-                    : '<i class="bi bi-person"></i>')));
+        let avatarIconHTML = '<i class="bi bi-person"></i>';
+        if (inProgressAtOtherService) {
+            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white');
+        } else if (isAbandoned) {
+            avatarIconHTML = '<i class="bi bi-person-x"></i>';
+        } else if (isCompleted) {
+            avatarIconHTML = '<i class="bi bi-check-lg"></i>';
+        } else if (isStandby) {
+            avatarIconHTML = '<i class="bi bi-clock-history"></i>';
+        } else if (inProgressAtCurrentService) {
+            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark');
+        }
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
+        const abandonedPillStyle = `${chipBaseStyle} background-color: #fdecef; border-color: #f5c2c7 !important; color: #a61e2f;`;
         const headerLine = `
             <div class="d-flex flex-column" style="min-width:0;">
                 <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
             </div>`;
+        const abandonedBadgeHTML = isAbandoned
+            ? `<span class="badge border" style="${abandonedPillStyle}"><i class="bi bi-person-x me-1" aria-hidden="true"></i>Abandoned</span>`
+            : '';
         const standbyBadgeHTML = isStandby
             ? `<span class="badge border" style="${chipBaseStyle} background-color: #fff3cd; border-color: #ffda6a !important; color: #7a5a00;">Standby</span>`
             : '';
@@ -1276,11 +1291,11 @@ function populateWaitlist(clientsToShow = null) {
         const groupedStatusHTML = (currentlyAtCells || nextCells)
             ? `<div class="${statusBlockClass}">${currentlyAtCells}${nextCells}</div>`
             : '';
-        const rowButtonClass = isInProgress ? 'btn-primary' : (isCompleted ? 'btn-outline-secondary' : 'btn-primary');
+        const rowButtonClass = isInProgress ? 'btn-primary' : ((isCompleted || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary');
         const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
-        const rowButtonLabel = isInProgress ? 'Update' : (isCompleted ? 'Completed' : 'Update');
-        const rowButtonDisabled = isCompleted ? 'disabled' : '';
-        const actionCellHTML = isCompleted
+        const rowButtonLabel = isInProgress ? 'Update' : (isCompleted || isAbandoned ? 'View' : 'Update');
+        const rowButtonDisabled = (isCompleted || isAbandoned) ? 'disabled' : '';
+        const actionCellHTML = (isCompleted || isAbandoned)
             ? ''
             : `<button class="btn ${rowButtonClass} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${rowButtonLabel}" ${rowButtonDisabled}>
                     <i class="bi ${rowButtonIcon} d-sm-none" style="font-size: 1rem; line-height: 1;"></i>
@@ -1291,6 +1306,9 @@ function populateWaitlist(clientsToShow = null) {
         if (inProgressAtCurrentService) {
             row.style.backgroundColor = '#fff9e6';
             row.style.boxShadow = 'inset 4px 0 0 #d4aa00';
+        } else if (isAbandoned) {
+            row.style.backgroundColor = '#fff5f6';
+            row.style.boxShadow = 'inset 4px 0 0 #a61e2f';
         }
         row.innerHTML = `
             <td class="ps-3 py-3">
@@ -1300,6 +1318,7 @@ function populateWaitlist(clientsToShow = null) {
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">
                         ${headerLine}
+                        ${abandonedBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${abandonedBadgeHTML}</div>` : ''}
                             ${standbyBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${standbyBadgeHTML}</div>` : ''}
                         ${groupedStatusHTML}
                     </div>

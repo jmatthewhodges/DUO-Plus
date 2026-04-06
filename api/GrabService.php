@@ -71,7 +71,7 @@ $currentEventID = $eventRow['EventID'];
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
 $dataStmt = $mysqli->prepare(
     "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB,
-            vs.ServiceID, vs.ServiceStatus, v.FirstCheckedIn,
+            vs.ServiceID, vs.ServiceStatus, v.IsAbandoned, v.FirstCheckedIn,
             assigned.AssignedServiceDetails
      FROM tblVisitServices vs
      JOIN tblVisits v ON v.VisitID = vs.VisitID
@@ -111,12 +111,24 @@ $dataStmt->close();
 $counts = ['Pending' => 0, 'In-Progress' => 0, 'Complete' => 0, 'Standby' => 0];
 $waitList = [];
 $countedClients = [];
+$abandonedByService = [];
 foreach ($allRows as $row) {
     $status = $row['ServiceStatus'];
+    $isAbandoned = (int)($row['IsAbandoned'] ?? 0) === 1;
     $clientKey = $row['ClientID'] . ':' . $status;
+
+    if ($isAbandoned && in_array($status, ['Pending', 'Standby'], true)) {
+        $serviceKey = $row['ServiceID'];
+        $abandonedByService[$serviceKey] = ($abandonedByService[$serviceKey] ?? 0) + 1;
+    }
+
     if (!isset($countedClients[$clientKey])) {
         $countedClients[$clientKey] = true;
-        if (isset($counts[$status])) $counts[$status]++;
+        if (isset($counts[$status])) {
+            if (!($isAbandoned && in_array($status, ['Pending', 'Standby'], true))) {
+                $counts[$status]++;
+            }
+        }
     }
     if (in_array($status, ['Pending', 'In-Progress', 'Complete', 'Standby'], true)) {
         $waitList[] = $row;
@@ -164,13 +176,15 @@ if ($capStmt) {
     foreach ($capRows as $cr) {
         $maxCap   = (int)$cr['MaxCapacity'];
         $assigned = (int)$cr['CurrentAssigned'];
+        $abandonedAdjust = (int)($abandonedByService[$cr['ServiceID']] ?? 0);
+        $effectiveAssigned = max($assigned - $abandonedAdjust, 0);
         $capacityData[] = [
             'serviceID'       => $cr['ServiceID'],
             'maxCapacity'     => $maxCap,
-            'currentAssigned' => $assigned,
+            'currentAssigned' => $effectiveAssigned,
             'isClosed'        => (int)$cr['IsClosed'],
             'standbyLimit'    => (int)$cr['StandbyLimit'],
-            'standbyCount'    => ($maxCap > 0 && $assigned > $maxCap) ? ($assigned - $maxCap) : 0,
+            'standbyCount'    => ($maxCap > 0 && $effectiveAssigned > $maxCap) ? ($effectiveAssigned - $maxCap) : 0,
         ];
     }
 }
