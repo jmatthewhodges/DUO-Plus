@@ -995,6 +995,22 @@ body.no-scroll {
     height: 100%;
 }
 
+/* On shorter laptop screens, allow vertical scrolling so lower cards are not clipped */
+@media (max-height: 860px) {
+    body.no-scroll {
+        overflow-y: auto;
+        overflow-x: hidden;
+        align-items: flex-start !important;
+        min-height: 100vh;
+        height: auto;
+    }
+
+    body.no-scroll .container-fluid.h-100 {
+        height: auto !important;
+        min-height: 100vh;
+    }
+}
+
 /* Hide scrollbar on the table card-body while keeping it scrollable */
 body.no-scroll .card-body[style*="overflow-y"]::-webkit-scrollbar {
     display: none;
