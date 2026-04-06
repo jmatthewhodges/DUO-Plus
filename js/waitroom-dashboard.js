@@ -374,11 +374,9 @@ function populateWaitListTable(patients) {
         const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
         const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
-        const rowStyle = isNowServing
-            ? 'background-color: #eef4ff; box-shadow: inset 4px 0 0 #174593;'
-            : '';
+        const rowClass = isNowServing ? 'border-bottom waitlist-now-serving-row' : 'border-bottom';
         const rowHTML = `
-            <tr class="border-bottom" style="${rowStyle}" data-client-id="${patient.ClientID}">
+            <tr class="${rowClass}" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
                     <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                         <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">

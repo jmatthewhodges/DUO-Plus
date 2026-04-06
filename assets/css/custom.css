@@ -903,6 +903,23 @@ body.v-center-page {
 }
 
 /* Waiting room: animate current "Now Serving" client name */
+.waitlist-now-serving-row {
+    background-color: #eef4ff;
+    box-shadow: inset 4px 0 0 #174593;
+    animation: waitlist-now-serving-row-flash 1.15s ease-in-out infinite;
+}
+
+@keyframes waitlist-now-serving-row-flash {
+    0%, 100% {
+        background-color: #eef4ff;
+        box-shadow: inset 4px 0 0 #174593;
+    }
+    50% {
+        background-color: #dce9ff;
+        box-shadow: inset 4px 0 0 #10326e;
+    }
+}
+
 .waitlist-now-serving-name {
     animation: waitlist-now-serving-pulse 1s ease-in-out infinite;
 }
