@@ -300,10 +300,11 @@ async function fetchServiceData(serviceKey) {
             }
 
             // Promote status by priority so one client card reflects the strongest state.
-            const statusPriority = { waiting: 1, completed: 2, 'in-progress': 3 };
+            const statusPriority = { waiting: 1, standby: 2, completed: 3, 'in-progress': 4 };
             let normalizedStatus = 'waiting';
             if (client.ServiceStatus === 'In-Progress') normalizedStatus = 'in-progress';
             else if (client.ServiceStatus === 'Complete') normalizedStatus = 'completed';
+            else if (client.ServiceStatus === 'Standby') normalizedStatus = 'standby';
             const currentStatus = SERVICE_WAITLISTS[serviceKey][client.ClientID].status;
             if ((statusPriority[normalizedStatus] || 0) > (statusPriority[currentStatus] || 0)) {
                 SERVICE_WAITLISTS[serviceKey][client.ClientID].status = normalizedStatus;
@@ -1194,6 +1195,7 @@ function populateWaitlist(clientsToShow = null) {
     // Populate with client data
     clientsArray.forEach(client => {
         const isInProgress = client.status === 'in-progress';
+        const isStandby = client.status === 'standby';
         const isCompleted = client.status === 'completed';
         const currentServiceIDs = (currentServiceKey && SERVICES[currentServiceKey])
             ? SERVICES[currentServiceKey].serviceIDs
@@ -1209,7 +1211,7 @@ function populateWaitlist(clientsToShow = null) {
             : '';
         const avatarClass = inProgressAtOtherService
             ? 'bg-info text-white'
-            : (inProgressAtCurrentService ? 'text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light'));
+            : (inProgressAtCurrentService ? 'text-dark' : (isStandby ? 'bg-warning text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light')));
         const avatarStyle = inProgressAtCurrentService
             ? ' background-color: #ffe066;'
             : '';
@@ -1217,14 +1219,19 @@ function populateWaitlist(clientsToShow = null) {
             ? renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white')
             : (isCompleted
                 ? '<i class="bi bi-check-lg"></i>'
+                : (isStandby
+                    ? '<i class="bi bi-clock-history"></i>'
                 : (inProgressAtCurrentService
                     ? renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark')
-                    : '<i class="bi bi-person"></i>'));
+                    : '<i class="bi bi-person"></i>')));
         const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
         const headerLine = `
             <div class="d-flex flex-column" style="min-width:0;">
                 <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
             </div>`;
+        const standbyBadgeHTML = isStandby
+            ? `<span class="badge border" style="${chipBaseStyle} background-color: #fff3cd; border-color: #ffda6a !important; color: #7a5a00;">Standby</span>`
+            : '';
         const currentlyAtCells = (inProgressAtOtherService || inProgressAtCurrentService)
             ? (inProgressAtOtherService
                 ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">
@@ -1293,6 +1300,7 @@ function populateWaitlist(clientsToShow = null) {
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0;">
                         ${headerLine}
+                            ${standbyBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${standbyBadgeHTML}</div>` : ''}
                         ${groupedStatusHTML}
                     </div>
                 </div>

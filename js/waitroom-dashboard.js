@@ -315,6 +315,7 @@ function populateWaitListTable(patients) {
         const completedPillStyle = `${chipBaseStyle} background-color: #e8f6ee; border-color: #b7e4c7 !important; color: #1f7a4d;`;
         const abandonedPillStyle = `${chipBaseStyle} background-color: #fdecef; border-color: #f5c2c7 !important; color: #a61e2f;`;
         const inProgressOtherPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
+        const standbyPillStyle = `${chipBaseStyle} background-color: #fff3cd; border-color: #ffda6a !important; color: #7a5a00;`;
         const pendingPillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
         const nowServingPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
         let metaBadges = '';
@@ -337,6 +338,10 @@ function populateWaitListTable(patients) {
             let pillPrefix = '';
             if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
             if (vs.ServiceStatus === 'Complete') pillPrefix = '<i class="bi bi-check2 me-1" aria-hidden="true"></i>';
+            if (vs.ServiceStatus === 'Standby') {
+                pillStyle = standbyPillStyle;
+                pillPrefix = '<i class="bi bi-clock-history me-1" aria-hidden="true"></i>';
+            }
             return `<span class="badge border" style="${pillStyle}">${pillPrefix}${escapeHtml(vs.ServiceName)}</span>`;
         }).join('');
         const currentlyAtCells = currentAtPills
