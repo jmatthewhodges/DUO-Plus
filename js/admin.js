@@ -616,7 +616,7 @@ function renderFastTrackSection() {
 
     container.innerHTML = `
         <p class="text-muted small mb-3">First N dental patients skip medical and go straight to dental.</p>
-        <div class="d-flex align-items-end gap-3">
+        <div class="d-flex align-items-end justify-content-start flex-wrap gap-3">
             <div>
                 <label class="form-label fw-semibold small mb-1">Fast Track Limit</label>
                 <input type="number" class="form-control form-control-sm" id="inputFastTrackLimit"
