@@ -470,7 +470,16 @@ function fetchRegistrationQueue() {
             }
             // Only update processed count when fetching the registration queue
             // (checked-in tab re-fetches return a different context and should not overwrite it)
+            /*
             if (currentTab !== 'checked-in' && statCompCount && data.clientsProcessed !== undefined) {
+                statCompCount.innerText = data.clientsProcessed;
+            }
+            */
+            //Beth changed this 4/5/26 Please check that this does not break anything 
+            //heavily since my javascript skills are week
+            //This code fixed the clients registered numbers
+            if (currentTab !== 'checked-in' && statCompCount && data.clientsProcessed !== undefined && data.clientsProcessed > 0
+            ) {
                 statCompCount.innerText = data.clientsProcessed;
             }
             // Update service progress bars based on API data

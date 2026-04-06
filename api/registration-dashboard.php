@@ -112,7 +112,7 @@ unset($row);
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
 $EventID = "b7e2d9f4c6a81322"; // Hardcoded eventID
-$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
+$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'Clients Processed' AND EventID = '$EventID' LIMIT 1");
 if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
     $clientsProcessed = (int)$statsRow['StatValue'];
 }
