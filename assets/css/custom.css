@@ -1036,17 +1036,24 @@ body.no-scroll .card-body[style*="overflow-y"] {
 }
 
 .admin-page {
+    min-height: 100vh;
     align-items: flex-start;
     justify-content: center;
 }
 
 .admin-shell {
+    width: 100%;
     max-width: 1240px;
 }
 
 .admin-header-card {
     border-radius: 14px;
     background: #ffffff;
+    box-shadow: 0 10px 28px rgba(17, 37, 69, 0.08) !important;
+}
+
+.admin-layout-row {
+    --bs-gutter-y: 1.25rem;
 }
 
 .admin-section .card-header {
@@ -1067,10 +1074,19 @@ body.no-scroll .card-body[style*="overflow-y"] {
 .admin-section .card {
     border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 8px 22px rgba(17, 37, 69, 0.07) !important;
 }
 
 .admin-section .card-body {
     background: #fff;
+}
+
+@media (min-width: 992px) {
+    .admin-sidebar-column {
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+    }
 }
 
 .admin-pin-row {
