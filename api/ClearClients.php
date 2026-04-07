@@ -60,9 +60,10 @@ if ($eventStmt) {
 
     if (!empty($eventRow['EventID'])) {
         $activeEventID = $eventRow['EventID'];
-        $stmt = $mysqli->prepare("UPDATE tblAnalytics SET StatValue = 0 WHERE StatID = 'clientsProcessed' AND EventID = ?");
+        $clientsProcessedKey = 'clientsProcessed';
+        $stmt = $mysqli->prepare("UPDATE tblAnalytics SET StatValue = 0, LastUpdated = NOW() WHERE StatKey = ? AND EventID = ?");
         if ($stmt) {
-            $stmt->bind_param('s', $activeEventID);
+            $stmt->bind_param('ss', $clientsProcessedKey, $activeEventID);
             $stmt->execute();
             $stmt->close();
         } else {

@@ -41,7 +41,13 @@ $placeholders = implode(',', array_fill(0, count($serviceIDs), '?'));
 $types = str_repeat('s', count($serviceIDs));
 
 // Resolve active event so service stats and capacity reflect the current event.
-$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+$eventStmt = $mysqli->prepare(
+    "SELECT EventID
+     FROM tblEvents
+     WHERE IsActive = 1
+     ORDER BY EventDate DESC
+     LIMIT 1"
+);
 if (!$eventStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Failed to prepare active event query: ' . $mysqli->error]);
@@ -59,6 +65,7 @@ if (!$eventRow || empty($eventRow['EventID'])) {
         'inProgressCount' => 0,
         'completedCount' => 0,
         'avgServiceTime' => null,
+        'pastAvgServiceTime' => null,
         'capacityData' => [],
         'waitList' => [],
     ]);
@@ -66,6 +73,25 @@ if (!$eventRow || empty($eventRow['EventID'])) {
 }
 
 $currentEventID = $eventRow['EventID'];
+$previousEventID = null;
+
+// Resolve previous event (most recent non-current event).
+$prevEventStmt = $mysqli->prepare(
+    "SELECT EventID
+     FROM tblEvents
+     WHERE EventID <> ?
+     ORDER BY EventDate DESC
+     LIMIT 1"
+);
+if ($prevEventStmt) {
+    $prevEventStmt->bind_param('s', $currentEventID);
+    $prevEventStmt->execute();
+    $prevEventRow = $prevEventStmt->get_result()->fetch_assoc();
+    $prevEventStmt->close();
+    if ($prevEventRow && !empty($prevEventRow['EventID'])) {
+        $previousEventID = $prevEventRow['EventID'];
+    }
+}
 
 // --- Combined counts + waitlist (one query instead of two) ---
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
@@ -77,7 +103,7 @@ $dataStmt = $mysqli->prepare(
      JOIN tblVisits v ON v.VisitID = vs.VisitID
      JOIN tblClients c ON c.ClientID = v.ClientID
      LEFT JOIN (
-         SELECT vs2.VisitID,
+         SELECT vs2.VisitID, v2.EventID,
                 GROUP_CONCAT(
                     CONCAT(
                         REPLACE(vs2.ServiceID, '::', ''),
@@ -90,9 +116,11 @@ $dataStmt = $mysqli->prepare(
                     SEPARATOR '||'
                 ) AS AssignedServiceDetails
          FROM tblVisitServices vs2
+                 JOIN tblVisits v2 ON v2.VisitID = vs2.VisitID
          JOIN tblServices s2 ON s2.ServiceID = vs2.ServiceID
-         GROUP BY vs2.VisitID
-     ) assigned ON assigned.VisitID = v.VisitID
+                 WHERE v2.EventID = ?
+                 GROUP BY vs2.VisitID, v2.EventID
+         ) assigned ON assigned.VisitID = v.VisitID AND assigned.EventID = v.EventID
      WHERE vs.ServiceID IN ($placeholders)
              AND v.EventID = ?
        AND vs.ServiceStatus IN ('Pending', 'In-Progress', 'Complete', 'Standby')
@@ -103,7 +131,7 @@ if (!$dataStmt) {
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
-$dataStmt->bind_param($types . 's', ...[...$serviceIDs, $currentEventID]);
+$dataStmt->bind_param($types . 'ss', ...[...$serviceIDs, $currentEventID, $currentEventID]);
 $dataStmt->execute();
 $allRows = $dataStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $dataStmt->close();
@@ -161,6 +189,34 @@ if ($avgStmt) {
     }
 }
 
+// --- Average service time (previous event only) ---
+$pastAvgServiceTime = null;
+if ($previousEventID) {
+        $pastAvgStmt = $mysqli->prepare(
+                "SELECT AVG(TIMESTAMPDIFF(MINUTE, ci.Timestamp, co.Timestamp)) AS avgMinutes
+                 FROM tblVisitServices vs
+                 JOIN tblVisits v ON v.VisitID = vs.VisitID
+                 JOIN tblMovementLogs ci
+                     ON ci.VisitServiceID = vs.VisitServiceID
+                     AND ci.Action = CONCAT(vs.ServiceID, 'CheckIn')
+                 JOIN tblMovementLogs co
+                     ON co.VisitServiceID = vs.VisitServiceID
+                     AND co.Action = CONCAT(vs.ServiceID, 'CheckOut')
+                 WHERE vs.ServiceID IN ($placeholders)
+                     AND v.EventID = ?"
+        );
+
+        if ($pastAvgStmt) {
+                $pastAvgStmt->bind_param($types . 's', ...[...$serviceIDs, $previousEventID]);
+                $pastAvgStmt->execute();
+                $pastAvgRow = $pastAvgStmt->get_result()->fetch_assoc();
+                $pastAvgStmt->close();
+                if ($pastAvgRow && $pastAvgRow['avgMinutes'] !== null) {
+                        $pastAvgServiceTime = round((float)$pastAvgRow['avgMinutes']);
+                }
+        }
+}
+
 // --- Capacity data for availability bars (avoids a second HTTP request from the client) ---
 $capStmt = $mysqli->prepare(
     "SELECT es.ServiceID, es.MaxCapacity, es.CurrentAssigned, es.IsClosed, es.StandbyLimit
@@ -197,6 +253,7 @@ echo json_encode([
     'inProgressCount'=> $counts['In-Progress'],
     'completedCount' => $counts['Complete'],
     'avgServiceTime' => $avgServiceTime,
+    'pastAvgServiceTime' => $pastAvgServiceTime,
     'capacityData'   => $capacityData,
     'waitList'       => $waitList,
 ]);

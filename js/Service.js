@@ -35,7 +35,7 @@
  4. GET SERVICE STATS — IMPLEMENTED via /api/GrabService.php
     Purpose: Fetch stats (counts + avg time) and waitlist for one or more services
     Endpoint: /api/GrabService.php?ServiceID=medicalExam,medicalFollowUp
-    Returns: { success, pendingCount, inProgressCount, completedCount, avgServiceTime, waitList }
+     Returns: { success, pendingCount, inProgressCount, completedCount, avgServiceTime, pastAvgServiceTime, waitList }
     
  5. SERVICE SCAN (CHECK-IN / CHECK-OUT) — IMPLEMENTED via /api/ServiceScan.php
     Purpose: Auto-progress a client's service status (Pending→In-Progress or In-Progress→Complete)
@@ -179,14 +179,6 @@ let currentServiceKey = null;  // Track current service for client operations
 let isClientScan = false;  // Flag to distinguish between service and client QR scans
 let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
 
-// Hardcoded historical past averages per service (in minutes)
-const PAST_AVG_MINUTES = {
-    medical: 5,
-    dental:  6,
-    optical: 4,
-    haircut: 4,
-};
-
 // Show a specific service's content section
 function showService(serviceKey) {
     console.log(`showService called with: ${serviceKey}`);
@@ -222,11 +214,10 @@ function showService(serviceKey) {
     const waitlistTitleEl = document.getElementById('waitlistTitle');
     if (waitlistTitleEl) waitlistTitleEl.textContent = `${service.name} - Waitlist`;
 
-    // Set hardcoded past average for this service
+    // Reset past average display before fresh data is loaded
     const pastAvgEl = document.getElementById('pastAvgTime');
     if (pastAvgEl) {
-        const pastMin = PAST_AVG_MINUTES[serviceKey.toLowerCase()];
-        pastAvgEl.textContent = pastMin != null ? `${pastMin} min` : 'N/A';
+        pastAvgEl.textContent = 'N/A';
     }
 
     // Fetch live stats and waitlist from GrabService API
@@ -277,7 +268,12 @@ async function fetchServiceData(serviceKey) {
         if (avgTimeEl) {
             avgTimeEl.textContent = data.avgServiceTime != null ? `${data.avgServiceTime} min` : 'N/A';
         }
-        // Past avg is hardcoded per service — set once in showService(), not overwritten here
+
+        // Previous-event average (server-calculated from the most recent prior event)
+        const pastAvgEl = document.getElementById('pastAvgTime');
+        if (pastAvgEl) {
+            pastAvgEl.textContent = data.pastAvgServiceTime != null ? `${data.pastAvgServiceTime} min` : 'N/A';
+        }
 
         // Normalize API waitlist into local format and populate table.
         // Rows may include the same client multiple times (one per service),

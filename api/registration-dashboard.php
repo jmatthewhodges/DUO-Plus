@@ -136,9 +136,22 @@ unset($row);
 
 // Fetch processed patients count from stats table
 $clientsProcessed = 0;
-$statsResult = $mysqli->query("SELECT StatValue FROM tblAnalytics WHERE StatID = 'clientsProcessed' AND EventID = '$EventID' LIMIT 1");
-if ($statsResult && $statsRow = $statsResult->fetch_assoc()) {
-    $clientsProcessed = (int)$statsRow['StatValue'];
+$clientsProcessedKey = 'clientsProcessed';
+$statsStmt = $mysqli->prepare(
+    "SELECT StatValue
+     FROM tblAnalytics
+     WHERE EventID = ? AND StatKey = ?
+     ORDER BY LastUpdated DESC
+     LIMIT 1"
+);
+if ($statsStmt) {
+    $statsStmt->bind_param('ss', $EventID, $clientsProcessedKey);
+    $statsStmt->execute();
+    $statsRow = $statsStmt->get_result()->fetch_assoc();
+    $statsStmt->close();
+    if ($statsRow) {
+        $clientsProcessed = (int)$statsRow['StatValue'];
+    }
 }
 
 // Fetch service availability data from tblEventServices

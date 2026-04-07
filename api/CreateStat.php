@@ -43,15 +43,34 @@ if (!is_array($_POST)) {
 require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
+function getActiveEventID(mysqli $mysqli): ?string
+{
+    $stmt = $mysqli->prepare(
+        "SELECT EventID
+         FROM tblEvents
+         WHERE IsActive = 1
+         ORDER BY EventDate DESC
+         LIMIT 1"
+    );
+
+    if (!$stmt) {
+        return null;
+    }
+
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return $row['EventID'] ?? null;
+}
+
 // Validate required fields
-$StatID = $_POST['StatID'] ?? '';
-$EventID = $_POST['EventID'] ?? '';
-$StatKey = $_POST['StatKey'] ?? '';
+$StatID = trim($_POST['StatID'] ?? '');
+$StatKey = trim($_POST['StatKey'] ?? '');
 $StatValue = $_POST['StatValue'] ?? 0;
+$EventID = getActiveEventID($mysqli);
 
 $missingFields = [];
-if (empty($StatID)) $missingFields[] = 'StatID';
-if (empty($EventID)) $missingFields[] = 'EventID';
 if (empty($StatKey)) $missingFields[] = 'StatKey';
 if (!isset($_POST['StatValue'])) $missingFields[] = 'StatValue';
 
@@ -72,38 +91,37 @@ if (!is_numeric($StatValue)) {
 }
 $StatValue = (int)$StatValue; // Explicitly cast to integer
 
-// Check if EventID exists
-$eventCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblEvents WHERE EventID = ?");
-$eventCheck->bind_param("s", $EventID);
-$eventCheck->execute();
-$eventCheck->bind_result($eventCount);
-$eventCheck->fetch();
-$eventCheck->close();
-
-if ($eventCount == 0) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'Event not found for provided EventID.']);
+if (!$EventID) {
+    http_response_code(409);
+    echo json_encode(['success' => false, 'message' => 'No active event found.']);
     exit;
 }
 
-// Check for duplicate StatID within the same event only
-$statCheck = $mysqli->prepare("SELECT COUNT(*) FROM tblAnalytics WHERE StatID = ? AND EventID = ?");
-$statCheck->bind_param("ss", $StatID, $EventID);
+// StatKey must be unique per event
+$statCheck = $mysqli->prepare("SELECT StatID FROM tblAnalytics WHERE EventID = ? AND StatKey = ? LIMIT 1");
+if (!$statCheck) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $mysqli->error]);
+    exit;
+}
+
+$statCheck->bind_param("ss", $EventID, $StatKey);
 $statCheck->execute();
-$statCheck->bind_result($statCount);
-$statCheck->fetch();
+$existingStat = $statCheck->get_result()->fetch_assoc();
 $statCheck->close();
 
-if ($statCount > 0) {
+if ($existingStat) {
     http_response_code(409);
-    echo json_encode(['success' => false, 'message' => 'StatID already exists for this event.']);
+    echo json_encode(['success' => false, 'message' => 'StatKey already exists for this active event.']);
     exit;
 }
 
-$LastUpdated = date('Y-m-d H:i:s');
+if ($StatID === '') {
+    $StatID = bin2hex(random_bytes(8));
+}
 
 // Prepare the query with temp variables
-$createStat = $mysqli->prepare("INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated) VALUES (?, ?, ?, ?, ?)");
+$createStat = $mysqli->prepare("INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated) VALUES (?, ?, ?, ?, NOW())");
 
 // Check for error
 if (!$createStat) {
@@ -112,7 +130,7 @@ if (!$createStat) {
     exit;
 }
 
-$createStat->bind_param("sssis", $StatID, $EventID, $StatKey, $StatValue, $LastUpdated);
+$createStat->bind_param("sssi", $StatID, $EventID, $StatKey, $StatValue);
 $result = $createStat->execute();
 
 // Give response
@@ -121,6 +139,12 @@ if ($result) {
     $msg = json_encode([
         'success' => true,
         'message' => 'Statistic created.',
+        'stat' => [
+            'StatID' => $StatID,
+            'EventID' => $EventID,
+            'StatKey' => $StatKey,
+            'StatValue' => $StatValue
+        ]
     ]);
     echo $msg;
     error_log($msg); 

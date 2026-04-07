@@ -26,7 +26,7 @@
     // References for status text
     var statusText = document.getElementById('foodTruckStatus');
 
-    // Sends us eventid, every save should go to the same eventid    
+    // Event ID returned by backend (active event)
     var currentEventID = null;
 
 
@@ -96,7 +96,6 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                EventID: currentEventID,
                 counterName: counterName,
                 value: value
             })

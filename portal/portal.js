@@ -22,6 +22,18 @@
 //    testData    – object with sample values to auto-fill in TEST mode
 // ============================================================================
 
+function generateUUIDLikeId() {
+    const bytes = new Uint8Array(8);
+    if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        window.crypto.getRandomValues(bytes);
+    } else {
+        for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = Math.floor(Math.random() * 256);
+        }
+    }
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
 const API_METHODS = [
 
     // ─── Authentication ───────────────────────────────────────────────────
@@ -274,19 +286,17 @@ const API_METHODS = [
         category: 'Analytics',
         method: 'POST',
         endpoint: '/api/CreateStat.php',
-        description: 'Create a new statistic to track.',
+        description: 'Create a new statistic for the active event. StatID is auto-generated as a UUID-like ID.',
         params: [
-            { name: 'StatID', type: 'text', required: true, default: '', description: 'Unique identifier for the statistic' },
-            { name: 'EventID', type: 'text', required: true, default: '', description: 'Event that statistic is getting tracked for' },
+            { name: 'StatID', type: 'text', required: false, default: '', description: 'Optional override. Leave blank to auto-generate UUID-like ID.' },
             { name: 'StatKey', type: 'text', required: true, default: '', description: 'Name of the statistic' },
             { name: 'StatValue', type: 'text', required: true, default: '', description: 'Starting value of the statistic' }
         ],
-        testData: {
-            StatID: 'opticalWaiting',
-            EventID: '4cbde538985861b9',
+        testData: () => ({
+            StatID: generateUUIDLikeId(),
             StatKey: "Optical - Waiting",
             StatValue: 0
-        }
+        })
     },
 
     // ─── Testing ──────────────────────────────────────────────────────────
@@ -631,6 +641,11 @@ const API_METHODS = [
                 if (val !== '') body[p.name] = val;
             }
         });
+
+        // CreateStat should always carry a generated ID if none was entered.
+        if (method.id === 'CreateStat' && (!body.StatID || String(body.StatID).trim() === '')) {
+            body.StatID = generateUUIDLikeId();
+        }
 
         const url = getFullURL(method.endpoint);
         const startTime = performance.now();

@@ -36,29 +36,20 @@ $mysqli = $GLOBALS['mysqli'];
 
 $statConfig = [
     'clientsServed' => [
-        'statID' => 'foodTruckClientsServed',
         'statKey' => 'clientsServed'
     ],
     'volunteersServed' => [
-        'statID' => 'foodTruckVolunteersServed',
         'statKey' => 'volunteersServed'
     ]
 ];
 
-// Decide which EventID to use. If a specific one is being sent through it uses that,
-// otherwise it grabs the most recent active event. This is just for flexibility to make sure it works
-// Even though they said they'd only have the one active event at a time.
+// Always use the most recent active event.
+// Food truck counters must stay tied to the active event and should never
+// trust a client-sent EventID when an active event exists.
 
 function grabEventID(mysqli $mysqli): ?string
 {
-    // Check request for a specific eventID
-    $requestEventID = $_GET['EventID'] ?? $_POST['EventID'] ?? '';
-    if (!empty($requestEventID)) {
-        return $requestEventID;
-    }
-
-
-    // Otherwise check most current event
+    // Check most current active event
     $activeEventCheck = $mysqli->prepare(
         'SELECT EventID 
         FROM tblEvents 
@@ -88,45 +79,61 @@ function grabEventID(mysqli $mysqli): ?string
 function saveStat(
     mysqli $mysqli,
     string $eventID,
-    string $statID,
     string $statKey,
     int $value
 ): bool {
-    $dataCollectQuery = $mysqli->prepare(
-        'INSERT INTO tblAnalytics 
-         (StatID, EventID, StatKey, StatValue, LastUpdated)
-         VALUES (?, ?, ?, ?, NOW())
-         ON DUPLICATE KEY UPDATE
-         StatValue = VALUES(StatValue),
-         EventID = VALUES(EventID),
-         StatKey = VALUES(StatKey),
-         LastUpdated = NOW()'
+    // Update existing row by EventID + StatKey first.
+    $updateStat = $mysqli->prepare(
+        'UPDATE tblAnalytics
+         SET StatValue = ?,
+             LastUpdated = NOW()
+         WHERE EventID = ? AND StatKey = ?'
     );
 
-    if (!$dataCollectQuery) {
+    if (!$updateStat) {
         return false;
     }
 
-    // If the row doesn't exist, it is inserted. 
+    $updateStat->bind_param('iss', $value, $eventID, $statKey);
+    $collectSuccess = $updateStat->execute();
+    $updatedRows = $updateStat->affected_rows;
+    $updateStat->close();
 
-    // If it already exists, it's updated.
+    if (!$collectSuccess) {
+        return false;
+    }
 
-    $dataCollectQuery->bind_param('sssi', $statID, $eventID, $statKey, $value);
-    $collectSuccess = $dataCollectQuery->execute();
-    $dataCollectQuery->close();
+    if ($updatedRows > 0) {
+        return true;
+    }
 
-    return $collectSuccess;
+    // Create a new stat row with generated StatID when no row exists yet.
+    $statID = bin2hex(random_bytes(8));
+    $insertStat = $mysqli->prepare(
+        'INSERT INTO tblAnalytics
+         (StatID, EventID, StatKey, StatValue, LastUpdated)
+         VALUES (?, ?, ?, ?, NOW())'
+    );
+
+    if (!$insertStat) {
+        return false;
+    }
+
+    $insertStat->bind_param('sssi', $statID, $eventID, $statKey, $value);
+    $insertSuccess = $insertStat->execute();
+    $insertStat->close();
+
+    return $insertSuccess;
 }
 
 
-// If no id is provided and no active event is in database,
-// return error because counter must attach to an event
+// If no active event exists, return error because counters must attach to one.
 $eventID = grabEventID($mysqli);
 if (!$eventID) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'No EventID provided and no active event found.'
+        'message' => 'No active event found.'
     ]);
     exit;
 }
@@ -210,7 +217,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $collectSuccess = saveStat(
         $mysqli,
         $eventID,
-        $statInfo['statID'],
         $statInfo['statKey'],
         $value
     );

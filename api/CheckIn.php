@@ -486,29 +486,56 @@ error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false
 
 // Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
 if (!$alreadyCheckedIn) {
-    $statID = 'clientsProcessed';
     $statKey = 'clientsProcessed';
+
+    // Update by EventID + StatKey first. If missing, insert a new stat row.
     $updateStat = $mysqli->prepare(
-        "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
-         VALUES (?, ?, ?, 1, NOW())
-         ON DUPLICATE KEY UPDATE
-           StatValue = StatValue + 1,
-           LastUpdated = NOW()"
+        "UPDATE tblAnalytics
+         SET StatValue = StatValue + 1,
+             LastUpdated = NOW()
+         WHERE EventID = ? AND StatKey = ?"
     );
+
+    $updated = false;
     if ($updateStat) {
-        $updateStat->bind_param('sss', $statID, $eventID, $statKey);
+        $updateStat->bind_param('ss', $eventID, $statKey);
         $updateStat->execute();
+        $updated = $updateStat->affected_rows > 0;
         $updateStat->close();
+    }
+
+    if (!$updated) {
+        $statID = bin2hex(random_bytes(8));
+        $insertStat = $mysqli->prepare(
+            "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
+             VALUES (?, ?, ?, 1, NOW())"
+        );
+        if ($insertStat) {
+            $insertStat->bind_param('sss', $statID, $eventID, $statKey);
+            $insertStat->execute();
+            $insertStat->close();
+        }
     }
 }
 
 // Fetch updated clientsProcessed to return to frontend
 $clientsProcessed = 0;
-$statFetch = $mysqli->query(
-    "SELECT StatValue FROM tblAnalytics WHERE EventID = '$eventID' AND StatID = 'clientsProcessed' LIMIT 1"
+$statKey = 'clientsProcessed';
+$statFetch = $mysqli->prepare(
+    "SELECT StatValue
+     FROM tblAnalytics
+     WHERE EventID = ? AND StatKey = ?
+     ORDER BY LastUpdated DESC
+     LIMIT 1"
 );
-if ($statFetch && $statRow = $statFetch->fetch_assoc()) {
-    $clientsProcessed = (int)$statRow['StatValue'];
+if ($statFetch) {
+    $statFetch->bind_param('ss', $eventID, $statKey);
+    $statFetch->execute();
+    $statRow = $statFetch->get_result()->fetch_assoc();
+    $statFetch->close();
+    if ($statRow) {
+        $clientsProcessed = (int)$statRow['StatValue'];
+    }
 }
 
 // Fetch all checked-in clients for this event (for registration table)
