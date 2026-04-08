@@ -4,8 +4,9 @@
  *  File:        AbandonClient.php
  *  Description: Marks a client as abandoned for the current event.
  *               Sets IsAbandoned = 1 on their visit so the NowServing
- *               logic permanently skips them, and logs 'Abandoned' for
- *               each of their pending/standby services.
+ *               logic permanently skips them, releases any active
+ *               in-progress service seat(s), and logs 'Abandoned' for
+ *               each active service row on the visit.
  *  Method:      POST  { "ClientID": "..." }
  * ============================================================
  */
@@ -46,7 +47,7 @@ $activeEventID = $eventResult['EventID'];
 
 // Get the client's visit
 $visitStmt = $mysqli->prepare(
-    "SELECT VisitID FROM tblVisits
+    "SELECT VisitID, EventID FROM tblVisits
      WHERE ClientID = ? AND EventID = ? AND RegistrationStatus = 'CheckedIn'
      LIMIT 1"
 );
@@ -61,35 +62,97 @@ if (!$visitRow) {
     exit;
 }
 $visitID = $visitRow['VisitID'];
+$eventID = $visitRow['EventID'];
 
-// Mark visit as abandoned
-$abandonStmt = $mysqli->prepare("UPDATE tblVisits SET IsAbandoned = 1 WHERE VisitID = ?");
-$abandonStmt->bind_param('s', $visitID);
-$abandonStmt->execute();
-$abandonStmt->close();
+try {
+    $mysqli->begin_transaction();
 
-// Log 'Abandoned' for every pending/standby service on this visit
-$pendingStmt = $mysqli->prepare(
-    "SELECT VisitServiceID FROM tblVisitServices WHERE VisitID = ? AND ServiceStatus IN ('Pending','Standby')"
-);
-if ($pendingStmt) {
-    $pendingStmt->bind_param('s', $visitID);
-    $pendingStmt->execute();
-    $pendingRows = $pendingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $pendingStmt->close();
+    // Gather current active service rows for cleanup + movement logs.
+    $activeServicesStmt = $mysqli->prepare(
+        "SELECT VisitServiceID, ServiceID, ServiceStatus
+         FROM tblVisitServices
+         WHERE VisitID = ?
+           AND ServiceStatus IN ('Pending','Standby','In-Progress')"
+    );
+    if (!$activeServicesStmt) {
+        throw new Exception('Failed to prepare active service query: ' . $mysqli->error);
+    }
+    $activeServicesStmt->bind_param('s', $visitID);
+    $activeServicesStmt->execute();
+    $activeServiceRows = $activeServicesStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $activeServicesStmt->close();
 
+    $inProgressByService = [];
+    foreach ($activeServiceRows as $row) {
+        if (($row['ServiceStatus'] ?? '') !== 'In-Progress') continue;
+        $sid = $row['ServiceID'];
+        $inProgressByService[$sid] = ($inProgressByService[$sid] ?? 0) + 1;
+    }
+
+    // Clear in-progress state so abandoned clients are not stuck forever as active.
+    if (!empty($inProgressByService)) {
+        $clearInProgressStmt = $mysqli->prepare(
+            "UPDATE tblVisitServices
+             SET ServiceStatus = 'Pending'
+             WHERE VisitID = ?
+               AND ServiceStatus = 'In-Progress'"
+        );
+        if (!$clearInProgressStmt) {
+            throw new Exception('Failed to prepare in-progress cleanup query: ' . $mysqli->error);
+        }
+        $clearInProgressStmt->bind_param('s', $visitID);
+        $clearInProgressStmt->execute();
+        $clearInProgressStmt->close();
+
+        // Release occupied seats for services this client was actively in.
+        $seatReleaseStmt = $mysqli->prepare(
+            "UPDATE tblEventServices
+             SET SeatsInProgress = GREATEST(SeatsInProgress - ?, 0)
+             WHERE EventID = ? AND ServiceID = ?"
+        );
+        if (!$seatReleaseStmt) {
+            throw new Exception('Failed to prepare seat release query: ' . $mysqli->error);
+        }
+        foreach ($inProgressByService as $serviceID => $releaseCount) {
+            $seatReleaseStmt->bind_param('iss', $releaseCount, $eventID, $serviceID);
+            $seatReleaseStmt->execute();
+        }
+        $seatReleaseStmt->close();
+    }
+
+    // Mark visit as abandoned.
+    $abandonStmt = $mysqli->prepare("UPDATE tblVisits SET IsAbandoned = 1 WHERE VisitID = ?");
+    if (!$abandonStmt) {
+        throw new Exception('Failed to prepare abandon query: ' . $mysqli->error);
+    }
+    $abandonStmt->bind_param('s', $visitID);
+    $abandonStmt->execute();
+    $abandonStmt->close();
+
+    // Log 'Abandoned' for every active service row on this visit.
     $now     = date('Y-m-d H:i:s');
     $logStmt = $mysqli->prepare(
         "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'Abandoned', ?)"
     );
     if ($logStmt) {
-        foreach ($pendingRows as $pr) {
+        foreach ($activeServiceRows as $row) {
             $logID = uniqid('log_', true);
-            $logStmt->bind_param('sss', $logID, $pr['VisitServiceID'], $now);
+            $logStmt->bind_param('sss', $logID, $row['VisitServiceID'], $now);
             $logStmt->execute();
         }
         $logStmt->close();
     }
-}
 
-echo json_encode(['success' => true, 'message' => 'Client marked as abandoned.']);
+    $mysqli->commit();
+
+    $releasedSeats = array_sum($inProgressByService);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Client marked as abandoned.',
+        'releasedInProgressSeats' => $releasedSeats
+    ]);
+} catch (Throwable $e) {
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to abandon client: ' . $e->getMessage()]);
+}

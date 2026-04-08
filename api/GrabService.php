@@ -145,7 +145,7 @@ foreach ($allRows as $row) {
     $isAbandoned = (int)($row['IsAbandoned'] ?? 0) === 1;
     $clientKey = $row['ClientID'] . ':' . $status;
 
-    if ($isAbandoned && in_array($status, ['Pending', 'Standby'], true)) {
+    if ($isAbandoned && in_array($status, ['Pending', 'Standby', 'In-Progress'], true)) {
         $serviceKey = $row['ServiceID'];
         $abandonedByService[$serviceKey] = ($abandonedByService[$serviceKey] ?? 0) + 1;
     }
@@ -153,7 +153,7 @@ foreach ($allRows as $row) {
     if (!isset($countedClients[$clientKey])) {
         $countedClients[$clientKey] = true;
         if (isset($counts[$status])) {
-            if (!($isAbandoned && in_array($status, ['Pending', 'Standby'], true))) {
+            if (!($isAbandoned && in_array($status, ['Pending', 'Standby', 'In-Progress'], true))) {
                 $counts[$status]++;
             }
         }

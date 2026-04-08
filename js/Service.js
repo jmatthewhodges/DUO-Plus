@@ -1170,13 +1170,18 @@ function populateWaitlist(clientsToShow = null) {
             Object.values(SERVICE_WAITLISTS[currentServiceKey]) : [];
     }
 
-    // Keep original order, but move completed clients to the bottom.
+    // Keep original order, but move completed/abandoned clients to the bottom.
     clientsArray = clientsArray.sort((a, b) => {
-        const aCompleted = a.status === 'completed';
-        const bCompleted = b.status === 'completed';
-        if (aCompleted && !bCompleted) return 1;
-        if (!aCompleted && bCompleted) return -1;
-        return 0;
+        const getBottomRank = (client) => {
+            const isAbandoned = client.status === 'abandoned' || client.isAbandoned;
+            if (isAbandoned) return 2;
+            if (client.status === 'completed') return 1;
+            return 0;
+        };
+
+        const aRank = getBottomRank(a);
+        const bRank = getBottomRank(b);
+        return aRank - bRank;
     });
 
     // Clear existing rows
