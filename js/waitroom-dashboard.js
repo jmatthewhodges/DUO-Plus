@@ -47,6 +47,7 @@ const autoRefreshToggleText = document.getElementById('autoRefreshToggleText');
 // Grab the single element for Now Serving
 const nowServingNameEl = document.querySelector('.queue-name');
 const nowServingServiceEl = document.querySelector('.queue-service');
+const nowServingSeatStatsEl = document.getElementById('nowServingSeatStats');
 
 //================================================================================
 // 3. HELPERS
@@ -101,6 +102,111 @@ function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
 function closeUpdateModal() {
     updateModal.classList.add('d-none');
     updateModal.classList.remove('d-flex');
+}
+
+function renderNowServingSeatStats(services) {
+    if (!nowServingSeatStatsEl) return;
+
+    const list = Array.isArray(services) ? services : [];
+    const excludedCategoryIds = new Set(['dental', 'medical']);
+    const visibleServices = list.filter(service => {
+        const serviceId = String(service?.ServiceID || '').toLowerCase();
+        return !excludedCategoryIds.has(serviceId);
+    });
+
+    if (!visibleServices.length) {
+        nowServingSeatStatsEl.innerHTML = '<p class="mb-0 text-muted small">Seat capacity unavailable.</p>';
+        return;
+    }
+
+    const getFallbackGroupName = (serviceId) => {
+        const normalized = String(serviceId || '').toLowerCase();
+        for (const [filterKey, ids] of Object.entries(QUEUE_FILTER_SERVICE_IDS)) {
+            if (filterKey === 'all') continue;
+            if ((ids || []).some(id => String(id).toLowerCase() === normalized)) {
+                return filterKey.charAt(0).toUpperCase() + filterKey.slice(1);
+            }
+        }
+        return '';
+    };
+
+    const groups = new Map();
+    visibleServices.forEach(service => {
+        const serviceId = String(service.ServiceID || '');
+        const parentId = service.ParentServiceID ? String(service.ParentServiceID) : '';
+        const normalizedServiceId = serviceId.toLowerCase();
+        const normalizedParentId = parentId.toLowerCase();
+        const parentName = String(service.ParentServiceName || '').trim();
+        const fallbackGroupName = getFallbackGroupName(serviceId);
+        const groupKey = normalizedParentId || normalizedServiceId || fallbackGroupName;
+        const groupLabel = parentName || fallbackGroupName || String(service.ServiceName || 'Service');
+        const groupPriority = servicePriorityMap[parentId] ?? servicePriorityMap[serviceId] ?? 999;
+
+        if (!groups.has(groupKey)) {
+            groups.set(groupKey, {
+                key: groupKey,
+                label: groupLabel,
+                priority: groupPriority,
+                seatsInUse: 0,
+                maxSeats: 0,
+                services: [],
+            });
+        }
+
+        const entry = groups.get(groupKey);
+        const current = Number(service.SeatsInProgress || 0);
+        const max = Number(service.MaxSeats || 0);
+        entry.seatsInUse += current;
+        entry.maxSeats += max;
+        entry.services.push(service);
+        entry.priority = Math.min(entry.priority, groupPriority);
+    });
+
+    const orderedGroups = [...groups.values()].sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.label.localeCompare(b.label);
+    });
+
+    const groupMarkup = orderedGroups.map(group => {
+        const orderedServices = [...group.services].sort((a, b) => {
+            const pa = servicePriorityMap[a.ServiceID] ?? 999;
+            const pb = servicePriorityMap[b.ServiceID] ?? 999;
+            if (pa !== pb) return pa - pb;
+            return String(a.ServiceName || '').localeCompare(String(b.ServiceName || ''));
+        });
+
+        const serviceLines = orderedServices.map(service => {
+            const current = Number(service.SeatsInProgress || 0);
+            const max = Number(service.MaxSeats || 0);
+            const isClosed = !!service.IsClosed;
+            const statusClass = isClosed
+                ? 'is-closed'
+                : ((max > 0 && current >= max) ? 'is-full' : 'is-current');
+            return `
+                <div class="now-serving-seat-service ${statusClass}">
+                    <span class="now-serving-seat-service-left">
+                        <span class="waitlist-service-dot now-serving-seat-dot" aria-hidden="true"></span>
+                        <span class="now-serving-seat-service-name">${escapeHtml(service.ServiceName)}</span>
+                    </span>
+                    <span class="now-serving-seat-service-count">${current}/${max}</span>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <section class="now-serving-seat-group">
+                <div class="now-serving-seat-group-head">
+                    <span class="now-serving-seat-group-title">${escapeHtml(group.label)}</span>
+                </div>
+                <div class="now-serving-seat-service-list">${serviceLines}</div>
+            </section>
+        `;
+    }).join('');
+
+    nowServingSeatStatsEl.innerHTML = `
+        <div class="now-serving-seat-header">Seats In Use</div>
+        <div class="now-serving-seat-groups">${groupMarkup}</div>
+    `;
 }
 
 function getFilterIconTag(filterKey, categories) {
@@ -321,6 +427,7 @@ async function fetchQueueData() {
             waitListData = data.WaitList;
             availableServices = data.Services || [];
             servicePriorityMap = data.ServicePriority || {};
+            renderNowServingSeatStats(availableServices);
 
             // 1. Update Now Serving safely
             const skipBtn = document.getElementById('skipNowServingBtn');

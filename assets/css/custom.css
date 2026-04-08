@@ -1652,3 +1652,118 @@ body.no-scroll .card-body[style*="overflow-y"] {
     border: 1px solid #B7E4C7;
     white-space: nowrap;
 }
+
+.now-serving-seat-stats {
+    margin-top: 0.04rem;
+}
+
+.now-serving-seat-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #667085;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.01em;
+}
+
+.now-serving-seat-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+}
+
+.now-serving-seat-group {
+    border: 1px solid #E4E7EC;
+    background: #FCFCFD;
+    border-radius: 0.44rem;
+    padding: 0.26rem 0.32rem;
+}
+
+.now-serving-seat-group-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.now-serving-seat-group-title {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #1D2939;
+    letter-spacing: 0.01em;
+}
+
+.now-serving-seat-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.now-serving-seat-service {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    min-width: 0;
+    line-height: 1.08;
+}
+
+.now-serving-seat-service-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-width: 0;
+}
+
+.now-serving-seat-dot {
+    width: 0.52rem;
+    height: 0.52rem;
+    border-width: 1.4px;
+}
+
+.now-serving-seat-service-name {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #667085;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.now-serving-seat-service-count {
+    font-size: 0.67rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #344054;
+    white-space: nowrap;
+}
+
+.now-serving-seat-service.is-current .now-serving-seat-dot {
+    background-color: #1D9E75;
+    border-color: #1D9E75;
+    width: 0.56rem;
+    height: 0.56rem;
+    border-width: 1.7px;
+}
+
+.now-serving-seat-service.is-current .now-serving-seat-service-name {
+    color: #344054;
+    font-weight: 650;
+}
+
+.now-serving-seat-service.is-full .now-serving-seat-dot {
+    background-color: #F79009;
+    border-color: #F79009;
+}
+
+.now-serving-seat-service.is-full .now-serving-seat-service-name,
+.now-serving-seat-service.is-full .now-serving-seat-service-count {
+    color: #8A5526;
+}
+
+.now-serving-seat-service.is-closed .now-serving-seat-dot {
+    background-color: #FEECEB;
+    border-color: #F97066;
+}
+
+.now-serving-seat-service.is-closed .now-serving-seat-service-name,
+.now-serving-seat-service.is-closed .now-serving-seat-service-count {
+    color: #B42318;
+}

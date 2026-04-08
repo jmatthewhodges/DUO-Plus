@@ -69,9 +69,11 @@ $activeEventID = $eventResult['EventID'];
 ---------------------------------
 */
 $svcStmt = $mysqli->prepare(
-    "SELECT es.ServiceID, s.ServiceName, es.SeatsInProgress, es.MaxSeats, es.IsClosed
+    "SELECT es.ServiceID, s.ServiceName, s.ParentServiceID, p.ServiceName AS ParentServiceName,
+            es.SeatsInProgress, es.MaxSeats, es.IsClosed
      FROM tblEventServices es
      JOIN tblServices s ON s.ServiceID = es.ServiceID
+     LEFT JOIN tblServices p ON p.ServiceID = s.ParentServiceID
      WHERE es.EventID = ?"
 );
 if (!$svcStmt) {
@@ -95,6 +97,10 @@ foreach ($svcRows as $row) {
     $servicesList[] = [
         'ServiceID'   => $row['ServiceID'],
         'ServiceName' => $row['ServiceName'],
+        'ParentServiceID' => $row['ParentServiceID'],
+        'ParentServiceName' => $row['ParentServiceName'],
+        'SeatsInProgress' => (int)$row['SeatsInProgress'],
+        'MaxSeats'    => (int)$row['MaxSeats'],
         'IsClosed'    => (bool)$row['IsClosed'],
     ];
 }
