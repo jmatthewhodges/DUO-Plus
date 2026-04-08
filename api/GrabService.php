@@ -131,7 +131,7 @@ if (!$dataStmt) {
     echo json_encode(['success' => false, 'error' => $mysqli->error]);
     exit;
 }
-$dataStmt->bind_param($types . 'ss', ...[...$serviceIDs, $currentEventID, $currentEventID]);
+$dataStmt->bind_param('s' . $types . 's', ...[$currentEventID, ...$serviceIDs, $currentEventID]);
 $dataStmt->execute();
 $allRows = $dataStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $dataStmt->close();
