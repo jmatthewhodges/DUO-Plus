@@ -198,6 +198,7 @@ const passwordUserTableBody = document.getElementById('passwordUserTableBody');
 const selectedPasswordUserName = document.getElementById('selectedPasswordUserName');
 const selectedPasswordUserDob = document.getElementById('selectedPasswordUserDob');
 const selectedPasswordUserEmail = document.getElementById('selectedPasswordUserEmail');
+const selectedPasswordUserPhone = document.getElementById('selectedPasswordUserPhone');
 const newUserPassword = document.getElementById('newUserPassword');
 const toggleNewUserPasswordBtn = document.getElementById('toggleNewUserPasswordBtn');
 const newUserPasswordIcon = document.getElementById('newUserPasswordIcon');
@@ -547,6 +548,7 @@ function resetChangePasswordModalState() {
     selectedPasswordUserName.innerText = '-';
     selectedPasswordUserDob.innerText = 'DOB: -';
     selectedPasswordUserEmail.innerText = 'Email: -';
+    selectedPasswordUserPhone.innerText = 'Phone: -';
     newUserPassword.value = '';
     confirmUserPassword.value = '';
     resetNewPasswordVisibility();
@@ -586,6 +588,7 @@ function renderPasswordUsers(users) {
         const fullName = `${escapeHtml(user.FirstName)}${middleInitial} ${escapeHtml(user.LastName)}`;
         const dob = formatDOB(user.DOB);
         const emailRaw = user.Email || '';
+        const phoneRaw = user.Phone || '';
         const emailDisplay = emailRaw
             ? escapeHtml(emailRaw)
             : '<span class="text-muted fst-italic">No account</span>';
@@ -594,7 +597,8 @@ function renderPasswordUsers(users) {
                 data-client-id="${escapeHtml(user.ClientID)}"
                 data-name="${fullName}"
                 data-dob="${escapeHtml(dob)}"
-                data-email="${escapeHtml(emailRaw)}">
+                data-email="${escapeHtml(emailRaw)}"
+                data-phone="${escapeHtml(phoneRaw)}">
                 <td class="fw-semibold text-dark">${fullName}</td>
                 <td class="text-secondary">${dob}</td>
                 <td class="text-secondary">${emailDisplay}</td>
@@ -603,7 +607,8 @@ function renderPasswordUsers(users) {
                         data-client-id="${escapeHtml(user.ClientID)}"
                         data-name="${fullName}"
                         data-dob="${escapeHtml(dob)}"
-                        data-email="${escapeHtml(emailRaw)}">
+                        data-email="${escapeHtml(emailRaw)}"
+                        data-phone="${escapeHtml(phoneRaw)}">
                         Select
                     </button>
                 </td>
@@ -620,12 +625,17 @@ function selectPasswordUserFromElement(sourceEl) {
         clientID: sourceEl.getAttribute('data-client-id'),
         name: sourceEl.getAttribute('data-name'),
         dob: sourceEl.getAttribute('data-dob'),
-        email: sourceEl.getAttribute('data-email')
+        email: sourceEl.getAttribute('data-email'),
+        phone: sourceEl.getAttribute('data-phone')
     };
+
+    const selectedEmail = selectedPasswordUser.email || '-';
+    const selectedPhone = selectedPasswordUser.phone || '-';
 
     selectedPasswordUserName.innerText = selectedPasswordUser.name;
     selectedPasswordUserDob.innerText = `DOB: ${selectedPasswordUser.dob}`;
-    selectedPasswordUserEmail.innerText = `Email: ${selectedPasswordUser.email}`;
+    selectedPasswordUserEmail.innerText = `Email: ${selectedEmail}`;
+    selectedPasswordUserPhone.innerText = `Phone: ${selectedPhone}`;
     newUserPassword.value = '';
     confirmUserPassword.value = '';
     resetNewPasswordVisibility();

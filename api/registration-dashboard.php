@@ -100,6 +100,7 @@ if ($action === 'searchUsers') {
                 c.MiddleInitial,
                 c.LastName,
                 c.DOB,
+                     c.Phone,
                 a.Email
              FROM tblClients c
              LEFT JOIN tblClientAuth a ON c.ClientID = a.ClientID
