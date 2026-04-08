@@ -240,7 +240,7 @@ if ($queue === 'CheckedIn') {
             c.TranslatorNeeded,
             GROUP_CONCAT(
                 DISTINCT CASE
-                    WHEN vs.ServiceStatus IN ('Pending', 'Standby', 'In-Progress') THEN vs.ServiceID
+                    WHEN vs.ServiceStatus IN ('Pending', 'Standby', 'In-Progress', 'Complete') THEN vs.ServiceID
                     ELSE NULL
                 END
                 ORDER BY vs.ServiceID
