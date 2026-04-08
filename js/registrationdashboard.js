@@ -1695,6 +1695,10 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 
 // Sweet Alert Popups
 document.getElementById('printVolunteerBadgeBtn').addEventListener('click', async function () {
+    const toTitleCase = (value) => String(value || '')
+        .toLowerCase()
+        .replace(/\b([a-z])/g, (_, ch) => ch.toUpperCase());
+
     let trimmedName = '';
     while (true) {
         const result = await Swal.fire({
@@ -1717,7 +1721,7 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
 
         if (!result.isConfirmed) return;
 
-        trimmedName = (result.value || '').trim();
+        trimmedName = toTitleCase((result.value || '').trim());
         if (!trimmedName) {
             await Swal.fire({
                 icon: 'error',
