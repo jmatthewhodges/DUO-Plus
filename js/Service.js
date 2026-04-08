@@ -1203,88 +1203,73 @@ function populateWaitlist(clientsToShow = null) {
     // Populate with client data
     clientsArray.forEach(client => {
         const isInProgress = client.status === 'in-progress';
-        const isStandby = client.status === 'standby';
         const isAbandoned = client.status === 'abandoned' || client.isAbandoned;
         const isCompleted = client.status === 'completed';
         const currentServiceIDs = (currentServiceKey && SERVICES[currentServiceKey])
             ? SERVICES[currentServiceKey].serviceIDs
             : [];
+        const currentServiceEntries = (client.assignedServices || []).filter(s => currentServiceIDs.includes(s.id));
+        const currentServiceInProgressEntry = currentServiceEntries.find(s => s.status === 'In-Progress');
+        const currentServiceIsInProgress = !!currentServiceInProgressEntry;
+        const currentServiceIsComplete = !currentServiceIsInProgress && currentServiceEntries.some(s => s.status === 'Complete');
+        const currentServiceIsStandby = !currentServiceIsInProgress && !currentServiceIsComplete && currentServiceEntries.some(s => s.status === 'Standby');
         const inProgressService = (client.assignedServices || []).find(s => s.status === 'In-Progress');
-        const inProgressAtCurrentService = !!(inProgressService && currentServiceIDs.includes(inProgressService.id));
-        const inProgressAtOtherService = !!(inProgressService && !currentServiceIDs.includes(inProgressService.id));
-        const inProgressServiceName = inProgressService
-            ? (SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || inProgressService.id)
-            : '';
         const inProgressIconTag = inProgressService
             ? (SERVICE_ICON_BY_ID[inProgressService.id] || '')
             : '';
-        const avatarClass = inProgressAtOtherService
-            ? 'bg-info text-white'
-            : (inProgressAtCurrentService ? 'text-dark' : (isAbandoned ? 'bg-danger text-white' : (isStandby ? 'bg-warning text-dark' : (isCompleted ? 'bg-success text-white' : 'bg-light'))));
-        const avatarStyle = inProgressAtCurrentService
-            ? ' background-color: #ffe066;'
-            : '';
+        const avatarClass = 'waitlist-avatar-primary text-white';
         let avatarIconHTML = '<i class="bi bi-person"></i>';
-        if (inProgressAtOtherService) {
-            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white');
-        } else if (isAbandoned) {
+        if (isAbandoned) {
             avatarIconHTML = '<i class="bi bi-person-x"></i>';
+        } else if (currentServiceIsInProgress) {
+            const currentServiceIconTag = SERVICE_ICON_BY_ID[currentServiceInProgressEntry.id] || inProgressIconTag;
+            avatarIconHTML = renderAvatarIconMarkup(currentServiceIconTag, 'bi-arrow-right-circle', 'text-white');
+        } else if (currentServiceIsComplete) {
+            avatarIconHTML = '<i class="bi bi-check-lg"></i>';
+        } else if (inProgressService) {
+            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white');
         } else if (isCompleted) {
             avatarIconHTML = '<i class="bi bi-check-lg"></i>';
-        } else if (isStandby) {
-            avatarIconHTML = '<i class="bi bi-clock-history"></i>';
-        } else if (inProgressAtCurrentService) {
-            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-person-check', 'text-dark');
         }
-        const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
-        const abandonedPillStyle = `${chipBaseStyle} background-color: #fdecef; border-color: #f5c2c7 !important; color: #a61e2f;`;
-        const headerLine = `
-            <div class="d-flex flex-column" style="min-width:0;">
-                <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
-            </div>`;
-        const abandonedBadgeHTML = isAbandoned
-            ? `<span class="badge border" style="${abandonedPillStyle}"><i class="bi bi-person-x me-1" aria-hidden="true"></i>Abandoned</span>`
+        const rowStatusClass = isAbandoned
+            ? 'waitlist-row-abandoned'
+            : (currentServiceIsComplete ? 'waitlist-row-no-station' : 'waitlist-row-waiting');
+        const nameStateBadge = isAbandoned
+            ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
             : '';
-        const standbyBadgeHTML = isStandby
-            ? `<span class="badge border" style="${chipBaseStyle} background-color: #fff3cd; border-color: #ffda6a !important; color: #7a5a00;">Standby</span>`
+        const standbyStateBadge = (!isAbandoned && currentServiceIsStandby)
+            ? '<span class="waitlist-standby-badge">Standby</span>'
             : '';
-        const currentlyAtCells = (inProgressAtOtherService || inProgressAtCurrentService)
-            ? (inProgressAtOtherService
-                ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">
-                        <span class="badge border" style="${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;">
-                            ${escapeHtml(inProgressServiceName)}
-                        </span>
-                    </div>`
-                : `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">
-                        <span class="badge border" style="${chipBaseStyle} background-color: #ffe066; border-color: #d4aa00 !important; border-width: 1.5px; color: #212529;">
-                            ${escapeHtml(inProgressServiceName)}
-                        </span>
-                    </div>`)
-            : '';
-        const otherServicesRaw = (client.assignedServices || [])
-            .filter(s => s.status !== 'In-Progress');
-        const incompleteOther = otherServicesRaw
-            .filter(s => s.status !== 'Complete')
-            .sort((a, b) => (SERVICE_PRIORITY[a.id] ?? 999) - (SERVICE_PRIORITY[b.id] ?? 999));
-        const completeOther = otherServicesRaw
-            .filter(s => s.status === 'Complete')
-            .sort((a, b) => (SERVICE_PRIORITY[a.id] ?? 999) - (SERVICE_PRIORITY[b.id] ?? 999));
-        const orderedOtherServices = [...incompleteOther, ...completeOther];
-        const assignedServices = orderedOtherServices.map(service => {
-            let servicePillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
-            let pillPrefix = '';
-            if (service.status === 'Complete') {
-                servicePillStyle = `${chipBaseStyle} background-color: #e8f6ee; border-color: #b7e4c7 !important; color: #1f7a4d;`;
-                pillPrefix = '<i class="bi bi-check2 me-1" aria-hidden="true"></i>';
-            }
-            return `<span class="badge border" style="${servicePillStyle}">${pillPrefix}${escapeHtml(service.name)}</span>`;
+
+        const orderedServices = [...(client.assignedServices || [])].sort((a, b) => {
+            const pa = SERVICE_PRIORITY[a.id] ?? 999;
+            const pb = SERVICE_PRIORITY[b.id] ?? 999;
+            if (pa !== pb) return pa - pb;
+            return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+
+        const serviceListItems = orderedServices.map(service => {
+            const isServiceInProgress = service.status === 'In-Progress';
+            const isServiceCurrentHere = isServiceInProgress && currentServiceIDs.includes(service.id);
+            const isServiceComplete = service.status === 'Complete';
+            const statusClass = isServiceInProgress
+                ? 'is-current'
+                : (isServiceComplete ? 'is-complete' : 'is-pending');
+            const hereNowBadge = isServiceCurrentHere
+                ? '<span class="waitlist-here-now-badge">Here now</span>'
+                : '';
+
+            return `
+                <div class="waitlist-service-item ${statusClass}">
+                    <span class="waitlist-service-dot" aria-hidden="true"></span>
+                    <span class="waitlist-service-name">${escapeHtml(service.name)}</span>
+                    ${hereNowBadge}
+                </div>
+            `;
         }).join('');
-        const currentlyAtHTML = currentlyAtCells
-            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}</div>`
-            : '';
-        const servicesRowHTML = assignedServices
-            ? `<div class="service-waitlist-badges-wrap mt-1">${assignedServices}</div>`
-            : '';
+        const serviceListHTML = serviceListItems
+            ? `<div class="waitlist-service-list">${serviceListItems}</div>`
+            : '<div class="small text-muted mt-1">No services assigned</div>';
         const rowButtonClass = isInProgress ? 'btn-primary' : ((isCompleted || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary');
         const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
         const rowButtonLabel = isInProgress ? 'Update' : (isCompleted || isAbandoned ? 'View' : 'Update');
@@ -1296,26 +1281,20 @@ function populateWaitlist(clientsToShow = null) {
                     <span class="d-none d-sm-inline text-nowrap">${rowButtonLabel}</span>
                 </button>`;
         const row = document.createElement('tr');
-        row.className = 'border-bottom';
-        if (inProgressAtCurrentService) {
-            row.style.backgroundColor = '#fff9e6';
-            row.style.boxShadow = 'inset 4px 0 0 #d4aa00';
-        } else if (isAbandoned) {
-            row.style.backgroundColor = '#fff5f6';
-            row.style.boxShadow = 'inset 4px 0 0 #a61e2f';
-        }
+        row.className = `border-bottom ${rowStatusClass}`;
         row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;${avatarStyle}">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;">
                         ${avatarIconHTML}
                     </div>
-                    <div class="d-flex flex-column" style="min-width: 0;">
-                        ${headerLine}
-                        ${abandonedBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${abandonedBadgeHTML}</div>` : ''}
-                            ${standbyBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${standbyBadgeHTML}</div>` : ''}
-                        ${currentlyAtHTML}
-                        ${servicesRowHTML}
+                    <div class="d-flex flex-column" style="min-width: 0; gap: 0.12rem;">
+                        <div class="d-flex align-items-center flex-wrap gap-1" style="min-width: 0;">
+                            <span class="fw-bold text-dark">${escapeHtml(client.name)}</span>
+                            ${nameStateBadge}
+                            ${standbyStateBadge}
+                        </div>
+                        ${serviceListHTML}
                     </div>
                 </div>
             </td>

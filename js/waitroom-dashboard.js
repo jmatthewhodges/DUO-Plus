@@ -358,11 +358,12 @@ function populateWaitListTable(patients) {
     // Sort: clients with all services complete go to the bottom
     if (patients && patients.length > 0) {
         patients = [...patients].sort((a, b) => {
-            const aBottom = a.AllServicesComplete || a.IsAbandoned;
-            const bBottom = b.AllServicesComplete || b.IsAbandoned;
-            if (aBottom && !bBottom) return 1;
-            if (!aBottom && bBottom) return -1;
-            return 0;
+            const getRank = (p) => {
+                if (p.IsAbandoned) return 2;
+                if (p.AllServicesComplete) return 1;
+                return 0;
+            };
+            return getRank(a) - getRank(b);
         });
     }
 
@@ -388,18 +389,26 @@ function populateWaitListTable(patients) {
         const hasInProgressService = orderedVisitServices.some(vs => vs.ServiceStatus === 'In-Progress');
         const rowStatusClass = isAbandoned
             ? 'waitlist-row-abandoned'
-            : (hasInProgressService ? 'waitlist-row-has-station' : 'waitlist-row-no-station');
+            : (allDone
+                ? 'waitlist-row-completed'
+                : (wasSkipped
+                    ? 'waitlist-row-skipped'
+                    : (hasInProgressService ? 'waitlist-row-has-station' : 'waitlist-row-waiting')));
         const nameStateBadge = isAbandoned
             ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
             : '';
         const serviceListItems = orderedVisitServices.map(vs => {
             const isCurrentStation = vs.ServiceStatus === 'In-Progress';
             const isCompletedStation = vs.ServiceStatus === 'Complete';
+            const isStandbyStation = vs.ServiceStatus === 'Standby';
             const statusClass = isCurrentStation
                 ? 'is-current'
                 : (isCompletedStation ? 'is-complete' : 'is-pending');
             const hereNowBadge = isCurrentStation
                 ? '<span class="waitlist-here-now-badge">Here now</span>'
+                : '';
+            const standbyBadge = isStandbyStation
+                ? '<span class="waitlist-standby-badge">Standby</span>'
                 : '';
 
             return `
@@ -407,15 +416,14 @@ function populateWaitListTable(patients) {
                     <span class="waitlist-service-dot" aria-hidden="true"></span>
                     <span class="waitlist-service-name">${escapeHtml(vs.ServiceName)}</span>
                     ${hereNowBadge}
+                    ${standbyBadge}
                 </div>
             `;
         }).join('');
         const serviceListHTML = serviceListItems
             ? `<div class="waitlist-service-list">${serviceListItems}</div>`
             : '<div class="small text-muted mt-1">No services assigned</div>';
-        const avatarClass = isAbandoned
-            ? 'bg-danger text-white'
-            : 'waitlist-avatar-primary text-white';
+        const avatarClass = 'waitlist-avatar-primary text-white';
         const avatarIcon  = isAbandoned
             ? 'bi-person-x'
             : (wasSkipped ? 'bi-skip-forward-fill' : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person')));
@@ -507,11 +515,14 @@ tableBody.addEventListener('click', (event) => {
 function renderServiceToggles(patient) {
     const container = document.getElementById('modalServiceToggles');
     container.innerHTML = '';
-    const chipBaseStyle = 'font-size: 0.62rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.5rem; line-height: 1.2;';
-    const getStatusPillStyle = (status) => {
-        if (status === 'In-Progress') return `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
-        if (status === 'Complete') return `${chipBaseStyle} background-color: #198754; border-color: #198754 !important; color: #fff;`;
-        return `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
+    const getStatusBadgeMarkup = (status) => {
+        if (status === 'In-Progress') {
+            return '<span class="waitlist-here-now-badge">In Progress</span>';
+        }
+        if (status === 'Standby') {
+            return '<span class="waitlist-standby-badge">Standby</span>';
+        }
+        return '';
     };
 
     // Show/hide the abandon section based on whether the client is already abandoned or all done
@@ -530,17 +541,20 @@ function renderServiceToggles(patient) {
 
     // Abandoned clients — show services read-only with a notice, no action buttons
     if (patient.IsAbandoned) {
-        container.innerHTML = `<div class="alert alert-danger py-2 px-3 mb-2" style="font-size:0.85rem;">
-            <i class="bi bi-person-x me-1"></i>This client has been marked as <strong>abandoned</strong> and will not be called to a service.
-        </div>`;
+        container.innerHTML = '<div class="waitlist-modal-note waitlist-modal-note-danger mb-2">This client is marked as abandoned.</div>';
         visitServices.forEach(vs => {
-            const statusInfo = getServiceStatusLabel(vs.ServiceStatus);
+            const isInProgress = vs.ServiceStatus === 'In-Progress';
+            const isComplete = vs.ServiceStatus === 'Complete';
+            const isStandby = vs.ServiceStatus === 'Standby';
+            const dotStatusClass = isInProgress ? 'is-current' : (isComplete ? 'is-complete' : 'is-pending');
+            const rowStatusClass = isInProgress ? 'is-current' : (isComplete ? 'is-complete' : (isStandby ? 'is-standby' : 'is-pending'));
             const row = document.createElement('div');
-            row.className = 'd-flex align-items-center justify-content-between px-3 py-2 rounded-2 border';
+            row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 waitlist-modal-service-row ${rowStatusClass}`;
             row.innerHTML = `
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
-                    <span class="badge border" style="${getStatusPillStyle(vs.ServiceStatus)}">${statusInfo.text}</span>
+                <div class="waitlist-service-item ${dotStatusClass}">
+                    <span class="waitlist-service-dot" aria-hidden="true"></span>
+                    <span class="fw-semibold waitlist-modal-service-name ${isComplete ? 'is-complete' : ''}" style="font-size: 0.9rem;">${escapeHtml(vs.ServiceName)}</span>
+                    ${getStatusBadgeMarkup(vs.ServiceStatus)}
                 </div>`;
             container.appendChild(row);
         });
@@ -551,43 +565,37 @@ function renderServiceToggles(patient) {
 
     visitServices.forEach(vs => {
         const status = vs.ServiceStatus;
-        const statusInfo = getServiceStatusLabel(status);
         const isPending = status === 'Pending';
         const isInProgress = status === 'In-Progress';
         const isComplete = status === 'Complete';
         const isStandby = status === 'Standby';
-
-        let rowBg = 'border';
-        if (isInProgress) rowBg = 'bg-soft-primary border border-primary border-opacity-25';
-        else if (isComplete) rowBg = 'bg-soft-success border border-success border-opacity-25';
-        else if (isStandby) rowBg = 'bg-soft-warning border border-warning border-opacity-25';
+        const dotStatusClass = isInProgress ? 'is-current' : (isComplete ? 'is-complete' : 'is-pending');
+        const rowStatusClass = isInProgress ? 'is-current' : (isComplete ? 'is-complete' : (isStandby ? 'is-standby' : 'is-pending'));
 
         let actionBtn = '';
         if (isPending) {
             if (hasInProgress) {
-                actionBtn = `<button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled style="font-size: 0.75rem;" title="Check out current service first">Check In</button>`;
+                actionBtn = '<button class="btn btn-outline-secondary btn-sm rounded-2 px-3 waitlist-modal-action-btn" disabled title="Check out current service first">Check In</button>';
             } else {
-                actionBtn = `<button class="btn btn-outline-primary btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+                actionBtn = `<button class="btn btn-primary btn-sm svc-toggle-btn rounded-2 px-3 waitlist-modal-action-btn" data-service-id="${vs.ServiceID}" data-action="checkin">Check In</button>`;
             }
         } else if (isStandby) {
             if (hasInProgress) {
-                actionBtn = `<button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled style="font-size: 0.75rem;" title="Check out current service first">Check In</button>`;
+                actionBtn = '<button class="btn btn-outline-secondary btn-sm rounded-2 px-3 waitlist-modal-action-btn" disabled title="Check out current service first">Check In</button>';
             } else {
-                actionBtn = `<button class="btn btn-outline-warning btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkin" style="font-size: 0.75rem;">Check In</button>`;
+                actionBtn = `<button class="btn btn-primary btn-sm svc-toggle-btn rounded-2 px-3 waitlist-modal-action-btn" data-service-id="${vs.ServiceID}" data-action="checkin">Check In</button>`;
             }
         } else if (isInProgress) {
-            actionBtn = `<button class="btn btn-outline-success btn-sm svc-toggle-btn rounded-pill px-3" data-service-id="${vs.ServiceID}" data-action="checkout" style="font-size: 0.75rem;">Check Out</button>`;
+            actionBtn = `<button class="btn btn-primary btn-sm svc-toggle-btn rounded-2 px-3 waitlist-modal-action-btn" data-service-id="${vs.ServiceID}" data-action="checkout">Check Out</button>`;
         }
 
         const row = document.createElement('div');
-        row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 ${rowBg}`;
+        row.className = `d-flex align-items-center justify-content-between px-3 py-2 rounded-2 waitlist-modal-service-row ${rowStatusClass}`;
         row.innerHTML = `
-            <div class="d-flex flex-column">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fw-semibold text-dark" style="font-size: 0.9rem;">${vs.ServiceName}</span>
-                    <span class="badge border" style="${getStatusPillStyle(vs.ServiceStatus)}">${statusInfo.text}</span>
-                </div>
-                ${isStandby ? '<span class="text-muted" style="font-size: 0.7rem;">If available only</span>' : ''}
+            <div class="waitlist-service-item ${dotStatusClass}">
+                <span class="waitlist-service-dot" aria-hidden="true"></span>
+                <span class="fw-semibold waitlist-modal-service-name ${isComplete ? 'is-complete' : ''}" style="font-size: 0.9rem;">${escapeHtml(vs.ServiceName)}</span>
+                ${getStatusBadgeMarkup(vs.ServiceStatus)}
             </div>
             <div>${actionBtn}</div>
         `;
