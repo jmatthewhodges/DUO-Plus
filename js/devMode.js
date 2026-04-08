@@ -81,6 +81,7 @@
                     <a href="${p}waitingroom.html">Waiting Room</a>
                     <a href="${p}service-scan.html">Service Scan</a>
                     <a href="${p}food-truck.html">Food Truck</a>
+                    <a href="${p}chiropractor.html">Chiropractor</a>
                     <a href="${p}admin.html">Admin</a>
                 </div>
                 <div class="dev-panel-meta" id="devCameraStatusWrap">
