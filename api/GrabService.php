@@ -97,7 +97,7 @@ if ($prevEventStmt) {
 // Fetches all statuses so PHP can count per-status; waitlist is filtered in PHP.
 $dataStmt = $mysqli->prepare(
     "SELECT c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB,
-            vs.ServiceID, vs.ServiceStatus, v.IsAbandoned, v.FirstCheckedIn,
+            vs.ServiceID, vs.ServiceStatus, v.IsAbandoned, v.DentalFormsCompleted, v.FirstCheckedIn,
             assigned.AssignedServiceDetails
      FROM tblVisitServices vs
      JOIN tblVisits v ON v.VisitID = vs.VisitID

@@ -291,12 +291,14 @@ async function fetchServiceData(serviceKey) {
                     dob: client.DOB,
                     status: 'waiting',
                     isAbandoned: false,
+                    dentalFormsCompleted: false,
                     serviceID: client.ServiceID,
                     assignedServices: []
                 };
             }
 
             SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned = (client.IsAbandoned === 1 || client.IsAbandoned === '1');
+            SERVICE_WAITLISTS[serviceKey][client.ClientID].dentalFormsCompleted = (client.DentalFormsCompleted === 1 || client.DentalFormsCompleted === '1');
 
             // Promote status by priority so one client card reflects the strongest state.
             const statusPriority = { waiting: 1, standby: 2, completed: 3, 'in-progress': 4 };
@@ -1031,6 +1033,7 @@ async function handleClientQRScan(qrData) {
 function showCheckInOutModal(clientId) {
     const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
     const serviceTitle = service ? service.name : 'Service';
+    const isDentalService = currentServiceKey === 'dental';
 
     // Get client from waitlist
     let client = null;
@@ -1038,6 +1041,7 @@ function showCheckInOutModal(clientId) {
         client = SERVICE_WAITLISTS[currentServiceKey][clientId];
     }
     const clientName = client ? client.name : 'Unknown Client';
+    const formsCompleted = !!(client && client.dentalFormsCompleted);
 
     // Determine which button to show based on client status
     const isInProgress = client && client.status === 'in-progress';
@@ -1048,6 +1052,17 @@ function showCheckInOutModal(clientId) {
         : `<button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
                <i class="bi bi-person-plus me-2"></i>Check In
            </button>`;
+
+    const dentalFormsSection = isDentalService
+        ? `
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" value="1" id="dentalFormsCompletedToggle" ${formsCompleted ? 'checked' : ''}>
+                <label class="form-check-label" for="dentalFormsCompletedToggle">
+                    Mark forms done
+                </label>
+            </div>
+          `
+        : '';
 
     Swal.fire({
         title: false,
@@ -1060,6 +1075,7 @@ function showCheckInOutModal(clientId) {
                 <p><strong>Service:</strong> ${serviceTitle}</p>
                 <p><strong>Status:</strong> ${isInProgress ? 'In Progress' : 'Waiting'}</p>
                 </div>
+                ${dentalFormsSection}
             </div>
             <div class="d-grid gap-3">
                 ${actionButton}
@@ -1072,8 +1088,62 @@ function showCheckInOutModal(clientId) {
         allowEscapeKey: true,
         didOpen: (modal) => {
             modal.classList.add('modal-lg');
+
+            if (!isDentalService) return;
+
+            const formsToggle = modal.querySelector('#dentalFormsCompletedToggle');
+            if (!formsToggle) return;
+
+            formsToggle.addEventListener('change', async () => {
+                const nextValue = formsToggle.checked;
+                formsToggle.disabled = true;
+
+                const saved = await updateDentalFormsCompleted(clientId, nextValue);
+                if (!saved) {
+                    formsToggle.checked = !nextValue;
+                }
+
+                formsToggle.disabled = false;
+            });
         }
     });
+}
+
+async function updateDentalFormsCompleted(clientId, isCompleted) {
+    try {
+        const response = await fetch('/api/UpdateDentalForms.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ClientID: clientId, FormsCompleted: !!isCompleted })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Unable to save forms status',
+                text: data.error || data.message || 'Please try again.',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+
+        if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey] && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
+            SERVICE_WAITLISTS[currentServiceKey][clientId].dentalFormsCompleted = !!isCompleted;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error updating dental forms status:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Unable to update forms status. Please try again.',
+            confirmButtonText: 'OK'
+        });
+        return false;
+    }
 }
 
 
