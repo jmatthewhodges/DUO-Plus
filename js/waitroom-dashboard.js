@@ -347,18 +347,11 @@ function populateWaitListTable(patients) {
         const currentlyAtCells = currentAtPills
             ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">${currentAtPills}</div>`
             : '';
-        const hasCurrentlyAt = !!currentlyAtCells;
-        const servicesLabelClass = hasCurrentlyAt
-            ? 'small service-waitlist-label-text'
-            : 'small service-waitlist-label-text service-waitlist-label-services-only';
-        const statusBlockClass = hasCurrentlyAt
-            ? 'service-waitlist-status-block mt-1'
-            : 'service-waitlist-status-block service-waitlist-services-only mt-1';
-        const serviceCells = servicePills
-            ? `<span class="${servicesLabelClass}">Services:</span><div class="service-waitlist-badges-wrap">${servicePills}</div>`
+        const currentlyAtHTML = currentlyAtCells
+            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}</div>`
             : '';
-        const groupedStatusHTML = (currentlyAtCells || serviceCells)
-            ? `<div class="${statusBlockClass}">${currentlyAtCells}${serviceCells}</div>`
+        const servicePillsHTML = servicePills
+            ? `<div class="service-waitlist-badges-wrap mt-1">${servicePills}</div>`
             : '';
         const avatarClass = isAbandoned
             ? 'bg-danger text-white'
@@ -390,7 +383,8 @@ function populateWaitListTable(patients) {
                         <div class="d-flex flex-column gap-1" style="min-width: 0;">
                             <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
                             ${metaBadges ? `<div class="d-flex flex-wrap gap-1">${metaBadges}</div>` : ''}
-                            ${groupedStatusHTML}
+                            ${currentlyAtHTML}
+                            ${servicePillsHTML}
                         </div>
                     </div>
                 </td>

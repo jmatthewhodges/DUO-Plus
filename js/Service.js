@@ -1274,18 +1274,11 @@ function populateWaitlist(clientsToShow = null) {
             }
             return `<span class="badge border" style="${servicePillStyle}">${pillPrefix}${escapeHtml(service.name)}</span>`;
         }).join('');
-        const hasCurrentlyAt = !!currentlyAtCells;
-        const servicesLabelClass = hasCurrentlyAt
-            ? 'small service-waitlist-label-text'
-            : 'small service-waitlist-label-text service-waitlist-label-services-only';
-        const statusBlockClass = hasCurrentlyAt
-            ? 'service-waitlist-status-block mt-1'
-            : 'service-waitlist-status-block service-waitlist-services-only mt-1';
-        const nextCells = assignedServices
-            ? `<span class="${servicesLabelClass}">Services:</span><div class="service-waitlist-badges-wrap">${assignedServices}</div>`
+        const currentlyAtHTML = currentlyAtCells
+            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}</div>`
             : '';
-        const groupedStatusHTML = (currentlyAtCells || nextCells)
-            ? `<div class="${statusBlockClass}">${currentlyAtCells}${nextCells}</div>`
+        const servicesRowHTML = assignedServices
+            ? `<div class="service-waitlist-badges-wrap mt-1">${assignedServices}</div>`
             : '';
         const rowButtonClass = isInProgress ? 'btn-primary' : ((isCompleted || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary');
         const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
@@ -1316,7 +1309,8 @@ function populateWaitlist(clientsToShow = null) {
                         ${headerLine}
                         ${abandonedBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${abandonedBadgeHTML}</div>` : ''}
                             ${standbyBadgeHTML ? `<div class="d-flex flex-wrap gap-1">${standbyBadgeHTML}</div>` : ''}
-                        ${groupedStatusHTML}
+                        ${currentlyAtHTML}
+                        ${servicesRowHTML}
                     </div>
                 </div>
             </td>
