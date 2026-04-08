@@ -385,68 +385,59 @@ function populateWaitListTable(patients) {
             if (pa !== pb) return pa - pb;
             return String(a.ServiceName || '').localeCompare(String(b.ServiceName || ''));
         });
-        const chipBaseStyle = 'font-size: 0.65rem; font-weight: 500; border-radius: 999px; padding: 0.22rem 0.5rem; line-height: 1.2;';
-        const completedPillStyle = `${chipBaseStyle} background-color: #e8f6ee; border-color: #b7e4c7 !important; color: #1f7a4d;`;
-        const abandonedPillStyle = `${chipBaseStyle} background-color: #fdecef; border-color: #f5c2c7 !important; color: #a61e2f;`;
-        const inProgressOtherPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
-        const standbyPillStyle = `${chipBaseStyle} background-color: #fff3cd; border-color: #ffda6a !important; color: #7a5a00;`;
-        const pendingPillStyle = `${chipBaseStyle} background-color: #f7f9fc; border-color: #d7deea !important; color: #212529;`;
-        const nowServingPillStyle = `${chipBaseStyle} background-color: var(--bs-info); border-color: var(--bs-info) !important; color: #fff;`;
-        let metaBadges = '';
-        if (isAbandoned) {
-            metaBadges = `<span class="badge border" style="${abandonedPillStyle}"><i class="bi bi-person-x me-1" aria-hidden="true"></i>Abandoned</span>`;
-        }
-        const currentServiceIDs = orderedVisitServices
-            .filter(vs => vs.ServiceStatus === 'In-Progress')
-            .map(vs => vs.ServiceID);
-        const currentAtPills = orderedVisitServices
-            .filter(vs => currentServiceIDs.includes(vs.ServiceID))
-            .map(vs => `<span class="badge border" style="${nowServingPillStyle}">${escapeHtml(vs.ServiceName)}</span>`)
-            .join('');
-        const otherServicesRaw = orderedVisitServices.filter(vs => !currentServiceIDs.includes(vs.ServiceID));
-        const incompleteOtherServices = otherServicesRaw.filter(vs => vs.ServiceStatus !== 'Complete');
-        const completedOtherServices = otherServicesRaw.filter(vs => vs.ServiceStatus === 'Complete');
-        const otherServices = [...incompleteOtherServices, ...completedOtherServices];
-        const servicePills = otherServices.map(vs => {
-            let pillStyle = pendingPillStyle;
-            let pillPrefix = '';
-            if (vs.ServiceStatus === 'Complete') pillStyle = completedPillStyle;
-            if (vs.ServiceStatus === 'Complete') pillPrefix = '<i class="bi bi-check2 me-1" aria-hidden="true"></i>';
-            if (vs.ServiceStatus === 'Standby') {
-                pillStyle = standbyPillStyle;
-                pillPrefix = '<i class="bi bi-clock-history me-1" aria-hidden="true"></i>';
-            }
-            return `<span class="badge border" style="${pillStyle}">${pillPrefix}${escapeHtml(vs.ServiceName)}</span>`;
+        const hasInProgressService = orderedVisitServices.some(vs => vs.ServiceStatus === 'In-Progress');
+        const rowStatusClass = isAbandoned
+            ? 'waitlist-row-abandoned'
+            : (hasInProgressService ? 'waitlist-row-has-station' : 'waitlist-row-no-station');
+        const nameStateBadge = isAbandoned
+            ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
+            : '';
+        const serviceListItems = orderedVisitServices.map(vs => {
+            const isCurrentStation = vs.ServiceStatus === 'In-Progress';
+            const isCompletedStation = vs.ServiceStatus === 'Complete';
+            const statusClass = isCurrentStation
+                ? 'is-current'
+                : (isCompletedStation ? 'is-complete' : 'is-pending');
+            const hereNowBadge = isCurrentStation
+                ? '<span class="waitlist-here-now-badge">Here now</span>'
+                : '';
+
+            return `
+                <div class="waitlist-service-item ${statusClass}">
+                    <span class="waitlist-service-dot" aria-hidden="true"></span>
+                    <span class="waitlist-service-name">${escapeHtml(vs.ServiceName)}</span>
+                    ${hereNowBadge}
+                </div>
+            `;
         }).join('');
-        const currentlyAtCells = currentAtPills
-            ? `<span class="small service-waitlist-label-text">Currently At:</span><div class="service-waitlist-badges-wrap">${currentAtPills}</div>`
-            : '';
-        const currentlyAtHTML = currentlyAtCells
-            ? `<div class="service-waitlist-status-block mt-1">${currentlyAtCells}</div>`
-            : '';
-        const servicePillsHTML = servicePills
-            ? `<div class="service-waitlist-badges-wrap mt-1">${servicePills}</div>`
-            : '';
+        const serviceListHTML = serviceListItems
+            ? `<div class="waitlist-service-list">${serviceListItems}</div>`
+            : '<div class="small text-muted mt-1">No services assigned</div>';
         const avatarClass = isAbandoned
             ? 'bg-danger text-white'
-            : (wasSkipped ? 'bg-warning text-dark' : (allDone ? 'bg-success text-white' : (atService ? 'bg-info text-white' : 'bg-light')));
+            : 'waitlist-avatar-primary text-white';
         const avatarIcon  = isAbandoned
             ? 'bi-person-x'
             : (wasSkipped ? 'bi-skip-forward-fill' : (allDone ? 'bi-check-lg' : (atService ? 'bi-arrow-right-circle' : 'bi-person')));
         const isNowServing = patient.ClientID == nowServingClientId;
-        const finalAvatarClass = isNowServing ? 'text-dark' : avatarClass;
+        const finalAvatarClass = isNowServing
+            ? 'waitlist-avatar-primary waitlist-now-serving-avatar text-white'
+            : avatarClass;
         const finalAvatarIconHTML = isNowServing
-            ? '<i class="bi bi-bell-fill waitlist-now-serving-bell"></i>'
+            ? '<i class="bi bi-person waitlist-now-serving-avatar-icon"></i>'
             : (wasSkipped
                 ? `<i class="bi ${avatarIcon}"></i>`
                 : (atService
                 ? renderAvatarIconMarkup(inProgressIconTag, avatarIcon, 'text-white')
                 : `<i class="bi ${avatarIcon}"></i>`));
-        const finalAvatarStyle = isNowServing ? 'background-color: #ffe066;' : '';
+        const finalAvatarStyle = '';
         const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
+        const nowServingNameBadge = isNowServing ? '<span class="waitlist-now-serving-badge">Now serving</span>' : '';
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
         const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
-        const rowClass = isNowServing ? 'border-bottom waitlist-now-serving-row' : 'border-bottom';
+        const rowClass = ['border-bottom', rowStatusClass, (isNowServing ? 'waitlist-now-serving-row' : '')]
+            .filter(Boolean)
+            .join(' ');
         const rowHTML = `
             <tr class="${rowClass}" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
@@ -454,11 +445,13 @@ function populateWaitListTable(patients) {
                         <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">
                             ${finalAvatarIconHTML}
                         </div>
-                        <div class="d-flex flex-column gap-1" style="min-width: 0;">
-                            <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
-                            ${metaBadges ? `<div class="d-flex flex-wrap gap-1">${metaBadges}</div>` : ''}
-                            ${currentlyAtHTML}
-                            ${servicePillsHTML}
+                        <div class="d-flex flex-column" style="min-width: 0; gap: 0.12rem;">
+                            <div class="d-flex align-items-center flex-wrap gap-1" style="min-width: 0;">
+                                <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
+                                ${nameStateBadge}
+                                ${nowServingNameBadge}
+                            </div>
+                            ${serviceListHTML}
                         </div>
                     </div>
                 </td>

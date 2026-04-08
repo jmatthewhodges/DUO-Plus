@@ -504,6 +504,38 @@ body.v-center-page {
     vertical-align: middle;
 }
 
+.waitlist-table tbody tr,
+.waitlist-table tbody td {
+    background-color: #ffffff;
+}
+
+/* Stronger row divider to improve scanability when left accents repeat */
+.waitlist-table tbody tr + tr td {
+    border-top: 2px solid #d5dee8 !important;
+}
+
+.waitlist-table tbody tr.waitlist-row-has-station td:first-child {
+    border-left: 4px solid #1D9E75;
+}
+
+.waitlist-table tbody tr.waitlist-row-no-station td:first-child {
+    border-left: 4px solid #D0D5DD;
+}
+
+.waitlist-table tbody tr.waitlist-row-abandoned td:first-child {
+    border-left: 4px solid #D64545;
+}
+
+.waitlist-avatar-primary {
+    background-color: #174593;
+    border-color: #174593 !important;
+}
+
+.waitlist-avatar-neutral {
+    background-color: #F2F4F7;
+    border-color: #D0D5DD !important;
+}
+
 /* Name column: contain text, wrap long words (overrides hope-ui's white-space:nowrap on td) */
 .waitlist-table td:first-child {
     overflow: hidden;
@@ -910,24 +942,60 @@ body.v-center-page {
 
 /* Waiting room: animate current "Now Serving" client name */
 .waitlist-now-serving-row {
-    background-color: #eef4ff;
-    box-shadow: inset 4px 0 0 #174593;
+    background-color: #ffffff !important;
+}
+
+.waitlist-now-serving-row td {
     animation: waitlist-now-serving-row-flash 1.15s ease-in-out infinite;
+}
+
+.waitlist-table tbody tr.waitlist-now-serving-row td:first-child {
+    border-left: 4px solid #174593 !important;
 }
 
 @keyframes waitlist-now-serving-row-flash {
     0%, 100% {
-        background-color: #eef4ff;
-        box-shadow: inset 4px 0 0 #174593;
+        background-color: #ffffff;
     }
     50% {
-        background-color: #dce9ff;
-        box-shadow: inset 4px 0 0 #10326e;
+        background-color: #f2f7ff;
     }
 }
 
 .waitlist-now-serving-name {
     animation: waitlist-now-serving-pulse 1s ease-in-out infinite;
+}
+
+.waitlist-now-serving-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.04rem 0.42rem;
+    font-size: 0.62rem;
+    line-height: 1.12;
+    font-weight: 700;
+    color: #475467;
+    background-color: #ffffff;
+    border: 1px solid #d0d5dd;
+    white-space: nowrap;
+}
+
+.waitlist-now-serving-avatar {
+    border-color: #ffffff !important;
+    animation: waitlist-now-serving-avatar-glow 1.15s ease-in-out infinite;
+}
+
+.waitlist-now-serving-avatar-icon {
+    color: #ffffff;
+}
+
+@keyframes waitlist-now-serving-avatar-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 2px rgba(23, 69, 147, 0.26), 0 0 0 5px rgba(23, 69, 147, 0.12);
+    }
+    50% {
+        box-shadow: 0 0 0 2px rgba(23, 69, 147, 0.38), 0 0 0 7px rgba(23, 69, 147, 0.16);
+    }
 }
 
 @keyframes waitlist-now-serving-pulse {
@@ -1285,6 +1353,26 @@ body.no-scroll .card-body[style*="overflow-y"] {
     align-items: center;
 }
 
+#queueViewFilters .queue-filter-btn[data-filter]:not([data-filter="all"]) {
+    color: #174593 !important;
+    border-color: #174593 !important;
+    background-color: #ffffff !important;
+}
+
+#queueViewFilters .queue-filter-btn[data-filter]:not([data-filter="all"]).active {
+    color: #ffffff !important;
+    border-color: #174593 !important;
+    background-color: #174593 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    #queueViewFilters .queue-filter-btn[data-filter]:not([data-filter="all"]):hover {
+        color: #ffffff !important;
+        border-color: #174593 !important;
+        background-color: #174593 !important;
+    }
+}
+
 #queueViewFilters .queue-filter-btn .bi,
 #queueViewFilters .queue-filter-btn .svg-icon {
     display: inline-flex;
@@ -1326,4 +1414,116 @@ body.no-scroll .card-body[style*="overflow-y"] {
 .service-waitlist-label-services-only {
     display: inline-block;
     width: 5rem;
+}
+
+.waitlist-abandoned-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.04rem 0.4rem;
+    font-size: 0.62rem;
+    line-height: 1.12;
+    font-weight: 700;
+    color: #B42318;
+    background-color: #FEECEB;
+    border: 1px solid #F9C8C5;
+    white-space: nowrap;
+}
+
+.waitlist-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.waitlist-service-item {
+    display: flex;
+    align-items: center;
+    gap: 0.34rem;
+    min-width: 0;
+    line-height: 1.08;
+}
+
+.waitlist-service-dot {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    border: 1.6px solid #98a2b3;
+    background-color: transparent;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.waitlist-service-name {
+    font-size: 0.93rem;
+    font-weight: 500;
+    color: #7b8794;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.waitlist-service-item.is-complete .waitlist-service-dot {
+    background-color: #98A2B3;
+    border-color: #98A2B3;
+}
+
+.waitlist-service-item.is-complete .waitlist-service-dot::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.16rem;
+    height: 0.27rem;
+    border-right: 1.6px solid #ffffff;
+    border-bottom: 1.6px solid #ffffff;
+    transform: translate(-52%, -62%) rotate(45deg);
+}
+
+.waitlist-service-item.is-complete .waitlist-service-name {
+    color: #8B8F96;
+    text-decoration: line-through;
+    text-decoration-color: #8B8F96;
+    text-decoration-thickness: 1.4px;
+}
+
+.waitlist-service-item.is-current .waitlist-service-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    background-color: #1D9E75;
+    border-color: #1D9E75;
+    border-width: 2px;
+}
+
+.waitlist-service-item.is-current .waitlist-service-dot::after {
+    content: none;
+}
+
+.waitlist-service-item.is-current .waitlist-service-name {
+    color: #344054;
+    font-weight: 700;
+}
+
+.waitlist-service-item.is-pending .waitlist-service-dot {
+    background-color: transparent;
+    border-color: #95a0b6;
+}
+
+.waitlist-service-item.is-pending .waitlist-service-name {
+    color: #6c757d;
+}
+
+.waitlist-here-now-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    margin-left: 0.12rem;
+    padding: 0.04rem 0.4rem;
+    font-size: 0.62rem;
+    line-height: 1.12;
+    font-weight: 700;
+    color: #176C53;
+    background-color: #E8F6EE;
+    border: 1px solid #B7E4C7;
+    white-space: nowrap;
 }
