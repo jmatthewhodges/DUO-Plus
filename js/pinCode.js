@@ -4,9 +4,10 @@
  *  Description: modular script for handling PIN code verification.
  *               Hides content until PIN is verified.
  *
- *  Last Modified By:  Cameron
- *  Last Modified On:  Mar 1 @ 9:00 aM
- *  Changes Made:      Replaced custom error boxes with sweetalerts
+ *  Last Modified By:  Cameron Jasper
+ *  Last Modified On:  Apr 7 11:00 PM
+ *  Changes Made:      Added PIN-specific relock handling, cross-tab reset
+ *                     notifications, and clearer expired-session messaging.
  * ============================================================
 */
 // PIN Modal - Fully modular component
@@ -90,7 +91,7 @@ function initializePINModal() {
     // Check if user already has a valid server session for this pin type
     async function checkServerSession() {
         try {
-            const response = await fetch('/api/VerifyPin.php?type=' + pinType);
+            const response = await fetch('/api/VerifyPin.php?type=' + pinType, { cache: 'no-store' });
             const data = await response.json();
             return data.verified === true;
         } catch (e) {
@@ -104,6 +105,143 @@ function initializePINModal() {
     const modal = document.getElementById('pinCodeModal');
     const submitBtn = document.getElementById('submitPinBtn');
     const nameEntry = document.getElementById('nameEntry');
+    const nameInput = nameEntry.querySelector('input[type="text"]');
+
+    // These two browser-level channels let one tab tell other open tabs that
+    // a PIN was changed from the admin page, so they can relock immediately.
+    const PIN_RESET_EVENT_KEY = 'duoPlusPinReset';
+    const pinResetChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('duo-plus-pin-reset') : null;
+    let sessionMonitorId = null;
+    let relockAlertOpen = false;
+
+    function showPinModal() {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal, { backdrop: 'static', keyboard: false });
+        modalInstance.show();
+    }
+
+    function lockPageForPinReset(message = 'Your PIN session is no longer valid. Please enter the PIN again to continue.', title = 'PIN Required') {
+        if (relockAlertOpen) return;
+
+        relockAlertOpen = true;
+        pinVerified = false;
+        document.body.classList.remove('pin-verified');
+        clearInputs(inputs);
+
+        if (nameInput) {
+            nameInput.value = '';
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Verify PIN';
+        showPinModal();
+
+        Swal.fire({
+            icon: 'warning',
+            title: title,
+            text: message,
+            confirmButtonText: 'Re-enter PIN',
+            allowOutsideClick: false
+        }).then(() => {
+            relockAlertOpen = false;
+            setTimeout(() => inputs[0].focus(), 150);
+        });
+    }
+
+    async function validateActivePinSession() {
+        if (!pinVerified) return false;
+
+        const isStillVerified = await checkServerSession();
+        if (!isStillVerified) {
+            lockPageForPinReset('Your PIN session expired or was cleared. Please enter the PIN again to continue.', 'PIN Required');
+        }
+        return isStillVerified;
+    }
+
+    function startPinSessionMonitor() {
+        if (sessionMonitorId !== null) return;
+
+        sessionMonitorId = window.setInterval(() => {
+            if (pinVerified && !document.hidden) {
+                validateActivePinSession();
+            }
+        }, 1000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            validateActivePinSession();
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        validateActivePinSession();
+    });
+
+    document.addEventListener('pinSessionExpired', (event) => {
+        if (pinVerified) {
+            lockPageForPinReset(
+                event.detail?.message || 'Your PIN session is no longer valid. Please enter the PIN again to continue.',
+                event.detail?.title || 'PIN Required'
+            );
+        }
+    });
+
+    // Only relock pages whose required PIN type matches the PIN that was
+    // actually changed. General PIN updates should not kick out admin pages, and vice versa.
+    function handlePinResetSignal(detail = {}) {
+        const resetType = (detail.pinType === 'admin') ? 'admin' : 'general';
+        if (resetType !== pinType) return;
+
+        lockPageForPinReset(
+            detail.message || 'This PIN was updated. Please enter the new PIN to continue.',
+            detail.title || 'PIN Updated'
+        );
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== PIN_RESET_EVENT_KEY || !event.newValue) return;
+
+        try {
+            handlePinResetSignal(JSON.parse(event.newValue));
+        } catch (_) {
+            // Ignore malformed storage payloads.
+        }
+    });
+
+    window.addEventListener('duo-pin-reset', (event) => {
+        handlePinResetSignal(event.detail || {});
+    });
+
+    if (pinResetChannel) {
+        pinResetChannel.addEventListener('message', (event) => {
+            handlePinResetSignal(event.data || {});
+        });
+    }
+
+    if (!window.__pinFetchWrapped) {
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = async (...args) => {
+            const response = await originalFetch(...args);
+
+            if (pinVerified && response.status === 403) {
+                const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                if (contentType.includes('application/json')) {
+                    try {
+                        const payload = await response.clone().json();
+                        const errorText = String(payload?.error || '');
+                        if (/pin verification required|admin pin verification required/i.test(errorText)) {
+                            lockPageForPinReset('Your PIN session is no longer valid. Please enter the PIN again to continue.', 'PIN Required');
+                        }
+                    } catch (_) {
+                        // Ignore JSON parsing failures and return the original response.
+                    }
+                }
+            }
+
+            return response;
+        };
+        window.__pinFetchWrapped = true;
+    }
 
     // QR CODE AUTO-FILL: Check for PIN in URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -165,15 +303,16 @@ function initializePINModal() {
             // User already verified - show content
             pinVerified = true;
             document.body.classList.add('pin-verified');
+            startPinSessionMonitor();
             // Notify other JS files that PIN is verified
             document.dispatchEvent(new CustomEvent('pinVerified'));
         } else {
             // User not verified - show modal
-            pinModal.show();
+            showPinModal();
         }
     }).catch(() => {
         // On error, show modal to be safe
-        pinModal.show();
+        showPinModal();
     });
 
     // PIN INPUT HANDLING: Setup event listeners for each PIN digit input
@@ -203,8 +342,6 @@ function initializePINModal() {
     });
 
     // NAME ENTRY HANDLING: Process user's name submission
-    const nameInput = nameEntry.querySelector('input[type="text"]');
-    
     // Allow Enter key to submit name entry form
     nameInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
@@ -272,6 +409,8 @@ function initializePINModal() {
             // SUCCESS: Show content, close modal
             pinVerified = true;
             document.body.classList.add('pin-verified');
+            startPinSessionMonitor();
+            document.dispatchEvent(new CustomEvent('pinVerified'));
             
             // Close modal and remove backdrop
             const modalInstance = bootstrap.Modal.getInstance(modal);

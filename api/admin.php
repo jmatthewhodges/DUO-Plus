@@ -7,23 +7,16 @@
  *               configuration. Modular — each settings section is
  *               a handler that can be added independently.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 7, 2026
- *  Changes Made:      Initial creation
+ *  Last Modified By:  Cameron Jasper
+ *  Last Modified On:  Apr 7 11:00 PM
+ *  Changes Made:      Added PIN-specific session invalidation so only
+ *                     the matching protected pages are forced to relock.
  * ============================================================
  */
 
+$requiredPinType = 'admin';
+require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/config.php';
-
-// Admin pages require the admin PIN session, not the general one
-session_start();
-if (!isset($_SESSION['admin_pin_verified']) || $_SESSION['admin_pin_verified'] !== true) {
-    header('Content-Type: application/json');
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized - Admin PIN verification required']);
-    exit;
-}
 
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
@@ -72,9 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $svcStmt->close();
         $response['services'] = $rows;
     }
-
-    // --- Config values ---
-    $response['config'] = getConfig($mysqli);
 
     // --- Event Settings (e.g. FastTrackLimit) ---
     $evtSettingsStmt = $mysqli->prepare(
@@ -154,6 +144,14 @@ switch ($action) {
         $stmt->execute();
         $stmt->close();
 
+        // Only general PIN-approved pages should be forced to re-enter the
+        // code when the general PIN changes; admin approval is handled separately.
+        unset(
+            $_SESSION['pin_verified'],
+            $_SESSION['pin_verified_meta']
+        );
+        session_write_close();
+
         echo json_encode(['success' => true, 'message' => 'General PIN updated.']);
         break;
 
@@ -170,6 +168,14 @@ switch ($action) {
         $stmt->bind_param('s', $newPin);
         $stmt->execute();
         $stmt->close();
+
+        // Only the admin PIN session should be cleared here so non-admin
+        // PIN-protected pages stay open when the admin code is updated.
+        unset(
+            $_SESSION['admin_pin_verified'],
+            $_SESSION['admin_pin_verified_meta']
+        );
+        session_write_close();
 
         echo json_encode(['success' => true, 'message' => 'Admin PIN updated.']);
         break;
@@ -511,28 +517,6 @@ switch ($action) {
         }
 
         echo json_encode(['success' => true, 'message' => $isClosed ? 'Service closed.' : 'Service opened.']);
-        break;
-
-    // ── Update Config Value ──────────────────────────────────
-    case 'updateConfig':
-        $key   = trim($body['key']   ?? '');
-        $value = trim($body['value'] ?? '');
-
-        if (empty($key)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Config key is required.']);
-            exit;
-        }
-
-        // Whitelist allowed config keys
-        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/', $key)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid config key format.']);
-            exit;
-        }
-
-        setConfigValue($mysqli, $key, $value);
-        echo json_encode(['success' => true, 'message' => "Config '$key' updated."]);
         break;
 
     // ── Unknown action ───────────────────────────────────────

@@ -7,16 +7,46 @@
  *               services. Modular — each section has its own
  *               init/render/save functions.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 7, 2026
- *  Changes Made:      Initial creation
+ *  Last Modified By:  Cameron Jasper
+ *  Last Modified On:  Apr 7 11:00 PM
+ *  Changes Made:      Added PIN reset broadcasts so matching protected
+ *                     pages relock immediately after a PIN update.
  * ============================================================
  */
 
 const API = '/api/admin.php';
+const PIN_RESET_EVENT_KEY = 'duoPlusPinReset';
+const pinResetChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('duo-plus-pin-reset') : null;
 
 // ─── State ──────────────────────────────────────────────────
 let adminData = null;
+
+// Broadcast a lightweight "PIN changed" event to other open tabs so pages
+// using `pinCode.js` can relock immediately without waiting for a refresh.
+function broadcastPinReset(pinType) {
+    const payload = {
+        pinType: pinType === 'admin' ? 'admin' : 'general',
+        at: Date.now(),
+        message: (pinType === 'admin')
+            ? 'The admin PIN was updated. Please enter it again to continue.'
+            : 'The PIN was updated. Please enter the new PIN to continue.'
+    };
+
+    // local storage for cross-tab communication in older browsers, BroadcastChannel for modern ones. Both are best-effort.
+    try {
+        localStorage.setItem(PIN_RESET_EVENT_KEY, JSON.stringify(payload));
+    } catch (e) {
+        // Ignore storage failures.
+    }
+
+    // Also dispatch a custom event on the window for same-tab listeners (e.g. if admin has the protected page open in another window)
+    window.dispatchEvent(new CustomEvent('duo-pin-reset', { detail: payload }));
+
+    // BroadcastChannel for real-time cross-tab notifications in modern browsers
+    if (pinResetChannel) {
+        pinResetChannel.postMessage(payload);
+    }
+}
 
 // Format a UTC datetime string from MySQL into a human-readable America/Chicago timestamp
 function formatChicagoTime(utcString) {
@@ -152,8 +182,8 @@ document.getElementById('btnSavePin').addEventListener('click', async () => {
     try {
         const result = await adminPost({ action: 'updatePin', pinValue: newPin });
         if (result.success) {
-            Swal.fire({ icon: 'success', title: 'Saved', text: 'General PIN updated.', timer: 1500, showConfirmButton: false });
             document.getElementById('pinLastUpdated').textContent = 'Last updated: ' + nowChicago();
+            broadcastPinReset('general');
         } else {
             throw new Error(result.error || 'Update failed');
         }
@@ -174,8 +204,8 @@ document.getElementById('btnSaveAdminPin').addEventListener('click', async () =>
     try {
         const result = await adminPost({ action: 'updateAdminPin', pinValue: newPin });
         if (result.success) {
-            Swal.fire({ icon: 'success', title: 'Saved', text: 'Admin PIN updated.', timer: 1500, showConfirmButton: false });
             document.getElementById('adminPinLastUpdated').textContent = 'Last updated: ' + nowChicago();
+            broadcastPinReset('admin');
         } else {
             throw new Error(result.error || 'Update failed');
         }
