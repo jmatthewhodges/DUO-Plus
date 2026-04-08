@@ -439,6 +439,19 @@ function populateWaitListTable(patients) {
                 : (atService
                 ? renderAvatarIconMarkup(inProgressIconTag, avatarIcon, 'text-white')
                 : `<i class="bi ${avatarIcon}"></i>`));
+        const currentServiceLabel = String(inProgressService?.ServiceName || atService || '').trim();
+        const hasStandbyService = orderedVisitServices.some(vs => vs.ServiceStatus === 'Standby');
+        const avatarTooltip = (() => {
+            if (isNowServing) {
+                return currentServiceLabel ? `Now serving: Currently at ${currentServiceLabel}` : 'Now serving client';
+            }
+            if (isAbandoned) return 'Abandoned client';
+            if (wasSkipped) return 'Skipped this turn';
+            if (allDone) return 'All services complete';
+            if (currentServiceLabel) return `Currently at ${currentServiceLabel}`;
+            if (hasStandbyService) return 'On standby';
+            return 'Waiting for service';
+        })();
         const finalAvatarStyle = '';
         const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
         const nowServingNameBadge = isNowServing ? '<span class="waitlist-now-serving-badge">Now serving</span>' : '';
@@ -451,7 +464,7 @@ function populateWaitListTable(patients) {
             <tr class="${rowClass}" data-client-id="${patient.ClientID}">
                 <td class="ps-3 py-3">
                     <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle}">
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center ${finalAvatarClass} flex-shrink-0" style="width: 30px; height: 30px; ${finalAvatarStyle} cursor: help;" title="${escapeHtml(avatarTooltip)}" aria-label="${escapeHtml(avatarTooltip)}">
                             ${finalAvatarIconHTML}
                         </div>
                         <div class="d-flex flex-column" style="min-width: 0; gap: 0.12rem;">

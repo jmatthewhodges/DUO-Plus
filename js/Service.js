@@ -1234,6 +1234,18 @@ function populateWaitlist(clientsToShow = null) {
         const rowStatusClass = isAbandoned
             ? 'waitlist-row-abandoned'
             : (currentServiceIsComplete ? 'waitlist-row-no-station' : 'waitlist-row-waiting');
+        const currentServiceName = (currentServiceKey && SERVICES[currentServiceKey]) ? SERVICES[currentServiceKey].name : 'this service';
+        const inProgressServiceName = inProgressService
+            ? String(SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || '').trim()
+            : '';
+        const avatarTooltip = (() => {
+            if (isAbandoned) return 'Abandoned client';
+            if (currentServiceIsInProgress) return `Currently at ${inProgressServiceName || currentServiceName}`;
+            if (currentServiceIsComplete) return `Completed ${currentServiceName}`;
+            if (currentServiceIsStandby) return `Standby for ${currentServiceName}`;
+            if (inProgressServiceName) return `Currently at ${inProgressServiceName}`;
+            return `Waiting for ${currentServiceName}`;
+        })();
         const nameStateBadge = isAbandoned
             ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
             : '';
@@ -1285,7 +1297,7 @@ function populateWaitlist(clientsToShow = null) {
         row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px;">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px; cursor: help;" title="${escapeHtml(avatarTooltip)}" aria-label="${escapeHtml(avatarTooltip)}">
                         ${avatarIconHTML}
                     </div>
                     <div class="d-flex flex-column" style="min-width: 0; gap: 0.12rem;">
