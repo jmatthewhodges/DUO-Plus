@@ -164,6 +164,26 @@ body.portal-body {
     text-overflow: ellipsis;
 }
 
+.method-danger-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.16rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    flex-shrink: 0;
+}
+
+.method-danger-badge i {
+    font-size: 0.62rem;
+}
+
 .method-item.active .method-name {
     color: #0f3468;
     font-weight: 600;
@@ -271,6 +291,34 @@ body.portal-body {
     margin: 0;
     font-size: 1.1rem;
     letter-spacing: -0.01em;
+}
+
+.endpoint-danger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(248, 113, 113, 0.18);
+    color: #fee2e2;
+    border: 1px solid rgba(254, 202, 202, 0.3);
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.endpoint-danger-note {
+    margin-top: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(248, 113, 113, 0.12);
+    color: rgba(255, 240, 240, 0.95);
+    border: 1px solid rgba(254, 202, 202, 0.26);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.76rem;
+    line-height: 1.35;
 }
 
 .panel-endpoint {

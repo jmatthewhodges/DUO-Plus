@@ -363,6 +363,10 @@ const API_METHODS = [
     let lastResponse = null;
     let currentMode = 'test'; // 'test' or 'manual'
 
+    function isDangerousMethod(method) {
+        return method.category === 'Testing' || method.dangerous === true;
+    }
+
     // ─── Init ─────────────────────────────────────────────────────────────
     renderSidebar();
     showWelcome();
@@ -395,10 +399,14 @@ const API_METHODS = [
         for (const [cat, methods] of Object.entries(categories)) {
             html += `<div class="method-category">${cat}</div>`;
             methods.forEach(m => {
+                const dangerBadgeHTML = isDangerousMethod(m)
+                    ? '<span class="method-danger-badge" title="Dangerous endpoint: may affect real data"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>Danger</span>'
+                    : '';
                 html += `
                     <div class="method-item ${m.id === activeMethodId ? 'active' : ''}" data-id="${m.id}">
                         <span class="method-badge ${m.method.toLowerCase()}">${m.method}</span>
                         <span class="method-name">${m.name}</span>
+                        ${dangerBadgeHTML}
                     </div>`;
             });
         }
@@ -437,6 +445,12 @@ const API_METHODS = [
     function renderMethodDetail(method) {
         const methodLower = method.method.toLowerCase();
         currentMode = 'test'; // always default to test mode
+        const dangerHeaderBadgeHTML = isDangerousMethod(method)
+            ? '<span class="endpoint-danger-badge"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>Dangerous Endpoint</span>'
+            : '';
+        const dangerNoteHTML = isDangerousMethod(method)
+            ? '<div class="endpoint-danger-note"><i class="bi bi-shield-exclamation" aria-hidden="true"></i>This testing endpoint can modify or delete production-like data. Use with caution.</div>'
+            : '';
 
         let paramsHTML = '';
         if (method.params.length === 0) {
@@ -462,12 +476,14 @@ const API_METHODS = [
                     <div class="panel-header">
                         <div class="panel-title-row">
                             <h4 class="panel-title">${method.name}</h4>
+                            ${dangerHeaderBadgeHTML}
                             <div class="panel-endpoint">
                                 <span class="endpoint-method ${methodLower}">${method.method}</span>
                                 <code class="endpoint-url" id="fullEndpointUrl">${getFullURL(method.endpoint)}</code>
                             </div>
                         </div>
                         <p class="panel-description">${method.description}</p>
+                        ${dangerNoteHTML}
                     </div>
 
                     <!-- Parameters section -->
