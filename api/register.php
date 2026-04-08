@@ -47,7 +47,13 @@ require_once __DIR__ . '/db.php';
 $mysqli = $GLOBALS['mysqli'];
 
 // Always target the currently active event for registrations.
-$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+$eventStmt = $mysqli->prepare(
+    "SELECT EventID
+     FROM tblEvents
+     WHERE IsActive = 1
+     ORDER BY EventDate DESC
+     LIMIT 1"
+);
 if (!$eventStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Failed to prepare active event query: ' . $mysqli->error]);

@@ -31,7 +31,13 @@ header('Content-Type: application/json');
 $mysqli = $GLOBALS['mysqli'];
 
 // Resolve currently active event so queue data and stats are aligned with check-in.
-$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+$eventStmt = $mysqli->prepare(
+    "SELECT EventID
+     FROM tblEvents
+     WHERE IsActive = 1
+     ORDER BY EventDate DESC
+     LIMIT 1"
+);
 if (!$eventStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Failed to prepare active event query: ' . $mysqli->error]);

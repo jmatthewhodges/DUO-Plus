@@ -63,7 +63,13 @@ if (empty($services) || !is_array($services)) {
 }
 
 // Resolve active EventID so check-in always targets the current live event.
-$eventStmt = $mysqli->prepare("SELECT EventID FROM tblEvents WHERE IsActive = 1 LIMIT 1");
+$eventStmt = $mysqli->prepare(
+    "SELECT EventID
+     FROM tblEvents
+     WHERE IsActive = 1
+     ORDER BY EventDate DESC
+     LIMIT 1"
+);
 if (!$eventStmt) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Failed to prepare active event query: ' . $mysqli->error]);
@@ -116,9 +122,32 @@ $visitRow = $visitResult->fetch_assoc();
 $visitStmt->close();
 
 if (!$visitRow) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'No visit record found for this client and event.']);
-    exit;
+    // Create a visit tied to the active event so check-in never lands on a stale event.
+    $newVisitID = bin2hex(random_bytes(8));
+    $createVisit = $mysqli->prepare(
+        "INSERT INTO tblVisits (VisitID, ClientID, EventID, RegistrationStatus, QR_Code_Data)
+         VALUES (?, ?, ?, 'Registered', NULL)"
+    );
+
+    if (!$createVisit) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to prepare visit creation: ' . $mysqli->error]);
+        exit;
+    }
+
+    $createVisit->bind_param('sss', $newVisitID, $clientID, $eventID);
+    if (!$createVisit->execute()) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to create visit for active event: ' . $createVisit->error]);
+        $createVisit->close();
+        exit;
+    }
+    $createVisit->close();
+
+    $visitRow = [
+        'VisitID' => $newVisitID,
+        'FirstCheckedIn' => null
+    ];
 }
 
 $visitID          = $visitRow['VisitID'];

@@ -312,6 +312,20 @@ const API_METHODS = [
         testData: {
         }
     },
+    {
+        id: 'ClearTestClients',
+        name: 'Clear Test Clients',
+        category: 'Testing',
+        method: 'POST',
+        endpoint: '/api/ClearTestClients.php',
+        description: 'Delete only test clients and related rows where tblClients.DateCreated is strictly AFTER the cutoff date.',
+        params: [
+            { name: 'cutoffDate', type: 'date', required: false, default: '2026-03-14', description: 'Clients with DateCreated after this date are deleted (strictly AFTER this date).' }
+        ],
+        testData: {
+            cutoffDate: '2026-04-01'
+        }
+    },
 
 ];
 
