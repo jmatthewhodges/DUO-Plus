@@ -243,15 +243,47 @@ async function skipNowServingClient(clientId) {
 
 async function abandonClient(clientId) {
     const result = await Swal.fire({
-        title: 'This cannot be undone.',
-        html: 'Marking this client as abandoned will <strong>permanently remove them from the queue</strong>. They will <strong>not be called to any service</strong> for the rest of the event and <strong>cannot be re-added</strong>.',
+        title: 'NUCLEAR ACTION',
+        html: `
+            <div class="text-start">
+                <p class="mb-2 fw-bold text-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    You are about to permanently abandon this client.
+                </p>
+                <ul class="mb-2 ps-3">
+                    <li><strong>Permanently removes</strong> them from the queue.</li>
+                    <li>They will <strong>not be called</strong> to any service.</li>
+                    <li>This action <strong>cannot be undone</strong> or reversed.</li>
+                </ul>
+                <p class="mb-0 text-muted small">Only continue if you are absolutely certain.</p>
+            </div>
+        `,
         icon: 'error',
         showCancelButton: true,
-        confirmButtonText: 'Yes, Abandon',
+        confirmButtonText: 'NUCLEAR: Abandon Client',
         confirmButtonColor: '#dc3545',
         cancelButtonText: 'Go Back',
         allowOutsideClick: false,
-        reverseButtons: true
+        reverseButtons: true,
+        didOpen: (popup) => {
+            if (typeof popup.animate === 'function') {
+                popup.animate(
+                    [
+                        { transform: 'translate3d(0, 0, 0)' },
+                        { transform: 'translate3d(-6px, 1px, 0) rotate(-0.6deg)' },
+                        { transform: 'translate3d(6px, -1px, 0) rotate(0.6deg)' },
+                        { transform: 'translate3d(-5px, 0, 0) rotate(-0.4deg)' },
+                        { transform: 'translate3d(5px, 0, 0) rotate(0.4deg)' },
+                        { transform: 'translate3d(0, 0, 0)' }
+                    ],
+                    {
+                        duration: 520,
+                        iterations: 2,
+                        easing: 'linear'
+                    }
+                );
+            }
+        }
     });
     if (!result.isConfirmed) return;
 
