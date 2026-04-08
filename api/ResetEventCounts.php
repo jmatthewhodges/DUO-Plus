@@ -118,6 +118,65 @@ try {
     $analyticsRows = $analyticsReset->affected_rows;
     $analyticsReset->close();
 
+    // Explicitly ensure food truck and chiropractor counters are reset to 0
+    // and exist for this event even if they were never created yet.
+    $counterStatKeys = [
+        'clientsServed',
+        'volunteersServed',
+        'chiropractorClientsServed',
+        'chiropractorVolunteersServed'
+    ];
+
+    $counterUpdate = $mysqli->prepare(
+        "UPDATE tblAnalytics
+         SET StatValue = 0,
+             LastUpdated = NOW()
+         WHERE EventID = ? AND StatKey = ?"
+    );
+    if (!$counterUpdate) {
+        throw new RuntimeException('Failed to prepare counter reset update query: ' . $mysqli->error);
+    }
+
+    $counterInsertIfMissing = $mysqli->prepare(
+        "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
+         SELECT ?, ?, ?, 0, NOW()
+         WHERE NOT EXISTS (
+             SELECT 1
+             FROM tblAnalytics
+             WHERE EventID = ? AND StatKey = ?
+             LIMIT 1
+         )"
+    );
+    if (!$counterInsertIfMissing) {
+        $counterUpdate->close();
+        throw new RuntimeException('Failed to prepare counter insert-if-missing query: ' . $mysqli->error);
+    }
+
+    $counterKeysEnsured = [];
+    foreach ($counterStatKeys as $statKey) {
+        $counterUpdate->bind_param('ss', $eventID, $statKey);
+        if (!$counterUpdate->execute()) {
+            $err = $counterUpdate->error;
+            $counterUpdate->close();
+            $counterInsertIfMissing->close();
+            throw new RuntimeException('Failed to reset stat key ' . $statKey . ': ' . $err);
+        }
+
+        $statID = bin2hex(random_bytes(8));
+        $counterInsertIfMissing->bind_param('sssss', $statID, $eventID, $statKey, $eventID, $statKey);
+        if (!$counterInsertIfMissing->execute()) {
+            $err = $counterInsertIfMissing->error;
+            $counterUpdate->close();
+            $counterInsertIfMissing->close();
+            throw new RuntimeException('Failed to ensure stat key ' . $statKey . ': ' . $err);
+        }
+
+        $counterKeysEnsured[] = $statKey;
+    }
+
+    $counterUpdate->close();
+    $counterInsertIfMissing->close();
+
     $availabilityReset = $mysqli->prepare(
         "UPDATE tblEventServices
          SET CurrentAssigned = 0,
@@ -145,7 +204,8 @@ try {
         ],
         'reset' => [
             'analyticsRows' => $analyticsRows,
-            'eventServiceRows' => $availabilityRows
+            'eventServiceRows' => $availabilityRows,
+            'explicitCounterKeysReset' => $counterKeysEnsured
         ]
     ]);
 } catch (Throwable $e) {

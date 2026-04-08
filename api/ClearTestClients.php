@@ -61,12 +61,29 @@ $countRow = $countStmt->get_result()->fetch_assoc();
 $countStmt->close();
 
 $targetClientCount = (int)($countRow['cnt'] ?? 0);
-if ($targetClientCount === 0) {
+$pinLogCountStmt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tblPinCodeLogs WHERE DateUsed > ?');
+if (!$pinLogCountStmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Failed to prepare PIN log count query: ' . $mysqli->error]);
+    exit;
+}
+
+$pinLogCountStmt->bind_param('s', $cutoffDateTime);
+$pinLogCountStmt->execute();
+$pinLogCountRow = $pinLogCountStmt->get_result()->fetch_assoc();
+$pinLogCountStmt->close();
+
+$targetPinCodeLogCount = (int)($pinLogCountRow['cnt'] ?? 0);
+
+if ($targetClientCount === 0 && $targetPinCodeLogCount === 0) {
     echo json_encode([
         'success' => true,
-        'message' => 'No test clients matched the cutoff. No records were deleted.',
+        'message' => 'No test clients or PIN code logs matched the cutoff. No records were deleted.',
         'cutoffDateTime' => $cutoffDateTime,
+        'targetClientCount' => 0,
+        'targetPinCodeLogCount' => 0,
         'deleted' => [
+            'pinCodeLogs' => 0,
             'movementLogs' => 0,
             'visitServices' => 0,
             'visitServiceSelections' => 0,
@@ -81,6 +98,7 @@ if ($targetClientCount === 0) {
 }
 
 $deleteQueries = [
+    'pinCodeLogs' => 'DELETE FROM tblPinCodeLogs WHERE DateUsed > ?',
     'movementLogs' => "DELETE ml
                        FROM tblMovementLogs ml
                        INNER JOIN tblVisitServices vs ON ml.VisitServiceID = vs.VisitServiceID
@@ -116,6 +134,7 @@ $deleteQueries = [
 ];
 
 $deleted = [
+    'pinCodeLogs' => 0,
     'movementLogs' => 0,
     'visitServices' => 0,
     'visitServiceSelections' => 0,
@@ -154,6 +173,7 @@ try {
         'message' => 'Test client cleanup completed.',
         'cutoffDateTime' => $cutoffDateTime,
         'targetClientCount' => $targetClientCount,
+        'targetPinCodeLogCount' => $targetPinCodeLogCount,
         'deleted' => $deleted
     ]);
 } catch (Throwable $e) {
