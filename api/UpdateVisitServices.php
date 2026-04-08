@@ -43,19 +43,26 @@ if (empty($visitID) || empty($serviceID) || !in_array($action, ['add', 'remove',
 }
 
 $mysqli = $GLOBALS['mysqli'];
-$eventID = '4cbde538985861b9';
 
 // Verify visit exists
-$visitCheck = $mysqli->prepare("SELECT VisitID FROM tblVisits WHERE VisitID = ? LIMIT 1");
+$visitCheck = $mysqli->prepare("SELECT VisitID, EventID, IsAbandoned FROM tblVisits WHERE VisitID = ? LIMIT 1");
 $visitCheck->bind_param('s', $visitID);
 $visitCheck->execute();
-if (!$visitCheck->get_result()->fetch_assoc()) {
+$visitRow = $visitCheck->get_result()->fetch_assoc();
+if (!$visitRow) {
     $visitCheck->close();
     http_response_code(404);
     echo json_encode(['success' => false, 'error' => 'Visit not found.']);
     exit;
 }
 $visitCheck->close();
+
+$eventID = $visitRow['EventID'];
+if ((int)($visitRow['IsAbandoned'] ?? 0) === 1) {
+    http_response_code(409);
+    echo json_encode(['success' => false, 'error' => 'Cannot update services for an abandoned client.']);
+    exit;
+}
 
 // Verify service exists
 $svcCheck = $mysqli->prepare("SELECT ServiceID FROM tblServices WHERE ServiceID = ? LIMIT 1");
@@ -191,19 +198,42 @@ if ($action === 'add') {
         exit;
     }
 
-    // Block check-in if all seats are full for this service
+    // Block check-in if all seats are full for this service.
+    // Use live non-abandoned in-progress occupancy so stale counters do not hard-lock a lane.
     $seatCheck = $mysqli->prepare(
-        "SELECT MaxSeats, SeatsInProgress FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
+        "SELECT MaxSeats, MaxCapacity FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
     );
     if ($seatCheck) {
         $seatCheck->bind_param('ss', $eventID, $serviceID);
         $seatCheck->execute();
         $seatRow = $seatCheck->get_result()->fetch_assoc();
         $seatCheck->close();
+
         if ($seatRow) {
-            $maxSeats = (int)$seatRow['MaxSeats'];
-            $seatsInUse = (int)$seatRow['SeatsInProgress'];
-            if ($maxSeats > 0 && $seatsInUse >= $maxSeats) {
+            $seatLimit = (int)$seatRow['MaxSeats'];
+            if ($seatLimit <= 0) {
+                $seatLimit = (int)($seatRow['MaxCapacity'] ?? 0);
+            }
+
+            $activeCount = 0;
+            $activeSeatStmt = $mysqli->prepare(
+                "SELECT COUNT(*) AS ActiveSeats
+                 FROM tblVisitServices vs
+                 JOIN tblVisits v ON v.VisitID = vs.VisitID
+                 WHERE v.EventID = ?
+                   AND vs.ServiceID = ?
+                   AND vs.ServiceStatus = 'In-Progress'
+                   AND COALESCE(v.IsAbandoned, 0) = 0"
+            );
+            if ($activeSeatStmt) {
+                $activeSeatStmt->bind_param('ss', $eventID, $serviceID);
+                $activeSeatStmt->execute();
+                $activeSeatRow = $activeSeatStmt->get_result()->fetch_assoc();
+                $activeSeatStmt->close();
+                $activeCount = (int)($activeSeatRow['ActiveSeats'] ?? 0);
+            }
+
+            if ($seatLimit > 0 && $activeCount >= $seatLimit) {
                 http_response_code(409);
                 echo json_encode(['success' => false, 'error' => 'All seats are currently full for this service. Please wait for an opening.']);
                 exit;

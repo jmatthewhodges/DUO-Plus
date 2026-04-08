@@ -200,20 +200,43 @@ $LogID = uniqid('log_', true);
 
 if ($currentStatus === 'Pending' || $currentStatus === 'Standby') {
 
-    // Block check-in if all seats are full for this service
+    // Block check-in if all seats are full for this service.
+    // Use live non-abandoned in-progress occupancy so stale counters do not hard-lock a lane.
     $eventID = $visitService['EventID'];
     $seatCheck = $mysqli->prepare(
-        "SELECT MaxSeats, SeatsInProgress FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
+        "SELECT MaxSeats, MaxCapacity FROM tblEventServices WHERE EventID = ? AND ServiceID = ? LIMIT 1"
     );
     if ($seatCheck) {
         $seatCheck->bind_param('ss', $eventID, $ServiceID);
         $seatCheck->execute();
         $seatRow = $seatCheck->get_result()->fetch_assoc();
         $seatCheck->close();
+
         if ($seatRow) {
-            $maxSeats = (int)$seatRow['MaxSeats'];
-            $seatsInUse = (int)$seatRow['SeatsInProgress'];
-            if ($maxSeats > 0 && $seatsInUse >= $maxSeats) {
+            $seatLimit = (int)$seatRow['MaxSeats'];
+            if ($seatLimit <= 0) {
+                $seatLimit = (int)($seatRow['MaxCapacity'] ?? 0);
+            }
+
+            $activeCount = 0;
+            $activeSeatStmt = $mysqli->prepare(
+                "SELECT COUNT(*) AS ActiveSeats
+                 FROM tblVisitServices vs
+                 JOIN tblVisits v ON v.VisitID = vs.VisitID
+                 WHERE v.EventID = ?
+                   AND vs.ServiceID = ?
+                   AND vs.ServiceStatus = 'In-Progress'
+                   AND COALESCE(v.IsAbandoned, 0) = 0"
+            );
+            if ($activeSeatStmt) {
+                $activeSeatStmt->bind_param('ss', $eventID, $ServiceID);
+                $activeSeatStmt->execute();
+                $activeSeatRow = $activeSeatStmt->get_result()->fetch_assoc();
+                $activeSeatStmt->close();
+                $activeCount = (int)($activeSeatRow['ActiveSeats'] ?? 0);
+            }
+
+            if ($seatLimit > 0 && $activeCount >= $seatLimit) {
                 $mysqli->rollback();
                 http_response_code(409);
                 echo json_encode([
