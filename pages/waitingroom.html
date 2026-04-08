@@ -19,9 +19,15 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3">
                 <h5 class="text-white mb-0 fw-bold">Queue</h5>
-                <button class="btn btn-sm text-white border-0 p-1" id="refreshQueueBtn" title="Refresh queue">
-                    <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-light py-1 px-2" id="autoRefreshToggleBtn" title="Turn off auto refresh" aria-pressed="true">
+                        <i class="bi bi-clock-history me-1" aria-hidden="true"></i>
+                        <span id="autoRefreshToggleText">Auto: On</span>
+                    </button>
+                    <button class="btn btn-sm text-white border-0 p-1" id="refreshQueueBtn" title="Refresh queue">
+                        <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="card-body position-relative p-4">

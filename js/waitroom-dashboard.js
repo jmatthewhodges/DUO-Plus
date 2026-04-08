@@ -15,6 +15,10 @@ let currentVisitId = null;
 let nowServingClientId = null;
 let currentQueueFilter = 'all';
 let currentSearchTerm = '';
+let autoRefreshEnabled = true;
+let autoRefreshTimerId = null;
+let hasWaitingRoomInitialized = false;
+const AUTO_REFRESH_INTERVAL_MS = 60 * 1000;
 const QUEUE_FILTER_SERVICE_IDS = {
     all: [],
     dental: ['dental', 'dentalHygiene', 'dentalExtraction'],
@@ -36,6 +40,8 @@ const tableBody = document.querySelector('tbody');
 const updateModal = document.getElementById('updateStatusModal');
 const waitListCountLabel = document.getElementById('waitlist-header-count');
 const queueFilterButtons = document.querySelectorAll('.queue-filter-btn');
+const autoRefreshToggleBtn = document.getElementById('autoRefreshToggleBtn');
+const autoRefreshToggleText = document.getElementById('autoRefreshToggleText');
 
 // Grab the single element for Now Serving
 const nowServingNameEl = document.querySelector('.queue-name');
@@ -166,6 +172,42 @@ function getServiceStatusLabel(status) {
         case 'Standby': return { text: 'Standby', class: 'bg-warning text-dark' };
         default: return { text: 'Not Added', class: 'bg-light text-muted' };
     }
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshTimerId) {
+        clearInterval(autoRefreshTimerId);
+        autoRefreshTimerId = null;
+    }
+}
+
+function startAutoRefresh() {
+    stopAutoRefresh();
+    if (!autoRefreshEnabled) return;
+
+    autoRefreshTimerId = setInterval(() => {
+        fetchQueueData();
+    }, AUTO_REFRESH_INTERVAL_MS);
+}
+
+function updateAutoRefreshToggleUI() {
+    if (!autoRefreshToggleBtn) return;
+
+    autoRefreshToggleBtn.setAttribute('aria-pressed', autoRefreshEnabled ? 'true' : 'false');
+    autoRefreshToggleBtn.setAttribute('title', autoRefreshEnabled ? 'Turn off auto refresh' : 'Turn on auto refresh');
+    autoRefreshToggleBtn.classList.toggle('btn-outline-light', autoRefreshEnabled);
+    autoRefreshToggleBtn.classList.toggle('btn-light', !autoRefreshEnabled);
+    autoRefreshToggleBtn.classList.toggle('text-primary', !autoRefreshEnabled);
+
+    if (autoRefreshToggleText) {
+        autoRefreshToggleText.textContent = autoRefreshEnabled ? 'Auto: On' : 'Auto: Off';
+    }
+}
+
+function setAutoRefreshEnabled(enabled) {
+    autoRefreshEnabled = enabled;
+    updateAutoRefreshToggleUI();
+    startAutoRefresh();
 }
 
 async function skipNowServingClient(clientId) {
@@ -610,11 +652,28 @@ document.getElementById('skipNowServingBtn').addEventListener('click', function 
 // 6. INITIALIZATION
 
 function init() {
+    if (hasWaitingRoomInitialized) return;
+    hasWaitingRoomInitialized = true;
+
     loadQueueFilterIcons();
     fetchQueueData();
+    updateAutoRefreshToggleUI();
+    startAutoRefresh();
+
+    if (autoRefreshToggleBtn) {
+        autoRefreshToggleBtn.addEventListener('click', () => {
+            setAutoRefreshEnabled(!autoRefreshEnabled);
+        });
+    }
 
     const refreshBtn = document.getElementById('refreshQueueBtn');
-    if (refreshBtn) refreshBtn.addEventListener('click', () => spinRefreshBtn(refreshBtn, fetchQueueData()));
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            const refreshPromise = fetchQueueData();
+            if (autoRefreshEnabled) startAutoRefresh();
+            return spinRefreshBtn(refreshBtn, refreshPromise);
+        });
+    }
 }
 
 // Wait for PIN verification before loading any data
