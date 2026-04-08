@@ -1400,17 +1400,19 @@ function buildAvailabilityRow(label, data) {
     if (maxCapacity > 0) {
         if (percentage > 100)      barClass = 'bg-danger';
         else if (percentage <= 50) barClass = 'bg-success';
-        else if (percentage < 80)  barClass = 'bg-warning';
+        else if (percentage < 80)  barClass = 'bg-standby';
         else                       barClass = 'bg-danger';
     }
 
     let countStyle = 'background-color:#e9ecef;color:#495057;';
-    if (currentAssigned > maxCapacity) countStyle = 'background-color:#fd7e14;color:#fff;';
+    if (currentAssigned > maxCapacity) countStyle = 'background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;';
 
     let standbyHTML = '';
     if (standbyCount > 0) {
-        const standbyColor = (standbyLimit > 0 && standbyCount >= standbyLimit) ? '#dc3545' : '#fd7e14';
-        standbyHTML = `<span class="badge fw-bold ms-1" style="font-size:0.7rem;background-color:${standbyColor};color:#fff;">${standbyCount} standby</span>`;
+        const standbyStyle = (standbyLimit > 0 && standbyCount >= standbyLimit)
+            ? 'background-color:#dc3545;color:#fff;border:1px solid #dc3545;'
+            : 'background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;';
+        standbyHTML = `<span class="badge fw-bold ms-1" style="font-size:0.7rem;${standbyStyle}">${standbyCount} standby</span>`;
     }
 
     const div = document.createElement('div');

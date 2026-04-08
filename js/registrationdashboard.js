@@ -119,7 +119,7 @@ function buildServiceProgressBars() {
                 </div>
                 <div class="d-flex align-items-center gap-1">
                     <span class="badge fw-bold service-count" style="font-size: 0.8rem; background-color: #e9ecef; color: #495057 !important;">0/0</span>
-                    <span class="badge standby-badge fw-bold d-none" style="font-size: 0.7rem; background-color: #fd7e14; color: #fff !important;">0 standby</span>
+                    <span class="badge standby-badge fw-bold d-none" style="font-size: 0.7rem; background-color: #FFF3CD; color: #7A5A00 !important; border: 1px solid #FFDA6A;">0 standby</span>
                 </div>
             </div>
             <div class="progress" style="height: 6px; border-radius: 3px;">
@@ -393,13 +393,15 @@ function updateServiceProgressBars(servicesData) {
         // Update display text — show actual assigned / max capacity
         if (countSpan) {
             countSpan.textContent = `${currentAssigned}/${maxCapacity}`;
-            // If over capacity, tint the count badge orange
+            // If over capacity, tint the count badge with the standby palette
             if (currentAssigned > maxCapacity) {
-                countSpan.style.backgroundColor = '#fd7e14';
-                countSpan.style.color = '#fff';
+                countSpan.style.backgroundColor = '#FFF3CD';
+                countSpan.style.color = '#7A5A00';
+                countSpan.style.border = '1px solid #FFDA6A';
             } else {
                 countSpan.style.backgroundColor = '#e9ecef';
                 countSpan.style.color = '#495057';
+                countSpan.style.border = 'none';
             }
         }
 
@@ -411,8 +413,12 @@ function updateServiceProgressBars(servicesData) {
                 // Red tint when standby limit is exceeded
                 if (standbyLimit > 0 && standbyCount >= standbyLimit) {
                     standbyBadge.style.backgroundColor = '#dc3545';
+                    standbyBadge.style.color = '#fff';
+                    standbyBadge.style.borderColor = '#dc3545';
                 } else {
-                    standbyBadge.style.backgroundColor = '#fd7e14';
+                    standbyBadge.style.backgroundColor = '#FFF3CD';
+                    standbyBadge.style.color = '#7A5A00';
+                    standbyBadge.style.borderColor = '#FFDA6A';
                 }
             } else {
                 standbyBadge.classList.add('d-none');
@@ -424,7 +430,7 @@ function updateServiceProgressBars(servicesData) {
             progressBar.style.width = Math.min(percentage, 100) + '%';
 
             // Remove all color classes
-            progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            progressBar.classList.remove('bg-success', 'bg-standby', 'bg-danger');
 
             // Add color based on percentage
             if (percentage > 100) {
@@ -432,7 +438,7 @@ function updateServiceProgressBars(servicesData) {
             } else if (percentage <= 50) {
                 progressBar.classList.add('bg-success');   // Green: under 50%
             } else if (percentage < 80) {
-                progressBar.classList.add('bg-warning');   // Yellow: 50-80%
+                progressBar.classList.add('bg-standby');   // Standby tone: 50-80%
             } else {
                 progressBar.classList.add('bg-danger');    // Red: 80%+
             }

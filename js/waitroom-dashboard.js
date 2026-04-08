@@ -276,7 +276,7 @@ function getServiceStatusLabel(status) {
         case 'Pending': return { text: 'Pending', class: 'bg-light text-dark' };
         case 'In-Progress': return { text: 'In Progress', class: 'bg-info text-white' };
         case 'Complete': return { text: 'Complete', class: 'bg-success text-white' };
-        case 'Standby': return { text: 'Standby', class: 'bg-warning text-dark' };
+        case 'Standby': return { text: 'Standby', class: 'bg-standby' };
         default: return { text: 'Not Added', class: 'bg-light text-muted' };
     }
 }
@@ -350,7 +350,7 @@ async function skipNowServingClient(clientId) {
 
 async function abandonClient(clientId) {
     const result = await Swal.fire({
-        title: 'NUCLEAR ACTION',
+        title: 'WARNING',
         html: `
             <div class="text-start">
                 <p class="mb-2 fw-bold text-danger">

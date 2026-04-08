@@ -294,7 +294,7 @@ function renderServiceRow(svc, isChild) {
                 <i class="bi bi-check-lg"></i>
             </button>
             ${hasEvent ? `
-            <button class="btn btn-sm ${svc.IsClosed == 1 ? 'btn-outline-success' : 'btn-outline-warning'} btn-toggle-service" 
+            <button class="btn btn-sm ${svc.IsClosed == 1 ? 'btn-outline-success' : 'btn-outline-standby'} btn-toggle-service" 
                 title="${svc.IsClosed == 1 ? 'Open service' : 'Close service'}">
                 <i class="bi ${svc.IsClosed == 1 ? 'bi-play-fill' : 'bi-pause-fill'}"></i>
             </button>
@@ -623,7 +623,7 @@ function renderFastTrackSection() {
                     value="${limit}" min="0" max="50" inputmode="numeric" style="max-width: 100px;">
             </div>
             <div>
-                <span class="badge status-badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-warning text-dark' : 'bg-success'}">
+                <span class="badge status-badge ${used >= parseInt(limit) && parseInt(limit) > 0 ? 'bg-standby' : 'bg-success'}">
                     ${used}/${limit} used
                 </span>
             </div>

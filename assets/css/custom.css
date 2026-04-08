@@ -1483,6 +1483,30 @@ body.no-scroll .card-body[style*="overflow-y"] {
     white-space: nowrap;
 }
 
+.bg-standby {
+    background-color: #FFF3CD !important;
+    color: #7A5A00 !important;
+    border-color: #FFDA6A !important;
+}
+
+.progress-bar.bg-standby {
+    background-color: #FFDA6A !important;
+}
+
+.btn-outline-standby {
+    color: #7A5A00;
+    background-color: #FFF3CD;
+    border-color: #FFDA6A;
+}
+
+.btn-outline-standby:hover,
+.btn-outline-standby:focus,
+.btn-outline-standby:active {
+    color: #7A5A00;
+    background-color: #FFE69C;
+    border-color: #FFDA6A;
+}
+
 .waitlist-modal-status-badge {
     display: inline-flex;
     align-items: center;
@@ -1749,13 +1773,13 @@ body.no-scroll .card-body[style*="overflow-y"] {
 }
 
 .now-serving-seat-service.is-full .now-serving-seat-dot {
-    background-color: #F79009;
-    border-color: #F79009;
+    background-color: #FFDA6A;
+    border-color: #FFDA6A;
 }
 
 .now-serving-seat-service.is-full .now-serving-seat-service-name,
 .now-serving-seat-service.is-full .now-serving-seat-service-count {
-    color: #8A5526;
+    color: #7A5A00;
 }
 
 .now-serving-seat-service.is-closed .now-serving-seat-dot {
