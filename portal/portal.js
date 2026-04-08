@@ -326,6 +326,20 @@ const API_METHODS = [
             cutoffDate: '2026-04-01'
         }
     },
+    {
+        id: 'ResetEventCounts',
+        name: 'Reset Event Counts',
+        category: 'Testing',
+        method: 'POST',
+        endpoint: '/api/ResetEventCounts.php',
+        description: 'Reset analytics stats and availability counts to 0 for one selected event.',
+        params: [
+            { name: 'EventID', type: 'select', required: true, default: '', description: 'Select the event to reset.', options: [] }
+        ],
+        testData: {
+            EventID: ''
+        }
+    },
 
 ];
 
@@ -501,6 +515,10 @@ const API_METHODS = [
             fillForm(method, getTestData(method));
         }
 
+        if (method.id === 'ResetEventCounts') {
+            hydrateResetEventDropdown();
+        }
+
 
         // Mode toggle listeners
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -625,6 +643,43 @@ const API_METHODS = [
                 ${param.description ? `<div class="param-description">${param.description}</div>` : ''}
                 ${inputHTML}
             </div>`;
+    }
+
+    async function hydrateResetEventDropdown() {
+        const selectEl = document.getElementById('param_EventID');
+        if (!selectEl) return;
+
+        selectEl.innerHTML = '<option value="">Loading events...</option>';
+        selectEl.disabled = true;
+
+        try {
+            const res = await fetch(getFullURL('/api/ResetEventCounts.php'));
+            const data = await res.json();
+
+            if (!res.ok || !data.success || !Array.isArray(data.events)) {
+                throw new Error(data.message || 'Failed to load events list.');
+            }
+
+            const options = data.events.map(ev => {
+                const label = ev.label || `${ev.EventDate || 'No Date'} - ${ev.LocationName || ev.EventID}`;
+                return `<option value="${escapeHTML(String(ev.EventID))}">${escapeHTML(label)}</option>`;
+            });
+
+            selectEl.innerHTML = options.length > 0
+                ? options.join('')
+                : '<option value="">No events found</option>';
+
+            // Prefer active event as default when present.
+            const activeEvent = data.events.find(ev => Number(ev.IsActive) === 1);
+            if (activeEvent) {
+                selectEl.value = activeEvent.EventID;
+            }
+        } catch (err) {
+            console.error('Failed to hydrate EventID dropdown:', err);
+            selectEl.innerHTML = '<option value="">Failed to load events</option>';
+        } finally {
+            selectEl.disabled = false;
+        }
     }
 
     // ─── Send Request ─────────────────────────────────────────────────────
