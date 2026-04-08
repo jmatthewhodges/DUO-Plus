@@ -307,6 +307,9 @@ const resizePlugins = () => {
 -----------------------------------------------------------------------*/
 const loaderInit = () => {
   const loader = document.querySelector('.loader')
+  if (!loader) {
+    return
+  }
   setTimeout(() => {
     loader.classList.add('animate__animated', 'animate__fadeOut')
     setTimeout(() => {

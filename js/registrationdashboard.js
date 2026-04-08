@@ -3,9 +3,9 @@
  * File:           registrationdashboard.js
  * Description:    Handles managing the registration dashboard.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  Feb 28 @ 12:12 PM
- * Changes Made:      Removed automatic refresh
+ * Last Modified By:  Lauren
+ * Last Modified On:  April 3rd @ 2:15 PM
+ * Changes Made:      Added volunteer printing functionality tweaks based on Burchfield feedback.
  * ============================================================
 */
 
@@ -177,12 +177,36 @@ function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
+let selectedPasswordUser = null;
+let passwordSearchDebounceTimer = null;
 
 // Search elements
 const searchInput = document.getElementById('registrationSearch');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
 const noSearchResults = document.getElementById('noSearchResults');
 const noSearchTerm = document.getElementById('noSearchTerm');
+
+// Password reset modal elements
+const btnResetPassword = document.getElementById('btn-reset-password');
+const changePasswordModal = document.getElementById('changePasswordModal');
+const closeChangePasswordModalBtn = document.getElementById('closeChangePasswordModalBtn');
+const passwordSearchSection = document.getElementById('passwordSearchSection');
+const passwordResetSection = document.getElementById('passwordResetSection');
+const userPasswordSearch = document.getElementById('userPasswordSearch');
+const clearUserPasswordSearchBtn = document.getElementById('clearUserPasswordSearchBtn');
+const passwordUserTableBody = document.getElementById('passwordUserTableBody');
+const selectedPasswordUserName = document.getElementById('selectedPasswordUserName');
+const selectedPasswordUserDob = document.getElementById('selectedPasswordUserDob');
+const selectedPasswordUserEmail = document.getElementById('selectedPasswordUserEmail');
+const newUserPassword = document.getElementById('newUserPassword');
+const toggleNewUserPasswordBtn = document.getElementById('toggleNewUserPasswordBtn');
+const newUserPasswordIcon = document.getElementById('newUserPasswordIcon');
+const confirmUserPassword = document.getElementById('confirmUserPassword');
+const toggleConfirmUserPasswordBtn = document.getElementById('toggleConfirmUserPasswordBtn');
+const confirmUserPasswordIcon = document.getElementById('confirmUserPasswordIcon');
+const backToUserSearchBtn = document.getElementById('backToUserSearchBtn');
+const saveUserPasswordBtn = document.getElementById('saveUserPasswordBtn');
+const PASSWORD_PATTERN = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])\S{8,}$/;
 
 //================================================================================
 // 2. DOM REFERENCES
@@ -215,11 +239,83 @@ btnCheckedIn.addEventListener('click', () => {
     fetchRegistrationQueue(); // Re-fetch for checked-in queue
 });
 
+if (btnResetPassword) {
+    btnResetPassword.addEventListener('click', () => {
+        openChangePasswordModal();
+    });
+}
+
 //formats "YYYY-MM-DD" to "MM/DD/YYYY", returns "N/A" if input is empty or null
 function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function setFieldInvalidState(field, isInvalid) {
+    if (!field) return;
+    field.classList.toggle('is-invalid', isInvalid);
+}
+
+function validatePasswordFieldsLive(requireBoth = false) {
+    const password = newUserPassword ? newUserPassword.value : '';
+    const confirm = confirmUserPassword ? confirmUserPassword.value : '';
+
+    const hasPassword = password.length > 0;
+    const hasConfirm = confirm.length > 0;
+    const invalidFormat = hasPassword && !PASSWORD_PATTERN.test(password);
+    const mismatch = hasPassword && hasConfirm && password !== confirm;
+
+    const passwordInvalid =
+        (requireBoth && !hasPassword) ||
+        invalidFormat ||
+        mismatch;
+
+    const confirmInvalid =
+        (requireBoth && !hasConfirm) ||
+        mismatch;
+
+    setFieldInvalidState(newUserPassword, passwordInvalid);
+    setFieldInvalidState(confirmUserPassword, confirmInvalid);
+
+    return { hasPassword, hasConfirm, invalidFormat, mismatch };
+}
+
+// Function to show passwords in reset modal when toggled
+function resetNewPasswordVisibility() {
+    if (newUserPassword) {
+        newUserPassword.type = 'password';
+    }
+    if (newUserPasswordIcon) {
+        newUserPasswordIcon.classList.remove('bi-eye-slash');
+        newUserPasswordIcon.classList.add('bi-eye');
+    }
+    if (toggleNewUserPasswordBtn) {
+        toggleNewUserPasswordBtn.setAttribute('title', 'Show password');
+        toggleNewUserPasswordBtn.setAttribute('aria-label', 'Show password');
+    }
+
+    if (confirmUserPassword) {
+        confirmUserPassword.type = 'password';
+    }
+    if (confirmUserPasswordIcon) {
+        confirmUserPasswordIcon.classList.remove('bi-eye-slash');
+        confirmUserPasswordIcon.classList.add('bi-eye');
+    }
+    if (toggleConfirmUserPasswordBtn) {
+        toggleConfirmUserPasswordBtn.setAttribute('title', 'Show password');
+        toggleConfirmUserPasswordBtn.setAttribute('aria-label', 'Show password');
+    }
 }
 
 // Fetch only service stats and update progress bars (lightweight call after check-in)
@@ -404,7 +500,6 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
 }
 
 // Filters the visible table rows based on the current search query.
-// Rows whose name contains the query (case-insensitive) are shown; others are hidden.
 // Shows a "no results" message when nothing matches.
 function applySearch() {
     const query = searchInput.value.trim().toLowerCase();
@@ -443,7 +538,366 @@ clearSearchBtn.addEventListener('click', () => {
 });
 
 //================================================================================
-// 4. DATA FETCHING & TABLE RENDERING
+// 4. PASSWORD RESET FUNCTIONALITY
+// Resets the state of the change password modal to its initial state, clearing any selected user and input fields.
+function resetChangePasswordModalState() {
+    selectedPasswordUser = null;
+    passwordSearchSection.classList.remove('d-none');
+    passwordResetSection.classList.add('d-none');
+    selectedPasswordUserName.innerText = '-';
+    selectedPasswordUserDob.innerText = 'DOB: -';
+    selectedPasswordUserEmail.innerText = 'Email: -';
+    newUserPassword.value = '';
+    confirmUserPassword.value = '';
+    resetNewPasswordVisibility();
+    setFieldInvalidState(newUserPassword, false);
+    setFieldInvalidState(confirmUserPassword, false);
+}
+
+// Placeholder for searching clients to reset password 
+const PASSWORD_SEARCH_PLACEHOLDER = '<tr><td colspan="4" class="text-center text-muted p-3">Type a name or email to search clients.</td></tr>';
+
+// Opens the change password modal and resets its state to the initial view.
+function openChangePasswordModal() {
+    resetChangePasswordModalState();
+    userPasswordSearch.value = '';
+    clearUserPasswordSearchBtn.style.display = 'none';
+    passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
+    changePasswordModal.classList.remove('d-none');
+    changePasswordModal.classList.add('d-flex');
+}
+
+// Closes the change password modal and resets its state.
+function closeChangePasswordModal() {
+    changePasswordModal.classList.add('d-none');
+    changePasswordModal.classList.remove('d-flex');
+}
+
+// Renders the list of users in the password reset search results table. 
+function renderPasswordUsers(users) {
+    if (!Array.isArray(users) || users.length === 0) {
+        passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No clients found.</td></tr>';
+        return;
+    }
+
+    // For each user, create a table row with their name, DOB, email, and a select button. 
+    passwordUserTableBody.innerHTML = users.map(user => {
+        const middleInitial = user.MiddleInitial ? ` ${escapeHtml(user.MiddleInitial)}.` : '';
+        const fullName = `${escapeHtml(user.FirstName)}${middleInitial} ${escapeHtml(user.LastName)}`;
+        const dob = formatDOB(user.DOB);
+        const emailRaw = user.Email || '';
+        const emailDisplay = emailRaw
+            ? escapeHtml(emailRaw)
+            : '<span class="text-muted fst-italic">No account</span>';
+        return `
+            <tr class="select-password-user-row" style="cursor: pointer;"
+                data-client-id="${escapeHtml(user.ClientID)}"
+                data-name="${fullName}"
+                data-dob="${escapeHtml(dob)}"
+                data-email="${escapeHtml(emailRaw)}">
+                <td class="fw-semibold text-dark">${fullName}</td>
+                <td class="text-secondary">${dob}</td>
+                <td class="text-secondary">${emailDisplay}</td>
+                <td>
+                    <button type="button" class="btn btn-sm bg-primary text-white select-password-user-btn"
+                        data-client-id="${escapeHtml(user.ClientID)}"
+                        data-name="${fullName}"
+                        data-dob="${escapeHtml(dob)}"
+                        data-email="${escapeHtml(emailRaw)}">
+                        Select
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// When a user is selected from the search results, this function populates the password reset section with their info and shows it.
+function selectPasswordUserFromElement(sourceEl) {
+    if (!sourceEl) return;
+
+    selectedPasswordUser = {
+        clientID: sourceEl.getAttribute('data-client-id'),
+        name: sourceEl.getAttribute('data-name'),
+        dob: sourceEl.getAttribute('data-dob'),
+        email: sourceEl.getAttribute('data-email')
+    };
+
+    selectedPasswordUserName.innerText = selectedPasswordUser.name;
+    selectedPasswordUserDob.innerText = `DOB: ${selectedPasswordUser.dob}`;
+    selectedPasswordUserEmail.innerText = `Email: ${selectedPasswordUser.email}`;
+    newUserPassword.value = '';
+    confirmUserPassword.value = '';
+    resetNewPasswordVisibility();
+    setFieldInvalidState(newUserPassword, false);
+    setFieldInvalidState(confirmUserPassword, false);
+
+    passwordSearchSection.classList.add('d-none');
+    passwordResetSection.classList.remove('d-none');
+}
+
+// Fetches users from the API based on the search query and renders them in the table.
+function fetchPasswordUsers(query) {
+    passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Loading users...</td></tr>';
+
+    fetch('../api/registration-dashboard.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'searchUsers',
+            query: query || ''
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Search Failed',
+                    text: data.message || 'Unable to search users.',
+                    confirmButtonColor: '#174593'
+                });
+                return;
+            }
+
+            renderPasswordUsers(data.data || []);
+        })
+        .catch(error => {
+            console.error('Error searching users:', error);
+            passwordUserTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">No users found.</td></tr>';
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'Unable to connect to the server. Please try again.',
+                confirmButtonColor: '#174593'
+            });
+        });
+}
+
+// closes the change password modal when the close button is clicked or when clicking outside the modal area
+if (closeChangePasswordModalBtn) {
+    closeChangePasswordModalBtn.addEventListener('click', () => {
+        closeChangePasswordModal();
+    });
+}
+
+// Allow clicking outside the modal content to close the change password modal
+if (changePasswordModal) {
+    changePasswordModal.addEventListener('click', (event) => {
+        if (event.target === changePasswordModal) {
+            closeChangePasswordModal();
+        }
+    });
+}
+
+// a timeout to limit how often we send search requests as the user types in the password reset search field
+if (userPasswordSearch) {
+    userPasswordSearch.addEventListener('input', () => {
+        const query = userPasswordSearch.value.trim();
+        clearUserPasswordSearchBtn.style.display = query ? '' : 'none';
+
+        if (passwordSearchDebounceTimer) {
+            clearTimeout(passwordSearchDebounceTimer);
+        }
+
+        if (!query) {
+            passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
+            return;
+        }
+
+        passwordSearchDebounceTimer = setTimeout(() => {
+            fetchPasswordUsers(query);
+        }, 300);
+    });
+}
+
+// resets search field when clear btn is clicked
+if (clearUserPasswordSearchBtn) {
+    clearUserPasswordSearchBtn.addEventListener('click', () => {
+        userPasswordSearch.value = '';
+        clearUserPasswordSearchBtn.style.display = 'none';
+        passwordUserTableBody.innerHTML = PASSWORD_SEARCH_PLACEHOLDER;
+        userPasswordSearch.focus();
+    });
+}
+
+// validates password fields in real-time as the user types, providing immediate feedback on validity and matching status.
+if (newUserPassword) {
+    newUserPassword.addEventListener('input', () => {
+        validatePasswordFieldsLive(false);
+    });
+}
+
+// Functions to toggle password visibility for new password and confirm password fields, updating the input type and icon accordingly.
+if (toggleNewUserPasswordBtn && newUserPassword) {
+    toggleNewUserPasswordBtn.addEventListener('click', () => {
+        const isPassword = newUserPassword.type === 'password';
+        newUserPassword.type = isPassword ? 'text' : 'password';
+
+        if (newUserPasswordIcon) {
+            newUserPasswordIcon.classList.toggle('bi-eye', !isPassword);
+            newUserPasswordIcon.classList.toggle('bi-eye-slash', isPassword);
+        }
+
+        toggleNewUserPasswordBtn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        toggleNewUserPasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+}
+
+// Toggle for confirm password visibility
+if (toggleConfirmUserPasswordBtn && confirmUserPassword) {
+    toggleConfirmUserPasswordBtn.addEventListener('click', () => {
+        const isPassword = confirmUserPassword.type === 'password';
+        confirmUserPassword.type = isPassword ? 'text' : 'password';
+
+        if (confirmUserPasswordIcon) {
+            confirmUserPasswordIcon.classList.toggle('bi-eye', !isPassword);
+            confirmUserPasswordIcon.classList.toggle('bi-eye-slash', isPassword);
+        }
+
+        toggleConfirmUserPasswordBtn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        toggleConfirmUserPasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+}
+
+// Validates password fields in real-time as the user types, providing immediate feedback on validity and matching status.
+if (confirmUserPassword) {
+    confirmUserPassword.addEventListener('input', () => {
+        validatePasswordFieldsLive(false);
+    });
+}
+
+// allowing user to click on clients row
+if (passwordUserTableBody) {
+    passwordUserTableBody.addEventListener('click', (event) => {
+        const selectBtn = event.target.closest('.select-password-user-btn');
+        if (selectBtn) {
+            selectPasswordUserFromElement(selectBtn);
+            return;
+        }
+
+        const selectRow = event.target.closest('.select-password-user-row');
+        if (selectRow) {
+            selectPasswordUserFromElement(selectRow);
+        }
+    });
+}
+
+// Allows user to return to client search bar after getting into password reset
+if (backToUserSearchBtn) {
+    backToUserSearchBtn.addEventListener('click', () => {
+        passwordResetSection.classList.add('d-none');
+        passwordSearchSection.classList.remove('d-none');
+    });
+}
+
+// Error handling for multiple errors
+if (saveUserPasswordBtn) {
+    // Error for when no user is selected
+    saveUserPasswordBtn.addEventListener('click', function () {
+        if (!selectedPasswordUser || !selectedPasswordUser.clientID) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No User Selected',
+                text: 'Please select a user before resetting password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        const password = newUserPassword.value;
+        const validation = validatePasswordFieldsLive(true);
+
+        // Check for missing fields
+        if (!validation.hasPassword || !validation.hasConfirm) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Password',
+                text: 'Please enter and confirm the new password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        // If the password and confirm password fields do not match, show an error message
+        if (validation.mismatch) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Passwords Do Not Match',
+                text: 'The new password and confirmation must match.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        // If the password does not meet the required format, show an error message
+        if (validation.invalidFormat) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Password',
+                text: 'Please enter a valid password.',
+                confirmButtonColor: '#174593'
+            });
+            return;
+        }
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+
+        // Send the password reset request to the API
+        fetch('../api/registration-dashboard.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'resetUserPassword',
+                clientID: selectedPasswordUser.clientID,
+                password
+            })
+        })
+            //swal fire pop ups based on response from API
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Reset Failed',
+                        text: data.message || 'Unable to reset password.',
+                        confirmButtonColor: '#174593'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Password Updated',
+                    text: 'The user password has been reset successfully.',
+                    confirmButtonColor: '#174593'
+                });
+
+                closeChangePasswordModal();
+            })
+            // swal fire error if there was a error witht he API request
+            .catch(error => {
+                console.error('Error resetting password:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'Unable to connect to the server. Please try again.',
+                    confirmButtonColor: '#174593'
+                });
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+    });
+}
+
+//================================================================================
+// 5. DATA FETCHING & TABLE RENDERING
 
 // Fetches the registration queue data from the API and populates the table. Also updates the stats in the header.
 function fetchRegistrationQueue() {
@@ -718,7 +1172,7 @@ function handleReprintQR(e) {
 }
 
 //================================================================================
-// 5. TABLE EVENT LISTENERS (Service Toggles & Check-In)
+// 6. TABLE EVENT LISTENERS (Service Toggles & Check-In)
 
 // Using event delegation to handle clicks on service buttons and check-in buttons within the table body
 tableBody.addEventListener('click', function (event) {
@@ -809,7 +1263,7 @@ tableBody.addEventListener('click', function (event) {
 });
 
 //================================================================================
-// 6. CHECK-IN MODAL SUBMISSION
+// 7. CHECK-IN MODAL SUBMISSION
 
 // When the "Finalize Check-In" button is clicked, gather the selected services and interpreter need, send the data to the API, 
 // and show the QR code modal with the generated QR code and service icons. Also handles loading state and error messages.
@@ -1115,7 +1569,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
 });
 
 //================================================================================
-// 7. PRINT QR CODE
+// 8. PRINT QR CODE
 
 // When the "Print QR Code" button is clicked, apply print-specific styles to ensure only the QR code card is printed, then trigger the print dialog.
 document.getElementById('printQrBtn').addEventListener('click', function () {
@@ -1216,8 +1670,173 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
     fetchRegistrationQueue();
 });
 
+
+
 //================================================================================
-// 8. INITIALIZATION
+// 8. PRINT VOLUNTEER BADGE
+
+// When the "Print Volunteer Badge" button is clicked, prompt for a volunteer name, apply print-specific styles so only the volunteer label is printed, then trigger print dialog.
+
+// Sweet Alert Popups
+document.getElementById('printVolunteerBadgeBtn').addEventListener('click', async function () {
+    let trimmedName = '';
+    while (true) {
+        const result = await Swal.fire({
+            title: 'Print Volunteer Badge',
+            input: 'text',
+            inputLabel: 'Volunteer name',
+            inputPlaceholder: 'Enter first and last name',
+            inputAttributes: {
+                maxlength: '16',
+                'aria-label': 'Volunteer name input (max 16 characters)'
+            },
+            footer: '<span aria-live="polite">Max limit of 16 characters</span>',
+            showCancelButton: true,
+            confirmButtonText: 'Prepare Badge',
+            confirmButtonColor: '#174593',
+            cancelButtonText: 'Cancel'
+        });
+
+        // Swap between input prompt and error messages until we get a valid name
+
+        if (!result.isConfirmed) return;
+
+        trimmedName = (result.value || '').trim();
+        if (!trimmedName) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Name Required',
+                text: 'Please enter a volunteer name.',
+                confirmButtonColor: '#174593'
+            });
+            continue;
+        }
+        break;
+    }
+
+    // Changes font size depending on length of name.
+
+    const getVolunteerNameFontSize = (name) => {
+        const length = (name || '').trim().length;
+        if (length <= 8)  return 48;
+        if (length <= 11) return 42;
+        if (length <= 14) return 36;
+        return 30;
+    };
+
+    // Fits name on the label.
+
+    const labelName = document.getElementById('volunteerLabelName');
+    if (!labelName) return;
+    labelName.textContent = trimmedName;
+    labelName.style.fontSize = `${getVolunteerNameFontSize(trimmedName)}px`;
+
+    const style = document.createElement('style');
+    style.textContent = `
+            @media print {
+                @page {
+                    /* DYMO LabelWriter 450 - 30857 Badge label */
+                    size: 4in 2.125in;
+                    margin: 0;
+                }
+
+                /* LOCK the document height so hidden dashboard content doesn't create blank pages */
+                html, body {
+                    width: 4in !important;
+                    height: 2.125in !important;
+                    min-height: 2.125in !important;
+                    max-height: 2.125in !important;
+                    overflow: hidden !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: white !important;
+                }
+
+                body > *:not(#volunteerPrintLabel) {
+                    display: none !important;
+                }
+
+                #volunteerPrintLabel, #volunteerPrintLabel * {
+                    visibility: visible;
+                }
+
+                #volunteerPrintLabel {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 4in !important;
+                    height: 2.125in !important;
+                    padding: 0.12in !important;
+                    display: block !important;
+                    margin: 0 !important;
+                    box-sizing: border-box !important;
+                    font-family: Arial, Helvetica, sans-serif !important;
+                    background: white !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-shell {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    display: flex !important;
+                    align-items: flex-start !important;
+                    justify-content: flex-start !important;
+                    position: relative !important;
+                    padding: 0.12in 0.16in !important;
+                    gap: 0.12in !important;
+                    box-sizing: border-box !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-content {
+                    min-width: 0 !important;
+                    flex: 1 1 auto !important;
+                    padding-top: 0.18in !important;
+                    padding-right: 1.1in !important;
+                }
+
+                #volunteerPrintLabel .volunteer-name {
+                    color: #111 !important;
+                    line-height: 1 !important;
+                    font-weight: 800 !important;
+                    white-space: nowrap !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    width: 100% !important;
+                }
+
+                #volunteerPrintLabel .volunteer-role {
+                    margin-top: 0.08in !important;
+                    color: #333 !important;
+                    font-size: 22px !important;
+                    font-weight: 700 !important;
+                    letter-spacing: 0.02em !important;
+                    text-transform: uppercase !important;
+                }
+
+                #volunteerPrintLabel .volunteer-label-logo {
+                    width: 1.0in !important;
+                    height: auto !important;
+                    object-fit: contain !important;
+                    flex: 0 0 auto !important;
+                    position: absolute !important;
+                    bottom: 0.06in !important;
+                    right: 0.06in !important;
+                    clip-path: inset(0 14% 0 0) !important;
+                }
+            }
+    `;
+    document.head.appendChild(style);
+
+    window.print();
+
+    setTimeout(() => {
+        document.head.removeChild(style);
+    }, 100);
+});
+
+//================================================================================
+// 9. INITIALIZATION
 (async () => {
     await loadServiceHierarchyForDashboard();
     buildServiceProgressBars();
