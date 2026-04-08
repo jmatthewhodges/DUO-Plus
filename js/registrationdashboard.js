@@ -177,6 +177,9 @@ function buildQrIconSlots(container, selectedServiceIDs, iconLookup) {
 let currentRowToUpdate = null;
 let currentClientName = "";
 let currentClientId = null;
+let checkInModalMode = 'registration';
+let originalCheckedInServices = [];
+let originalTranslatorNeeded = false;
 let selectedPasswordUser = null;
 let passwordSearchDebounceTimer = null;
 
@@ -251,6 +254,18 @@ function formatDOB(dateString) {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
+}
+
+function normalizeServiceIds(serviceIds) {
+    return [...new Set((serviceIds || []).map(id => String(id).trim()).filter(Boolean))].sort();
+}
+
+function areServiceSelectionsEqual(first, second) {
+    if (first.length !== second.length) return false;
+    for (let i = 0; i < first.length; i++) {
+        if (first[i] !== second[i]) return false;
+    }
+    return true;
 }
 
 function escapeHtml(value) {
@@ -473,6 +488,73 @@ function closeQrModal() {
     const qrModal = document.getElementById('qrCodeModal');
     qrModal.classList.add('d-none');
     qrModal.classList.remove('d-flex');
+}
+
+async function showQrBadgeModal(services, isInterpreterNeeded, isFastTracked = false) {
+    const qrModal = document.getElementById('qrCodeModal');
+    const printBtn = document.getElementById('printQrBtn');
+    printBtn.disabled = true;
+    qrModal.classList.remove('d-none');
+    qrModal.classList.add('d-flex');
+
+    const nameParts = currentClientName.split(' ');
+    const firstName = nameParts[0].toUpperCase();
+    const lastName = nameParts.slice(1).join(' ');
+
+    const firstNameEl = document.getElementById('qrCardFirstName');
+    const lastNameEl = document.getElementById('qrCardLastName');
+
+    function scaledName(name, maxSize, minSize) {
+        const len = name.length;
+        if (len <= 6) return { text: name, size: maxSize };
+        if (len <= 8) return { text: name, size: maxSize * 0.85 };
+        if (len <= 10) return { text: name, size: maxSize * 0.70 };
+        if (len <= 12) return { text: name, size: maxSize * 0.58 };
+        if (len <= 14) return { text: name, size: maxSize * 0.50 };
+        if (len <= 18) return { text: name, size: maxSize * 0.42 };
+        return { text: name, size: minSize };
+    }
+
+    const first = scaledName(firstName, 2.5, 1.1);
+    const last = scaledName(lastName, 1.5, 0.8);
+
+    firstNameEl.innerText = first.text;
+    firstNameEl.style.fontSize = first.size + 'rem';
+
+    lastNameEl.innerText = last.text;
+    lastNameEl.style.fontSize = last.size + 'rem';
+
+    new QRious({
+        element: document.getElementById('qr'),
+        value: currentClientId,
+        size: 200,
+    });
+
+    const iconLookup = {};
+    serviceCategories.forEach(cat => {
+        iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
+        if (cat.children) {
+            cat.children.forEach(child => {
+                iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
+            });
+        }
+    });
+
+    const qrIconsContainer = document.getElementById('qrCardIcons');
+    buildQrIconSlots(qrIconsContainer, services, iconLookup);
+
+    await loadServiceHierarchyForDashboard();
+
+    document.getElementById('qrCardTranslator').style.display = isInterpreterNeeded ? 'block' : 'none';
+
+    const ftBadge = document.getElementById('qrCardFastTrack');
+    if (ftBadge) {
+        ftBadge.style.display = isFastTracked ? 'block' : 'none';
+    }
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => { printBtn.disabled = false; });
+    });
 }
 
 // Creates the HTML for a service button based on the service type, current state, and availability. 
@@ -1057,6 +1139,7 @@ function populateCheckedInTable(patientsData) {
         if (patient.MiddleInitial) {
             fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
         }
+        const inProgressServicesEncoded = encodeURIComponent(JSON.stringify(patient.inProgressServices || []));
 
         // Determine which parent categories are active for this client
         const activeCategoryIDs = new Set();
@@ -1081,6 +1164,8 @@ function populateCheckedInTable(patientsData) {
             data-first-name="${patient.FirstName}"
             data-last-name="${patient.LastName}"
             data-services='${JSON.stringify(patient.services || [])}'
+            data-has-in-progress="${patient.hasInProgress ? 1 : 0}"
+            data-in-progress-services="${inProgressServicesEncoded}"
             data-translator="${patient.TranslatorNeeded || 0}">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3">
@@ -1123,9 +1208,29 @@ function populateCheckedInTable(patientsData) {
 // adjust services, pick sub-services, set translator, and re-check-in.
 function handleReprintQR(e) {
     const row = e.target.closest('tr');
+    const hasInProgress = row.dataset.hasInProgress === '1';
+    let inProgressServices = [];
+    try {
+        inProgressServices = JSON.parse(decodeURIComponent(row.dataset.inProgressServices || '[]'));
+    } catch (_) {
+        inProgressServices = [];
+    }
+
+    if (hasInProgress) {
+        const serviceText = inProgressServices.length > 0 ? inProgressServices.join(', ') : 'an active service';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Client Is Currently In Service',
+            html: `This client is currently in progress at <strong>${escapeHtml(serviceText)}</strong>.<br><br>To avoid queue mistakes, reprint and service edits are disabled until that service is completed.`,
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
     currentRowToUpdate = row;
     currentClientId = row.dataset.clientId;
     currentClientName = row.querySelector('.fw-bold.text-dark').innerText;
+    checkInModalMode = 'reprint';
 
     // --- Build sub-service sections dynamically (same as registration check-in) ---
     const subSvcContainer = document.getElementById('modalSubServiceSections');
@@ -1139,6 +1244,8 @@ function handleReprintQR(e) {
     // Parse existing operational service IDs so we can pre-select radio buttons
     let existingServices = [];
     try { existingServices = JSON.parse(row.dataset.services || '[]'); } catch (_) {}
+    originalCheckedInServices = normalizeServiceIds(existingServices);
+    originalTranslatorNeeded = row.dataset.translator === '1';
     const existingSet = new Set(existingServices);
 
     serviceCategories.forEach(cat => {
@@ -1220,6 +1327,9 @@ tableBody.addEventListener('click', function (event) {
         currentRowToUpdate = checkInBtn.closest('tr');
         currentClientName = currentRowToUpdate.querySelector('.fw-bold.text-dark').innerText;
         currentClientId = currentRowToUpdate.getAttribute('data-client-id');
+        checkInModalMode = 'registration';
+        originalCheckedInServices = [];
+        originalTranslatorNeeded = false;
 
         // --- Build sub-service sections dynamically ---
         const subSvcContainer = document.getElementById('modalSubServiceSections');
@@ -1320,6 +1430,44 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
         } else {
             // Standalone category (no children) — use category ID directly
             services.push(cat.ServiceID);
+        }
+    }
+
+    if (services.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No Services Selected',
+            text: 'Please keep at least one service selected before continuing.',
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
+    const isReprintFlow = checkInModalMode === 'reprint';
+    const selectedNormalized = normalizeServiceIds(services);
+    const originalNormalized = normalizeServiceIds(originalCheckedInServices);
+    const hasServiceChanges = !areServiceSelectionsEqual(selectedNormalized, originalNormalized);
+    const hasTranslatorChange = isInterpreterNeeded !== originalTranslatorNeeded;
+
+    if (isReprintFlow && !hasServiceChanges && !hasTranslatorChange) {
+        closeModalAnimated();
+        await showQrBadgeModal(services, isInterpreterNeeded, false);
+        return;
+    }
+
+    if (isReprintFlow && (hasServiceChanges || hasTranslatorChange)) {
+        const reprintChangeConfirm = await Swal.fire({
+            icon: 'warning',
+            title: 'Update Services And Reprint?',
+            html: 'This will update the client\'s active check-in services and print a new badge.<br><br>If they are currently being served, this action will be blocked.',
+            showCancelButton: true,
+            confirmButtonText: 'Update and Reprint',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#174593'
+        });
+
+        if (!reprintChangeConfirm.isConfirmed) {
+            return;
         }
     }
 
@@ -1474,95 +1622,16 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
 
                 // Refresh service progress bars with latest counts
                 refreshServiceStats();
-
-                // Show QR modal (print disabled until fully rendered)
-                const qrModal = document.getElementById('qrCodeModal');
-                const printBtn = document.getElementById('printQrBtn');
-                printBtn.disabled = true;
-                qrModal.classList.remove('d-none');
-                qrModal.classList.add('d-flex');
-
-                // Split name and convert First Name to ALL CAPS
-                const nameParts = currentClientName.split(' ');
-                const firstName = nameParts[0].toUpperCase();
-                const lastName = nameParts.slice(1).join(' ');
-
-                // Get the name elements
-                const firstNameEl = document.getElementById('qrCardFirstName');
-                const lastNameEl = document.getElementById('qrCardLastName');
-
-                // Scale font size down based on character length; never truncate.
-                // Long names wrap naturally at the minimum size.
-                function scaledName(name, maxSize, minSize) {
-                    const len = name.length;
-                    if (len <= 6)  return { text: name, size: maxSize };
-                    if (len <= 8)  return { text: name, size: maxSize * 0.85 };
-                    if (len <= 10) return { text: name, size: maxSize * 0.70 };
-                    if (len <= 12) return { text: name, size: maxSize * 0.58 };
-                    if (len <= 14) return { text: name, size: maxSize * 0.50 };
-                    if (len <= 18) return { text: name, size: maxSize * 0.42 };
-                    return { text: name, size: minSize };
-                }
-
-                const first = scaledName(firstName, 2.5, 1.1);
-                const last = scaledName(lastName, 1.5, 0.8);
-
-                firstNameEl.innerText = first.text;
-                firstNameEl.style.fontSize = first.size + 'rem';
-
-                lastNameEl.innerText = last.text;
-                lastNameEl.style.fontSize = last.size + 'rem';
-
-                // Generate QR Code (QRious library)
-                new QRious({
-                    element: document.getElementById('qr'),
-                    value: currentClientId,
-                    size: 200,
-                });
-
-                // Build QR card icons BEFORE re-fetching hierarchy, so closed
-                // children (e.g. medicalExam at capacity) are still in the lookup.
-                const iconLookup = {};
-                serviceCategories.forEach(cat => {
-                    iconLookup[cat.ServiceID] = cat.IconTag || 'bi-circle';
-                    if (cat.children) {
-                        cat.children.forEach(child => {
-                            iconLookup[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
-                        });
-                    }
-                });
-
-                const qrIconsContainer = document.getElementById('qrCardIcons');
-                buildQrIconSlots(qrIconsContainer, services, iconLookup);
-
-                // Re-fetch service hierarchy to pick up any icon/capacity changes
-                await loadServiceHierarchyForDashboard();
-                document.getElementById('qrCardTranslator').style.display = 'none';
-
-                // Translator badge: show the icon pinned to top-right of the name area
-                if (isInterpreterNeeded) {
-                    document.getElementById('qrCardTranslator').style.display = 'block';
-                }
-
-                // Fast Track badge: show if API flagged this client as fast-tracked
-                const ftBadge = document.getElementById('qrCardFastTrack');
-                console.log('[FastTrack] data.isFastTracked =', data.isFastTracked, '| badge element =', ftBadge);
-                if (ftBadge) {
-                    ftBadge.style.display = data.isFastTracked ? 'block' : 'none';
-                }
-
-                // Allow a frame for the browser to paint, then enable print
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => { printBtn.disabled = false; });
-                });
+                await showQrBadgeModal(services, isInterpreterNeeded, !!data.isFastTracked);
 
             } else {
                 // Check-in failed logic
                 closeQrModal();
                 console.error('Check-in failed:', data.message);
+                const blockedByInProgress = /currently being served|cannot be checked in again/i.test(data.message || '');
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Check-In Failed',
+                    icon: blockedByInProgress ? 'warning' : 'error',
+                    title: blockedByInProgress ? 'Client Is Currently In Service' : 'Check-In Failed',
                     text: data.message || 'Unable to process this patient.',
                     confirmButtonColor: '#174593'
                 });

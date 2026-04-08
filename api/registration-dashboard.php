@@ -238,10 +238,27 @@ if ($queue === 'CheckedIn') {
             c.LastName, 
             c.DOB, 
             c.TranslatorNeeded,
-            GROUP_CONCAT(vs.ServiceID) AS ServiceSelections
+            GROUP_CONCAT(
+                DISTINCT CASE
+                    WHEN vs.ServiceStatus IN ('Pending', 'Standby', 'In-Progress') THEN vs.ServiceID
+                    ELSE NULL
+                END
+                ORDER BY vs.ServiceID
+                SEPARATOR ','
+            ) AS ServiceSelections,
+            MAX(CASE WHEN vs.ServiceStatus = 'In-Progress' THEN 1 ELSE 0 END) AS HasInProgress,
+            GROUP_CONCAT(
+                DISTINCT CASE
+                    WHEN vs.ServiceStatus = 'In-Progress' THEN COALESCE(ts.ServiceName, vs.ServiceID)
+                    ELSE NULL
+                END
+                ORDER BY vs.ServiceID
+                SEPARATOR '|'
+            ) AS InProgressServices
         FROM tblClients c
         LEFT JOIN tblVisits v ON c.ClientID = v.ClientID
         LEFT JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
+        LEFT JOIN tblServices ts ON ts.ServiceID = vs.ServiceID
         WHERE v.RegistrationStatus = ? AND v.EventID = ?
         GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
     );
@@ -291,7 +308,13 @@ $clientDataStmt->close();
 // Convert ServiceSelections to array
 foreach ($rows as &$row) {
     $row['services'] = $row['ServiceSelections'] ? explode(',', $row['ServiceSelections']) : [];
+    $row['hasInProgress'] = !empty($row['HasInProgress']) ? 1 : 0;
+    $row['inProgressServices'] = !empty($row['InProgressServices'])
+        ? array_values(array_filter(explode('|', $row['InProgressServices'])))
+        : [];
     unset($row['ServiceSelections']);
+    unset($row['HasInProgress']);
+    unset($row['InProgressServices']);
 }
 unset($row); 
 
