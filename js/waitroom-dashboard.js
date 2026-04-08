@@ -260,7 +260,7 @@ async function abandonClient(clientId) {
         `,
         icon: 'error',
         showCancelButton: true,
-        confirmButtonText: 'NUCLEAR: Abandon Client',
+        confirmButtonText: 'Yes, Abandon Client',
         confirmButtonColor: '#dc3545',
         cancelButtonText: 'Go Back',
         allowOutsideClick: false,
