@@ -105,10 +105,14 @@ function setButtonLoading(btn, isLoading, textKey, fallback) {
 // EN = MM/DD/YYYY, ES = DD/MM/YYYY
 function createDobMask(lang) {
     const dobInput = document.getElementById('txtForgetDOB');
+    if (!dobInput) return;
     const isSpanish = (lang === 'es');
 
-    // Preserve current value before destroying
-    const currentValue = dobMask ? dobMask.value : '';
+    // Preserve current parsed date when possible so format can safely switch.
+    const currentTypedDate = (dobMask && dobMask.typedValue instanceof Date && !isNaN(dobMask.typedValue))
+        ? new Date(dobMask.typedValue.getTime())
+        : null;
+    const currentValue = dobMask ? dobMask.value : dobInput.value;
     if (dobMask) dobMask.destroy();
 
     dobMask = IMask(dobInput, {
@@ -141,9 +145,13 @@ function createDobMask(lang) {
         autofix: true,
     });
 
-    dobInput.placeholder = isSpanish ? 'DD/MM/AAAA' : 'MM/DD/YYYY';
+    const placeholder = isSpanish ? 'DD/MM/AAAA' : 'MM/DD/YYYY';
+    dobInput.placeholder = placeholder;
+    dobInput.setAttribute('placeholder', placeholder);
 
-    if (currentValue) {
+    if (currentTypedDate) {
+        dobMask.typedValue = currentTypedDate;
+    } else if (currentValue) {
         try { dobMask.value = currentValue; } catch (e) { dobMask.value = ''; }
     }
 }
@@ -367,6 +375,15 @@ document.addEventListener('DOMContentLoaded', () => {
         verifySection: document.getElementById('verifySection'),
         resetSection: document.getElementById('resetSection')
     };
+
+    const languageSelect = document.getElementById('selLanguageSwitch');
+    if (languageSelect) {
+        languageSelect.addEventListener('change', function () {
+            createDobMask(this.value || 'en');
+            resetVerificationState();
+            updateIdentityFieldMarkers();
+        });
+    }
 
     // Identity markers
     elements.emailInput.addEventListener('blur', updateIdentityFieldMarkers);
