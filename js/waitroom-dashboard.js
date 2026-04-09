@@ -507,6 +507,11 @@ function populateWaitListTable(patients) {
             return String(a.ServiceName || '').localeCompare(String(b.ServiceName || ''));
         });
         const hasInProgressService = orderedVisitServices.some(vs => vs.ServiceStatus === 'In-Progress');
+        const hasFastTrackedService = orderedVisitServices.some(vs => {
+            const isFastTracked = Number(vs.IsFastTracked || 0) === 1;
+            const isActive = ['Pending', 'Standby', 'In-Progress'].includes(vs.ServiceStatus);
+            return isFastTracked && isActive;
+        });
         const rowStatusClass = isAbandoned
             ? 'waitlist-row-abandoned'
             : (allDone
@@ -516,6 +521,9 @@ function populateWaitListTable(patients) {
                     : (hasInProgressService ? 'waitlist-row-has-station' : 'waitlist-row-waiting')));
         const nameStateBadge = isAbandoned
             ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
+            : '';
+        const fastTrackNameBadge = hasFastTrackedService
+            ? '<span class="waitlist-fast-track-badge">Fast Track</span>'
             : '';
         const serviceListItems = orderedVisitServices.map(vs => {
             const isCurrentStation = vs.ServiceStatus === 'In-Progress';
@@ -590,6 +598,7 @@ function populateWaitListTable(patients) {
                             <div class="d-flex align-items-center flex-wrap gap-1" style="min-width: 0;">
                                 <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
                                 ${nameStateBadge}
+                                ${fastTrackNameBadge}
                                 ${nowServingNameBadge}
                             </div>
                             ${serviceListHTML}

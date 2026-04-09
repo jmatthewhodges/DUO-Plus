@@ -1493,6 +1493,20 @@ body.no-scroll .card-body[style*="overflow-y"] {
     white-space: nowrap;
 }
 
+.waitlist-fast-track-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.04rem 0.4rem;
+    font-size: 0.62rem;
+    line-height: 1.12;
+    font-weight: 700;
+    color: #1849A9;
+    background-color: #EAF2FF;
+    border: 1px solid #B2CCFF;
+    white-space: nowrap;
+}
+
 .bg-standby {
     background-color: #FFF3CD !important;
     color: #7A5A00 !important;
