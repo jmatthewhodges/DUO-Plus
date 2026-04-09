@@ -188,7 +188,11 @@ function renderNowServingSeatStats(services) {
                         <span class="waitlist-service-dot now-serving-seat-dot" aria-hidden="true"></span>
                         <span class="now-serving-seat-service-name">${escapeHtml(service.ServiceName)}</span>
                     </span>
-                    <span class="now-serving-seat-service-count">${current}/${max}</span>
+                    <span class="now-serving-seat-service-count">
+                        <span class="now-serving-seat-service-used">${current}</span>
+                        <span class="now-serving-seat-count-slash" aria-hidden="true">/</span>
+                        <span class="now-serving-seat-service-total">${max}</span>
+                    </span>
                 </div>
             `;
         }).join('');
@@ -203,9 +207,17 @@ function renderNowServingSeatStats(services) {
         `;
     }).join('');
 
+    const renderedGroups = groupMarkup || '<div class="now-serving-seat-empty">No active seats to display.</div>';
+
     nowServingSeatStatsEl.innerHTML = `
         <div class="now-serving-seat-header">Seats In Use</div>
-        <div class="now-serving-seat-groups">${groupMarkup}</div>
+        <div class="now-serving-seat-shell">
+            <div class="now-serving-seat-table-head">
+                <span class="now-serving-seat-col now-serving-seat-col-service">Service</span>
+                <span class="now-serving-seat-col now-serving-seat-col-count">Used / Total</span>
+            </div>
+            <div class="now-serving-seat-groups">${renderedGroups}</div>
+        </div>
     `;
 }
 
