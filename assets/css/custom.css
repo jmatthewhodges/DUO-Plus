@@ -640,16 +640,18 @@ body.v-center-page {
     .waitlist-table .badge { font-size: 0.6rem !important; }
 }
 
-/* Hide scrollbar while keeping functionality */
-.custom-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.custom-scroll {
+/* Hide scrollbars everywhere by default */
+* {
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;
     /* Firefox */
+}
+
+*::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* Waitlist tables: show a slim, styled scrollbar for easier position awareness */
