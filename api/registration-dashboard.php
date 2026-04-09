@@ -238,6 +238,7 @@ if ($queue === 'CheckedIn') {
             c.LastName, 
             c.DOB, 
             c.TranslatorNeeded,
+            COALESCE(v.IsAbandoned, 0) AS IsAbandoned,
             GROUP_CONCAT(
                 DISTINCT CASE
                     WHEN vs.ServiceStatus IN ('Pending', 'Standby', 'In-Progress', 'Complete') THEN vs.ServiceID
@@ -260,7 +261,7 @@ if ($queue === 'CheckedIn') {
         LEFT JOIN tblVisitServices vs ON vs.VisitID = v.VisitID
         LEFT JOIN tblServices ts ON ts.ServiceID = vs.ServiceID
         WHERE v.RegistrationStatus = ? AND v.EventID = ?
-        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded"
+        GROUP BY c.ClientID, c.FirstName, c.MiddleInitial, c.LastName, c.DOB, c.TranslatorNeeded, v.IsAbandoned"
     );
 } else {
     $clientDataStmt = $mysqli->prepare(

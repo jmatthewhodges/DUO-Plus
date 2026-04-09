@@ -559,10 +559,11 @@ async function showQrBadgeModal(services, isInterpreterNeeded, isFastTracked = f
 
 // Creates the HTML for a service button based on the service type, current state, and availability. 
 //State can be 1 (selected), 0 (not selected), or -1 (locked/unavailable).
-function buildServiceButton(serviceType, state, iconClass, serviceKey) {
+function buildServiceButton(serviceType, state, iconClass, serviceKey, forceDisabled = false) {
     let colorClass = '';
     let iconColor = '';
     let disabledAttr = '';
+    let lockedClass = '';
     const isAvailable = serviceAvailability[serviceKey];
     state = parseInt(state);
 
@@ -579,8 +580,13 @@ function buildServiceButton(serviceType, state, iconClass, serviceKey) {
         disabledAttr = 'disabled';
     }
 
+    if (forceDisabled) {
+        disabledAttr = 'disabled';
+        lockedClass = ' locked-btn';
+    }
+
     return `
-        <button class="btn ${colorClass} btn-sm rounded-2 service-btn" 
+        <button class="btn ${colorClass}${lockedClass} btn-sm rounded-2 service-btn" 
                 data-state="${state}" ${disabledAttr} title="${serviceType}" 
                 style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
             ${renderIcon(iconClass, iconColor)}
@@ -1139,6 +1145,7 @@ function populateCheckedInTable(patientsData) {
         if (patient.MiddleInitial) {
             fullName = `${patient.FirstName} ${patient.MiddleInitial}. ${patient.LastName}`;
         }
+        const isAbandoned = Number(patient.IsAbandoned || 0) === 1;
         const inProgressServicesEncoded = encodeURIComponent(JSON.stringify(patient.inProgressServices || []));
 
         // Determine which parent categories are active for this client
@@ -1152,27 +1159,46 @@ function populateCheckedInTable(patientsData) {
         let serviceButtonsHTML = '';
         serviceCategories.forEach(cat => {
             const state = activeCategoryIDs.has(cat.ServiceID) ? 1 : 0;
-            serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
+            serviceButtonsHTML += buildServiceButton(
+                cat.ServiceName,
+                state,
+                cat.IconTag || 'bi-circle',
+                cat.ServiceID,
+                isAbandoned
+            );
         });
 
         const translatorBadge = patient.TranslatorNeeded == 1
             ? '<i class="bi bi-chat-dots text-muted ms-2" title="Needs translator" style="font-size: 1rem;"></i>'
             : '';
+        const abandonedBadge = isAbandoned
+            ? '<span class="badge rounded-pill text-bg-danger">Abandoned</span>'
+            : '';
+        const reprintDisabledAttr = isAbandoned ? 'disabled' : '';
+        const reprintBtnClass = isAbandoned ? 'btn btn-sm btn-outline-secondary btn-reprint-qr' : 'btn btn-sm btn-outline-primary btn-reprint-qr';
+        const reprintTitle = isAbandoned
+            ? 'Abandoned clients cannot be reprinted or checked in again.'
+            : 'Reprint QR Badge';
+        const rowClass = isAbandoned ? 'align-middle registration-row-abandoned' : 'align-middle';
 
         const rowHTML = `
-        <tr class="align-middle" data-client-id="${patient.ClientID}"
+        <tr class="${rowClass}" data-client-id="${patient.ClientID}"
             data-first-name="${patient.FirstName}"
             data-last-name="${patient.LastName}"
             data-services='${JSON.stringify(patient.services || [])}'
             data-has-in-progress="${patient.hasInProgress ? 1 : 0}"
             data-in-progress-services="${inProgressServicesEncoded}"
+            data-is-abandoned="${isAbandoned ? 1 : 0}"
             data-translator="${patient.TranslatorNeeded || 0}">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
                         <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
                     </div>
-                    <span class="fw-bold text-dark">${fullName}${translatorBadge}</span>
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="fw-bold text-dark">${fullName}${translatorBadge}</span>
+                        ${abandonedBadge}
+                    </div>
                 </div>
             </td>
             <td class="fw-medium text-secondary">${formatDOB(patient.DOB)}</td>
@@ -1182,7 +1208,7 @@ function populateCheckedInTable(patientsData) {
                         ${serviceButtonsHTML}
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary btn-reprint-qr" title="Reprint QR Badge">
+                        <button class="${reprintBtnClass}" title="${reprintTitle}" ${reprintDisabledAttr}>
                             <i class="bi bi-printer"></i>
                         </button>
                     </div>
@@ -1208,6 +1234,18 @@ function populateCheckedInTable(patientsData) {
 // adjust services, pick sub-services, set translator, and re-check-in.
 function handleReprintQR(e) {
     const row = e.target.closest('tr');
+    if (!row) return;
+
+    if (row.dataset.isAbandoned === '1') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Client Is Abandoned',
+            text: 'Abandoned clients cannot have services changed or be checked in again.',
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
     const hasInProgress = row.dataset.hasInProgress === '1';
     let inProgressServices = [];
     try {
@@ -1302,6 +1340,10 @@ tableBody.addEventListener('click', function (event) {
 
     const serviceBtn = event.target.closest('.service-btn');
     if (serviceBtn) {
+        const row = serviceBtn.closest('tr');
+        if (row && row.dataset.isAbandoned === '1') {
+            return;
+        }
         if (serviceBtn.hasAttribute('disabled') || serviceBtn.classList.contains('locked-btn')) return;
 
         // Toggle service state between 1 (selected) and 0 (not selected)
@@ -1399,6 +1441,17 @@ document.getElementById('cancelCheckInBtn').addEventListener('click', () => {
 
 document.getElementById('finalizeCheckInBtn').addEventListener('click', async function () {
     const btn = this;
+
+    if (currentRowToUpdate && currentRowToUpdate.dataset.isAbandoned === '1') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Client Is Abandoned',
+            text: 'Abandoned clients cannot have services changed or be checked in again.',
+            confirmButtonColor: '#174593'
+        });
+        return;
+    }
+
     const isInterpreterNeeded = document.getElementById('translatorCheck').checked;
 
     // Build services array dynamically from category buttons and sub-service selections

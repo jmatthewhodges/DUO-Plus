@@ -491,6 +491,16 @@ body.v-center-page {
     box-shadow: 0 4px 8px rgba(236, 192, 192, 0.15);
 }
 
+.registration-row-abandoned .service-btn,
+.registration-row-abandoned .btn-reprint-qr {
+    opacity: 0.62;
+}
+
+.registration-row-abandoned .service-btn:disabled,
+.registration-row-abandoned .btn-reprint-qr:disabled {
+    cursor: not-allowed;
+}
+
 /* ==========================================
    WAITING ROOM & GENERAL SCROLLING
    ========================================== */

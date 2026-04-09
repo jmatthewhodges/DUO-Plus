@@ -88,25 +88,9 @@ if (!$eventRow || empty($eventRow['EventID'])) {
 
 $eventID = $eventRow['EventID'];
 
-// Update TranslatorNeeded on tblClients
-$updateClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
-if (!$updateClient) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
-    exit;
-}
-$updateClient->bind_param('is', $needsInterpreter, $clientID);
-if (!$updateClient->execute()) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $updateClient->error]);
-    $updateClient->close();
-    exit;
-}
-$updateClient->close();
-
 // Fetch the VisitID for this client + event
 $visitStmt = $mysqli->prepare(
-    "SELECT VisitID, FirstCheckedIn FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1"
+    "SELECT VisitID, FirstCheckedIn, COALESCE(IsAbandoned, 0) AS IsAbandoned FROM tblVisits WHERE ClientID = ? AND EventID = ? LIMIT 1"
 );
 
 if (!$visitStmt) {
@@ -146,9 +130,35 @@ if (!$visitRow) {
 
     $visitRow = [
         'VisitID' => $newVisitID,
-        'FirstCheckedIn' => null
+        'FirstCheckedIn' => null,
+        'IsAbandoned' => 0
     ];
 }
+
+if (!empty($visitRow['IsAbandoned'])) {
+    http_response_code(409);
+    echo json_encode([
+        'success' => false,
+        'message' => 'This client has been marked as abandoned and cannot be checked in again.'
+    ]);
+    exit;
+}
+
+// Update TranslatorNeeded on tblClients
+$updateClient = $mysqli->prepare("UPDATE tblClients SET TranslatorNeeded = ? WHERE ClientID = ?");
+if (!$updateClient) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'DB prepare error: ' . $mysqli->error]);
+    exit;
+}
+$updateClient->bind_param('is', $needsInterpreter, $clientID);
+if (!$updateClient->execute()) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Failed to update client: ' . $updateClient->error]);
+    $updateClient->close();
+    exit;
+}
+$updateClient->close();
 
 $visitID          = $visitRow['VisitID'];
 $alreadyCheckedIn = !empty($visitRow['FirstCheckedIn']); // true if they've checked in before
