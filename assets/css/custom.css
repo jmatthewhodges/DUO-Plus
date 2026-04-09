@@ -1721,8 +1721,8 @@ body.no-scroll .card-body[style*="overflow-y"] {
     border-radius: 0.65rem;
     background: #FFFFFF;
     overflow: hidden;
-    width: 94%;
-    max-width: 94%;
+    width: 100%;
+    max-width: 100%;
     margin: 0;
 }
 
