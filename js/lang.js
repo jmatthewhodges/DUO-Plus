@@ -118,6 +118,7 @@ var translations = {
 
     // Loading services
     loadingServices: "Loading services...",
+    serviceSelectionLegend: "Select the services you need",
     noServicesAvailable: "No services available.",
     failedToLoadServices: "Failed to load services.",
 
@@ -299,6 +300,7 @@ var translations = {
 
     // Loading services
     loadingServices: "Cargando servicios...",
+    serviceSelectionLegend: "Seleccione los servicios que necesita",
     noServicesAvailable: "No hay servicios disponibles.",
     failedToLoadServices: "Error al cargar los servicios.",
 

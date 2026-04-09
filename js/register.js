@@ -169,10 +169,93 @@ function createDobMask(lang) {
 
 // Stored categories from API for QR card icon rendering
 let registrationCategories = [];
+let waiverContentDefaultHtml = '';
+
+const SERVICE_TRANSLATIONS_ES_BY_ID = {
+    medical: 'Medico',
+    dental: 'Dental',
+    optical: 'Optico',
+    haircut: 'Corte de pelo',
+    exam: 'Examen',
+    followup: 'Seguimiento',
+    'follow-up': 'Seguimiento',
+    extraction: 'Extraccion',
+    hygiene: 'Higiene'
+};
+
+const SERVICE_TRANSLATIONS_ES_BY_NAME = {
+    medical: 'Medico',
+    dental: 'Dental',
+    optical: 'Optico',
+    haircut: 'Corte de pelo',
+    exam: 'Examen',
+    'follow up': 'Seguimiento',
+    'follow-up': 'Seguimiento',
+    extraction: 'Extraccion',
+    hygiene: 'Higiene'
+};
+
+const WAIVER_CONTENT_ES_HTML = `
+    <p class="mb-2 fw-bold">EXENCION DE RESPONSABILIDAD DE DUO</p>
+    <p>ACUSE DE RECIBO DEL AVISO DE PRACTICAS DE PRIVACIDAD</p>
+    <p class="fw-bold">MEDICO</p>
+    <p class="fs-6">Al aceptar abajo, reconozco que he recibido una copia del Aviso de Practicas de Privacidad.</p>
+    <p>CONSENTIMIENTO PARA TRATAMIENTO:</p>
+    <p class="fs-6">Al aceptar abajo, doy mi consentimiento voluntario para tratamiento por optometristas de Doing Unto Others (DUO), incluyendo examen de la vista y procedimientos diagnosticos y tratamientos relacionados segun el criterio profesional del optometrista. Entiendo que la optometria no es una ciencia exacta y que no se pueden garantizar resultados.</p>
+    <p>CONSENTIMIENTO PARA DIVULGAR INFORMACION GENERAL DE SALUD:</p>
+    <p class="fs-6">Al aceptar abajo, autorizo a Doing Unto Others a divulgar mi informacion medica para brindarme tratamiento y para operaciones de atencion de salud (por ejemplo, aseguramiento de calidad). Tambien autorizo la divulgacion a aseguradoras y proveedores externos cuando sea necesario para mi tratamiento y sus operaciones de salud. Ademas, autorizo a DUO a comunicarse conmigo por telefono (usando los numeros proporcionados) y a dejar informacion general de salud en mi buzon de voz de casa, celular, y con mi conyuge, hijos o familiares.</p>
+    <p class="fs-6">Doing Unto Others no cobra por ningun servicio y es un Programa de Salud Voluntaria registrado en Tennessee (Registro #41). Entiendo que los servicios optometricos de DUO son gratuitos y se brindan bajo el Programa de Servicios de Salud Voluntarios del estado de Tennessee. La atencion gratuita no necesariamente se extiende a servicios de referencia externos.</p>
+    <p class="fs-6">Autorizacion de imagen/parecido:</p>
+    <p class="fs-6">Al aceptar este consentimiento, autorizo a DUO a publicar mi imagen o parecido en formatos impresos o digitales, incluyendo presentaciones virtuales y video.</p>
+    <p class="fs-6">Al aceptar abajo, acepto todo lo anterior mientras sea paciente de la practica.</p>
+    <p class="fw-bold">DENTAL</p>
+    <p class="fs-6">Al aceptar abajo, reconozco que he recibido una copia del Aviso de Practicas de Privacidad de la practica.</p>
+    <p class="fs-6">CONSENTIMIENTO PARA TRATAMIENTO:</p>
+    <p class="fs-6">Al aceptar abajo, doy mi consentimiento voluntario para tratamiento por dentistas y otros profesionales dentales de Doing Unto Others, incluyendo cuidado dental, procedimientos diagnosticos y tratamientos relacionados segun el criterio profesional del dentista. Entiendo que la odontologia no es una ciencia exacta y que no se pueden garantizar resultados.</p>
+    <p class="fs-6">CONSENTIMIENTO PARA DIVULGAR INFORMACION GENERAL DE SALUD:</p>
+    <p class="fs-6">Al aceptar abajo, autorizo a Doing Unto Others a divulgar mi informacion medica para tratamiento y operaciones de atencion de salud (por ejemplo, aseguramiento de calidad). Tambien autorizo la divulgacion a proveedores externos cuando sea necesario para mi tratamiento y sus operaciones de salud. Ademas, autorizo comunicacion por telefono y divulgacion de informacion general de salud en buzon de voz de casa o celular, y con mi conyuge, hijos o familiares.</p>
+    <p class="fs-6">CONSENTIMIENTO PARA IMAGENES RADIOLOGICAS:</p>
+    <p class="fs-6">Al aceptar abajo, autorizo a Doing Unto Others a usar imagenes de rayos X de baja dosis para procedimientos dentales y almacenar dichas imagenes para futuras citas.</p>
+    <p class="fs-6">Doing Unto Others no cobra por ningun servicio. Entiendo que los servicios dentales de DUO son gratuitos y se brindan bajo el Programa de Servicios de Salud Voluntarios del estado de Tennessee.</p>
+    <p class="fw-bold">OPTICO</p>
+    <p class="fs-6">CONSENTIMIENTO PARA TRATAMIENTO:</p>
+    <p class="fs-6">Al aceptar abajo, doy mi consentimiento voluntario para tratamiento por optometristas de la practica, incluyendo examen de la vista y procedimientos diagnosticos y tratamientos relacionados segun el criterio profesional del optometrista. Entiendo que la optometria no es una ciencia exacta y que no se pueden garantizar resultados.</p>
+    <p class="fs-6">CONSENTIMIENTO PARA DIVULGAR INFORMACION GENERAL DE SALUD:</p>
+    <p class="fs-6">Al aceptar abajo, autorizo a la practica a divulgar mi informacion medica para tratamiento, para buscar pago de terceros cuando aplique y para operaciones de atencion de salud (por ejemplo, aseguramiento de calidad). Tambien autorizo divulgacion a aseguradoras y proveedores externos cuando sea necesario para tratamiento, pago y operaciones de salud. Ademas, autorizo comunicacion por telefono y divulgacion de informacion general de salud en buzon de voz de casa o celular, y con mi conyuge, hijos o familiares.</p>
+    <p class="fs-6">Doing Unto Others no cobra por ningun servicio. Entiendo que los servicios optometricos de DUO son gratuitos y se brindan bajo el Programa de Servicios de Salud Voluntarios del estado de Tennessee.</p>
+`;
+
+function translateServiceName(serviceName, serviceId, lang) {
+    if (lang !== 'es') return serviceName;
+
+    const normalizedId = String(serviceId || '').trim().toLowerCase();
+    if (normalizedId && SERVICE_TRANSLATIONS_ES_BY_ID[normalizedId]) {
+        return SERVICE_TRANSLATIONS_ES_BY_ID[normalizedId];
+    }
+
+    const normalizedName = String(serviceName || '').trim().toLowerCase();
+    return SERVICE_TRANSLATIONS_ES_BY_NAME[normalizedName] || serviceName;
+}
+
+function applyWaiverLanguage(lang) {
+    const waiverContent = document.getElementById('waiverContent');
+    if (!waiverContent) return;
+
+    if (!waiverContentDefaultHtml) {
+        waiverContentDefaultHtml = waiverContent.innerHTML;
+    }
+
+    waiverContent.innerHTML = (lang === 'es')
+        ? WAIVER_CONTENT_ES_HTML
+        : waiverContentDefaultHtml;
+}
 
 // Load service categories from API and render Step 5 checkboxes dynamically
 async function loadServiceCategories() {
     const grid = document.getElementById('serviceSelectionGrid');
+    const selectedServices = new Set(
+        Array.from(document.querySelectorAll('input[name="clientServices"]:checked')).map(input => input.value)
+    );
     try {
         const res = await fetch('/api/services.php?view=categories');
         const json = await res.json();
@@ -194,22 +277,27 @@ async function loadServiceCategories() {
 
         // Build a 2-column grid of checkboxes with equal-height buttons
         let items = '';
+        const currentLang = sessionStorage.getItem('lang') || 'en';
         openCategories.forEach((cat) => {
             const id = `btnService_${cat.ServiceID}`;
+            const displayName = translateServiceName(cat.ServiceName, cat.ServiceID, currentLang);
+            const checkedAttr = selectedServices.has(cat.ServiceID) ? 'checked' : '';
             items += `
                 <div class="col-6 mb-3 d-flex">
                     <input type="checkbox" class="btn-check" name="clientServices"
                         id="${id}" value="${cat.ServiceID}" autocomplete="off"
-                        aria-label="${cat.ServiceName}">
+                        ${checkedAttr}
+                        aria-label="${displayName}">
                     <label class="btn btn-outline-navy w-100 text-start p-3 service-btn-label"
                         for="${id}">
-                        ${renderIcon(cat.IconTag, 'me-2')} ${cat.ServiceName}
+                        ${renderIcon(cat.IconTag, 'me-2')} ${displayName}
                     </label>
                 </div>`;
         });
 
+        const serviceLegend = t.serviceSelectionLegend || 'Select the services you need';
         grid.innerHTML = `
-            <legend class="visually-hidden">Select the services you need</legend>
+            <legend class="visually-hidden">${serviceLegend}</legend>
             ${items}`;
     } catch (err) {
         console.error('Failed to load service categories:', err);
@@ -222,10 +310,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize DOB mask with saved language (or default to English)
     const savedLang = sessionStorage.getItem('lang') || 'en';
     createDobMask(savedLang);
+    applyWaiverLanguage(savedLang);
 
     // Re-create mask when language changes
     document.getElementById('selLanguageSwitch').addEventListener('change', function () {
-        createDobMask(this.value);
+        const nextLang = this.value;
+        createDobMask(nextLang);
+        applyWaiverLanguage(nextLang);
+        loadServiceCategories();
     });
 
     // Load service categories from API for Step 5
