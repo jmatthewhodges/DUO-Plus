@@ -124,8 +124,11 @@ function createDobMask(lang) {
     const dobInput = document.getElementById('clientDOB');
     const isSpanish = (lang === 'es');
 
-    // Preserve current value before destroying
-    const currentValue = dobMask ? dobMask.value : '';
+    // Preserve a real Date first (if complete), then raw text as fallback.
+    const currentValue = dobMask ? dobMask.value : (dobInput.value || '');
+    const previousTypedDate = (dobMask && dobMask.masked?.isComplete && dobMask.typedValue instanceof Date && !isNaN(dobMask.typedValue))
+        ? new Date(dobMask.typedValue.getTime())
+        : null;
     if (dobMask) dobMask.destroy();
 
     dobMask = IMask(dobInput, {
@@ -162,9 +165,54 @@ function createDobMask(lang) {
     dobInput.placeholder = isSpanish ? 'DD/MM/AAAA' : 'MM/DD/YYYY';
 
     // Restore value if switching language mid-form
-    if (currentValue) {
-        try { dobMask.value = currentValue; } catch (e) { /* clear if incompatible */ dobMask.value = ''; }
+    if (previousTypedDate) {
+        try {
+            dobMask.typedValue = previousTypedDate;
+        } catch (e) {
+            dobMask.value = '';
+        }
+    } else if (currentValue) {
+        try {
+            dobMask.value = currentValue;
+        } catch (e) {
+            dobMask.value = '';
+        }
     }
+}
+
+function getEnteredDobDate() {
+    const typedDate = dobMask?.typedValue;
+    if (typedDate instanceof Date && !isNaN(typedDate)) {
+        return typedDate;
+    }
+
+    const dobInput = document.getElementById('clientDOB');
+    const raw = (dobInput?.value || '').trim();
+    if (!raw.includes('/')) return null;
+
+    const parts = raw.split('/');
+    if (parts.length !== 3) return null;
+
+    const currentLang = sessionStorage.getItem('lang') || 'en';
+    let year;
+    let month;
+    let day;
+
+    if (currentLang === 'es') {
+        day = Number(parts[0]);
+        month = Number(parts[1]);
+        year = Number(parts[2]);
+    } else {
+        month = Number(parts[0]);
+        day = Number(parts[1]);
+        year = Number(parts[2]);
+    }
+
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+    const parsed = new Date(year, month - 1, day);
+    if (isNaN(parsed)) return null;
+    if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) return null;
+    return parsed;
 }
 
 // Stored categories from API for QR card icon rendering
@@ -454,21 +502,20 @@ function stepTwoSubmit() {
         errors.push(t.registerDOB);
         markInvalid(dob);
     } else {
-        const parts = dob.value.split('/');
-        const currentLang = sessionStorage.getItem('lang') || 'en';
-        let enteredDate;
-        if (currentLang === 'es') {
-            enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
-        } else {
-            enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
-        }
-        const today = new Date();
-        const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-        if (enteredDate > minAgeDate) {
-            errors.push(t.registerAge);
+        const enteredDate = getEnteredDobDate();
+        if (!enteredDate) {
+            errors.push(t.registerDOB);
             markInvalid(dob);
-        } else {
-            clearInvalid(dob);
+        }
+        if (enteredDate) {
+            const today = new Date();
+            const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            if (enteredDate > minAgeDate) {
+                errors.push(t.registerAge);
+                markInvalid(dob);
+            } else {
+                clearInvalid(dob);
+            }
         }
     }
 
@@ -843,13 +890,10 @@ document.getElementById('clientDOB').addEventListener('blur', function () {
         this.classList.remove('is-valid', 'is-invalid');
         return;
     }
-    const parts = this.value.split('/');
-    const currentLang = sessionStorage.getItem('lang') || 'en';
-    let enteredDate;
-    if (currentLang === 'es') {
-        enteredDate = new Date(parts[2], parts[1] - 1, parts[0]);
-    } else {
-        enteredDate = new Date(parts[2], parts[0] - 1, parts[1]);
+    const enteredDate = getEnteredDobDate();
+    if (!enteredDate) {
+        this.classList.remove('is-valid', 'is-invalid');
+        return;
     }
     const today = new Date();
     const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
