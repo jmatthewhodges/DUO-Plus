@@ -297,29 +297,19 @@ if ($alreadyCheckedIn) {
     $decAssigned = $mysqli->prepare(
         "UPDATE tblEventServices SET CurrentAssigned = GREATEST(CurrentAssigned - 1, 0) WHERE EventID = ? AND ServiceID = ?"
     );
-    $removeStmt = $mysqli->prepare(
-        "UPDATE tblVisitServices
-         SET ServiceStatus = 'Removed'
-         WHERE VisitServiceID = ?"
-    );
+    $deleteLogsStmt = $mysqli->prepare("DELETE FROM tblMovementLogs WHERE VisitServiceID = ?");
+    $deleteStmt = $mysqli->prepare("DELETE FROM tblVisitServices WHERE VisitServiceID = ?");
 
     foreach ($toRemove as $svcID) {
         $row = $existingByServiceID[$svcID];
         if ($row['ServiceStatus'] !== 'Pending' && $row['ServiceStatus'] !== 'Standby') continue; // don't touch In-Progress or Complete
 
-        $removeStmt->bind_param('s', $row['VisitServiceID']);
-        $removeStmt->execute();
+        // Remove dependent movement logs first (FK requires children gone before parent delete).
+        $deleteLogsStmt->bind_param('s', $row['VisitServiceID']);
+        $deleteLogsStmt->execute();
 
-        // Log removal to tblMovementLogs
-        $logID = uniqid('log_', true);
-        $logStmt = $mysqli->prepare(
-            "INSERT INTO tblMovementLogs (LogID, VisitServiceID, Action, Timestamp) VALUES (?, ?, 'ServiceRemoved', ?)"
-        );
-        if ($logStmt) {
-            $logStmt->bind_param('sss', $logID, $row['VisitServiceID'], $now);
-            $logStmt->execute();
-            $logStmt->close();
-        }
+        $deleteStmt->bind_param('s', $row['VisitServiceID']);
+        $deleteStmt->execute();
 
         if ($decAssigned) {
             $decAssigned->bind_param('ss', $eventID, $svcID);
@@ -327,7 +317,8 @@ if ($alreadyCheckedIn) {
         }
         error_log("Re-check-in: Removed service $svcID (Pending) for VisitID=$visitID");
     }
-    $removeStmt->close();
+    $deleteLogsStmt->close();
+    $deleteStmt->close();
     if ($decAssigned) $decAssigned->close();
 
     // Add newly selected services
