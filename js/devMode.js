@@ -2,8 +2,10 @@
  * ============================================================
  * File:        devMode.js
  * Description: Developer mode toggle, protected by admin PIN.
- *              Activate by clicking the DUO+ logo 5 times on
- *              the login page. State persists for the session.
+ *              Activate from the DUO+ logo on the login page.
+ *              Desktop: multi-click. Touch devices: long-press
+ *              or fewer taps for easier activation.
+ *              State persists for the session.
  *              Injects a floating toolbar with page shortcuts
  *              and reveals any .dev-only elements on the page.
  * ============================================================
@@ -178,32 +180,90 @@
 
     // Secret trigger: tap/click the DUO+ logo 5 times within 3 seconds
     function setupSecretTrigger() {
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
+        const requiredTaps = isTouchDevice ? 3 : 5;
+        const resetMs = isTouchDevice ? 4000 : 3000;
+
+        const disableLongPressSelection = (el) => {
+            if (!el) return;
+            el.style.webkitUserSelect = 'none';
+            el.style.userSelect = 'none';
+            el.style.webkitTouchCallout = 'none';
+            el.style.webkitTapHighlightColor = 'transparent';
+            el.addEventListener('selectstart', (event) => event.preventDefault());
+            el.addEventListener('dragstart', (event) => event.preventDefault());
+        };
+
         let count = 0;
         let timer = null;
+        let longPressTimer = null;
+        let longPressHandled = false;
+
+        const triggerPrompt = () => {
+            if (isDevMode()) {
+                disableDevMode();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'info', title: 'Dev Mode Off', timer: 1000, showConfirmButton: false });
+                }
+            } else {
+                promptAdminPin();
+            }
+        };
 
         function onTrigger() {
             count++;
             clearTimeout(timer);
-            timer = setTimeout(() => { count = 0; }, 3000);
-            if (count >= 5) {
+            timer = setTimeout(() => { count = 0; }, resetMs);
+            if (count >= requiredTaps) {
                 count = 0;
                 clearTimeout(timer);
-                if (isDevMode()) {
-                    disableDevMode();
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'info', title: 'Dev Mode Off', timer: 1000, showConfirmButton: false });
-                    }
-                } else {
-                    promptAdminPin();
-                }
+                triggerPrompt();
             }
         }
 
         // Attach to the logo on the login page
         const logo = document.querySelector('.logo-section img');
         if (logo) {
+            disableLongPressSelection(document.querySelector('.logo-section'));
+            disableLongPressSelection(document.getElementById('subtitle'));
+            disableLongPressSelection(logo);
+
             logo.style.cursor = 'pointer';
+            logo.style.touchAction = 'manipulation';
+            logo.style.webkitTouchCallout = 'none';
+            logo.style.webkitUserSelect = 'none';
+            logo.style.userSelect = 'none';
+            logo.draggable = false;
             logo.addEventListener('click', onTrigger);
+
+            // Touch-friendly shortcut: press and hold logo to open dev PIN quickly.
+            if (isTouchDevice) {
+                logo.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+                    longPressHandled = false;
+                    clearTimeout(longPressTimer);
+                    longPressTimer = setTimeout(() => {
+                        longPressHandled = true;
+                        count = 0;
+                        clearTimeout(timer);
+                        triggerPrompt();
+                    }, 700);
+                });
+
+                const clearLongPress = () => {
+                    clearTimeout(longPressTimer);
+                };
+
+                logo.addEventListener('pointerup', clearLongPress);
+                logo.addEventListener('pointercancel', clearLongPress);
+                logo.addEventListener('pointerleave', clearLongPress);
+
+                logo.addEventListener('contextmenu', (event) => {
+                    if (longPressHandled) {
+                        event.preventDefault();
+                    }
+                });
+            }
         }
     }
 
@@ -212,15 +272,30 @@
 
         const { value: pin } = await Swal.fire({
             title: 'Developer Mode',
-            html: '<p class="text-muted small mb-0">Enter the admin PIN to enable developer mode for this session.</p>',
-            input: 'password',
-            inputAttributes: { maxlength: '6', autocomplete: 'off', inputmode: 'numeric', placeholder: '6-digit admin PIN' },
+            html: '<p class="text-muted small mb-0">Enter the 6-digit admin PIN for this session.</p>',
+            input: 'tel',
+            inputAttributes: {
+                maxlength: '6',
+                autocomplete: 'one-time-code',
+                inputmode: 'numeric',
+                pattern: '[0-9]*',
+                placeholder: '6-digit admin PIN'
+            },
+            inputValue: '',
             showCancelButton: true,
             confirmButtonText: 'Enable',
             cancelButtonText: 'Cancel',
             confirmButtonColor: '#174593',
             allowOutsideClick: false,
             allowEscapeKey: false,
+            didOpen: () => {
+                const input = Swal.getInput();
+                if (!input) return;
+                input.addEventListener('input', () => {
+                    input.value = input.value.replace(/\D/g, '').slice(0, 6);
+                });
+                setTimeout(() => input.focus(), 50);
+            },
             preConfirm: (value) => {
                 if (!value || value.trim() === '') {
                     Swal.showValidationMessage('Please enter the PIN.');
