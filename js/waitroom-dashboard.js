@@ -18,8 +18,8 @@ let currentSearchTerm = '';
 let autoRefreshEnabled = true;
 let autoRefreshTimerId = null;
 let hasWaitingRoomInitialized = false;
-// 30 sec refresh
-const AUTO_REFRESH_INTERVAL_MS = 30 * 1000;
+// 10 sec refresh
+const AUTO_REFRESH_INTERVAL_MS = 10 * 1000;
 const QUEUE_FILTER_SERVICE_IDS = {
     all: [],
     dental: ['dental', 'dentalHygiene', 'dentalExtraction'],
