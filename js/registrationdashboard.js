@@ -1279,7 +1279,7 @@ function handleReprintQR(e) {
     subSvcContainer.innerHTML = '';
 
     const categoryDescriptions = {
-        'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
+        'medical': 'Choose Exam if this is the <strong>client\'s first time</strong>, Follow Up if <strong>they\'ve been here before</strong>.',
         'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
     };
 
@@ -1383,8 +1383,8 @@ tableBody.addEventListener('click', function (event) {
 
         // Help text shown below the label in the check-in modal for categories with sub-services
         const categoryDescriptions = {
-            'medical': 'Choose Exam if this is the patient\'s first time, Follow Up if they\'ve been here before.',
-            'dental': 'Extraction is surgical pulling of teeth, Hygiene is everything else.'
+            'medical': 'Choose <strong>Exam</strong> if this is the client\'s first time, <strong>Follow Up</strong> if they\'ve been here before.',
+            'dental': '<strong>Extraction</strong> is surgical pulling of teeth, <strong>Hygiene</strong> is everything else.'
         };
 
         serviceCategories.forEach(cat => {
@@ -1575,7 +1575,7 @@ document.getElementById('finalizeCheckInBtn').addEventListener('click', async fu
                 newSection.dataset.category = medicalCat.ServiceID;
                 newSection.innerHTML = `
                     <label class="fw-bold mb-2 text-primary">Select ${medicalCat.ServiceName} Service:</label>
-                    <p class="text-muted small mb-2">Choose Exam if this is the patient's first time, Follow Up if they've been here before.</p>
+                    <p class="text-muted small mb-2">Choose Exam if this is the <strong>client's first time</strong>, Follow Up if <strong>they've been here before</strong>.</p>
                     <div class="d-flex gap-4">${radiosHTML}</div>`;
                 subSvcContainer.insertBefore(newSection, subSvcContainer.firstChild);
             }
