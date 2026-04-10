@@ -273,7 +273,10 @@ $standbyFull = [];      // service IDs where standby limit is also exceeded
 if ($alreadyCheckedIn) {
     // Fetch existing visit services for this visit
     $existingStmt = $mysqli->prepare(
-        "SELECT VisitServiceID, ServiceID, ServiceStatus FROM tblVisitServices WHERE VisitID = ?"
+        "SELECT VisitServiceID, ServiceID, ServiceStatus
+         FROM tblVisitServices
+         WHERE VisitID = ?
+           AND ServiceStatus IN ('Pending', 'Standby', 'In-Progress', 'Complete')"
     );
     $existingStmt->bind_param('s', $visitID);
     $existingStmt->execute();
@@ -294,14 +297,18 @@ if ($alreadyCheckedIn) {
     $decAssigned = $mysqli->prepare(
         "UPDATE tblEventServices SET CurrentAssigned = GREATEST(CurrentAssigned - 1, 0) WHERE EventID = ? AND ServiceID = ?"
     );
-    $delStmt = $mysqli->prepare("DELETE FROM tblVisitServices WHERE VisitServiceID = ?");
+    $removeStmt = $mysqli->prepare(
+        "UPDATE tblVisitServices
+         SET ServiceStatus = 'Removed'
+         WHERE VisitServiceID = ?"
+    );
 
     foreach ($toRemove as $svcID) {
         $row = $existingByServiceID[$svcID];
         if ($row['ServiceStatus'] !== 'Pending' && $row['ServiceStatus'] !== 'Standby') continue; // don't touch In-Progress or Complete
 
-        $delStmt->bind_param('s', $row['VisitServiceID']);
-        $delStmt->execute();
+        $removeStmt->bind_param('s', $row['VisitServiceID']);
+        $removeStmt->execute();
 
         // Log removal to tblMovementLogs
         $logID = uniqid('log_', true);
@@ -320,7 +327,7 @@ if ($alreadyCheckedIn) {
         }
         error_log("Re-check-in: Removed service $svcID (Pending) for VisitID=$visitID");
     }
-    $delStmt->close();
+    $removeStmt->close();
     if ($decAssigned) $decAssigned->close();
 
     // Add newly selected services
