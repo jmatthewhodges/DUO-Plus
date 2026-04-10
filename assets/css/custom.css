@@ -39,6 +39,30 @@
     color: #ffffff !important;
 }
 
+/* Register-only back buttons: keep neutral on press/focus (no solid blue flash) */
+.register-back-btn.btn-outline-primary,
+.register-back-btn.btn-outline-primary:focus,
+.register-back-btn.btn-outline-primary:active,
+.register-back-btn.btn-outline-primary.active,
+.register-back-btn.btn-outline-primary:not(:disabled):not(.disabled):active {
+    background-color: #ffffff !important;
+    border-color: #174593 !important;
+    color: #174593 !important;
+    box-shadow: none !important;
+}
+
+.register-back-btn {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .register-back-btn.btn-outline-primary:hover {
+        background-color: #eef3fb !important;
+        border-color: #174593 !important;
+        color: #174593 !important;
+    }
+}
+
 @media (hover: hover) and (pointer: fine) {
     .btn-outline-primary:hover {
         background-color: #174593 !important;
