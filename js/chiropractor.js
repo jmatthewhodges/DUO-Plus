@@ -3,7 +3,7 @@
  *  File:        chiropractor.js
  *  Description: Chiropractor counter functionality.
  *
- *  Last Modified By:  GitHub Copilot
+ *  Last Modified By:  Matthew
  *  Last Modified On:  April 8, 2026
  *  Changes Made:      Created file from food truck flow for chiropractor tracking.
  * ============================================================

@@ -1819,6 +1819,26 @@ document.getElementById('closeQrBtn').addEventListener('click', () => {
 
 // When the "Print Volunteer Badge" button is clicked, prompt for a volunteer name, apply print-specific styles so only the volunteer label is printed, then trigger print dialog.
 
+async function logVolunteerBadgePrint(volunteerName) {
+    try {
+        const response = await fetch('../api/LogVolunteerBadgePrint.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ volunteerName })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Unable to log volunteer badge print.');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Volunteer badge print log failed:', error);
+        return false;
+    }
+}
+
 // Sweet Alert Popups
 document.getElementById('printVolunteerBadgeBtn').addEventListener('click', async function () {
     const toTitleCase = (value) => String(value || '')
@@ -1876,6 +1896,16 @@ document.getElementById('printVolunteerBadgeBtn').addEventListener('click', asyn
     if (!labelName) return;
     labelName.textContent = trimmedName;
     labelName.style.fontSize = `${getVolunteerNameFontSize(trimmedName)}px`;
+
+    const logSaved = await logVolunteerBadgePrint(trimmedName);
+    if (!logSaved) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Print Log Not Saved',
+            text: 'This badge will still print, but the log entry could not be saved.',
+            confirmButtonColor: '#174593'
+        });
+    }
 
     const style = document.createElement('style');
     style.textContent = `

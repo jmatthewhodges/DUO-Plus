@@ -4,7 +4,7 @@
  *  File:        chiropractor-stats.php
  *  Purpose:     Backend of chiropractor.html, handles loading and saving counters
  *
- *  Last Modified By:  GitHub Copilot
+ *  Last Modified By:  Matthew
  *  Last Modified On:  April 8, 2026
  *  Changes Made:      Created file from food truck flow for chiropractor tracking.
  * ============================================================
