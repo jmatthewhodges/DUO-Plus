@@ -1303,7 +1303,9 @@ function populateWaitlist(clientsToShow = null) {
         }
         const rowStatusClass = isAbandoned
             ? 'waitlist-row-abandoned'
-            : (currentServiceIsComplete ? 'waitlist-row-no-station' : 'waitlist-row-waiting');
+            : (currentServiceIsInProgress
+                ? 'waitlist-row-has-station'
+                : (currentServiceIsComplete ? 'waitlist-row-no-station' : 'waitlist-row-waiting'));
         const currentServiceName = (currentServiceKey && SERVICES[currentServiceKey]) ? SERVICES[currentServiceKey].name : 'this service';
         const inProgressServiceName = inProgressService
             ? String(SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || '').trim()
