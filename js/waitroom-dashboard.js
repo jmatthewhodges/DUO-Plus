@@ -646,7 +646,11 @@ tableBody.addEventListener('click', (event) => {
 
         const patient = waitListData.find(p => p.ClientID == currentClientId);
         currentVisitId = patient.VisitID;
-        document.getElementById('modalPatientName').innerText = `${patient.FirstName} ${patient.LastName}`;
+        const middleInitialRaw = String(patient.MiddleInitial || '').trim();
+        const middleInitialDisplay = middleInitialRaw
+            ? ` ${middleInitialRaw}${(middleInitialRaw.length === 1 && !middleInitialRaw.endsWith('.')) ? '.' : ''}`
+            : '';
+        document.getElementById('modalPatientName').innerText = `${patient.FirstName}${middleInitialDisplay} ${patient.LastName}`;
         const modalPatientDob = document.getElementById('modalPatientDOB');
         if (modalPatientDob) {
             modalPatientDob.innerText = `DOB: ${formatDOB(patient.DOB)}`;
