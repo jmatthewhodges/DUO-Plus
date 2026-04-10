@@ -1083,6 +1083,10 @@ function populateRegistrationTable(patientsData) {
             serviceButtonsHTML += buildServiceButton(cat.ServiceName, state, cat.IconTag || 'bi-circle', cat.ServiceID);
         });
 
+        const translatorBadge = patient.TranslatorNeeded == 1
+            ? '<i class="bi bi-chat-dots text-muted ms-2" title="Needs translator" style="font-size: 1rem;"></i>'
+            : '';
+
         const rowHTML = `
             <tr class="align-middle" data-client-id="${patient.ClientID}" data-translator="${patient.TranslatorNeeded || 0}">
                 <td class="ps-4">
@@ -1090,7 +1094,7 @@ function populateRegistrationTable(patientsData) {
                         <div class="rounded-circle border d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px;">
                             <i class="bi bi-person-circle" style="font-size: 1.5rem"></i>
                         </div>
-                        <span class="fw-bold text-dark">${fullName}</span>
+                        <span class="fw-bold text-dark">${fullName}${translatorBadge}</span>
                     </div>
                 </td>
                 <td class="fw-medium text-secondary">${formattedDOB}</td>
