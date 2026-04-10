@@ -28,17 +28,6 @@
 <body style="overflow-x: hidden;">
     <div class="container" style="padding-top: 3.5rem;">
 
-        <div id="divLanguageSwitch">
-            <select name="languageSwitch" id="selLanguageSwitch" class="d-none" aria-hidden="true">
-                <option value="en">EN</option>
-                <option value="es">ES</option>
-            </select>
-            <div class="lang-toggle" role="radiogroup" aria-label="Select language">
-                <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
-                <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
-            </div>
-        </div>
-
         <div class="row justify-content-center">
             <!-- Screen size adjustments: mobile screens (col-10), tablets/smaller laptop screens (col-10), 
             desktops/bigger screens (col-6) -->
@@ -74,7 +63,19 @@
                 </div> -->
 
                 <!-- Registration Card -->
-                <div class="card shadow-lg border-0 rounded-4">
+                <div class="card shadow-lg border-0 rounded-4 card-has-lang">
+                    <div class="card-lang-corner">
+                        <div id="divLanguageSwitch">
+                            <select name="languageSwitch" id="selLanguageSwitch" class="d-none" aria-hidden="true">
+                                <option value="en">EN</option>
+                                <option value="es">ES</option>
+                            </select>
+                            <div class="lang-toggle" role="radiogroup" aria-label="Select language">
+                                <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
+                                <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- STEP 1: Login Info -->
                     <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">

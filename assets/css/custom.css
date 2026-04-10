@@ -354,10 +354,19 @@ body.v-center-page {
 
 /* Language Toggle */
 #divLanguageSwitch {
+    position: static;
+    z-index: 1;
+}
+
+.card-has-lang {
+    position: relative;
+}
+
+.card-lang-corner {
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
-    z-index: 1050;
+    z-index: 4;
 }
 
 .lang-toggle {
@@ -393,6 +402,18 @@ body.v-center-page {
     border-radius: 999px;
     padding: 0.35rem 0.85rem;
     min-width: 72px;
+}
+
+@media (max-width: 576px) {
+    .card-lang-corner {
+        top: 0.6rem;
+        right: 0.6rem;
+    }
+
+    .lang-btn {
+        padding: 0.28rem 0.68rem;
+        font-size: 0.82rem;
+    }
 }
 
 /* ==========================================
