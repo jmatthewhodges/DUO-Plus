@@ -582,6 +582,11 @@ function populateWaitListTable(patients) {
         const finalAvatarStyle = '';
         const nameClass = isNowServing ? 'waitlist-now-serving-name' : '';
         const nowServingNameBadge = isNowServing ? '<span class="waitlist-now-serving-badge">Now serving</span>' : '';
+        const middleInitialRaw = String(patient.MiddleInitial || '').trim();
+        const middleInitialDisplay = middleInitialRaw
+            ? ` ${escapeHtml(middleInitialRaw)}${(middleInitialRaw.length === 1 && !middleInitialRaw.endsWith('.')) ? '.' : ''}`
+            : '';
+        const fullNameDisplay = `${escapeHtml(patient.FirstName)}${middleInitialDisplay} ${escapeHtml(patient.LastName)}`;
         const btnClass = (allDone || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary';
         const btnText  = allDone ? 'View' : (isAbandoned ? 'View' : 'Update');
         const rowClass = ['border-bottom', rowStatusClass, (isNowServing ? 'waitlist-now-serving-row' : '')]
@@ -596,7 +601,7 @@ function populateWaitListTable(patients) {
                         </div>
                         <div class="d-flex flex-column" style="min-width: 0; gap: 0.12rem;">
                             <div class="d-flex align-items-center flex-wrap gap-1" style="min-width: 0;">
-                                <span class="fw-bold text-dark ${nameClass}">${escapeHtml(patient.FirstName)} ${escapeHtml(patient.LastName)}</span>
+                                <span class="fw-bold text-dark ${nameClass}">${fullNameDisplay}</span>
                                 ${nameStateBadge}
                                 ${fastTrackNameBadge}
                                 ${nowServingNameBadge}

@@ -280,7 +280,11 @@ async function fetchServiceData(serviceKey) {
         // so we aggregate into one client card with full assigned services.
         SERVICE_WAITLISTS[serviceKey] = {};
         (data.waitList || []).forEach(client => {
-            const fullName = [client.FirstName, client.MiddleInitial, client.LastName]
+            const middleInitialRaw = String(client.MiddleInitial || '').trim();
+            const middleInitialDisplay = middleInitialRaw
+                ? `${middleInitialRaw}${(middleInitialRaw.length === 1 && !middleInitialRaw.endsWith('.')) ? '.' : ''}`
+                : '';
+            const fullName = [client.FirstName, middleInitialDisplay, client.LastName]
                 .filter(Boolean)
                 .join(' ');
 
