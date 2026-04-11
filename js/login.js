@@ -105,18 +105,8 @@ document.getElementById('btnClientLogin').addEventListener('click', function (e)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: t.loginWelcomeTitle,
-                    html: `${t.loginWelcomeHello}<strong>${data.data.FirstName}</strong>${t.loginWelcomeRedirect}`,
-                    timer: 1500,
-                    timerProgressBar: true,
-                    showConfirmButton: false,
-                    allowOutsideClick: false
-                }).then(() => {
-                    // Pass clientID via URL — no session storage needed
-                    window.location.href = `pages/register.html?clientID=${data.data.ClientID}`;
-                });
+                // Pass clientID via URL — no session storage needed
+                window.location.href = `pages/register.html?clientID=${data.data.ClientID}`;
             } else {
                 // Failed - clear password and show error
                 passInput.value = '';

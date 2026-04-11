@@ -1170,50 +1170,14 @@ document.getElementById('btnWaiverSubmit').addEventListener('click', function ()
                 Swal.fire({
                     icon: 'success',
                     title: t.registrationSuccessTitle,
-                    text: t.registrationSuccessText,
-                    timer: 1500,
-                    timerProgressBar: true,
-                    showConfirmButton: false,
-                    allowOutsideClick: false
+                    html: t.registrationSuccessText,
+                    showConfirmButton: true,
+                    confirmButtonText: t.registrationBackButton || 'Back to Login',
+                    confirmButtonColor: '#174593',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
                 }).then(() => {
-                    // Hide the registration card and progress bar
-                    document.getElementById('divStepOne').closest('.card').style.display = 'none';
-                    document.getElementById('wholeProgressBar').style.display = 'none';
-                    const devBar = document.querySelector('.dev-bar');
-                    if (devBar) devBar.closest('.text-center').style.display = 'none';
-
-                    // Show QR code card
-                    const qrContainer = document.getElementById('divQRCode');
-                    qrContainer.classList.remove('d-none');
-                    qrContainer.classList.add('d-flex');
-
-                    // Set name — FIRST NAME in bold uppercase, last name normal
-                    const firstName = (data.firstName || '').toUpperCase();
-                    const lastName = data.lastName || '';
-                    document.getElementById('qrCardTitle').innerHTML = `<strong>${firstName}</strong> ${lastName}`;
-
-                    // Generate QR Code from clientID
-                    new QRious({
-                        element: document.getElementById('qr'),
-                        value: data.clientID,
-                        size: 200,
-                    });
-
-                    // Build QR card icons dynamically from loaded categories
-                    const qrIconsContainer = document.getElementById('qrCardIcons');
-                    qrIconsContainer.innerHTML = '';
-                    const selectedServices = data.services || [];
-                    registrationCategories.forEach(cat => {
-                        const wrapper = document.createElement('span');
-                        wrapper.className = 'qr-icon-border';
-                        wrapper.style.fontSize = '3rem';
-                        wrapper.style.color = 'black';
-                        wrapper.style.display = 'inline-flex';
-                        wrapper.style.visibility = selectedServices.includes(cat.ServiceID) ? 'visible' : 'hidden';
-                        wrapper.setAttribute('aria-hidden', 'true');
-                        wrapper.innerHTML = renderIcon(cat.IconTag);
-                        qrIconsContainer.appendChild(wrapper);
-                    });
+                    window.location.href = '../index.html';
                 });
             } else {
                 Swal.fire({

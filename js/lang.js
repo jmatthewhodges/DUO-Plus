@@ -135,6 +135,9 @@ var translations = {
     loginWelcomeTitle: "Welcome Back!",
     loginWelcomeHello: "Hello, ",
     loginWelcomeRedirect: "! Redirecting you now...",
+    loginReadyTitle: "You are good to go",
+    loginReadyText: "Your login is complete.<br><br>Please go to the registration table for check-in assistance.<br><br>When staff is ready for you, tap Continue below.",
+    loginReadyButton: "Continue",
     loginFailedTitle: "Login Failed",
     loginFailedText: "Invalid email or password.",
     loginConnectionErrorTitle: "Connection Error",
@@ -163,7 +166,8 @@ var translations = {
 
     // Notifications
     registrationSuccessTitle: "Registration Complete!",
-    registrationSuccessText: "You have been officially registered.",
+    registrationSuccessText: "You are fully registered and good to go.<br><br>Please wait in line until you reach the registration table.<br><br>Then tell staff your name so they can check you in.",
+    registrationBackButton: "OK",
     registrationFailedTitle: "Registration Failed",
     registrationFailedText: "An error occurred. Please try again.",
     registrationConnectionErrorTitle: "Connection Error",
@@ -317,6 +321,9 @@ var translations = {
     loginWelcomeTitle: "¡Bienvenido de nuevo!",
     loginWelcomeHello: "Hola, ",
     loginWelcomeRedirect: "! Redirigiendo ahora...",
+    loginReadyTitle: "Ya está listo",
+    loginReadyText: "Su inicio de sesión está completo.<br><br>Por favor, vaya a la mesa de registro para recibir ayuda con su check-in.<br><br>Cuando el personal esté listo, toque Continuar abajo.",
+    loginReadyButton: "Continuar",
     loginFailedTitle: "Error de inicio de sesión",
     loginFailedText: "Correo electrónico o contraseña incorrectos.",
     loginConnectionErrorTitle: "Error de conexión",
@@ -345,7 +352,8 @@ var translations = {
 
     // Notifications
     registrationSuccessTitle: "¡Registro completo!",
-    registrationSuccessText: "Su cuenta ha sido creada exitosamente.",
+    registrationSuccessText: "Su registro está completo y ya está listo.<br><br>Por favor, espere en la fila hasta llegar a la mesa de registro.<br><br>Luego dígale su nombre al personal para que puedan hacer su check-in.",
+    registrationBackButton: "OK",
     registrationFailedTitle: "Registro fallido",
     registrationFailedText: "Se ha producido un error. Inténtelo de nuevo.",
     registrationConnectionErrorTitle: "Error de conexión",
