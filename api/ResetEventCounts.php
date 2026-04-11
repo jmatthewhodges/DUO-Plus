@@ -104,16 +104,18 @@ if (!$eventRow) {
 $mysqli->begin_transaction();
 
 try {
+    $lastUpdated = date('Y-m-d H:i:s');
+
     $analyticsReset = $mysqli->prepare(
         "UPDATE tblAnalytics
          SET StatValue = 0,
-             LastUpdated = NOW()
+             LastUpdated = ?
          WHERE EventID = ?"
     );
     if (!$analyticsReset) {
         throw new RuntimeException('Failed to prepare analytics reset query: ' . $mysqli->error);
     }
-    $analyticsReset->bind_param('s', $eventID);
+    $analyticsReset->bind_param('ss', $lastUpdated, $eventID);
     $analyticsReset->execute();
     $analyticsRows = $analyticsReset->affected_rows;
     $analyticsReset->close();
@@ -130,7 +132,7 @@ try {
     $counterUpdate = $mysqli->prepare(
         "UPDATE tblAnalytics
          SET StatValue = 0,
-             LastUpdated = NOW()
+             LastUpdated = ?
          WHERE EventID = ? AND StatKey = ?"
     );
     if (!$counterUpdate) {
@@ -139,7 +141,7 @@ try {
 
     $counterInsertIfMissing = $mysqli->prepare(
         "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
-         SELECT ?, ?, ?, 0, NOW()
+         SELECT ?, ?, ?, 0, ?
          WHERE NOT EXISTS (
              SELECT 1
              FROM tblAnalytics
@@ -154,7 +156,7 @@ try {
 
     $counterKeysEnsured = [];
     foreach ($counterStatKeys as $statKey) {
-        $counterUpdate->bind_param('ss', $eventID, $statKey);
+        $counterUpdate->bind_param('sss', $lastUpdated, $eventID, $statKey);
         if (!$counterUpdate->execute()) {
             $err = $counterUpdate->error;
             $counterUpdate->close();
@@ -163,7 +165,7 @@ try {
         }
 
         $statID = bin2hex(random_bytes(8));
-        $counterInsertIfMissing->bind_param('sssss', $statID, $eventID, $statKey, $eventID, $statKey);
+        $counterInsertIfMissing->bind_param('ssssss', $statID, $eventID, $statKey, $lastUpdated, $eventID, $statKey);
         if (!$counterInsertIfMissing->execute()) {
             $err = $counterInsertIfMissing->error;
             $counterUpdate->close();

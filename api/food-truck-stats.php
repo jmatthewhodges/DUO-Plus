@@ -26,6 +26,7 @@ if (
 
 // Set response header to JSON
 header('Content-Type: application/json');
+date_default_timezone_set('America/Chicago');
 
 // Get set mysql connection
 $mysqli = $GLOBALS['mysqli'];
@@ -82,11 +83,13 @@ function saveStat(
     string $statKey,
     int $value
 ): bool {
+    $lastUpdated = date('Y-m-d H:i:s');
+
     // Update existing row by EventID + StatKey first.
     $updateStat = $mysqli->prepare(
         'UPDATE tblAnalytics
          SET StatValue = ?,
-             LastUpdated = NOW()
+             LastUpdated = ?
          WHERE EventID = ? AND StatKey = ?'
     );
 
@@ -94,7 +97,7 @@ function saveStat(
         return false;
     }
 
-    $updateStat->bind_param('iss', $value, $eventID, $statKey);
+    $updateStat->bind_param('isss', $value, $lastUpdated, $eventID, $statKey);
     $collectSuccess = $updateStat->execute();
     $updatedRows = $updateStat->affected_rows;
     $updateStat->close();
@@ -107,19 +110,41 @@ function saveStat(
         return true;
     }
 
+    // 0 affected rows can mean "no matching row" OR "row already had same values".
+    // Check existence explicitly before deciding to insert.
+    $existingStat = $mysqli->prepare(
+        'SELECT StatID
+         FROM tblAnalytics
+         WHERE EventID = ? AND StatKey = ?
+         LIMIT 1'
+    );
+
+    if (!$existingStat) {
+        return false;
+    }
+
+    $existingStat->bind_param('ss', $eventID, $statKey);
+    $existingStat->execute();
+    $existingRow = $existingStat->get_result()->fetch_assoc();
+    $existingStat->close();
+
+    if ($existingRow) {
+        return true;
+    }
+
     // Create a new stat row with generated StatID when no row exists yet.
     $statID = bin2hex(random_bytes(8));
     $insertStat = $mysqli->prepare(
         'INSERT INTO tblAnalytics
          (StatID, EventID, StatKey, StatValue, LastUpdated)
-         VALUES (?, ?, ?, ?, NOW())'
+            VALUES (?, ?, ?, ?, ?)'
     );
 
     if (!$insertStat) {
         return false;
     }
 
-    $insertStat->bind_param('sssi', $statID, $eventID, $statKey, $value);
+    $insertStat->bind_param('sssis', $statID, $eventID, $statKey, $value, $lastUpdated);
     $insertSuccess = $insertStat->execute();
     $insertStat->close();
 

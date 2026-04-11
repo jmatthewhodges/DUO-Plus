@@ -524,18 +524,19 @@ error_log("[FastTrack] Final isFastTracked=" . ($isFastTracked ? 'true' : 'false
 // Update clientsProcessed stat in tblAnalytics — only on first check-in, not reprints
 if (!$alreadyCheckedIn) {
     $statKey = 'clientsProcessed';
+    $lastUpdated = date('Y-m-d H:i:s');
 
     // Update by EventID + StatKey first. If missing, insert a new stat row.
     $updateStat = $mysqli->prepare(
         "UPDATE tblAnalytics
          SET StatValue = StatValue + 1,
-             LastUpdated = NOW()
+             LastUpdated = ?
          WHERE EventID = ? AND StatKey = ?"
     );
 
     $updated = false;
     if ($updateStat) {
-        $updateStat->bind_param('ss', $eventID, $statKey);
+        $updateStat->bind_param('sss', $lastUpdated, $eventID, $statKey);
         $updateStat->execute();
         $updated = $updateStat->affected_rows > 0;
         $updateStat->close();
@@ -545,10 +546,10 @@ if (!$alreadyCheckedIn) {
         $statID = bin2hex(random_bytes(8));
         $insertStat = $mysqli->prepare(
             "INSERT INTO tblAnalytics (StatID, EventID, StatKey, StatValue, LastUpdated)
-             VALUES (?, ?, ?, 1, NOW())"
+             VALUES (?, ?, ?, 1, ?)"
         );
         if ($insertStat) {
-            $insertStat->bind_param('sss', $statID, $eventID, $statKey);
+            $insertStat->bind_param('ssss', $statID, $eventID, $statKey, $lastUpdated);
             $insertStat->execute();
             $insertStat->close();
         }
