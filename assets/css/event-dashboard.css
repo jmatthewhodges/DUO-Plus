@@ -1,0 +1,168 @@
+.event-dashboard-shell {
+    max-width: 1500px;
+}
+
+.dashboard-header-card {
+    border-left: 6px solid #174593;
+}
+
+.dashboard-controls {
+    min-width: min(560px, 100%);
+}
+
+.dashboard-controls .form-select {
+    min-width: 320px;
+}
+
+.metric-card {
+    border-radius: 14px;
+    border: 1px solid #e7ebf0;
+    background: #ffffff;
+    padding: 1rem 1rem 0.95rem;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+}
+
+.metric-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.55rem;
+}
+
+.metric-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #465060;
+}
+
+.metric-top i {
+    font-size: 1.15rem;
+}
+
+.metric-value {
+    font-size: 1.9rem;
+    line-height: 1;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.metric-blue {
+    border-top: 4px solid #174593;
+}
+
+.metric-indigo {
+    border-top: 4px solid #3751e5;
+}
+
+.metric-teal {
+    border-top: 4px solid #0f766e;
+}
+
+.metric-red {
+    border-top: 4px solid #b91c1c;
+}
+
+.metric-gold {
+    border-top: 4px solid #b7791f;
+}
+
+.metric-cyan {
+    border-top: 4px solid #0369a1;
+}
+
+.metric-navy {
+    border-top: 4px solid #1e3a8a;
+}
+
+.metric-plum {
+    border-top: 4px solid #7c3aed;
+}
+
+.chart-shell {
+    min-height: 300px;
+}
+
+.chart-shell canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.utilization-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.utilization-bar-bg {
+    width: 180px;
+    height: 8px;
+    border-radius: 999px;
+    background: #e8edf3;
+    overflow: hidden;
+}
+
+.utilization-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #174593, #2f80ed);
+}
+
+.utilization-text {
+    min-width: 48px;
+    text-align: right;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.status-pill-open {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.status-pill-closed {
+    color: #7f1d1d;
+    background: #fee2e2;
+}
+
+.rate-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    background: #e2e8f0;
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+    .dashboard-controls {
+        min-width: 100%;
+    }
+
+    .dashboard-controls .form-select {
+        min-width: 100%;
+    }
+
+    .chart-shell {
+        min-height: 260px;
+    }
+
+    .utilization-bar-bg {
+        width: 120px;
+    }
+}

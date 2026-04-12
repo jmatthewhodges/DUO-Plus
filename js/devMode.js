@@ -80,6 +80,7 @@
                     <span class="dev-panel-section">Pages</span>
                     <a href="${r}portal/">API Portal</a>
                     <a href="${p}registration-dashboard.html">Reg. Dashboard</a>
+                    <a href="${p}event-dashboard.html">Event Dashboard</a>
                     <a href="${p}waitingroom.html">Waiting Room</a>
                     <a href="${p}service-scan.html">Service Scan</a>
                     <a href="${p}food-truck.html">Food Truck</a>
