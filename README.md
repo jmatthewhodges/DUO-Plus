@@ -1,9 +1,10 @@
 # 🏥 DUO
+<img src="assets\images\DUOPlusDropLogo.png" width="30%" />
 
 A full-stack healthcare platform for managing patient flow, tracking services, and delivering real-time clinic insights.
 
 ## 🌐 Live Demo
-[🧑‍⚕️ DUO's Website](https://duo.swollenhippo.com)
+[🧑‍⚕️ DUO's Website](https://duotest.swollenhippo.com)
 
 ## 📸 Gallery
 
@@ -84,7 +85,7 @@ php -S localhost:8000
 ```
 
 ## 💡 Why DUO?
-DUO stands for “Do Unto Others,” reflecting the organization’s mission to provide `###FREE` health, dental, vision, and wellness services to members of the community.
+DUO stands for “Do Unto Others,” reflecting the organization’s mission to provide FREE health, dental, vision, and wellness services to members of the community.
 
 Our team partnered with DUO to improve their operations by reducing wait times, digitizing patient tracking, and enhancing volunteer decision-making. We also developed real-time dashboards and analytics tools to help staff make faster, more informed decisions during high-volume events.
 
