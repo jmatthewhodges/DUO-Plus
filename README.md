@@ -1,5 +1,7 @@
 # 🏥 DUO
-<img src="assets\images\DUOPlusDropLogo.png" width="30%" />
+<p align="center">
+  <img src="assets\images\DUOPlusDropLogo.png" width="30%" />
+</p>
 
 A full-stack healthcare platform for managing patient flow, tracking services, and delivering real-time clinic insights.
 
