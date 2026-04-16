@@ -1,10 +1,11 @@
 # 🏥 DUO
 
-A responsive medical web platform designed to provide healthcare information, patient resources, and basic online services.
+A full-stack healthcare platform for managing patient flow, tracking services, and delivering real-time clinic insights.
 
+## 🌐 Live Demo
 [🧑‍⚕️ DUO's Website](https://duo.swollenhippo.com)
 
-## 📸 Screenshots
+## 📸 Gallery
 
 <p align="center">
   <img src="assets\images\readmeimgs\homepage.png" width="30%" />
@@ -24,7 +25,10 @@ A responsive medical web platform designed to provide healthcare information, pa
   <img src="assets\images\readmeimgs\EventDb.png" width="30%" />
 </p>
 
-
+## 👥 User Roles
+- Patients – register, check in, track services  
+- Volunteers – log activity and assist patients  
+- Administrators – manage events and monitor dashboards  
 
 ## 🚀 Features
 - 🩺 Patient login and registration  
@@ -65,9 +69,8 @@ composer install
 ```
 
 ### 3. Configure environment
-```
 Create a `.env` file:
-
+```
 DB_HOST=
 DB_NAME=
 DB_USER=
@@ -79,6 +82,12 @@ DB_PORT=
 ```
 php -S localhost:8000
 ```
+
+## 💡 Why DUO?
+DUO stands for “Do Unto Others,” reflecting the organization’s mission to provide `###FREE` health, dental, vision, and wellness services to members of the community.
+
+Our team partnered with DUO to improve their operations by reducing wait times, digitizing patient tracking, and enhancing volunteer decision-making. We also developed real-time dashboards and analytics tools to help staff make faster, more informed decisions during high-volume events.
+
 
 ## 🧑‍💻 Authors
 
