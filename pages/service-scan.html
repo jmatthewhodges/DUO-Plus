@@ -1,145 +1,230 @@
 <!--
- * ============================================================
- * File:           service-scan.html
- * Description:    Handles the service scan page.
- *
- * Last Modified By:  Cameron
- * Last Modified On:  Mar 3 @ 3:00 AM
- * Changes Made:      Added QR scanning functionality
- * ============================================================
-!-->
-<!DOCTYPE html>
+  ============================================================
+  File:               service-scan.html
+  Description:        Service scan-in and waitlist management page.
+
+  Last Modified By:   Matthew
+  Last Modified On:   April 20 @ 5:10 PM
+  Changes Made:       Standardized structure and comments for readability consistency.
+  ============================================================
+-->
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#72B2D4">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#72B2D4" />
     <title>DUO+ | Service Scan In</title>
-    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
 
-    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
-    <link href="../assets/css/custom.css" rel="stylesheet">
-    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body class="d-flex align-items-start align-items-sm-center justify-content-center py-3 py-sm-5">
-
-        <div class="container-fluid">
-            <div class="container" style="max-width: 600px; width: 100%;">
-
-                <!-- Logo -->
-                <!-- <div class="row mb-4">
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet" />
+    <link href="../assets/css/custom.css" rel="stylesheet" />
+    <link
+      href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="d-flex align-items-start align-items-sm-center justify-content-center py-3 py-sm-5"
+  >
+    <div class="container-fluid">
+      <div class="container" style="max-width: 600px; width: 100%">
+        <!-- Logo -->
+        <!-- <div class="row mb-4">
                     <div class="col-12 text-center">
                         <img src="../assets/images/DUOvolunteerlogo.png" alt="DUO Plus" style="width: 100px;">
                     </div>
                 </div> -->
 
-                <!-- Service Content (shown after PIN verified and service determined) -->
-                <div id="serviceContent">
-
-                    <!-- Service Header and Stats -->
-                    <div class="card mb-4 mt-5 mt-sm-0">
-                        <div class="card-header d-flex justify-content-between align-items-center bg-primary p-3" id="serviceHeader">
-                            <h5 class="text-white mb-0 fw-bold" id="serviceTitle">Service</h5>
-                            <div class="d-flex align-items-center gap-1">
-                                <button class="btn btn-sm text-white border-0 p-1" id="refreshServiceBtn" title="Refresh data">
-                                    <i class="bi bi-arrow-clockwise" style="font-size: 1.25rem;"></i>
-                                </button>
-                                <button id="btnScan" type="button" class="btn bg-primary btn-sm rounded-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0; border: none; transition: all 0.2s ease;">
-                                    <i style="color: white; font-size: 2rem;" class="bi bi-qr-code-scan"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="card-body p-3 p-sm-4">
-                            <!-- 3 stats side-by-side -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-4">
-                                    <h6 class="text-primary fw-bold mb-1 text-center service-stat-label" id="stat1Label">Waitlist</h6>
-                                    <div class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1">
-                                        <i class="bi bi-people text-dark d-none d-sm-inline" style="font-size: 1.1rem;"></i>
-                                        <span class="h4 fw-bold mb-0" id="stat1Value">0</span>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <h6 class="text-primary fw-bold mb-1 text-center service-stat-label" id="stat2Label">In Progress</h6>
-                                    <div class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1">
-                                        <i class="bi bi-person-dash text-dark d-none d-sm-inline" style="font-size: 1.1rem;"></i>
-                                        <span class="h4 fw-bold mb-0" id="stat2Value">0</span>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <h6 class="text-primary fw-bold mb-1 text-center service-stat-label" id="stat3Label">Completed</h6>
-                                    <div class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1">
-                                        <i class="bi bi-person-check text-dark d-none d-sm-inline" style="font-size: 1.1rem;"></i>
-                                        <span class="h4 fw-bold mb-0" id="stat3Value">0</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Avg times strip -->
-                            <div class="bg-white rounded-4 border shadow-sm px-3 py-2 d-flex justify-content-around align-items-center text-center">
-                                <div>
-                                    <div class="small fw-bold text-dark mb-0">Avg. Service Time</div>
-                                    <div class="h5 text-primary fw-bold mb-0" id="avgTime">0 min</div>
-                                </div>
-                                <div class="vr mx-2"></div>
-                                <div>
-                                    <div class="small fw-bold text-dark mb-0">Past Avg.</div>
-                                    <div class="h5 text-primary fw-bold mb-0" id="pastAvgTime">0 min</div>
-                                </div>
-                            </div>
-
-                            <!-- Per-service availability bars (populated by JS) -->
-                            <div id="availabilityContainer" class="mt-3 d-none"></div>
-                        </div>
-                    </div>
-
-                    <!-- Waitlist Table -->
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center gap-2 bg-primary p-3">
-                            <h5 class="text-white mb-0 fw-bold text-truncate flex-shrink-1" id="waitlistTitle" style="min-width: 0;">Service - Waitlist</h5>
-                            <input type="text" class="form-control form-control-sm flex-shrink-0 ms-auto" id="searchInput" placeholder="Search" style="width: 120px; max-width: 180px;">
-                        </div>
-                        
-                        <div class="card-body p-0 position-relative">
-                            <div class="custom-scroll-indicator" style="height: 50%; top: 25%;"></div>
-
-                            <div class="table-responsive waitlist-scroll-shell" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
-                                <table class="table table-borderless align-middle mb-0 waitlist-table">
-                                    <colgroup>
-                                        <col>
-                                        <col style="width: 22%;">
-                                    </colgroup>
-                                    <thead class="sticky-top bg-white d-none" style="z-index: 1;">
-                                        <tr class="border-bottom">
-                                            <th scope="col" class="ps-3">Client</th>
-                                            <th scope="col" class="text-end pe-3"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="waitlistBody">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Service Content (shown after PIN verified and service determined) -->
+        <div id="serviceContent">
+          <!-- Service Header and Stats -->
+          <div class="card mb-4 mt-5 mt-sm-0">
+            <div
+              class="card-header d-flex justify-content-between align-items-center bg-primary p-3"
+              id="serviceHeader"
+            >
+              <h5 class="text-white mb-0 fw-bold" id="serviceTitle">Service</h5>
+              <div class="d-flex align-items-center gap-1">
+                <button
+                  class="btn btn-sm text-white border-0 p-1"
+                  id="refreshServiceBtn"
+                  title="Refresh data"
+                >
+                  <i
+                    class="bi bi-arrow-clockwise"
+                    style="font-size: 1.25rem"
+                  ></i>
+                </button>
+                <button
+                  id="btnScan"
+                  type="button"
+                  class="btn bg-primary btn-sm rounded-2 d-flex align-items-center justify-content-center"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    padding: 0;
+                    border: none;
+                    transition: all 0.2s ease;
+                  "
+                >
+                  <i
+                    style="color: white; font-size: 2rem"
+                    class="bi bi-qr-code-scan"
+                  ></i>
+                </button>
+              </div>
             </div>
+
+            <div class="card-body p-3 p-sm-4">
+              <!-- 3 stats side-by-side -->
+              <div class="row g-2 mb-3">
+                <div class="col-4">
+                  <h6
+                    class="text-primary fw-bold mb-1 text-center service-stat-label"
+                    id="stat1Label"
+                  >
+                    Waitlist
+                  </h6>
+                  <div
+                    class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1"
+                  >
+                    <i
+                      class="bi bi-people text-dark d-none d-sm-inline"
+                      style="font-size: 1.1rem"
+                    ></i>
+                    <span class="h4 fw-bold mb-0" id="stat1Value">0</span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <h6
+                    class="text-primary fw-bold mb-1 text-center service-stat-label"
+                    id="stat2Label"
+                  >
+                    In Progress
+                  </h6>
+                  <div
+                    class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1"
+                  >
+                    <i
+                      class="bi bi-person-dash text-dark d-none d-sm-inline"
+                      style="font-size: 1.1rem"
+                    ></i>
+                    <span class="h4 fw-bold mb-0" id="stat2Value">0</span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <h6
+                    class="text-primary fw-bold mb-1 text-center service-stat-label"
+                    id="stat3Label"
+                  >
+                    Completed
+                  </h6>
+                  <div
+                    class="bg-white rounded-pill border shadow-sm py-2 px-1 d-flex justify-content-center align-items-center gap-1"
+                  >
+                    <i
+                      class="bi bi-person-check text-dark d-none d-sm-inline"
+                      style="font-size: 1.1rem"
+                    ></i>
+                    <span class="h4 fw-bold mb-0" id="stat3Value">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Avg times strip -->
+              <div
+                class="bg-white rounded-4 border shadow-sm px-3 py-2 d-flex justify-content-around align-items-center text-center"
+              >
+                <div>
+                  <div class="small fw-bold text-dark mb-0">
+                    Avg. Service Time
+                  </div>
+                  <div class="h5 text-primary fw-bold mb-0" id="avgTime">
+                    0 min
+                  </div>
+                </div>
+                <div class="vr mx-2"></div>
+                <div>
+                  <div class="small fw-bold text-dark mb-0">Past Avg.</div>
+                  <div class="h5 text-primary fw-bold mb-0" id="pastAvgTime">
+                    0 min
+                  </div>
+                </div>
+              </div>
+
+              <!-- Per-service availability bars (populated by JS) -->
+              <div id="availabilityContainer" class="mt-3 d-none"></div>
+            </div>
+          </div>
+
+          <!-- Waitlist Table -->
+          <div class="card">
+            <div
+              class="card-header d-flex align-items-center gap-2 bg-primary p-3"
+            >
+              <h5
+                class="text-white mb-0 fw-bold text-truncate flex-shrink-1"
+                id="waitlistTitle"
+                style="min-width: 0"
+              >
+                Service - Waitlist
+              </h5>
+              <input
+                type="text"
+                class="form-control form-control-sm flex-shrink-0 ms-auto"
+                id="searchInput"
+                placeholder="Search"
+                style="width: 120px; max-width: 180px"
+              />
+            </div>
+
+            <div class="card-body p-0 position-relative">
+              <div
+                class="custom-scroll-indicator"
+                style="height: 50%; top: 25%"
+              ></div>
+
+              <div
+                class="table-responsive waitlist-scroll-shell"
+                style="max-height: 400px; overflow-y: auto; overflow-x: hidden"
+              >
+                <table
+                  class="table table-borderless align-middle mb-0 waitlist-table"
+                >
+                  <colgroup>
+                    <col />
+                    <col style="width: 22%" />
+                  </colgroup>
+                  <thead class="sticky-top bg-white d-none" style="z-index: 1">
+                    <tr class="border-bottom">
+                      <th scope="col" class="ps-3">Client</th>
+                      <th scope="col" class="text-end pe-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="waitlistBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/js/core/libs.min.js"></script>
     <script src="../assets/js/jsQR.js"></script>
     <script src="../js/pinCode.js"></script>
     <script src="../js/Service.js"></script>
     <script src="../js/devMode.js"></script>
-    
+
     <script>
-        // Setup search functionality
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', function(e) {
-                filterWaitlist(e.target.value);
-            });
-        }
+      // Setup search functionality
+      const searchInput = document.getElementById("searchInput");
+      if (searchInput) {
+        searchInput.addEventListener("input", function (e) {
+          filterWaitlist(e.target.value);
+        });
+      }
     </script>
-    </body>
+  </body>
 </html>

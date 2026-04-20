@@ -1,14 +1,13 @@
 <!--
- ============================================================
-  File:        index.html
-  Description: Client login page.
+  ============================================================
+  File:               index.html
+  Description:        Client login page.
 
-  Last Modified By:  Lauren
-  Last Modified On:  March 5 @ 3:17 PM
-  Changes Made:      Added horizontal divider below Register
- ============================================================
+  Last Modified By:   Matthew
+  Last Modified On:   April 20 @ 5:14 PM
+  Changes Made:       Standardized structure and comments for readability consistency.
+  ============================================================
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -25,12 +24,15 @@
 </head>
 
 <body class="d-flex align-items-center justify-content-center min-vh-100 v-center-page">
-
   <div class="container text-center login-container" style="padding-top: 3.5rem;">
-    
-    <!-- Logo Section -->
+    <!-- Branding -->
     <div class="logo-section mb-3">
-      <img src="assets/images/DUOPlusDropLogo.png" alt="DUO Plus - Home" class="mb-1" style="width: 200px;">
+      <img
+        src="assets/images/DUOPlusDropLogo.png"
+        alt="DUO Plus - Home"
+        class="mb-1"
+        style="width: 200px;"
+      >
     </div>
 
     <!-- Subtitle -->
@@ -38,66 +40,93 @@
       Connecting patients with free<br>care through DUO
     </h5>
 
-    <!-- Login Box -->
+    <!-- Login Card -->
     <div class="card shadow-lg border-0 rounded-4 mb-4 mt-4 card-has-lang">
       <div class="card-lang-corner">
         <div id="divLanguageSwitch">
-          <select name="languageSwitch" id="selLanguageSwitch" class="d-none" aria-hidden="true">
+          <!-- Keep native select for accessibility/integration; custom toggle is visual control -->
+          <select
+            id="selLanguageSwitch"
+            name="languageSwitch"
+            class="d-none"
+            aria-hidden="true"
+          >
             <option value="en">EN</option>
             <option value="es">ES</option>
           </select>
+
           <div class="lang-toggle" role="radiogroup" aria-label="Select language">
             <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
             <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
           </div>
         </div>
       </div>
+
       <div class="card-body p-4">
         <form id="clientLoginForm" novalidate>
           <div class="mb-3 text-start">
             <label id="lblClientEmail" for="txtClientEmail" class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="txtClientEmail" class="form-control" required
-              autocomplete="email">
+            <input
+              id="txtClientEmail"
+              type="email"
+              name="email"
+              class="form-control"
+              required
+              autocomplete="email"
+            >
           </div>
 
           <div class="mb-3 text-start">
             <label id="lblClientPassword" for="txtClientPassword" class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" id="txtClientPassword" class="form-control" required
-              autocomplete="current-password">
+            <input
+              id="txtClientPassword"
+              type="password"
+              name="password"
+              class="form-control"
+              required
+              autocomplete="current-password"
+            >
           </div>
 
-          <!-- Main Login Button -->
-          <button id="btnClientLogin" type="button" class="btn btn-primary w-100 rounded-2 ">Login</button>
+          <button id="btnClientLogin" type="button" class="btn btn-primary w-100 rounded-2">Login</button>
         </form>
       </div>
     </div>
 
-    <!-- Register + Forget Password Section -->
+    <!-- Account Actions -->
     <div class="register-section">
-      <!-- <div class="d-flex align-items-center justify-content-center mb-2" aria-hidden="true">
-        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
-                <span id="orText" class="mx-2 text-muted fw-semibold">Or</span>
-        <hr class="flex-grow-1" style="height:1px; background-color:#ccc; border:none;">
-      </div> -->
-
-      <!-- Register Link -->
       <div class="d-flex flex-column align-items-center justify-content-center gap-1 mb-3">
-        <a id="btn2Register" href="pages/register.html" style="color: #174593;"
-          class="fw-semibold text-decoration-none text-center text-nowrap">Register</a>
+        <a
+          id="btn2Register"
+          href="pages/register.html"
+          class="fw-semibold text-decoration-none text-center text-nowrap"
+          style="color: #174593;"
+        >
+          Register
+        </a>
 
-        <!-- Horizontal Line -->
-        <hr class="w-75 my-1" style="height:1px; background-color:#ccc; border:none;">
+        <hr class="w-75 my-1" style="height: 1px; background-color: #ccc; border: none;">
 
-      <!-- Forget Password Link -->
-        <a id="btn2ForgetPass" href="pages/forgetpass.html" style="color: #174593;"
-          class="fw-semibold text-decoration-none text-center text-nowrap">Forgot Password?</a>
+        <a
+          id="btn2ForgetPass"
+          href="pages/forgetpass.html"
+          class="fw-semibold text-decoration-none text-center text-nowrap"
+          style="color: #174593;"
+        >
+          Forgot Password?
+        </a>
       </div>
 
-      <!-- Life Church Logo -->
+      <!-- Partner Branding + Developer Panel -->
       <div class="d-flex flex-column align-items-center">
-        <img src="assets/images/lifeChurchLogo.webp" alt="Life Church - Partner Organization" class="mb-3" style="width: 200px;">
+        <img
+          src="assets/images/lifeChurchLogo.webp"
+          alt="Life Church - Partner Organization"
+          class="mb-3"
+          style="width: 200px;"
+        >
 
-        <!-- Dev mode panel — shown only when dev mode is active -->
+        <!-- Shown only when dev mode is active -->
         <div id="devIndexPanel" class="dev-only d-none w-100">
           <div class="dev-inline-panel">
             <div class="dev-inline-header">
@@ -118,7 +147,6 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- JS Dependencies -->

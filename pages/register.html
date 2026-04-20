@@ -1,487 +1,968 @@
 <!--
- ============================================================
-  File:        register.html
-  Description: Multi-step client registration page. Includes
-               login info, personal details, address, emergency
-               contact, service selection, and waiver agreement.
+  ============================================================
+  File:               register.html
+  Description:        Multi-step client registration workflow page.
 
-  Last Modified By:  Matthew
-  Last Modified On:  March 4 @ 11:30 AM
-  Changes Made:      Updated overall accessibility and waiver information
- ============================================================
+  Last Modified By:   Matthew
+  Last Modified On:   April 20 @ 5:10 PM
+  Changes Made:       Standardized structure and comments for readability consistency.
+  ============================================================
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DUO+ | Register</title>
-    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
 
     <!-- Styles -->
-    <link href="../assets/css/hope-ui.min.css" rel="stylesheet">
-    <link href="../assets/css/custom.css" rel="stylesheet">
-    <link href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
-</head>
+    <link href="../assets/css/hope-ui.min.css" rel="stylesheet" />
+    <link href="../assets/css/custom.css" rel="stylesheet" />
+    <link
+      href="../assets/css/bootstrap-icons-1.13.1/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+  </head>
 
-<body style="overflow-x: hidden;">
-    <div class="container" style="padding-top: 3.5rem;">
-
-        <div class="row justify-content-center">
-            <!-- Screen size adjustments: mobile screens (col-10), tablets/smaller laptop screens (col-10), 
+  <body style="overflow-x: hidden">
+    <div class="container" style="padding-top: 3.5rem">
+      <div class="row justify-content-center">
+        <!-- Screen size adjustments: mobile screens (col-10), tablets/smaller laptop screens (col-10), 
             desktops/bigger screens (col-6) -->
-            <div class="col-12 col-sm-10 col-md-10 col-lg-6">
-
-                <!-- Logo -->
-                <!-- <div class="text-center">
+        <div class="col-12 col-sm-10 col-md-10 col-lg-6">
+          <!-- Logo -->
+          <!-- <div class="text-center">
                     <img src="../assets/images/DUOPlusDropLogo.png" alt="DUO Logo" class="mb-3" style="width: 200px;">
                 </div> -->
 
-                <!-- Subtitle -->
-                <!-- <div id="divStepOneSubtitle" class="text-center">
+          <!-- Subtitle -->
+          <!-- <div id="divStepOneSubtitle" class="text-center">
                     <h5 id="progressTitle" class="subtitle-text fw-medium mb-3" style="color: #174593;">
                         Progress through registration
                     </h5>
                 </div> -->
 
-                <!-- Registration Card -->
-                <div class="card shadow-lg border-0 rounded-4 card-has-lang">
-                    <div class="card-lang-corner">
-                        <div id="divLanguageSwitch">
-                            <select name="languageSwitch" id="selLanguageSwitch" class="d-none" aria-hidden="true">
-                                <option value="en">EN</option>
-                                <option value="es">ES</option>
-                            </select>
-                            <div class="lang-toggle" role="radiogroup" aria-label="Select language">
-                                <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
-                                <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- STEP 1: Login Info -->
-                    <div id="divStepOne" class="card-body p-3 p-md-4 p-lg-4 step-visible">
-                        <h5 id="titleStepOne" class="card-title text-center">Login Information</h5>
-                        <form id="clientRegisterFormStep1" novalidate>
-
-                            <!-- Email -->
-                            <div class="mb-3 text-start">
-                                <label id="clientRegisterEmailLabel" for="clientRegisterEmail"
-                                    class="form-label fw-semibold">Email <span class="text-danger"
-                                        aria-hidden="true">*</span></label>
-                                <input type="email" id="clientRegisterEmail" class="form-control input-black" required
-                                    placeholder="john.doe@gmail.com" autocomplete="email">
-                                <div id="emailCheckStatus" class="form-text text-muted small mt-1" style="display:none;">
-                                    <span class="spinner-border spinner-border-sm me-1" style="width:.65rem;height:.65rem;" role="status" aria-hidden="true"></span>Checking...
-                                </div>
-                                <div class="invalid-feedback" id="emailInvalidFeedback"></div>
-                            </div>
-
-                            <!-- Password -->
-                            <div class="mb-3 text-start">
-                                <label id="clientRegisterPassLabel" for="clientRegisterPass"
-                                    class="form-label fw-semibold">Password <span class="text-danger"
-                                        aria-hidden="true">*</span></label>
-                                <input type="password" id="clientRegisterPass" class="form-control input-black" required
-                                    autocomplete="new-password" aria-describedby="passwordHint">
-                                <div class="form-text text-muted" id="passwordHint">
-                                    8+ characters, 1 uppercase, 1 lowercase, and 1 number.
-                                </div>
-                            </div>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext1" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack1" type="button"
-                                class="btn btn-outline-primary register-back-btn w-100 rounded-2">Back to
-                                Login</button>
-                        </form>
-                    </div>
-
-                    <!-- STEP 2: Personal Info -->
-                    <div id="divStepTwo" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
-                        <h5 id="titleStepTwo" class="card-title text-center mb-3">Personal Information</h5>
-                        <form id="clientRegisterFormStep2" novalidate>
-
-                            <!-- First Name -->
-                            <div class="mb-3 text-start">
-                                <label id="clientFirstNameLabel" for="clientFirstName"
-                                    class="form-label fw-semibold">First Name <span class="text-danger"
-                                        aria-hidden="true">*</span></label>
-                                <input type="text" id="clientFirstName" class="form-control input-black" required
-                                    maxlength="50" autocomplete="given-name">
-                            </div>
-
-                            <!-- Middle Initial (optional) -->
-                            <div class="mb-3 text-start">
-                                <label id="clientMiddleInitialLabel" for="clientMiddleInitial"
-                                    class="form-label fw-semibold">Middle Initial <span
-                                        class="text-muted fw-normal small">(optional)</span></label>
-                                <input type="text" id="clientMiddleInitial" class="form-control input-black"
-                                    maxlength="1" autocomplete="additional-name">
-                            </div>
-
-                            <!-- Last Name -->
-                            <div class="mb-3 text-start">
-                                <label id="clientLastNameLabel" for="clientLastName" class="form-label fw-semibold">Last
-                                    Name <span class="text-danger" aria-hidden="true">*</span></label>
-                                <input type="text" id="clientLastName" class="form-control input-black" required
-                                    maxlength="50" autocomplete="family-name">
-                            </div>
-
-                            <!-- Sex -->
-                            <div class="mb-3 text-start">
-                                <label class="form-label fw-semibold d-block" id="sexLabel">Sex <span
-                                        class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Select your sex."
-                                    aria-required="true" id="sexRadioGroup">
-                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexMale" value="male"
-                                        required>
-                                    <label class="btn btn-outline-primary" id="btnSexMaleLabel"
-                                        for="btnSexMale">Male</label>
-
-                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexFemale"
-                                        value="female">
-                                    <label class="btn btn-outline-primary" id="btnSexFemaleLabel"
-                                        for="btnSexFemale">Female</label>
-
-                                    <input type="radio" class="btn-check" name="clientSex" id="btnSexIntersex"
-                                        value="intersex">
-                                    <label class="btn btn-outline-primary" id="btnSexIntersexLabel"
-                                        for="btnSexIntersex">Intersex</label>
-                                </div>
-                            </div>
-
-                            <!-- Date of Birth -->
-                            <div class="mb-3 text-start">
-                                <label id="clientDOBLabel" for="clientDOB" class="form-label fw-semibold">Date of Birth
-                                    <span class="text-danger" aria-hidden="true">*</span></label>
-                                <input type="text" id="clientDOB" class="form-control input-black" required
-                                    inputmode="numeric" placeholder="MM/DD/YYYY">
-                            </div>
-
-                            <!-- Phone (optional) -->
-                            <div class="mb-3 text-start">
-                                <label id="clientPhoneLabel" for="clientPhone" class="form-label fw-semibold">Phone
-                                    <span class="text-muted fw-normal small">(optional)</span></label>
-                                <input type="tel" id="clientPhone" class="form-control input-black"
-                                    placeholder="(999) 999-9999" autocomplete="tel">
-                            </div>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext2" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack2" type="button"
-                                class="btn btn-outline-primary register-back-btn w-100 rounded-2">Go
-                                Back</button>
-                        </form>
-                    </div>
-
-
-                    <!-- STEP 3: Address Info -->
-                    <div id="divStepThree" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
-                        <h5 id="titleStepThree" class="card-title text-center mb-3">Address Information</h5>
-                        <form id="clientRegisterFormStep3" novalidate>
-
-                            <!-- No Address Toggle -->
-                            <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
-                                style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
-                                role="button" tabindex="0"
-                                onclick="document.getElementById('noAddress').click();"
-                                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('noAddress').click();}">
-                                <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
-                                    id="noAddressLabel" for="noAddress">
-                                    No current address
-                                </label>
-                                <div class="form-check form-switch mb-0" onclick="event.stopPropagation();">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        style="cursor: pointer; width: 3em; height: 1.5em;" id="noAddress">
-                                </div>
-                            </div>
-
-                            <!-- Street Address 1 -->
-                            <div class="mb-3 text-start">
-                                <label for="clientAddress1" id="clientAddress1Label"
-                                    class="form-label fw-semibold">Street Address 1</label>
-                                <input type="text" id="clientAddress1" class="form-control input-black" required
-                                    placeholder="123 Main St" autocomplete="address-line1">
-                            </div>
-
-                            <!-- Street Address 2 (optional) -->
-                            <div class="mb-3 text-start">
-                                <label id="clientAddress2Label" for="clientAddress2"
-                                    class="form-label fw-semibold">Street Address 2</label>
-                                <input type="text" id="clientAddress2" class="form-control input-black"
-                                    placeholder="Apt, Suite, Unit" autocomplete="address-line2">
-                            </div>
-
-                            <!-- City -->
-                            <div class="mb-3 text-start">
-                                <label id="clientCityLabel" for="clientCity" class="form-label fw-semibold">City</label>
-                                <input type="text" id="clientCity" class="form-control input-black" required
-                                    autocomplete="address-level2">
-                            </div>
-
-                            <!-- State -->
-                            <div class="mb-3 text-start">
-                                <label id="selectStateLabel" for="selectState"
-                                    class="form-label fw-semibold">State</label>
-                                <select class="form-select" id="selectState" required
-                                    autocomplete="address-level1">
-                                    <option selected disabled value="" id="stateChoose">Choose...</option>
-                                    <option value="AL">Alabama</option>
-                                    <option value="AK">Alaska</option>
-                                    <option value="AZ">Arizona</option>
-                                    <option value="AR">Arkansas</option>
-                                    <option value="CA">California</option>
-                                    <option value="CO">Colorado</option>
-                                    <option value="CT">Connecticut</option>
-                                    <option value="DE">Delaware</option>
-                                    <option value="FL">Florida</option>
-                                    <option value="GA">Georgia</option>
-                                    <option value="HI">Hawaii</option>
-                                    <option value="ID">Idaho</option>
-                                    <option value="IL">Illinois</option>
-                                    <option value="IN">Indiana</option>
-                                    <option value="IA">Iowa</option>
-                                    <option value="KS">Kansas</option>
-                                    <option value="KY">Kentucky</option>
-                                    <option value="LA">Louisiana</option>
-                                    <option value="ME">Maine</option>
-                                    <option value="MD">Maryland</option>
-                                    <option value="MA">Massachusetts</option>
-                                    <option value="MI">Michigan</option>
-                                    <option value="MN">Minnesota</option>
-                                    <option value="MS">Mississippi</option>
-                                    <option value="MO">Missouri</option>
-                                    <option value="MT">Montana</option>
-                                    <option value="NE">Nebraska</option>
-                                    <option value="NV">Nevada</option>
-                                    <option value="NH">New Hampshire</option>
-                                    <option value="NJ">New Jersey</option>
-                                    <option value="NM">New Mexico</option>
-                                    <option value="NY">New York</option>
-                                    <option value="NC">North Carolina</option>
-                                    <option value="ND">North Dakota</option>
-                                    <option value="OH">Ohio</option>
-                                    <option value="OK">Oklahoma</option>
-                                    <option value="OR">Oregon</option>
-                                    <option value="PA">Pennsylvania</option>
-                                    <option value="RI">Rhode Island</option>
-                                    <option value="SC">South Carolina</option>
-                                    <option value="SD">South Dakota</option>
-                                    <option value="TN">Tennessee</option>
-                                    <option value="TX">Texas</option>
-                                    <option value="UT">Utah</option>
-                                    <option value="VT">Vermont</option>
-                                    <option value="VA">Virginia</option>
-                                    <option value="WA">Washington</option>
-                                    <option value="WV">West Virginia</option>
-                                    <option value="WI">Wisconsin</option>
-                                    <option value="WY">Wyoming</option>
-                                    <option disabled>──────────</option>
-                                    <option value="DC">District of Columbia</option>
-                                    <option value="PR">Puerto Rico</option>
-                                    <option value="GU">Guam</option>
-                                    <option value="VI">U.S. Virgin Islands</option>
-                                    <option value="AS">American Samoa</option>
-                                    <option value="MP">Northern Mariana Islands</option>
-                                    <option value="AE">Military (AE)</option>
-                                    <option value="AP">Military (AP)</option>
-                                    <option value="AA">Military (AA)</option>
-                                </select>
-                            </div>
-
-                            <!-- Zip Code -->
-                            <div class="mb-3 text-start">
-                                <label id="clientZipCodeLabel" for="clientZipCode" class="form-label fw-semibold">Zip
-                                    Code</label>
-                                <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
-                                    id="clientZipCode" class="form-control input-black" required
-                                    autocomplete="postal-code">
-                            </div>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext3" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack3" type="button"
-                                class="btn btn-outline-primary register-back-btn w-100 rounded-2">Go
-                                Back</button>
-                        </form>
-                    </div>
-
-
-                    <!-- STEP 4: Emergency Contact -->
-                    <div id="divStepFour" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
-                        <h5 id="titleStepFour" class="card-title text-center mb-3">Emergency Contact</h5>
-                        <form id="clientRegisterFormStep4" novalidate>
-
-                            <!-- No Emergency Contact Toggle -->
-                            <div class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
-                                style="background-color: #e9ecef; border-color: #adb5bd !important; cursor: pointer;"
-                                role="button" tabindex="0"
-                                onclick="document.getElementById('noEmergencyContact').click();"
-                                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('noEmergencyContact').click();}">
-                                <label class="form-check-label fw-bold mb-0 fs-6" style="cursor: pointer; color: #333;"
-                                    id="noEmergencyContactLabel" for="noEmergencyContact">
-                                    No emergency contact
-                                </label>
-                                <div class="form-check form-switch mb-0" onclick="event.stopPropagation();">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        style="cursor: pointer; width: 3em; height: 1.5em;" id="noEmergencyContact">
-                                </div>
-                            </div>
-
-                            <!-- Contact First Name -->
-                            <div class="mb-3 text-start">
-                                <label id="emergencyContactFirstNameLabel" for="emergencyContactFirstName"
-                                    class="form-label fw-semibold">Contact First
-                                    Name</label>
-                                <input type="text" id="emergencyContactFirstName" class="form-control input-black"
-                                    required>
-                            </div>
-
-                            <!-- Contact Last Name -->
-                            <div class="mb-3 text-start">
-                                <label id="emergencyContactLastNameLabel" for="emergencyContactLastName"
-                                    class="form-label fw-semibold">Contact Last
-                                    Name</label>
-                                <input type="text" id="emergencyContactLastName" class="form-control input-black"
-                                    required>
-                            </div>
-
-                            <!-- Contact Phone -->
-                            <div class="mb-3 text-start">
-                                <label id="emergencyContactPhoneLabel" for="emergencyContactPhone"
-                                    class="form-label fw-semibold">Contact Phone</label>
-                                <input type="tel" id="emergencyContactPhone" class="form-control input-black" required
-                                    placeholder="(999) 999-9999">
-                            </div>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext4" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack4" type="button"
-                                class="btn btn-outline-primary register-back-btn w-100 rounded-2">Go
-                                Back</button>
-                        </form>
-                    </div>
-
-
-                    <!-- STEP 5: Service Selection -->
-                    <div id="divStepFive" class="card-body p-3 p-md-4 p-lg-4 step-hidden">
-                        <h5 id="titleStepFive" class="card-title text-center mb-3">Service Selection</h5>
-                        <form id="clientRegisterFormStep5" novalidate>
-                            <!-- Services Grid (populated dynamically from API) -->
-                            <fieldset class="row mb-3" id="serviceSelectionGrid" aria-label="Select services">
-                                <legend class="visually-hidden">Select the services you need</legend>
-                                <div class="text-center p-3 text-muted" id="loadingServices">Loading services...</div>
-                            </fieldset>
-
-                            <!-- Buttons -->
-                            <button id="btnRegisterNext5" type="button"
-                                class="btn btn-primary w-100 rounded-2 mb-1">Next</button>
-                            <button id="btnRegisterBack5" type="button"
-                                class="btn btn-outline-primary register-back-btn w-100 rounded-2">Go
-                                Back</button>
-                        </form>
-                    </div>
-
-                    <!-- Progress Bar -->
-                    <div id="wholeProgressBar" class="px-3 px-md-4 mb-3">
-                        <div class="progress" style="height: 8px; border-radius: 999px; background: #e9ecef;">
-                            <div class="progress-bar bg-success" id="progressBarTop" role="progressbar"
-                                style="width: 17%; border-radius: 999px; transition: width 0.5s ease;"
-                                aria-valuenow="17" aria-valuemin="0" aria-valuemax="100"
-                                aria-label="Registration progress, step 1 of 5"></div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-1" id="progressStepLabels"
-                            style="font-size: 0.65rem; color: #777;" aria-hidden="true">
-                            <span id="progressLogin">Login</span>
-                            <span id="progressPersonal">Personal</span>
-                            <span id="progressAddress">Address</span>
-                            <span id="progressEmergency">Emergency</span>
-                            <span id="progressServices">Services</span>
-                        </div>
-                    </div>
+          <!-- Registration Card -->
+          <div class="card shadow-lg border-0 rounded-4 card-has-lang">
+            <div class="card-lang-corner">
+              <div id="divLanguageSwitch">
+                <select
+                  name="languageSwitch"
+                  id="selLanguageSwitch"
+                  class="d-none"
+                  aria-hidden="true"
+                >
+                  <option value="en">EN</option>
+                  <option value="es">ES</option>
+                </select>
+                <div
+                  class="lang-toggle"
+                  role="radiogroup"
+                  aria-label="Select language"
+                >
+                  <button
+                    type="button"
+                    class="lang-btn active"
+                    data-lang="en"
+                    aria-pressed="true"
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    class="lang-btn"
+                    data-lang="es"
+                    aria-pressed="false"
+                  >
+                    ES
+                  </button>
                 </div>
-
-                <!-- Dev: Step jumper (hidden unless dev mode is active) -->
-                <div class="text-center mt-2 mb-1 dev-only d-none">
-                    <div class="dev-bar">
-                        <span class="dev-bar-label">Dev</span>
-                        <button id="skipStep1" type="button" class="dev-step-btn">Step 1</button>
-                        <button id="skipStep2" type="button" class="dev-step-btn">Step 2</button>
-                        <button id="skipStep3" type="button" class="dev-step-btn">Step 3</button>
-                        <button id="skipStep4" type="button" class="dev-step-btn">Step 4</button>
-                        <button id="skipStep5" type="button" class="dev-step-btn">Step 5</button>
-                    </div>
-                </div>
-
+              </div>
             </div>
+
+            <!-- STEP 1: Login Info -->
+            <div
+              id="divStepOne"
+              class="card-body p-3 p-md-4 p-lg-4 step-visible"
+            >
+              <h5 id="titleStepOne" class="card-title text-center">
+                Login Information
+              </h5>
+              <form id="clientRegisterFormStep1" novalidate>
+                <!-- Email -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientRegisterEmailLabel"
+                    for="clientRegisterEmail"
+                    class="form-label fw-semibold"
+                    >Email
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <input
+                    type="email"
+                    id="clientRegisterEmail"
+                    class="form-control input-black"
+                    required
+                    placeholder="john.doe@gmail.com"
+                    autocomplete="email"
+                  />
+                  <div
+                    id="emailCheckStatus"
+                    class="form-text text-muted small mt-1"
+                    style="display: none"
+                  >
+                    <span
+                      class="spinner-border spinner-border-sm me-1"
+                      style="width: 0.65rem; height: 0.65rem"
+                      role="status"
+                      aria-hidden="true"
+                    ></span
+                    >Checking...
+                  </div>
+                  <div class="invalid-feedback" id="emailInvalidFeedback"></div>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientRegisterPassLabel"
+                    for="clientRegisterPass"
+                    class="form-label fw-semibold"
+                    >Password
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <input
+                    type="password"
+                    id="clientRegisterPass"
+                    class="form-control input-black"
+                    required
+                    autocomplete="new-password"
+                    aria-describedby="passwordHint"
+                  />
+                  <div class="form-text text-muted" id="passwordHint">
+                    8+ characters, 1 uppercase, 1 lowercase, and 1 number.
+                  </div>
+                </div>
+
+                <!-- Buttons -->
+                <button
+                  id="btnRegisterNext1"
+                  type="button"
+                  class="btn btn-primary w-100 rounded-2 mb-1"
+                >
+                  Next
+                </button>
+                <button
+                  id="btnRegisterBack1"
+                  type="button"
+                  class="btn btn-outline-primary register-back-btn w-100 rounded-2"
+                >
+                  Back to Login
+                </button>
+              </form>
+            </div>
+
+            <!-- STEP 2: Personal Info -->
+            <div
+              id="divStepTwo"
+              class="card-body p-3 p-md-4 p-lg-4 step-hidden"
+            >
+              <h5 id="titleStepTwo" class="card-title text-center mb-3">
+                Personal Information
+              </h5>
+              <form id="clientRegisterFormStep2" novalidate>
+                <!-- First Name -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientFirstNameLabel"
+                    for="clientFirstName"
+                    class="form-label fw-semibold"
+                    >First Name
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="clientFirstName"
+                    class="form-control input-black"
+                    required
+                    maxlength="50"
+                    autocomplete="given-name"
+                  />
+                </div>
+
+                <!-- Middle Initial (optional) -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientMiddleInitialLabel"
+                    for="clientMiddleInitial"
+                    class="form-label fw-semibold"
+                    >Middle Initial
+                    <span class="text-muted fw-normal small"
+                      >(optional)</span
+                    ></label
+                  >
+                  <input
+                    type="text"
+                    id="clientMiddleInitial"
+                    class="form-control input-black"
+                    maxlength="1"
+                    autocomplete="additional-name"
+                  />
+                </div>
+
+                <!-- Last Name -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientLastNameLabel"
+                    for="clientLastName"
+                    class="form-label fw-semibold"
+                    >Last Name
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="clientLastName"
+                    class="form-control input-black"
+                    required
+                    maxlength="50"
+                    autocomplete="family-name"
+                  />
+                </div>
+
+                <!-- Sex -->
+                <div class="mb-3 text-start">
+                  <label class="form-label fw-semibold d-block" id="sexLabel"
+                    >Sex
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <div
+                    class="d-flex flex-wrap gap-2"
+                    role="radiogroup"
+                    aria-label="Select your sex."
+                    aria-required="true"
+                    id="sexRadioGroup"
+                  >
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="clientSex"
+                      id="btnSexMale"
+                      value="male"
+                      required
+                    />
+                    <label
+                      class="btn btn-outline-primary"
+                      id="btnSexMaleLabel"
+                      for="btnSexMale"
+                      >Male</label
+                    >
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="clientSex"
+                      id="btnSexFemale"
+                      value="female"
+                    />
+                    <label
+                      class="btn btn-outline-primary"
+                      id="btnSexFemaleLabel"
+                      for="btnSexFemale"
+                      >Female</label
+                    >
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="clientSex"
+                      id="btnSexIntersex"
+                      value="intersex"
+                    />
+                    <label
+                      class="btn btn-outline-primary"
+                      id="btnSexIntersexLabel"
+                      for="btnSexIntersex"
+                      >Intersex</label
+                    >
+                  </div>
+                </div>
+
+                <!-- Date of Birth -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientDOBLabel"
+                    for="clientDOB"
+                    class="form-label fw-semibold"
+                    >Date of Birth
+                    <span class="text-danger" aria-hidden="true">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="clientDOB"
+                    class="form-control input-black"
+                    required
+                    inputmode="numeric"
+                    placeholder="MM/DD/YYYY"
+                  />
+                </div>
+
+                <!-- Phone (optional) -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientPhoneLabel"
+                    for="clientPhone"
+                    class="form-label fw-semibold"
+                    >Phone
+                    <span class="text-muted fw-normal small"
+                      >(optional)</span
+                    ></label
+                  >
+                  <input
+                    type="tel"
+                    id="clientPhone"
+                    class="form-control input-black"
+                    placeholder="(999) 999-9999"
+                    autocomplete="tel"
+                  />
+                </div>
+
+                <!-- Buttons -->
+                <button
+                  id="btnRegisterNext2"
+                  type="button"
+                  class="btn btn-primary w-100 rounded-2 mb-1"
+                >
+                  Next
+                </button>
+                <button
+                  id="btnRegisterBack2"
+                  type="button"
+                  class="btn btn-outline-primary register-back-btn w-100 rounded-2"
+                >
+                  Go Back
+                </button>
+              </form>
+            </div>
+
+            <!-- STEP 3: Address Info -->
+            <div
+              id="divStepThree"
+              class="card-body p-3 p-md-4 p-lg-4 step-hidden"
+            >
+              <h5 id="titleStepThree" class="card-title text-center mb-3">
+                Address Information
+              </h5>
+              <form id="clientRegisterFormStep3" novalidate>
+                <!-- No Address Toggle -->
+                <div
+                  class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
+                  style="
+                    background-color: #e9ecef;
+                    border-color: #adb5bd !important;
+                    cursor: pointer;
+                  "
+                  role="button"
+                  tabindex="0"
+                  onclick="document.getElementById('noAddress').click()"
+                  onkeydown="
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      document.getElementById('noAddress').click();
+                    }
+                  "
+                >
+                  <label
+                    class="form-check-label fw-bold mb-0 fs-6"
+                    style="cursor: pointer; color: #333"
+                    id="noAddressLabel"
+                    for="noAddress"
+                  >
+                    No current address
+                  </label>
+                  <div
+                    class="form-check form-switch mb-0"
+                    onclick="event.stopPropagation()"
+                  >
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      style="cursor: pointer; width: 3em; height: 1.5em"
+                      id="noAddress"
+                    />
+                  </div>
+                </div>
+
+                <!-- Street Address 1 -->
+                <div class="mb-3 text-start">
+                  <label
+                    for="clientAddress1"
+                    id="clientAddress1Label"
+                    class="form-label fw-semibold"
+                    >Street Address 1</label
+                  >
+                  <input
+                    type="text"
+                    id="clientAddress1"
+                    class="form-control input-black"
+                    required
+                    placeholder="123 Main St"
+                    autocomplete="address-line1"
+                  />
+                </div>
+
+                <!-- Street Address 2 (optional) -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientAddress2Label"
+                    for="clientAddress2"
+                    class="form-label fw-semibold"
+                    >Street Address 2</label
+                  >
+                  <input
+                    type="text"
+                    id="clientAddress2"
+                    class="form-control input-black"
+                    placeholder="Apt, Suite, Unit"
+                    autocomplete="address-line2"
+                  />
+                </div>
+
+                <!-- City -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientCityLabel"
+                    for="clientCity"
+                    class="form-label fw-semibold"
+                    >City</label
+                  >
+                  <input
+                    type="text"
+                    id="clientCity"
+                    class="form-control input-black"
+                    required
+                    autocomplete="address-level2"
+                  />
+                </div>
+
+                <!-- State -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="selectStateLabel"
+                    for="selectState"
+                    class="form-label fw-semibold"
+                    >State</label
+                  >
+                  <select
+                    class="form-select"
+                    id="selectState"
+                    required
+                    autocomplete="address-level1"
+                  >
+                    <option selected disabled value="" id="stateChoose">
+                      Choose...
+                    </option>
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="AR">Arkansas</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="CT">Connecticut</option>
+                    <option value="DE">Delaware</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="HI">Hawaii</option>
+                    <option value="ID">Idaho</option>
+                    <option value="IL">Illinois</option>
+                    <option value="IN">Indiana</option>
+                    <option value="IA">Iowa</option>
+                    <option value="KS">Kansas</option>
+                    <option value="KY">Kentucky</option>
+                    <option value="LA">Louisiana</option>
+                    <option value="ME">Maine</option>
+                    <option value="MD">Maryland</option>
+                    <option value="MA">Massachusetts</option>
+                    <option value="MI">Michigan</option>
+                    <option value="MN">Minnesota</option>
+                    <option value="MS">Mississippi</option>
+                    <option value="MO">Missouri</option>
+                    <option value="MT">Montana</option>
+                    <option value="NE">Nebraska</option>
+                    <option value="NV">Nevada</option>
+                    <option value="NH">New Hampshire</option>
+                    <option value="NJ">New Jersey</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="NY">New York</option>
+                    <option value="NC">North Carolina</option>
+                    <option value="ND">North Dakota</option>
+                    <option value="OH">Ohio</option>
+                    <option value="OK">Oklahoma</option>
+                    <option value="OR">Oregon</option>
+                    <option value="PA">Pennsylvania</option>
+                    <option value="RI">Rhode Island</option>
+                    <option value="SC">South Carolina</option>
+                    <option value="SD">South Dakota</option>
+                    <option value="TN">Tennessee</option>
+                    <option value="TX">Texas</option>
+                    <option value="UT">Utah</option>
+                    <option value="VT">Vermont</option>
+                    <option value="VA">Virginia</option>
+                    <option value="WA">Washington</option>
+                    <option value="WV">West Virginia</option>
+                    <option value="WI">Wisconsin</option>
+                    <option value="WY">Wyoming</option>
+                    <option disabled>──────────</option>
+                    <option value="DC">District of Columbia</option>
+                    <option value="PR">Puerto Rico</option>
+                    <option value="GU">Guam</option>
+                    <option value="VI">U.S. Virgin Islands</option>
+                    <option value="AS">American Samoa</option>
+                    <option value="MP">Northern Mariana Islands</option>
+                    <option value="AE">Military (AE)</option>
+                    <option value="AP">Military (AP)</option>
+                    <option value="AA">Military (AA)</option>
+                  </select>
+                </div>
+
+                <!-- Zip Code -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="clientZipCodeLabel"
+                    for="clientZipCode"
+                    class="form-label fw-semibold"
+                    >Zip Code</label
+                  >
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]{5}"
+                    maxlength="5"
+                    id="clientZipCode"
+                    class="form-control input-black"
+                    required
+                    autocomplete="postal-code"
+                  />
+                </div>
+
+                <!-- Buttons -->
+                <button
+                  id="btnRegisterNext3"
+                  type="button"
+                  class="btn btn-primary w-100 rounded-2 mb-1"
+                >
+                  Next
+                </button>
+                <button
+                  id="btnRegisterBack3"
+                  type="button"
+                  class="btn btn-outline-primary register-back-btn w-100 rounded-2"
+                >
+                  Go Back
+                </button>
+              </form>
+            </div>
+
+            <!-- STEP 4: Emergency Contact -->
+            <div
+              id="divStepFour"
+              class="card-body p-3 p-md-4 p-lg-4 step-hidden"
+            >
+              <h5 id="titleStepFour" class="card-title text-center mb-3">
+                Emergency Contact
+              </h5>
+              <form id="clientRegisterFormStep4" novalidate>
+                <!-- No Emergency Contact Toggle -->
+                <div
+                  class="mb-3 p-3 rounded-3 border border-2 d-flex align-items-center justify-content-between"
+                  style="
+                    background-color: #e9ecef;
+                    border-color: #adb5bd !important;
+                    cursor: pointer;
+                  "
+                  role="button"
+                  tabindex="0"
+                  onclick="
+                    document.getElementById('noEmergencyContact').click()
+                  "
+                  onkeydown="
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      document.getElementById('noEmergencyContact').click();
+                    }
+                  "
+                >
+                  <label
+                    class="form-check-label fw-bold mb-0 fs-6"
+                    style="cursor: pointer; color: #333"
+                    id="noEmergencyContactLabel"
+                    for="noEmergencyContact"
+                  >
+                    No emergency contact
+                  </label>
+                  <div
+                    class="form-check form-switch mb-0"
+                    onclick="event.stopPropagation()"
+                  >
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      style="cursor: pointer; width: 3em; height: 1.5em"
+                      id="noEmergencyContact"
+                    />
+                  </div>
+                </div>
+
+                <!-- Contact First Name -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="emergencyContactFirstNameLabel"
+                    for="emergencyContactFirstName"
+                    class="form-label fw-semibold"
+                    >Contact First Name</label
+                  >
+                  <input
+                    type="text"
+                    id="emergencyContactFirstName"
+                    class="form-control input-black"
+                    required
+                  />
+                </div>
+
+                <!-- Contact Last Name -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="emergencyContactLastNameLabel"
+                    for="emergencyContactLastName"
+                    class="form-label fw-semibold"
+                    >Contact Last Name</label
+                  >
+                  <input
+                    type="text"
+                    id="emergencyContactLastName"
+                    class="form-control input-black"
+                    required
+                  />
+                </div>
+
+                <!-- Contact Phone -->
+                <div class="mb-3 text-start">
+                  <label
+                    id="emergencyContactPhoneLabel"
+                    for="emergencyContactPhone"
+                    class="form-label fw-semibold"
+                    >Contact Phone</label
+                  >
+                  <input
+                    type="tel"
+                    id="emergencyContactPhone"
+                    class="form-control input-black"
+                    required
+                    placeholder="(999) 999-9999"
+                  />
+                </div>
+
+                <!-- Buttons -->
+                <button
+                  id="btnRegisterNext4"
+                  type="button"
+                  class="btn btn-primary w-100 rounded-2 mb-1"
+                >
+                  Next
+                </button>
+                <button
+                  id="btnRegisterBack4"
+                  type="button"
+                  class="btn btn-outline-primary register-back-btn w-100 rounded-2"
+                >
+                  Go Back
+                </button>
+              </form>
+            </div>
+
+            <!-- STEP 5: Service Selection -->
+            <div
+              id="divStepFive"
+              class="card-body p-3 p-md-4 p-lg-4 step-hidden"
+            >
+              <h5 id="titleStepFive" class="card-title text-center mb-3">
+                Service Selection
+              </h5>
+              <form id="clientRegisterFormStep5" novalidate>
+                <!-- Services Grid (populated dynamically from API) -->
+                <fieldset
+                  class="row mb-3"
+                  id="serviceSelectionGrid"
+                  aria-label="Select services"
+                >
+                  <legend class="visually-hidden">
+                    Select the services you need
+                  </legend>
+                  <div class="text-center p-3 text-muted" id="loadingServices">
+                    Loading services...
+                  </div>
+                </fieldset>
+
+                <!-- Buttons -->
+                <button
+                  id="btnRegisterNext5"
+                  type="button"
+                  class="btn btn-primary w-100 rounded-2 mb-1"
+                >
+                  Next
+                </button>
+                <button
+                  id="btnRegisterBack5"
+                  type="button"
+                  class="btn btn-outline-primary register-back-btn w-100 rounded-2"
+                >
+                  Go Back
+                </button>
+              </form>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="wholeProgressBar" class="px-3 px-md-4 mb-3">
+              <div
+                class="progress"
+                style="height: 8px; border-radius: 999px; background: #e9ecef"
+              >
+                <div
+                  class="progress-bar bg-success"
+                  id="progressBarTop"
+                  role="progressbar"
+                  style="
+                    width: 17%;
+                    border-radius: 999px;
+                    transition: width 0.5s ease;
+                  "
+                  aria-valuenow="17"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label="Registration progress, step 1 of 5"
+                ></div>
+              </div>
+              <div
+                class="d-flex justify-content-between mt-1"
+                id="progressStepLabels"
+                style="font-size: 0.65rem; color: #777"
+                aria-hidden="true"
+              >
+                <span id="progressLogin">Login</span>
+                <span id="progressPersonal">Personal</span>
+                <span id="progressAddress">Address</span>
+                <span id="progressEmergency">Emergency</span>
+                <span id="progressServices">Services</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dev: Step jumper (hidden unless dev mode is active) -->
+          <div class="text-center mt-2 mb-1 dev-only d-none">
+            <div class="dev-bar">
+              <span class="dev-bar-label">Dev</span>
+              <button id="skipStep1" type="button" class="dev-step-btn">
+                Step 1
+              </button>
+              <button id="skipStep2" type="button" class="dev-step-btn">
+                Step 2
+              </button>
+              <button id="skipStep3" type="button" class="dev-step-btn">
+                Step 3
+              </button>
+              <button id="skipStep4" type="button" class="dev-step-btn">
+                Step 4
+              </button>
+              <button id="skipStep5" type="button" class="dev-step-btn">
+                Step 5
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
-
     <!-- Waiver Modal -->
-    <div class="modal fade" id="registrationCompleteModal" tabindex="-1"
-        aria-labelledby="waiverLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+    <div
+      class="modal fade"
+      id="registrationCompleteModal"
+      tabindex="-1"
+      aria-labelledby="waiverLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="waiverLabel">Waiver Acknowledgement</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
 
-                <div class="modal-header">
-                    <h5 class="modal-title" id="waiverLabel">Waiver Acknowledgement</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body text-start">
-                    <div id="waiverContent" style="height:35vh;overflow:scroll;">
-                        <p class="mb-2 fw-bold">DUO WAIVER</p>
-                        <p>ACKNOWLEDGMENT OF RECEIPT OF NOTICE OF PRIVACY PRACTICES</p>
-                        <p class="fw-bold">MEDICAL</p>
-                        <p class="fs-6">By agreeing below, I hereby acknowledge that I have received a copy of the Practice's Notice of Privacy Practices. </p>
-                        <p>CONSENT TO TREATMENT: </p>
-                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by optometrists of Doing Unto Others (DUO) for an eye exam and to any related diagnostic procedures and treatments as necessary in the judgment of the optometrist. I acknowledge that the practice of optometry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments. </p>
-                        <p>CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION: </p>
-                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to disclose my medical information so that Doing Unto Others may treat me and generally carry on the health care operations of Doing Unto Others (e.g., quality assurance). I also authorize Doing Unto Others to disclose my medical information to insurers and providers outside of Doing Unto Others when necessary for purposes of my treatment and for their health care operations. By agreeing below, I also authorize Doing Unto Others to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives.</p>
-                        <p class="fs-6">Doing Unto Others does not charge for any services and is a registered Volunteer Health Program in Tennessee (Registration #41). By signing below, I understand the Optometric services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free. Free care does not necessarily extended to referral sources.</p>
-                        <p class="fs-6">Release of Likeness/Image: </p>
-                        <p class="fs-6">By agreeing to this consent, you release DUO to publish your image or likeness in formats such as paper, virtual presentation, video, and the like.</p>
-                        <p class="fs-6">By agreeing below, I agree to all of the above while I am a patient of the Practice.</p>
-                        <p class="fw-bold">DENTAL</p>
-                        <p class="fs-6">By agreeing below, I hereby acknowledge that I have received a copy of the Practice&rsquo;s Notice of Privacy Practices.</p>
-                        <p class="fs-6">CONSENT TO TREATMENT:</p>
-                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by dentists and other dental professionals of Doing Unto others for dental care and to any related diagnostic procedures and treatments as necessary in the judgment of the dentist. I acknowledge that the practice of dentistry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments.&nbsp;</p>
-                        <p class="fs-6">CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:</p>
-                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to disclose my medical information so that the practice may treat me and generally carry on the health care operations of the Practice (e.g., quality assurance). I also authorize the Practice to disclose my medical information to providers outside of the Practice when necessary for purposes of my treatment and for their health care operations. By agreeing below, I also authorize the Practice to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives.</p>
-                        <p class="fs-6">CONSENT FOR RADIOLOGIC IMAGING</p>
-                        <p class="fs-6">By agreeing below, I hereby authorize Doing Unto Others to use low-dose x-ray imaging for dental procedure purposes and to store the images for future appointment uses.</p>
-                        <p class="fs-6">Doing Unto Others does not charge for any services. By signing below, I understand the Dental services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free.</p>
-                        <p class="fw-bold">OPTICAL</p>
-                        <p class="fs-6">CONSENT TO TREATMENT: </p>
-                        <p class="fs-6">By agreeing below, I do hereby voluntarily consent to treatment by optometrists of the Practice for an eye exam and to any related diagnostic procedures and treatments as necessary in the judgment of the optometrist. I acknowledge that the practice of optometry is not an exact science. I acknowledge that no guarantees have been or can be made to me as a result of such procedures and treatments.  </p>
-                        <p class="fs-6">CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:  </p>
-                        <p class="fs-6">By agreeing below, I hereby authorize the Practice to disclose my medical information so that the Practice may treat me, seek payment from third parties for such treatment, and generally carry on the health care operations of the Practice (e.g., quality assurance). I also authorize the Practice to disclose my medical information to insurers and providers outside of the Practice when necessary for purposes of my treatment, payment for that treatment, and for their health care operations. By agreeing below, I also authorize the Practice to communicate with me by phone (using the numbers listed above) and to disclose my general health information on my home answering machine/voicemail and on my cell phone voicemail, and to my spouse, children, and relatives. </p>
-                        <p class="fs-6">Doing Unto Others does not charge for any services. By signing below, I understand the Optometric services provided by Doing Unto Others (DUO) are done in accordance with the Volunteer Health Service program in the state of Tennessee and that the service provided by Doing Unto Others is free. </p>
-                    </div>
-
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" value="" id="waiverAgree">
-                        <label class="form-check-label" for="waiverAgree" id="waiverAgreeLabel">
-                            I have read and agree.
-                        </label>
-                    </div>
-
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="btnWaiverSubmit">Submit</button>
-                </div>
-
+          <div class="modal-body text-start">
+            <div id="waiverContent" style="height: 35vh; overflow: scroll">
+              <p class="mb-2 fw-bold">DUO WAIVER</p>
+              <p>ACKNOWLEDGMENT OF RECEIPT OF NOTICE OF PRIVACY PRACTICES</p>
+              <p class="fw-bold">MEDICAL</p>
+              <p class="fs-6">
+                By agreeing below, I hereby acknowledge that I have received a
+                copy of the Practice's Notice of Privacy Practices.
+              </p>
+              <p>CONSENT TO TREATMENT:</p>
+              <p class="fs-6">
+                By agreeing below, I do hereby voluntarily consent to treatment
+                by optometrists of Doing Unto Others (DUO) for an eye exam and
+                to any related diagnostic procedures and treatments as necessary
+                in the judgment of the optometrist. I acknowledge that the
+                practice of optometry is not an exact science. I acknowledge
+                that no guarantees have been or can be made to me as a result of
+                such procedures and treatments.
+              </p>
+              <p>CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:</p>
+              <p class="fs-6">
+                By agreeing below, I hereby authorize Doing Unto Others to
+                disclose my medical information so that Doing Unto Others may
+                treat me and generally carry on the health care operations of
+                Doing Unto Others (e.g., quality assurance). I also authorize
+                Doing Unto Others to disclose my medical information to insurers
+                and providers outside of Doing Unto Others when necessary for
+                purposes of my treatment and for their health care operations.
+                By agreeing below, I also authorize Doing Unto Others to
+                communicate with me by phone (using the numbers listed above)
+                and to disclose my general health information on my home
+                answering machine/voicemail and on my cell phone voicemail, and
+                to my spouse, children, and relatives.
+              </p>
+              <p class="fs-6">
+                Doing Unto Others does not charge for any services and is a
+                registered Volunteer Health Program in Tennessee (Registration
+                #41). By signing below, I understand the Optometric services
+                provided by Doing Unto Others (DUO) are done in accordance with
+                the Volunteer Health Service program in the state of Tennessee
+                and that the service provided by Doing Unto Others is free. Free
+                care does not necessarily extended to referral sources.
+              </p>
+              <p class="fs-6">Release of Likeness/Image:</p>
+              <p class="fs-6">
+                By agreeing to this consent, you release DUO to publish your
+                image or likeness in formats such as paper, virtual
+                presentation, video, and the like.
+              </p>
+              <p class="fs-6">
+                By agreeing below, I agree to all of the above while I am a
+                patient of the Practice.
+              </p>
+              <p class="fw-bold">DENTAL</p>
+              <p class="fs-6">
+                By agreeing below, I hereby acknowledge that I have received a
+                copy of the Practice&rsquo;s Notice of Privacy Practices.
+              </p>
+              <p class="fs-6">CONSENT TO TREATMENT:</p>
+              <p class="fs-6">
+                By agreeing below, I do hereby voluntarily consent to treatment
+                by dentists and other dental professionals of Doing Unto others
+                for dental care and to any related diagnostic procedures and
+                treatments as necessary in the judgment of the dentist. I
+                acknowledge that the practice of dentistry is not an exact
+                science. I acknowledge that no guarantees have been or can be
+                made to me as a result of such procedures and treatments.&nbsp;
+              </p>
+              <p class="fs-6">
+                CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:
+              </p>
+              <p class="fs-6">
+                By agreeing below, I hereby authorize Doing Unto Others to
+                disclose my medical information so that the practice may treat
+                me and generally carry on the health care operations of the
+                Practice (e.g., quality assurance). I also authorize the
+                Practice to disclose my medical information to providers outside
+                of the Practice when necessary for purposes of my treatment and
+                for their health care operations. By agreeing below, I also
+                authorize the Practice to communicate with me by phone (using
+                the numbers listed above) and to disclose my general health
+                information on my home answering machine/voicemail and on my
+                cell phone voicemail, and to my spouse, children, and relatives.
+              </p>
+              <p class="fs-6">CONSENT FOR RADIOLOGIC IMAGING</p>
+              <p class="fs-6">
+                By agreeing below, I hereby authorize Doing Unto Others to use
+                low-dose x-ray imaging for dental procedure purposes and to
+                store the images for future appointment uses.
+              </p>
+              <p class="fs-6">
+                Doing Unto Others does not charge for any services. By signing
+                below, I understand the Dental services provided by Doing Unto
+                Others (DUO) are done in accordance with the Volunteer Health
+                Service program in the state of Tennessee and that the service
+                provided by Doing Unto Others is free.
+              </p>
+              <p class="fw-bold">OPTICAL</p>
+              <p class="fs-6">CONSENT TO TREATMENT:</p>
+              <p class="fs-6">
+                By agreeing below, I do hereby voluntarily consent to treatment
+                by optometrists of the Practice for an eye exam and to any
+                related diagnostic procedures and treatments as necessary in the
+                judgment of the optometrist. I acknowledge that the practice of
+                optometry is not an exact science. I acknowledge that no
+                guarantees have been or can be made to me as a result of such
+                procedures and treatments.
+              </p>
+              <p class="fs-6">
+                CONSENT TO DISCLOSE MY GENERAL HEALTH INFORMATION:
+              </p>
+              <p class="fs-6">
+                By agreeing below, I hereby authorize the Practice to disclose
+                my medical information so that the Practice may treat me, seek
+                payment from third parties for such treatment, and generally
+                carry on the health care operations of the Practice (e.g.,
+                quality assurance). I also authorize the Practice to disclose my
+                medical information to insurers and providers outside of the
+                Practice when necessary for purposes of my treatment, payment
+                for that treatment, and for their health care operations. By
+                agreeing below, I also authorize the Practice to communicate
+                with me by phone (using the numbers listed above) and to
+                disclose my general health information on my home answering
+                machine/voicemail and on my cell phone voicemail, and to my
+                spouse, children, and relatives.
+              </p>
+              <p class="fs-6">
+                Doing Unto Others does not charge for any services. By signing
+                below, I understand the Optometric services provided by Doing
+                Unto Others (DUO) are done in accordance with the Volunteer
+                Health Service program in the state of Tennessee and that the
+                service provided by Doing Unto Others is free.
+              </p>
             </div>
+
+            <div class="form-check mt-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value=""
+                id="waiverAgree"
+              />
+              <label
+                class="form-check-label"
+                for="waiverAgree"
+                id="waiverAgreeLabel"
+              >
+                I have read and agree.
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnWaiverSubmit">
+              Submit
+            </button>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Scripts -->
@@ -492,6 +973,5 @@
     <script src="../js/register.js"></script>
     <script src="../js/lang.js"></script>
     <script src="../js/devMode.js"></script>
-</body>
-
+  </body>
 </html>
