@@ -1,16 +1,15 @@
 /*
  ============================================================
- File:           Service.js
- Description:    Handles service-specific content display based on 
+ File:            Service.js
+ Description:     Service station queue, scanning, and status management logic.
                  ServiceID from QR code URL params. Also handles
                  client check-in/check-out via QR code scanning or
                  manual client ID entry through Update buttons.
                  ServiceID values: medical, optical, dental, haircut
                  Works with pinCode.js security layer.
- 
- Last Modified By:  Cameron
- Last Modified On:  Mar 5 @ 6:00 PM
- Changes Made:      Added API endpoint guidance IDK if its needed but its there
+ Last Modified By:  Matthew
+ Last Modified On:  April 20 @ 5:16 PM
+ Changes Made:      Standardized formatting and added clarity comments.
  
 =============================================================
 
@@ -51,48 +50,51 @@
 
 // Spin a refresh button's arrow icon while a promise is pending, then restore it
 function spinRefreshBtn(btn, promise) {
-    if (!btn) return promise;
-    const icon = btn.querySelector('.bi-arrow-clockwise');
-    btn.disabled = true;
-    if (icon) icon.classList.add('spin-refresh');
-    const minDelay = new Promise(r => setTimeout(r, 600));
-    return Promise.all([promise, minDelay]).finally(() => {
-        if (icon) icon.classList.remove('spin-refresh');
-        btn.disabled = false;
-    });
+  if (!btn) return promise;
+  const icon = btn.querySelector(".bi-arrow-clockwise");
+  btn.disabled = true;
+  if (icon) icon.classList.add("spin-refresh");
+  const minDelay = new Promise((r) => setTimeout(r, 600));
+  return Promise.all([promise, minDelay]).finally(() => {
+    if (icon) icon.classList.remove("spin-refresh");
+    btn.disabled = false;
+  });
 }
 
 // Format a YYYY-MM-DD date string to MM/DD/YYYY to match other dashboards
 function formatDOB(dateString) {
-    if (!dateString) return 'N/A';
-    const parts = dateString.split('-');
-    if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-    return dateString;
+  if (!dateString) return "N/A";
+  const parts = dateString.split("-");
+  if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+  return dateString;
 }
 
 function escapeHtml(text) {
-    return String(text ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = '') {
-    const safeFallback = fallbackBi || 'bi-person';
-    const cls = extraClasses ? ` ${extraClasses}` : '';
-    if (iconTag && typeof iconTag === 'string') {
-        const trimmed = iconTag.trim();
-        if (trimmed.includes('<svg')) {
-            const svg = trimmed.replace(/<svg/, '<svg style="width:1em;height:1em;fill:currentColor;"');
-            return `<span class="svg-icon${cls}" style="display:inline-flex;align-items:center;justify-content:center;">${svg}</span>`;
-        }
-        if (trimmed.startsWith('bi-')) {
-            return `<i class="bi ${trimmed}${cls}"></i>`;
-        }
+function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = "") {
+  const safeFallback = fallbackBi || "bi-person";
+  const cls = extraClasses ? ` ${extraClasses}` : "";
+  if (iconTag && typeof iconTag === "string") {
+    const trimmed = iconTag.trim();
+    if (trimmed.includes("<svg")) {
+      const svg = trimmed.replace(
+        /<svg/,
+        '<svg style="width:1em;height:1em;fill:currentColor;"',
+      );
+      return `<span class="svg-icon${cls}" style="display:inline-flex;align-items:center;justify-content:center;">${svg}</span>`;
     }
-    return `<i class="bi ${safeFallback}${cls}"></i>`;
+    if (trimmed.startsWith("bi-")) {
+      return `<i class="bi ${trimmed}${cls}"></i>`;
+    }
+  }
+  return `<i class="bi ${safeFallback}${cls}"></i>`;
 }
 
 // Service configuration — loaded from API at init, populated by loadServiceHierarchy()
@@ -112,319 +114,353 @@ let SERVICE_ICON_BY_ID = {};
 
 // Loads service hierarchy from /api/services.php and builds SERVICES, SERVICE_WAITLISTS, and SUB_SERVICE_LABELS
 async function loadServiceHierarchy() {
-    try {
-        const res = await fetch('/api/services.php?view=hierarchy');
-        const json = await res.json();
-        if (!json.success || !json.hierarchy) {
-            console.error('Failed to load service hierarchy');
-            return;
-        }
-
-        SERVICES = {};
-        SERVICE_WAITLISTS = {};
-        SUB_SERVICE_LABELS = {};
-        SERVICE_PRIORITY = {};
-        SERVICE_NAME_BY_ID = {};
-        SERVICE_ICON_BY_ID = {};
-        serviceHierarchyRaw = json.hierarchy;
-
-        let priorityIndex = 0;
-
-        json.hierarchy.forEach(cat => {
-            const key = cat.ServiceID;
-            const children = cat.children || [];
-
-            // If category has children, serviceIDs = child IDs
-            // If no children, serviceIDs = [category ID itself] (standalone like optical, haircut)
-            const serviceIDs = children.length > 0
-                ? children.map(c => c.ServiceID)
-                : [key];
-
-            SERVICES[key] = {
-                name: cat.ServiceName,
-                iconTag: cat.IconTag || 'bi-circle',
-                color: 'primary',
-                serviceIDs: serviceIDs,
-            };
-            SERVICE_PRIORITY[key] = priorityIndex++;
-            SERVICE_NAME_BY_ID[key] = cat.ServiceName;
-            SERVICE_ICON_BY_ID[key] = cat.IconTag || 'bi-circle';
-
-            SERVICE_WAITLISTS[key] = {};
-
-            // Build sub-service labels from child ServiceName
-            // Strip the parent name prefix if present (e.g. "Dental Hygiene" → "Hygiene")
-            children.forEach(child => {
-                let label = child.ServiceName;
-                if (label.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
-                    label = label.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
-                }
-                SUB_SERVICE_LABELS[child.ServiceID] = label || child.ServiceName;
-                SERVICE_PRIORITY[child.ServiceID] = priorityIndex++;
-                SERVICE_NAME_BY_ID[child.ServiceID] = child.ServiceName;
-                SERVICE_ICON_BY_ID[child.ServiceID] = child.IconTag || cat.IconTag || 'bi-circle';
-            });
-        });
-
-        console.log('Service hierarchy loaded:', Object.keys(SERVICES));
-    } catch (err) {
-        console.error('Error loading service hierarchy:', err);
+  try {
+    const res = await fetch("/api/services.php?view=hierarchy");
+    const json = await res.json();
+    if (!json.success || !json.hierarchy) {
+      console.error("Failed to load service hierarchy");
+      return;
     }
+
+    SERVICES = {};
+    SERVICE_WAITLISTS = {};
+    SUB_SERVICE_LABELS = {};
+    SERVICE_PRIORITY = {};
+    SERVICE_NAME_BY_ID = {};
+    SERVICE_ICON_BY_ID = {};
+    serviceHierarchyRaw = json.hierarchy;
+
+    let priorityIndex = 0;
+
+    json.hierarchy.forEach((cat) => {
+      const key = cat.ServiceID;
+      const children = cat.children || [];
+
+      // If category has children, serviceIDs = child IDs
+      // If no children, serviceIDs = [category ID itself] (standalone like optical, haircut)
+      const serviceIDs =
+        children.length > 0 ? children.map((c) => c.ServiceID) : [key];
+
+      SERVICES[key] = {
+        name: cat.ServiceName,
+        iconTag: cat.IconTag || "bi-circle",
+        color: "primary",
+        serviceIDs: serviceIDs,
+      };
+      SERVICE_PRIORITY[key] = priorityIndex++;
+      SERVICE_NAME_BY_ID[key] = cat.ServiceName;
+      SERVICE_ICON_BY_ID[key] = cat.IconTag || "bi-circle";
+
+      SERVICE_WAITLISTS[key] = {};
+
+      // Build sub-service labels from child ServiceName
+      // Strip the parent name prefix if present (e.g. "Dental Hygiene" → "Hygiene")
+      children.forEach((child) => {
+        let label = child.ServiceName;
+        if (label.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+          label = label
+            .substring(cat.ServiceName.length)
+            .replace(/^[\s\-–—]+/, "");
+        }
+        SUB_SERVICE_LABELS[child.ServiceID] = label || child.ServiceName;
+        SERVICE_PRIORITY[child.ServiceID] = priorityIndex++;
+        SERVICE_NAME_BY_ID[child.ServiceID] = child.ServiceName;
+        SERVICE_ICON_BY_ID[child.ServiceID] =
+          child.IconTag || cat.IconTag || "bi-circle";
+      });
+    });
+
+    console.log("Service hierarchy loaded:", Object.keys(SERVICES));
+  } catch (err) {
+    console.error("Error loading service hierarchy:", err);
+  }
 }
 
 let videoStream = null;
 let isScanning = false;
 let currentOverlay = null;
-let currentServiceKey = null;  // Track current service for client operations
-let isClientScan = false;  // Flag to distinguish between service and client QR scans
-let isProcessing = false;  // Guard against simultaneous check-in/check-out actions
+let currentServiceKey = null; // Track current service for client operations
+let isClientScan = false; // Flag to distinguish between service and client QR scans
+let isProcessing = false; // Guard against simultaneous check-in/check-out actions
 
 // Show a specific service's content section
 function showService(serviceKey) {
-    console.log(`showService called with: ${serviceKey}`);
+  console.log(`showService called with: ${serviceKey}`);
 
-    // Store current service for client operations
-    currentServiceKey = serviceKey;
+  // Store current service for client operations
+  currentServiceKey = serviceKey;
 
-    const service = SERVICES[serviceKey];
-    if (!service) {
-        console.error('Invalid service:', serviceKey);
-        return;
-    }
+  const service = SERVICES[serviceKey];
+  if (!service) {
+    console.error("Invalid service:", serviceKey);
+    return;
+  }
 
-    // Update the service title
-    const titleEl = document.getElementById('serviceTitle');
-    if (titleEl) titleEl.textContent = service.name;
+  // Update the service title
+  const titleEl = document.getElementById("serviceTitle");
+  if (titleEl) titleEl.textContent = service.name;
 
-    // Update the service header background color
-    const headerEl = document.getElementById('serviceHeader');
-    if (headerEl) {
-        headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${service.color} p-3`;
-    }
+  // Update the service header background color
+  const headerEl = document.getElementById("serviceHeader");
+  if (headerEl) {
+    headerEl.className = `card-header d-flex justify-content-between align-items-center bg-${service.color} p-3`;
+  }
 
-    // Set stat labels
-    const stat1LabelEl = document.getElementById('stat1Label');
-    const stat2LabelEl = document.getElementById('stat2Label');
-    const stat3LabelEl = document.getElementById('stat3Label');
-    if (stat1LabelEl) stat1LabelEl.textContent = 'Waitlist';
-    if (stat2LabelEl) stat2LabelEl.textContent = 'In Progress';
-    if (stat3LabelEl) stat3LabelEl.textContent = 'Completed';
+  // Set stat labels
+  const stat1LabelEl = document.getElementById("stat1Label");
+  const stat2LabelEl = document.getElementById("stat2Label");
+  const stat3LabelEl = document.getElementById("stat3Label");
+  if (stat1LabelEl) stat1LabelEl.textContent = "Waitlist";
+  if (stat2LabelEl) stat2LabelEl.textContent = "In Progress";
+  if (stat3LabelEl) stat3LabelEl.textContent = "Completed";
 
-    // Update waitlist title
-    const waitlistTitleEl = document.getElementById('waitlistTitle');
-    if (waitlistTitleEl) waitlistTitleEl.textContent = `${service.name} - Waitlist`;
+  // Update waitlist title
+  const waitlistTitleEl = document.getElementById("waitlistTitle");
+  if (waitlistTitleEl)
+    waitlistTitleEl.textContent = `${service.name} - Waitlist`;
 
-    // Reset past average display before fresh data is loaded
-    const pastAvgEl = document.getElementById('pastAvgTime');
-    if (pastAvgEl) {
-        pastAvgEl.textContent = 'N/A';
-    }
+  // Reset past average display before fresh data is loaded
+  const pastAvgEl = document.getElementById("pastAvgTime");
+  if (pastAvgEl) {
+    pastAvgEl.textContent = "N/A";
+  }
 
-    // Fetch live stats and waitlist from GrabService API
-    fetchServiceData(serviceKey);
+  // Fetch live stats and waitlist from GrabService API
+  fetchServiceData(serviceKey);
 
-    // Show the service content if it's hidden
-    const serviceContent = document.getElementById('serviceContent');
-    if (serviceContent && serviceContent.style.display === 'none') {
-        serviceContent.style.display = 'block';
-    }
+  // Show the service content if it's hidden
+  const serviceContent = document.getElementById("serviceContent");
+  if (serviceContent && serviceContent.style.display === "none") {
+    serviceContent.style.display = "block";
+  }
 
-    // Scroll to top so user can see the service
-    window.scrollTo(0, 0);
+  // Scroll to top so user can see the service
+  window.scrollTo(0, 0);
 
-    console.log(`Service displayed: ${serviceKey}`);
+  console.log(`Service displayed: ${serviceKey}`);
 }
 
 // Fetch live service data (stats + waitlist) from GrabService.php
 async function fetchServiceData(serviceKey) {
-    const service = SERVICES[serviceKey];
-    if (!service || !service.serviceIDs) return;
+  const service = SERVICES[serviceKey];
+  if (!service || !service.serviceIDs) return;
 
-    try {
-        const ids = service.serviceIDs.join(',');
-        const response = await fetch(`/api/GrabService.php?ServiceID=${encodeURIComponent(ids)}`);
+  try {
+    const ids = service.serviceIDs.join(",");
+    const response = await fetch(
+      `/api/GrabService.php?ServiceID=${encodeURIComponent(ids)}`,
+    );
 
-        if (!response.ok) {
-            console.error(`Failed to fetch service data: ${response.status}`);
-            return;
-        }
-
-        const data = await response.json();
-        if (!data.success) {
-            console.error('GrabService API error:', data.error);
-            return;
-        }
-
-        // Update stat values
-        const stat1ValueEl = document.getElementById('stat1Value');
-        const stat2ValueEl = document.getElementById('stat2Value');
-        const stat3ValueEl = document.getElementById('stat3Value');
-        if (stat1ValueEl) stat1ValueEl.textContent = data.pendingCount;
-        if (stat2ValueEl) stat2ValueEl.textContent = data.inProgressCount;
-        if (stat3ValueEl) stat3ValueEl.textContent = data.completedCount;
-
-        // Update average service times
-        const avgTimeEl = document.getElementById('avgTime');
-        if (avgTimeEl) {
-            avgTimeEl.textContent = data.avgServiceTime != null ? `${data.avgServiceTime} min` : 'N/A';
-        }
-
-        // Previous-event average (server-calculated from the most recent prior event)
-        const pastAvgEl = document.getElementById('pastAvgTime');
-        if (pastAvgEl) {
-            pastAvgEl.textContent = data.pastAvgServiceTime != null ? `${data.pastAvgServiceTime} min` : 'N/A';
-        }
-
-        // Normalize API waitlist into local format and populate table.
-        // Rows may include the same client multiple times (one per service),
-        // so we aggregate into one client card with full assigned services.
-        SERVICE_WAITLISTS[serviceKey] = {};
-        (data.waitList || []).forEach(client => {
-            const middleInitialRaw = String(client.MiddleInitial || '').trim();
-            const middleInitialDisplay = middleInitialRaw
-                ? `${middleInitialRaw}${(middleInitialRaw.length === 1 && !middleInitialRaw.endsWith('.')) ? '.' : ''}`
-                : '';
-            const fullName = [client.FirstName, middleInitialDisplay, client.LastName]
-                .filter(Boolean)
-                .join(' ');
-
-            if (!SERVICE_WAITLISTS[serviceKey][client.ClientID]) {
-                SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
-                    id: client.ClientID,
-                    name: fullName,
-                    dob: client.DOB,
-                    status: 'waiting',
-                    isAbandoned: false,
-                    dentalFormsCompleted: false,
-                    serviceID: client.ServiceID,
-                    assignedServices: []
-                };
-            }
-
-            SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned = (client.IsAbandoned === 1 || client.IsAbandoned === '1');
-            SERVICE_WAITLISTS[serviceKey][client.ClientID].dentalFormsCompleted = (client.DentalFormsCompleted === 1 || client.DentalFormsCompleted === '1');
-
-            // Promote status by priority so one client card reflects the strongest state.
-            const statusPriority = { waiting: 1, standby: 2, completed: 3, 'in-progress': 4 };
-            let normalizedStatus = 'waiting';
-            if (client.ServiceStatus === 'In-Progress') normalizedStatus = 'in-progress';
-            else if (client.ServiceStatus === 'Complete') normalizedStatus = 'completed';
-            else if (client.ServiceStatus === 'Standby') normalizedStatus = 'standby';
-            const currentStatus = SERVICE_WAITLISTS[serviceKey][client.ClientID].status;
-            if ((statusPriority[normalizedStatus] || 0) > (statusPriority[currentStatus] || 0)) {
-                SERVICE_WAITLISTS[serviceKey][client.ClientID].status = normalizedStatus;
-            }
-
-            if (SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned) {
-                SERVICE_WAITLISTS[serviceKey][client.ClientID].status = 'abandoned';
-            }
-
-            // Keep the current row's service for sub-label behavior.
-            SERVICE_WAITLISTS[serviceKey][client.ClientID].serviceID = client.ServiceID;
-
-            const serviceStatusPriority = {
-                'In-Progress': 4,
-                'Complete': 3,
-                'Pending': 2,
-                'Standby': 1
-            };
-            const existingMap = new Map(
-                (SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices || []).map(s => [s.name, s])
-            );
-            const assigned = (client.AssignedServiceDetails || '')
-                .split('||')
-                .map(s => s.trim())
-                .filter(Boolean);
-
-            assigned.forEach(item => {
-                const [serviceIdRaw, name, statusRaw] = item.split('::');
-                const serviceId = (serviceIdRaw || '').trim();
-                const serviceName = (name || '').trim();
-                const serviceStatus = (statusRaw || '').trim() || 'Pending';
-                if (!serviceName) return;
-
-                const existing = existingMap.get(serviceName);
-                if (!existing || (serviceStatusPriority[serviceStatus] || 0) > (serviceStatusPriority[existing.status] || 0)) {
-                    existingMap.set(serviceName, { id: serviceId, name: serviceName, status: serviceStatus });
-                }
-            });
-            SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices = Array.from(existingMap.values()).sort((a, b) => {
-                const aPriority = SERVICE_PRIORITY[a.id] ?? Number.MAX_SAFE_INTEGER;
-                const bPriority = SERVICE_PRIORITY[b.id] ?? Number.MAX_SAFE_INTEGER;
-                if (aPriority !== bPriority) return aPriority - bPriority;
-                return a.name.localeCompare(b.name);
-            });
-        });
-
-        populateWaitlist();
-        // Capacity data is now bundled in this same response — no second HTTP request needed
-        renderAvailabilityBars(data.capacityData || []);
-        console.log(`Service data updated for ${serviceKey}`);
-    } catch (error) {
-        console.error('Error fetching service data:', error);
-        const avgTimeEl = document.getElementById('avgTime');
-        if (avgTimeEl) avgTimeEl.textContent = 'N/A';
+    if (!response.ok) {
+      console.error(`Failed to fetch service data: ${response.status}`);
+      return;
     }
-}
 
+    const data = await response.json();
+    if (!data.success) {
+      console.error("GrabService API error:", data.error);
+      return;
+    }
+
+    // Update stat values
+    const stat1ValueEl = document.getElementById("stat1Value");
+    const stat2ValueEl = document.getElementById("stat2Value");
+    const stat3ValueEl = document.getElementById("stat3Value");
+    if (stat1ValueEl) stat1ValueEl.textContent = data.pendingCount;
+    if (stat2ValueEl) stat2ValueEl.textContent = data.inProgressCount;
+    if (stat3ValueEl) stat3ValueEl.textContent = data.completedCount;
+
+    // Update average service times
+    const avgTimeEl = document.getElementById("avgTime");
+    if (avgTimeEl) {
+      avgTimeEl.textContent =
+        data.avgServiceTime != null ? `${data.avgServiceTime} min` : "N/A";
+    }
+
+    // Previous-event average (server-calculated from the most recent prior event)
+    const pastAvgEl = document.getElementById("pastAvgTime");
+    if (pastAvgEl) {
+      pastAvgEl.textContent =
+        data.pastAvgServiceTime != null
+          ? `${data.pastAvgServiceTime} min`
+          : "N/A";
+    }
+
+    // Normalize API waitlist into local format and populate table.
+    // Rows may include the same client multiple times (one per service),
+    // so we aggregate into one client card with full assigned services.
+    SERVICE_WAITLISTS[serviceKey] = {};
+    (data.waitList || []).forEach((client) => {
+      const middleInitialRaw = String(client.MiddleInitial || "").trim();
+      const middleInitialDisplay = middleInitialRaw
+        ? `${middleInitialRaw}${middleInitialRaw.length === 1 && !middleInitialRaw.endsWith(".") ? "." : ""}`
+        : "";
+      const fullName = [client.FirstName, middleInitialDisplay, client.LastName]
+        .filter(Boolean)
+        .join(" ");
+
+      if (!SERVICE_WAITLISTS[serviceKey][client.ClientID]) {
+        SERVICE_WAITLISTS[serviceKey][client.ClientID] = {
+          id: client.ClientID,
+          name: fullName,
+          dob: client.DOB,
+          status: "waiting",
+          isAbandoned: false,
+          dentalFormsCompleted: false,
+          serviceID: client.ServiceID,
+          assignedServices: [],
+        };
+      }
+
+      SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned =
+        client.IsAbandoned === 1 || client.IsAbandoned === "1";
+      SERVICE_WAITLISTS[serviceKey][client.ClientID].dentalFormsCompleted =
+        client.DentalFormsCompleted === 1 ||
+        client.DentalFormsCompleted === "1";
+
+      // Promote status by priority so one client card reflects the strongest state.
+      const statusPriority = {
+        waiting: 1,
+        standby: 2,
+        completed: 3,
+        "in-progress": 4,
+      };
+      let normalizedStatus = "waiting";
+      if (client.ServiceStatus === "In-Progress")
+        normalizedStatus = "in-progress";
+      else if (client.ServiceStatus === "Complete")
+        normalizedStatus = "completed";
+      else if (client.ServiceStatus === "Standby") normalizedStatus = "standby";
+      const currentStatus =
+        SERVICE_WAITLISTS[serviceKey][client.ClientID].status;
+      if (
+        (statusPriority[normalizedStatus] || 0) >
+        (statusPriority[currentStatus] || 0)
+      ) {
+        SERVICE_WAITLISTS[serviceKey][client.ClientID].status =
+          normalizedStatus;
+      }
+
+      if (SERVICE_WAITLISTS[serviceKey][client.ClientID].isAbandoned) {
+        SERVICE_WAITLISTS[serviceKey][client.ClientID].status = "abandoned";
+      }
+
+      // Keep the current row's service for sub-label behavior.
+      SERVICE_WAITLISTS[serviceKey][client.ClientID].serviceID =
+        client.ServiceID;
+
+      const serviceStatusPriority = {
+        "In-Progress": 4,
+        Complete: 3,
+        Pending: 2,
+        Standby: 1,
+      };
+      const existingMap = new Map(
+        (
+          SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices || []
+        ).map((s) => [s.name, s]),
+      );
+      const assigned = (client.AssignedServiceDetails || "")
+        .split("||")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      assigned.forEach((item) => {
+        const [serviceIdRaw, name, statusRaw] = item.split("::");
+        const serviceId = (serviceIdRaw || "").trim();
+        const serviceName = (name || "").trim();
+        const serviceStatus = (statusRaw || "").trim() || "Pending";
+        if (!serviceName) return;
+
+        const existing = existingMap.get(serviceName);
+        if (
+          !existing ||
+          (serviceStatusPriority[serviceStatus] || 0) >
+            (serviceStatusPriority[existing.status] || 0)
+        ) {
+          existingMap.set(serviceName, {
+            id: serviceId,
+            name: serviceName,
+            status: serviceStatus,
+          });
+        }
+      });
+      SERVICE_WAITLISTS[serviceKey][client.ClientID].assignedServices =
+        Array.from(existingMap.values()).sort((a, b) => {
+          const aPriority = SERVICE_PRIORITY[a.id] ?? Number.MAX_SAFE_INTEGER;
+          const bPriority = SERVICE_PRIORITY[b.id] ?? Number.MAX_SAFE_INTEGER;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+          return a.name.localeCompare(b.name);
+        });
+    });
+
+    populateWaitlist();
+    // Capacity data is now bundled in this same response — no second HTTP request needed
+    renderAvailabilityBars(data.capacityData || []);
+    console.log(`Service data updated for ${serviceKey}`);
+  } catch (error) {
+    console.error("Error fetching service data:", error);
+    const avgTimeEl = document.getElementById("avgTime");
+    if (avgTimeEl) avgTimeEl.textContent = "N/A";
+  }
+}
 
 // Show service selection dropdown for manual entry
 // If required=true, user cannot dismiss without selecting a service
 function showServiceSelectionDropdown(required = false) {
-    // Stop QR scanning first
-    stopQRScanning();
+  // Stop QR scanning first
+  stopQRScanning();
 
-    let html = '<div class="d-grid gap-2">';
-    Object.entries(SERVICES).forEach(([serviceKey, serviceData]) => {
-        html += `<button class="btn btn-outline-primary service-select-btn" data-service="${serviceKey}">${serviceData.name}</button>`;
-    });
-    html += '</div>';
+  let html = '<div class="d-grid gap-2">';
+  Object.entries(SERVICES).forEach(([serviceKey, serviceData]) => {
+    html += `<button class="btn btn-outline-primary service-select-btn" data-service="${serviceKey}">${serviceData.name}</button>`;
+  });
+  html += "</div>";
 
-    Swal.fire({
-        title: 'Select Service',
-        html: html,
-        showConfirmButton: false,
-        allowOutsideClick: !required,
-        allowEscapeKey: !required,
-        didOpen: (modal) => {
-            // Prevent auto-focus so a residual keypress doesn't insta-select the first button
-            if (document.activeElement) document.activeElement.blur();
+  Swal.fire({
+    title: "Select Service",
+    html: html,
+    showConfirmButton: false,
+    allowOutsideClick: !required,
+    allowEscapeKey: !required,
+    didOpen: (modal) => {
+      // Prevent auto-focus so a residual keypress doesn't insta-select the first button
+      if (document.activeElement) document.activeElement.blur();
 
-            // Add click handlers to buttons
-            modal.querySelectorAll('.service-select-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const serviceKey = this.getAttribute('data-service');
-                    Swal.close();
-                    selectServiceManual(serviceKey);
-                });
-            });
-        }
-    });
+      // Add click handlers to buttons
+      modal.querySelectorAll(".service-select-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const serviceKey = this.getAttribute("data-service");
+          Swal.close();
+          selectServiceManual(serviceKey);
+        });
+      });
+    },
+  });
 }
 
 // Select service from manual dropdown
 function selectServiceManual(serviceKey) {
-    console.log('selectServiceManual called for:', serviceKey);
-    Swal.close();
-    showService(serviceKey);
+  console.log("selectServiceManual called for:", serviceKey);
+  Swal.close();
+  showService(serviceKey);
 }
-
 
 // Show a pre-permission screen explaining why camera access is needed
 // Skips the modal if camera permission is already granted
 async function showCameraPermissionScreen() {
-    try {
-        const permStatus = await navigator.permissions.query({ name: 'camera' });
-        if (permStatus.state === 'granted') {
-            startQRScanning();
-            return;
-        }
-    } catch (e) {
-        // Permissions API not supported — fall through to show the modal
+  try {
+    const permStatus = await navigator.permissions.query({ name: "camera" });
+    if (permStatus.state === "granted") {
+      startQRScanning();
+      return;
     }
+  } catch (e) {
+    // Permissions API not supported — fall through to show the modal
+  }
 
-    Swal.fire({
-        html: `
+  Swal.fire({
+    html: `
             <div style="padding: 10px 0;">
                 <div style="margin-bottom: 20px;">
                     <i class="bi bi-camera-video" style="font-size: 48px; color: #174593;"></i>
@@ -449,43 +485,45 @@ async function showCameraPermissionScreen() {
                 </div>
             </div>
         `,
-        confirmButtonText: '<i class="bi bi-camera-video me-2"></i>Allow Camera',
-        confirmButtonColor: '#174593',
-        showDenyButton: true,
-        denyButtonText: 'Continue without camera',
-        denyButtonColor: '#6c757d',
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            startQRScanning();
-        } else {
-            showCameraRecommendation();
-            showServiceSelectionDropdown(true);
-        }
-    });
+    confirmButtonText: '<i class="bi bi-camera-video me-2"></i>Allow Camera',
+    confirmButtonColor: "#174593",
+    showDenyButton: true,
+    denyButtonText: "Continue without camera",
+    denyButtonColor: "#6c757d",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then((result) => {
+    if (result.isConfirmed) {
+      startQRScanning();
+    } else {
+      showCameraRecommendation();
+      showServiceSelectionDropdown(true);
+    }
+  });
 }
 
 // Start QR code camera scanning
 function startQRScanning() {
-    if (isScanning) return;
+  if (isScanning) return;
 
-    isScanning = true;
-    const canvas = document.createElement('canvas');
-    const video = document.createElement('video');
-    const container = document.body;
+  isScanning = true;
+  const canvas = document.createElement("canvas");
+  const video = document.createElement("video");
+  const container = document.body;
 
-    // Request camera access
-    navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-    }).then(stream => {
-        videoStream = stream;
-        video.srcObject = stream;
-        video.play();
+  // Request camera access
+  navigator.mediaDevices
+    .getUserMedia({
+      video: { facingMode: "environment" },
+    })
+    .then((stream) => {
+      videoStream = stream;
+      video.srcObject = stream;
+      video.play();
 
-        // Create full-screen overlay for camera
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
+      // Create full-screen overlay for camera
+      const overlay = document.createElement("div");
+      overlay.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -498,38 +536,39 @@ function startQRScanning() {
             justify-content: center;
         `;
 
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
-        closeBtn.className = 'btn btn-light position-absolute top-0 end-0 m-3';
-        closeBtn.title = 'Stop scanning';
-        closeBtn.style.pointerEvents = 'auto';
-        closeBtn.type = 'button';
-        closeBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Close button clicked');
-            stopQRScanning();
-            // If no service selected yet, force the selection modal
-            if (!currentServiceKey) {
-                showServiceSelectionDropdown(true);
-            }
-        };
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
+      closeBtn.className = "btn btn-light position-absolute top-0 end-0 m-3";
+      closeBtn.title = "Stop scanning";
+      closeBtn.style.pointerEvents = "auto";
+      closeBtn.type = "button";
+      closeBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Close button clicked");
+        stopQRScanning();
+        // If no service selected yet, force the selection modal
+        if (!currentServiceKey) {
+          showServiceSelectionDropdown(true);
+        }
+      };
 
-        const manualBtn = document.createElement('button');
-        manualBtn.innerHTML = 'Manual Select';
-        manualBtn.className = 'btn btn-secondary position-absolute bottom-0 start-0 m-3';
-        manualBtn.title = 'Select service manually';
-        manualBtn.style.pointerEvents = 'auto';
-        manualBtn.type = 'button';
-        manualBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Manual Entry button clicked');
-            showServiceSelectionDropdown();
-        };
+      const manualBtn = document.createElement("button");
+      manualBtn.innerHTML = "Manual Select";
+      manualBtn.className =
+        "btn btn-secondary position-absolute bottom-0 start-0 m-3";
+      manualBtn.title = "Select service manually";
+      manualBtn.style.pointerEvents = "auto";
+      manualBtn.type = "button";
+      manualBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Manual Entry button clicked");
+        showServiceSelectionDropdown();
+      };
 
-        const hint = document.createElement('div');
-        hint.style.cssText = `
+      const hint = document.createElement("div");
+      hint.style.cssText = `
             position: absolute;
             bottom: 120px;
             left: 50%;
@@ -542,7 +581,7 @@ function startQRScanning() {
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             text-align: center;
         `;
-        hint.innerHTML = `
+      hint.innerHTML = `
             <div style="margin-bottom: 12px;">
                 <i class="bi bi-qr-code-scan" style="font-size: 32px; color: #174593;"></i>
             </div>
@@ -550,79 +589,82 @@ function startQRScanning() {
             <p style="font-size: 14px; margin: 0; color: #666; line-height: 1.4;">Point camera at QR code</p>
         `;
 
-        video.style.cssText = `
+      video.style.cssText = `
             width: 100%;
             height: 100%;
             object-fit: cover;
         `;
 
-        overlay.appendChild(video);
-        overlay.appendChild(closeBtn);
-        overlay.appendChild(manualBtn);
-        overlay.appendChild(hint);
-        container.appendChild(overlay);
+      overlay.appendChild(video);
+      overlay.appendChild(closeBtn);
+      overlay.appendChild(manualBtn);
+      overlay.appendChild(hint);
+      container.appendChild(overlay);
 
-        // Store reference so we can reliably remove it later
-        currentOverlay = overlay;
+      // Store reference so we can reliably remove it later
+      currentOverlay = overlay;
 
-        // Scanning loop
-        const scanLoop = setInterval(() => {
-            if (!isScanning) {
-                clearInterval(scanLoop);
-                return;
-            }
+      // Scanning loop
+      const scanLoop = setInterval(() => {
+        if (!isScanning) {
+          clearInterval(scanLoop);
+          return;
+        }
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            ctx.drawImage(video, 0, 0);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0);
 
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-            });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
 
-            if (code) {
-                stopQRScanning();
-                handleQRScan(code.data);
-            }
-        }, 100);
-
-    }).catch(err => {
-        isScanning = false;
-        console.error('Camera error:', err);
-        showCameraRecommendation();
-        showServiceSelectionDropdown(true);
+        if (code) {
+          stopQRScanning();
+          handleQRScan(code.data);
+        }
+      }, 100);
+    })
+    .catch((err) => {
+      isScanning = false;
+      console.error("Camera error:", err);
+      showCameraRecommendation();
+      showServiceSelectionDropdown(true);
     });
 }
 
 // Show a persistent banner recommending camera usage for QR scanning
 function showCameraRecommendation() {
-    if (document.getElementById('cameraRecBanner')) return;
-    const banner = document.createElement('div');
-    banner.id = 'cameraRecBanner';
-    banner.className = 'alert alert-warning d-flex align-items-center gap-2 mb-3';
-    banner.setAttribute('role', 'alert');
-    banner.innerHTML = `
+  if (document.getElementById("cameraRecBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "cameraRecBanner";
+  banner.className = "alert alert-warning d-flex align-items-center gap-2 mb-3";
+  banner.setAttribute("role", "alert");
+  banner.innerHTML = `
         <i class="bi bi-camera-video-off" style="font-size: 1.2rem;"></i>
         <div class="small">
             <strong>Camera not available.</strong> For the best experience, enable camera permissions to scan QR codes.
             <a href="#" id="enableCamLink" style="margin-left: 4px; font-weight: 600;">Enable Cam</a>
         </div>
     `;
-    banner.querySelector('#enableCamLink').addEventListener('click', function (e) {
-        e.preventDefault();
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-            .then(stream => {
-                // Camera works — stop the test stream and remove the banner
-                stream.getTracks().forEach(track => track.stop());
-                banner.remove();
-            })
-            .catch(() => {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Enable Camera',
-                    html: `
+  banner
+    .querySelector("#enableCamLink")
+    .addEventListener("click", function (e) {
+      e.preventDefault();
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" } })
+        .then((stream) => {
+          // Camera works — stop the test stream and remove the banner
+          stream.getTracks().forEach((track) => track.stop());
+          banner.remove();
+        })
+        .catch(() => {
+          Swal.fire({
+            icon: "info",
+            title: "Enable Camera",
+            html: `
                         <div style="text-align: left; line-height: 1.7;">
                             <p>Your browser has blocked camera access. To re-enable it:</p>
                             <ol style="padding-left: 20px;">
@@ -632,178 +674,181 @@ function showCameraRecommendation() {
                             </ol>
                         </div>
                     `,
-                    confirmButtonText: 'Got it',
-                    confirmButtonColor: '#174593'
-                });
-            });
+            confirmButtonText: "Got it",
+            confirmButtonColor: "#174593",
+          });
+        });
     });
-    const serviceContent = document.getElementById('serviceContent');
-    if (serviceContent) {
-        serviceContent.insertBefore(banner, serviceContent.firstChild);
-    }
+  const serviceContent = document.getElementById("serviceContent");
+  if (serviceContent) {
+    serviceContent.insertBefore(banner, serviceContent.firstChild);
+  }
 }
 
 // Stop QR scanning and clean up
 function stopQRScanning() {
-    isScanning = false;
+  isScanning = false;
 
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-    }
+  if (videoStream) {
+    videoStream.getTracks().forEach((track) => track.stop());
+    videoStream = null;
+  }
 
-    // Remove overlay using stored reference
-    if (currentOverlay) {
-        console.log('Removing overlay');
-        currentOverlay.remove();
-        currentOverlay = null;
-    }
+  // Remove overlay using stored reference
+  if (currentOverlay) {
+    console.log("Removing overlay");
+    currentOverlay.remove();
+    currentOverlay = null;
+  }
 
-    // Fallback if overlay wasn't stored for some reason
-    const overlay = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
-    if (overlay) {
-        console.log('Removing overlay via selector');
-        overlay.remove();
-    }
+  // Fallback if overlay wasn't stored for some reason
+  const overlay = document.querySelector(
+    'div[style*="position: fixed"][style*="z-index: 9999"]',
+  );
+  if (overlay) {
+    console.log("Removing overlay via selector");
+    overlay.remove();
+  }
 }
 
 // Handle QR code scan
 function handleQRScan(qrData) {
-    console.log('QR scanned:', qrData);
+  console.log("QR scanned:", qrData);
 
-    try {
-        // Try to parse as URL
-        const url = new URL(qrData, window.location.href);
+  try {
+    // Try to parse as URL
+    const url = new URL(qrData, window.location.href);
 
-        // Get ServiceID from URL parameters
-        const serviceID = url.searchParams.get('ServiceID') || url.searchParams.get('serviceid');
-        const pathname = url.pathname.toLowerCase();
+    // Get ServiceID from URL parameters
+    const serviceID =
+      url.searchParams.get("ServiceID") || url.searchParams.get("serviceid");
+    const pathname = url.pathname.toLowerCase();
 
-        // Check if URL is for service-scan page
-        if (!pathname.includes('service-scan')) {
-            console.error('Not a service-scan URL');
-            Swal.fire('Invalid QR', 'QR code is not for service selection', 'error');
-            startQRScanning();
-            return;
-        }
-
-        // Check if ServiceID is present
-        if (!serviceID) {
-            console.error('Missing ServiceID in QR');
-            Swal.fire('Invalid QR', 'QR code missing station information', 'error');
-            startQRScanning();
-            return;
-        }
-
-        // Check if station exists in SERVICES config
-        if (!SERVICES[serviceID.toLowerCase()]) {
-            console.error('Unknown station:', serviceID);
-            Swal.fire('Invalid QR', 'Unknown station: ' + serviceID, 'error');
-            startQRScanning();
-            return;
-        }
-
-        // Use ServiceID directly as service key
-        const serviceKey = serviceID.toLowerCase();
-
-        showService(serviceKey);
-
-    } catch (e) {
-        console.error('QR parse error:', e);
-        Swal.fire('Invalid QR', 'Could not parse QR code', 'error');
-        startQRScanning();
+    // Check if URL is for service-scan page
+    if (!pathname.includes("service-scan")) {
+      console.error("Not a service-scan URL");
+      Swal.fire("Invalid QR", "QR code is not for service selection", "error");
+      startQRScanning();
+      return;
     }
+
+    // Check if ServiceID is present
+    if (!serviceID) {
+      console.error("Missing ServiceID in QR");
+      Swal.fire("Invalid QR", "QR code missing station information", "error");
+      startQRScanning();
+      return;
+    }
+
+    // Check if station exists in SERVICES config
+    if (!SERVICES[serviceID.toLowerCase()]) {
+      console.error("Unknown station:", serviceID);
+      Swal.fire("Invalid QR", "Unknown station: " + serviceID, "error");
+      startQRScanning();
+      return;
+    }
+
+    // Use ServiceID directly as service key
+    const serviceKey = serviceID.toLowerCase();
+
+    showService(serviceKey);
+  } catch (e) {
+    console.error("QR parse error:", e);
+    Swal.fire("Invalid QR", "Could not parse QR code", "error");
+    startQRScanning();
+  }
 }
 
 // Start scanning after PIN verification
-document.addEventListener('pinVerified', async function () {
-    console.log('PIN verified - loading service hierarchy');
+document.addEventListener("pinVerified", async function () {
+  console.log("PIN verified - loading service hierarchy");
 
-    // Load service hierarchy from API before proceeding
-    await loadServiceHierarchy();
+  // Load service hierarchy from API before proceeding
+  await loadServiceHierarchy();
 
-    // Get ServiceID from URL if it exists
-    const urlParams = new URLSearchParams(window.location.search);
-    const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
+  // Get ServiceID from URL if it exists
+  const urlParams = new URLSearchParams(window.location.search);
+  const serviceID = urlParams.get("ServiceID") || urlParams.get("serviceid");
 
-    if (serviceID) {
-        // Direct to service based on URL parameter
-        console.log('ServiceID found in URL:', serviceID);
-        handleServiceSelection(serviceID);
-    } else {
-        // No ServiceID, show camera permission screen
-        console.log('No ServiceID - showing camera permission screen');
-        showCameraPermissionScreen();
-    }
+  if (serviceID) {
+    // Direct to service based on URL parameter
+    console.log("ServiceID found in URL:", serviceID);
+    handleServiceSelection(serviceID);
+  } else {
+    // No ServiceID, show camera permission screen
+    console.log("No ServiceID - showing camera permission screen");
+    showCameraPermissionScreen();
+  }
 });
-
 
 // Handle service selection from ServiceID
 function handleServiceSelection(serviceID) {
-    const serviceKey = serviceID.toLowerCase();
+  const serviceKey = serviceID.toLowerCase();
 
-    // Check if station exists in SERVICES config
-    if (!SERVICES[serviceKey]) {
-        console.error('Unknown station:', serviceID);
-        Swal.fire('Invalid Station', 'Unknown station: ' + serviceID, 'error');
-        startQRScanning();
-        return;
-    }
+  // Check if station exists in SERVICES config
+  if (!SERVICES[serviceKey]) {
+    console.error("Unknown station:", serviceID);
+    Swal.fire("Invalid Station", "Unknown station: " + serviceID, "error");
+    startQRScanning();
+    return;
+  }
 
-    // Show the service directly
-    showService(serviceKey);
+  // Show the service directly
+  showService(serviceKey);
 }
 
-
 // If page reloads after PIN verification, check for ServiceID
-document.addEventListener('DOMContentLoaded', async function () {
-    console.log('DOMContentLoaded - Service.js loaded');
+document.addEventListener("DOMContentLoaded", async function () {
+  console.log("DOMContentLoaded - Service.js loaded");
 
-    if (document.body.classList.contains('pin-verified')) {
-        console.log('Already pin-verified, loading hierarchy and checking for ServiceID');
-        await loadServiceHierarchy();
-        const urlParams = new URLSearchParams(window.location.search);
-        const serviceID = urlParams.get('ServiceID') || urlParams.get('serviceid');
+  if (document.body.classList.contains("pin-verified")) {
+    console.log(
+      "Already pin-verified, loading hierarchy and checking for ServiceID",
+    );
+    await loadServiceHierarchy();
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceID = urlParams.get("ServiceID") || urlParams.get("serviceid");
 
-        if (serviceID) {
-            setTimeout(() => handleServiceSelection(serviceID), 100);
-        } else {
-            setTimeout(showCameraPermissionScreen, 100);
-        }
+    if (serviceID) {
+      setTimeout(() => handleServiceSelection(serviceID), 100);
+    } else {
+      setTimeout(showCameraPermissionScreen, 100);
     }
+  }
 
-    // Setup client QR scan button
-    const btnScan = document.getElementById('btnScan');
-    if (btnScan) {
-        btnScan.addEventListener('click', function () {
-            console.log('Scan button clicked, starting client QR scan');
-            startClientQRScanning();
-        });
-    }
-
+  // Setup client QR scan button
+  const btnScan = document.getElementById("btnScan");
+  if (btnScan) {
+    btnScan.addEventListener("click", function () {
+      console.log("Scan button clicked, starting client QR scan");
+      startClientQRScanning();
+    });
+  }
 });
 
 // Start scanning for client QR codes
 function startClientQRScanning() {
-    if (isScanning) return;
+  if (isScanning) return;
 
-    isScanning = true;
-    isClientScan = true;
-    const canvas = document.createElement('canvas');
-    const video = document.createElement('video');
-    const container = document.body;
+  isScanning = true;
+  isClientScan = true;
+  const canvas = document.createElement("canvas");
+  const video = document.createElement("video");
+  const container = document.body;
 
-    // Request camera access
-    navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-    }).then(stream => {
-        videoStream = stream;
-        video.srcObject = stream;
-        video.play();
+  // Request camera access
+  navigator.mediaDevices
+    .getUserMedia({
+      video: { facingMode: "environment" },
+    })
+    .then((stream) => {
+      videoStream = stream;
+      video.srcObject = stream;
+      video.play();
 
-        // Create full-screen overlay for camera
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
+      // Create full-screen overlay for camera
+      const overlay = document.createElement("div");
+      overlay.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -816,21 +861,21 @@ function startClientQRScanning() {
             justify-content: center;
         `;
 
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
-        closeBtn.className = 'btn btn-light position-absolute top-0 end-0 m-3';
-        closeBtn.title = 'Stop scanning';
-        closeBtn.style.pointerEvents = 'auto';
-        closeBtn.type = 'button';
-        closeBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Close button clicked');
-            stopClientQRScanning();
-        };
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
+      closeBtn.className = "btn btn-light position-absolute top-0 end-0 m-3";
+      closeBtn.title = "Stop scanning";
+      closeBtn.style.pointerEvents = "auto";
+      closeBtn.type = "button";
+      closeBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Close button clicked");
+        stopClientQRScanning();
+      };
 
-        const hint = document.createElement('div');
-        hint.style.cssText = `
+      const hint = document.createElement("div");
+      hint.style.cssText = `
             position: absolute;
             bottom: 120px;
             left: 50%;
@@ -843,7 +888,7 @@ function startClientQRScanning() {
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             text-align: center;
         `;
-        hint.innerHTML = `
+      hint.innerHTML = `
             <div style="margin-bottom: 12px;">
                 <i class="bi bi-qr-code-scan" style="font-size: 32px; color: #174593;"></i>
             </div>
@@ -851,68 +896,68 @@ function startClientQRScanning() {
             <p style="font-size: 14px; margin: 0; color: #666; line-height: 1.4;">Point camera at client QR code</p>
         `;
 
-        video.style.cssText = `
+      video.style.cssText = `
             width: 100%;
             height: 100%;
             object-fit: cover;
         `;
 
-        overlay.appendChild(video);
-        overlay.appendChild(closeBtn);
-        overlay.appendChild(hint);
-        container.appendChild(overlay);
+      overlay.appendChild(video);
+      overlay.appendChild(closeBtn);
+      overlay.appendChild(hint);
+      container.appendChild(overlay);
 
-        // Store reference so we can reliably remove it later
-        currentOverlay = overlay;
+      // Store reference so we can reliably remove it later
+      currentOverlay = overlay;
 
-        // Scanning loop
-        const scanLoop = setInterval(() => {
-            if (!isScanning || !isClientScan) {
-                clearInterval(scanLoop);
-                return;
-            }
+      // Scanning loop
+      const scanLoop = setInterval(() => {
+        if (!isScanning || !isClientScan) {
+          clearInterval(scanLoop);
+          return;
+        }
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            ctx.drawImage(video, 0, 0);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0);
 
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-            });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
 
-            if (code) {
-                stopClientQRScanning();
-                handleClientQRScan(code.data);
-            }
-        }, 100);
-
-    }).catch(err => {
-        isScanning = false;
-        isClientScan = false;
-        console.error('Camera error:', err);
-        showCameraRecommendation();
-        Swal.fire('Camera Error', 'Unable to access camera.', 'error');
+        if (code) {
+          stopClientQRScanning();
+          handleClientQRScan(code.data);
+        }
+      }, 100);
+    })
+    .catch((err) => {
+      isScanning = false;
+      isClientScan = false;
+      console.error("Camera error:", err);
+      showCameraRecommendation();
+      Swal.fire("Camera Error", "Unable to access camera.", "error");
     });
 }
 
 // Stop client QR scanning
 function stopClientQRScanning() {
-    isScanning = false;
-    isClientScan = false;
+  isScanning = false;
+  isClientScan = false;
 
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-    }
+  if (videoStream) {
+    videoStream.getTracks().forEach((track) => track.stop());
+    videoStream = null;
+  }
 
-    // Remove overlay using stored reference
-    if (currentOverlay) {
-        console.log('Removing overlay');
-        currentOverlay.remove();
-        currentOverlay = null;
-    }
+  // Remove overlay using stored reference
+  if (currentOverlay) {
+    console.log("Removing overlay");
+    currentOverlay.remove();
+    currentOverlay = null;
+  }
 }
 
 // Handle client QR code scan - AUTO-PROGRESSION WORKFLOW via ServiceScan.php
@@ -925,159 +970,181 @@ function stopClientQRScanning() {
 //   4. If client is already completed or not found, show appropriate message
 //   5. Refresh data from GrabService after each action
 async function handleClientQRScan(qrData) {
-    if (isProcessing) return;
-    isProcessing = true;
+  if (isProcessing) return;
+  isProcessing = true;
 
-    console.log('=== CLIENT QR SCAN START ===');
-    console.log('Raw QR data:', JSON.stringify(qrData));
-    console.log('Current service key:', currentServiceKey);
+  console.log("=== CLIENT QR SCAN START ===");
+  console.log("Raw QR data:", JSON.stringify(qrData));
+  console.log("Current service key:", currentServiceKey);
+
+  try {
+    // Try to parse as URL or extract clientId
+    let clientId = null;
 
     try {
-        // Try to parse as URL or extract clientId
-        let clientId = null;
+      const url = new URL(qrData); // Only absolute URLs
+      clientId =
+        url.searchParams.get("clientId") ||
+        url.searchParams.get("id") ||
+        url.searchParams.get("ClientID");
+      console.log("Parsed as URL — extracted clientId:", clientId);
+    } catch (e) {
+      // Not a valid absolute URL — treat full text as the clientId
+      clientId = qrData.trim();
+      console.log("Not a URL — using raw text as clientId:", clientId);
+    }
 
-        try {
-            const url = new URL(qrData);  // Only absolute URLs
-            clientId = url.searchParams.get('clientId') || url.searchParams.get('id') || url.searchParams.get('ClientID');
-            console.log('Parsed as URL — extracted clientId:', clientId);
-        } catch (e) {
-            // Not a valid absolute URL — treat full text as the clientId
-            clientId = qrData.trim();
-            console.log('Not a URL — using raw text as clientId:', clientId);
-        }
+    if (!clientId) {
+      console.error("No clientId found in QR code");
+      Swal.fire(
+        "Invalid QR",
+        "QR code does not contain a valid client ID",
+        "error",
+      );
+      startClientQRScanning();
+      return;
+    }
 
-        if (!clientId) {
-            console.error('No clientId found in QR code');
-            Swal.fire('Invalid QR', 'QR code does not contain a valid client ID', 'error');
-            startClientQRScanning();
-            return;
-        }
+    console.log("Client ID extracted:", clientId);
 
-        console.log('Client ID extracted:', clientId);
+    // Check if client is in the current service's waitlist (loaded from GrabService)
+    const clientInWaitlist =
+      currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+    console.log(
+      "Client in waitlist:",
+      clientInWaitlist ? JSON.stringify(clientInWaitlist) : "NOT FOUND",
+    );
+    console.log(
+      "Waitlist keys for this service:",
+      currentServiceKey
+        ? Object.keys(SERVICE_WAITLISTS[currentServiceKey])
+        : "no service",
+    );
 
-        // Check if client is in the current service's waitlist (loaded from GrabService)
-        const clientInWaitlist = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
-        console.log('Client in waitlist:', clientInWaitlist ? JSON.stringify(clientInWaitlist) : 'NOT FOUND');
-        console.log('Waitlist keys for this service:', currentServiceKey ? Object.keys(SERVICE_WAITLISTS[currentServiceKey]) : 'no service');
-
-        if (clientInWaitlist && clientInWaitlist.status === 'completed') {
-            Swal.fire({
-                icon: 'info',
-                title: 'Client Already Completed',
-                html: `
+    if (clientInWaitlist && clientInWaitlist.status === "completed") {
+      Swal.fire({
+        icon: "info",
+        title: "Client Already Completed",
+        html: `
                     <div style="text-align: left;">
                         <p><strong>Client:</strong> ${clientInWaitlist.name}</p>
                         <p><strong>ID:</strong> ${clientId}</p>
                         <p><strong>Status:</strong> Already completed for this service</p>
                     </div>
                 `,
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-        // Determine the ServiceID(s) to pass to the API
-        // Send all serviceIDs for this station — backend auto-detects the correct one
-        const service = SERVICES[currentServiceKey];
-        const serviceID = service ? service.serviceIDs.join(',') : '';
-        console.log('Sending to ServiceScan.php:', { ClientID: clientId, ServiceID: serviceID });
+    // Determine the ServiceID(s) to pass to the API
+    // Send all serviceIDs for this station — backend auto-detects the correct one
+    const service = SERVICES[currentServiceKey];
+    const serviceID = service ? service.serviceIDs.join(",") : "";
+    console.log("Sending to ServiceScan.php:", {
+      ClientID: clientId,
+      ServiceID: serviceID,
+    });
 
-        // Call ServiceScan.php to auto-progress the client's status
-        const response = await fetch('/api/ServiceScan.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
-        });
+    // Call ServiceScan.php to auto-progress the client's status
+    const response = await fetch("/api/ServiceScan.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID }),
+    });
 
-        console.log('ServiceScan response status:', response.status);
-        const data = await response.json();
-        console.log('ServiceScan response body:', JSON.stringify(data));
+    console.log("ServiceScan response status:", response.status);
+    const data = await response.json();
+    console.log("ServiceScan response body:", JSON.stringify(data));
 
-        if (!data.success) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Scan Failed',
-                text: data.message || 'Unable to process client scan.',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
+    if (!data.success) {
+      Swal.fire({
+        icon: "error",
+        title: "Scan Failed",
+        text: data.message || "Unable to process client scan.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-        let statusText = data.newStatus === 'In-Progress' ? 'Checked in — now in service' : 'Completed and checked out';
-        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
-        const clientName = clientInWaitlist ? clientInWaitlist.name : clientId;
+    let statusText =
+      data.newStatus === "In-Progress"
+        ? "Checked in — now in service"
+        : "Completed and checked out";
+    let actionLabel =
+      data.newStatus === "In-Progress" ? "Check In" : "Check Out";
+    const clientName = clientInWaitlist ? clientInWaitlist.name : clientId;
 
-        Swal.fire({
-            icon: 'success',
-            title: `${actionLabel} Successful`,
-            html: `
+    Swal.fire({
+      icon: "success",
+      title: `${actionLabel} Successful`,
+      html: `
                 <div style="text-align: left;">
                     <p><strong>Client:</strong> ${clientName}</p>
                     <p><strong>ID:</strong> ${clientId}</p>
-                    <p><strong>Service:</strong> ${service ? service.name : 'Service'}</p>
+                    <p><strong>Service:</strong> ${service ? service.name : "Service"}</p>
                     <p><strong>Status:</strong> ${statusText}</p>
                 </div>
             `,
-            confirmButtonText: 'OK'
-        }).then(() => {
-            // Refresh stats and waitlist from the server
-            fetchServiceData(currentServiceKey);
-        });
-
-    } catch (e) {
-        console.error('QR scan error:', e);
-        Swal.fire('Error', 'Could not process QR code scan', 'error');
-        startClientQRScanning();
-    } finally {
-        isProcessing = false;
-    }
+      confirmButtonText: "OK",
+    }).then(() => {
+      // Refresh stats and waitlist from the server
+      fetchServiceData(currentServiceKey);
+    });
+  } catch (e) {
+    console.error("QR scan error:", e);
+    Swal.fire("Error", "Could not process QR code scan", "error");
+    startClientQRScanning();
+  } finally {
+    isProcessing = false;
+  }
 }
 
 // Show modal to choose check-in or check-out action (calls ServiceScan.php)
 function showCheckInOutModal(clientId) {
-    const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
-    const serviceTitle = service ? service.name : 'Service';
-    const isDentalService = currentServiceKey === 'dental';
+  const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
+  const serviceTitle = service ? service.name : "Service";
+  const isDentalService = currentServiceKey === "dental";
 
-    // Get client from waitlist
-    let client = null;
-    if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
-        client = SERVICE_WAITLISTS[currentServiceKey][clientId];
-    }
-    const clientName = client ? client.name : 'Unknown Client';
-    const formsCompleted = !!(client && client.dentalFormsCompleted);
+  // Get client from waitlist
+  let client = null;
+  if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
+    client = SERVICE_WAITLISTS[currentServiceKey][clientId];
+  }
+  const clientName = client ? client.name : "Unknown Client";
+  const formsCompleted = !!(client && client.dentalFormsCompleted);
 
-    // Determine which button to show based on client status
-    const isInProgress = client && client.status === 'in-progress';
-    const actionButton = isInProgress
-        ? `<button class="btn btn-success btn-lg" onclick="processClientAction('${clientId}', 'checkout')">
+  // Determine which button to show based on client status
+  const isInProgress = client && client.status === "in-progress";
+  const actionButton = isInProgress
+    ? `<button class="btn btn-success btn-lg" onclick="processClientAction('${clientId}', 'checkout')">
                <i class="bi bi-person-check me-2"></i>Complete
            </button>`
-        : `<button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
+    : `<button class="btn btn-info btn-lg" onclick="processClientAction('${clientId}', 'checkin')">
                <i class="bi bi-person-plus me-2"></i>Check In
            </button>`;
 
-    const dentalFormsSection = isDentalService
-        ? `
+  const dentalFormsSection = isDentalService
+    ? `
             <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" value="1" id="dentalFormsCompletedToggle" ${formsCompleted ? 'checked' : ''}>
+                <input class="form-check-input" type="checkbox" value="1" id="dentalFormsCompletedToggle" ${formsCompleted ? "checked" : ""}>
                 <label class="form-check-label" for="dentalFormsCompletedToggle">
                     Mark forms done
                 </label>
             </div>
           `
-        : '';
+    : "";
 
-    Swal.fire({
-        title: false,
-        html: `
+  Swal.fire({
+    title: false,
+    html: `
             <div style="text-align: left;">
                 <div class="fw-bold fs-5 mb-3">${escapeHtml(clientName)}</div>
                 <div style="margin-bottom: 20px;">
-                <p><strong>DOB:</strong> ${formatDOB(client ? client.dob : '')}</p>
+                <p><strong>DOB:</strong> ${formatDOB(client ? client.dob : "")}</p>
                 <p><strong>Client ID:</strong> ${clientId}</p>
                 <p><strong>Service:</strong> ${serviceTitle}</p>
-                <p><strong>Status:</strong> ${isInProgress ? 'In Progress' : 'Waiting'}</p>
+                <p><strong>Status:</strong> ${isInProgress ? "In Progress" : "Waiting"}</p>
                 </div>
                 ${dentalFormsSection}
             </div>
@@ -1085,123 +1152,133 @@ function showCheckInOutModal(clientId) {
                 ${actionButton}
             </div>
         `,
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: 'Close',
-        allowOutsideClick: true,
-        allowEscapeKey: true,
-        didOpen: (modal) => {
-            modal.classList.add('modal-lg');
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: "Close",
+    allowOutsideClick: true,
+    allowEscapeKey: true,
+    didOpen: (modal) => {
+      modal.classList.add("modal-lg");
 
-            if (!isDentalService) return;
+      if (!isDentalService) return;
 
-            const formsToggle = modal.querySelector('#dentalFormsCompletedToggle');
-            if (!formsToggle) return;
+      const formsToggle = modal.querySelector("#dentalFormsCompletedToggle");
+      if (!formsToggle) return;
 
-            formsToggle.addEventListener('change', async () => {
-                const nextValue = formsToggle.checked;
-                formsToggle.disabled = true;
+      formsToggle.addEventListener("change", async () => {
+        const nextValue = formsToggle.checked;
+        formsToggle.disabled = true;
 
-                const saved = await updateDentalFormsCompleted(clientId, nextValue);
-                if (!saved) {
-                    formsToggle.checked = !nextValue;
-                }
-
-                formsToggle.disabled = false;
-            });
+        const saved = await updateDentalFormsCompleted(clientId, nextValue);
+        if (!saved) {
+          formsToggle.checked = !nextValue;
         }
-    });
+
+        formsToggle.disabled = false;
+      });
+    },
+  });
 }
 
 async function updateDentalFormsCompleted(clientId, isCompleted) {
-    try {
-        const response = await fetch('/api/UpdateDentalForms.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ClientID: clientId, FormsCompleted: !!isCompleted })
-        });
+  try {
+    const response = await fetch("/api/UpdateDentalForms.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ClientID: clientId,
+        FormsCompleted: !!isCompleted,
+      }),
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!data.success) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Unable to save forms status',
-                text: data.error || data.message || 'Please try again.',
-                confirmButtonText: 'OK'
-            });
-            return false;
-        }
-
-        if (currentServiceKey && SERVICE_WAITLISTS[currentServiceKey] && SERVICE_WAITLISTS[currentServiceKey][clientId]) {
-            SERVICE_WAITLISTS[currentServiceKey][clientId].dentalFormsCompleted = !!isCompleted;
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Error updating dental forms status:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Network Error',
-            text: 'Unable to update forms status. Please try again.',
-            confirmButtonText: 'OK'
-        });
-        return false;
+    if (!data.success) {
+      Swal.fire({
+        icon: "error",
+        title: "Unable to save forms status",
+        text: data.error || data.message || "Please try again.",
+        confirmButtonText: "OK",
+      });
+      return false;
     }
+
+    if (
+      currentServiceKey &&
+      SERVICE_WAITLISTS[currentServiceKey] &&
+      SERVICE_WAITLISTS[currentServiceKey][clientId]
+    ) {
+      SERVICE_WAITLISTS[currentServiceKey][clientId].dentalFormsCompleted =
+        !!isCompleted;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error updating dental forms status:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Network Error",
+      text: "Unable to update forms status. Please try again.",
+      confirmButtonText: "OK",
+    });
+    return false;
+  }
 }
-
-
-
-
-
-
-
-
 
 // Process client action via ServiceScan.php API
 // ServiceScan auto-progresses: Pending → In-Progress, In-Progress → Complete
 async function processClientAction(clientId, action) {
-    if (isProcessing) return;
-    isProcessing = true;
+  if (isProcessing) return;
+  isProcessing = true;
 
-    const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
-    const serviceTitle = service ? service.name : 'Service';
+  const service = currentServiceKey ? SERVICES[currentServiceKey] : null;
+  const serviceTitle = service ? service.name : "Service";
 
-    console.log(`Processing client ${action}:`, clientId, 'for service:', serviceTitle);
+  console.log(
+    `Processing client ${action}:`,
+    clientId,
+    "for service:",
+    serviceTitle,
+  );
 
-    // Send all serviceIDs for this station — backend auto-detects the correct one
-    const serviceID = service ? service.serviceIDs.join(',') : '';
+  // Send all serviceIDs for this station — backend auto-detects the correct one
+  const serviceID = service ? service.serviceIDs.join(",") : "";
 
-    try {
-        const response = await fetch('/api/ServiceScan.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID })
-        });
+  try {
+    const response = await fetch("/api/ServiceScan.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ClientID: clientId, ServiceID: serviceID }),
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!data.success) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Action Failed',
-                text: data.message || 'Unable to update client status.',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
+    if (!data.success) {
+      Swal.fire({
+        icon: "error",
+        title: "Action Failed",
+        text: data.message || "Unable to update client status.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-        // Map API newStatus to display text
-        let statusText = data.newStatus === 'In-Progress' ? 'Now in service' : 'Completed and checked out';
-        let actionLabel = data.newStatus === 'In-Progress' ? 'Check In' : 'Check Out';
+    // Map API newStatus to display text
+    let statusText =
+      data.newStatus === "In-Progress"
+        ? "Now in service"
+        : "Completed and checked out";
+    let actionLabel =
+      data.newStatus === "In-Progress" ? "Check In" : "Check Out";
 
-        const wlClient = currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
-        const clientName = wlClient ? wlClient.name : clientId;
+    const wlClient =
+      currentServiceKey && SERVICE_WAITLISTS[currentServiceKey][clientId];
+    const clientName = wlClient ? wlClient.name : clientId;
 
-        Swal.fire({
-            icon: 'success',
-            title: `${actionLabel} Successful`,
-            html: `
+    Swal.fire({
+      icon: "success",
+      title: `${actionLabel} Successful`,
+      html: `
                 <div style="text-align: left;">
                     <p><strong>Client:</strong> ${clientName}</p>
                     <p><strong>ID:</strong> ${clientId}</p>
@@ -1209,168 +1286,220 @@ async function processClientAction(clientId, action) {
                     <p><strong>Status:</strong> ${statusText}</p>
                 </div>
             `,
-            confirmButtonText: 'OK'
-        }).then(() => {
-            // Refresh stats and waitlist from the server
-            fetchServiceData(currentServiceKey);
-        });
-    } catch (error) {
-        console.error('ServiceScan API error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Network Error',
-            text: 'Unable to reach the server. Please try again.',
-            confirmButtonText: 'OK'
-        });
-    } finally {
-        isProcessing = false;
-    }
+      confirmButtonText: "OK",
+    }).then(() => {
+      // Refresh stats and waitlist from the server
+      fetchServiceData(currentServiceKey);
+    });
+  } catch (error) {
+    console.error("ServiceScan API error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Network Error",
+      text: "Unable to reach the server. Please try again.",
+      confirmButtonText: "OK",
+    });
+  } finally {
+    isProcessing = false;
+  }
 }
-
-
 
 // Populate the waitlist table with client data
 function populateWaitlist(clientsToShow = null) {
-    const waitlistBody = document.getElementById('waitlistBody');
-    if (!waitlistBody) return;
+  const waitlistBody = document.getElementById("waitlistBody");
+  if (!waitlistBody) return;
 
-    // Use provided clients or clients from current service's waitlist
-    let clientsArray;
-    if (clientsToShow) {
-        clientsArray = Object.values(clientsToShow);
-    } else {
-        // Show all clients in this service table, including completed.
-        clientsArray = currentServiceKey ?
-            Object.values(SERVICE_WAITLISTS[currentServiceKey]) : [];
-    }
+  // Use provided clients or clients from current service's waitlist
+  let clientsArray;
+  if (clientsToShow) {
+    clientsArray = Object.values(clientsToShow);
+  } else {
+    // Show all clients in this service table, including completed.
+    clientsArray = currentServiceKey
+      ? Object.values(SERVICE_WAITLISTS[currentServiceKey])
+      : [];
+  }
 
-    // Keep original order, but move completed/abandoned clients to the bottom.
-    clientsArray = clientsArray.sort((a, b) => {
-        const getBottomRank = (client) => {
-            const isAbandoned = client.status === 'abandoned' || client.isAbandoned;
-            if (isAbandoned) return 2;
-            if (client.status === 'completed') return 1;
-            return 0;
-        };
+  // Keep original order, but move completed/abandoned clients to the bottom.
+  clientsArray = clientsArray.sort((a, b) => {
+    const getBottomRank = (client) => {
+      const isAbandoned = client.status === "abandoned" || client.isAbandoned;
+      if (isAbandoned) return 2;
+      if (client.status === "completed") return 1;
+      return 0;
+    };
 
-        const aRank = getBottomRank(a);
-        const bRank = getBottomRank(b);
-        return aRank - bRank;
-    });
+    const aRank = getBottomRank(a);
+    const bRank = getBottomRank(b);
+    return aRank - bRank;
+  });
 
-    // Clear existing rows
-    waitlistBody.innerHTML = '';
+  // Clear existing rows
+  waitlistBody.innerHTML = "";
 
-    // Show empty state if no clients
-    if (clientsArray.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `
+  // Show empty state if no clients
+  if (clientsArray.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.innerHTML = `
             <td colspan="2" class="text-center py-4 text-muted">
                 <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                 No clients in waitlist
             </td>
         `;
-        waitlistBody.appendChild(emptyRow);
-        return;
+    waitlistBody.appendChild(emptyRow);
+    return;
+  }
+
+  // Populate with client data
+  clientsArray.forEach((client) => {
+    const isInProgress = client.status === "in-progress";
+    const isAbandoned = client.status === "abandoned" || client.isAbandoned;
+    const isCompleted = client.status === "completed";
+    const currentServiceIDs =
+      currentServiceKey && SERVICES[currentServiceKey]
+        ? SERVICES[currentServiceKey].serviceIDs
+        : [];
+    const currentServiceEntries = (client.assignedServices || []).filter((s) =>
+      currentServiceIDs.includes(s.id),
+    );
+    const currentServiceInProgressEntry = currentServiceEntries.find(
+      (s) => s.status === "In-Progress",
+    );
+    const currentServiceIsInProgress = !!currentServiceInProgressEntry;
+    const currentServiceIsComplete =
+      !currentServiceIsInProgress &&
+      currentServiceEntries.some((s) => s.status === "Complete");
+    const currentServiceIsStandby =
+      !currentServiceIsInProgress &&
+      !currentServiceIsComplete &&
+      currentServiceEntries.some((s) => s.status === "Standby");
+    const inProgressService = (client.assignedServices || []).find(
+      (s) => s.status === "In-Progress",
+    );
+    const inProgressIconTag = inProgressService
+      ? SERVICE_ICON_BY_ID[inProgressService.id] || ""
+      : "";
+    const avatarClass = "waitlist-avatar-primary text-white";
+    let avatarIconHTML = '<i class="bi bi-person"></i>';
+    if (isAbandoned) {
+      avatarIconHTML = '<i class="bi bi-person-x"></i>';
+    } else if (currentServiceIsInProgress) {
+      const currentServiceIconTag =
+        SERVICE_ICON_BY_ID[currentServiceInProgressEntry.id] ||
+        inProgressIconTag;
+      avatarIconHTML = renderAvatarIconMarkup(
+        currentServiceIconTag,
+        "bi-arrow-right-circle",
+        "text-white",
+      );
+    } else if (currentServiceIsComplete) {
+      avatarIconHTML = '<i class="bi bi-check-lg"></i>';
+    } else if (inProgressService) {
+      avatarIconHTML = renderAvatarIconMarkup(
+        inProgressIconTag,
+        "bi-arrow-right-circle",
+        "text-white",
+      );
+    } else if (isCompleted) {
+      avatarIconHTML = '<i class="bi bi-check-lg"></i>';
     }
+    const rowStatusClass = isAbandoned
+      ? "waitlist-row-abandoned"
+      : currentServiceIsInProgress
+        ? "waitlist-row-has-station"
+        : currentServiceIsComplete
+          ? "waitlist-row-no-station"
+          : "waitlist-row-waiting";
+    const currentServiceName =
+      currentServiceKey && SERVICES[currentServiceKey]
+        ? SERVICES[currentServiceKey].name
+        : "this service";
+    const inProgressServiceName = inProgressService
+      ? String(
+          SERVICE_NAME_BY_ID[inProgressService.id] ||
+            inProgressService.name ||
+            "",
+        ).trim()
+      : "";
+    const avatarTooltip = (() => {
+      if (isAbandoned) return "Abandoned client";
+      if (currentServiceIsInProgress)
+        return `Currently at ${inProgressServiceName || currentServiceName}`;
+      if (currentServiceIsComplete) return `Completed ${currentServiceName}`;
+      if (currentServiceIsStandby) return `Standby for ${currentServiceName}`;
+      if (inProgressServiceName) return `Currently at ${inProgressServiceName}`;
+      return `Waiting for ${currentServiceName}`;
+    })();
+    const nameStateBadge = isAbandoned
+      ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
+      : "";
+    const standbyStateBadge =
+      !isAbandoned && currentServiceIsStandby
+        ? '<span class="waitlist-standby-badge">Standby</span>'
+        : "";
 
-    // Populate with client data
-    clientsArray.forEach(client => {
-        const isInProgress = client.status === 'in-progress';
-        const isAbandoned = client.status === 'abandoned' || client.isAbandoned;
-        const isCompleted = client.status === 'completed';
-        const currentServiceIDs = (currentServiceKey && SERVICES[currentServiceKey])
-            ? SERVICES[currentServiceKey].serviceIDs
-            : [];
-        const currentServiceEntries = (client.assignedServices || []).filter(s => currentServiceIDs.includes(s.id));
-        const currentServiceInProgressEntry = currentServiceEntries.find(s => s.status === 'In-Progress');
-        const currentServiceIsInProgress = !!currentServiceInProgressEntry;
-        const currentServiceIsComplete = !currentServiceIsInProgress && currentServiceEntries.some(s => s.status === 'Complete');
-        const currentServiceIsStandby = !currentServiceIsInProgress && !currentServiceIsComplete && currentServiceEntries.some(s => s.status === 'Standby');
-        const inProgressService = (client.assignedServices || []).find(s => s.status === 'In-Progress');
-        const inProgressIconTag = inProgressService
-            ? (SERVICE_ICON_BY_ID[inProgressService.id] || '')
-            : '';
-        const avatarClass = 'waitlist-avatar-primary text-white';
-        let avatarIconHTML = '<i class="bi bi-person"></i>';
-        if (isAbandoned) {
-            avatarIconHTML = '<i class="bi bi-person-x"></i>';
-        } else if (currentServiceIsInProgress) {
-            const currentServiceIconTag = SERVICE_ICON_BY_ID[currentServiceInProgressEntry.id] || inProgressIconTag;
-            avatarIconHTML = renderAvatarIconMarkup(currentServiceIconTag, 'bi-arrow-right-circle', 'text-white');
-        } else if (currentServiceIsComplete) {
-            avatarIconHTML = '<i class="bi bi-check-lg"></i>';
-        } else if (inProgressService) {
-            avatarIconHTML = renderAvatarIconMarkup(inProgressIconTag, 'bi-arrow-right-circle', 'text-white');
-        } else if (isCompleted) {
-            avatarIconHTML = '<i class="bi bi-check-lg"></i>';
-        }
-        const rowStatusClass = isAbandoned
-            ? 'waitlist-row-abandoned'
-            : (currentServiceIsInProgress
-                ? 'waitlist-row-has-station'
-                : (currentServiceIsComplete ? 'waitlist-row-no-station' : 'waitlist-row-waiting'));
-        const currentServiceName = (currentServiceKey && SERVICES[currentServiceKey]) ? SERVICES[currentServiceKey].name : 'this service';
-        const inProgressServiceName = inProgressService
-            ? String(SERVICE_NAME_BY_ID[inProgressService.id] || inProgressService.name || '').trim()
-            : '';
-        const avatarTooltip = (() => {
-            if (isAbandoned) return 'Abandoned client';
-            if (currentServiceIsInProgress) return `Currently at ${inProgressServiceName || currentServiceName}`;
-            if (currentServiceIsComplete) return `Completed ${currentServiceName}`;
-            if (currentServiceIsStandby) return `Standby for ${currentServiceName}`;
-            if (inProgressServiceName) return `Currently at ${inProgressServiceName}`;
-            return `Waiting for ${currentServiceName}`;
-        })();
-        const nameStateBadge = isAbandoned
-            ? '<span class="waitlist-abandoned-badge">Abandoned</span>'
-            : '';
-        const standbyStateBadge = (!isAbandoned && currentServiceIsStandby)
-            ? '<span class="waitlist-standby-badge">Standby</span>'
-            : '';
+    const orderedServices = [...(client.assignedServices || [])].sort(
+      (a, b) => {
+        const pa = SERVICE_PRIORITY[a.id] ?? 999;
+        const pb = SERVICE_PRIORITY[b.id] ?? 999;
+        if (pa !== pb) return pa - pb;
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      },
+    );
 
-        const orderedServices = [...(client.assignedServices || [])].sort((a, b) => {
-            const pa = SERVICE_PRIORITY[a.id] ?? 999;
-            const pb = SERVICE_PRIORITY[b.id] ?? 999;
-            if (pa !== pb) return pa - pb;
-            return String(a.name || '').localeCompare(String(b.name || ''));
-        });
+    const serviceListItems = orderedServices
+      .map((service) => {
+        const isServiceInProgress = service.status === "In-Progress";
+        const isServiceCurrentHere =
+          isServiceInProgress && currentServiceIDs.includes(service.id);
+        const isServiceComplete = service.status === "Complete";
+        const statusClass = isServiceInProgress
+          ? "is-current"
+          : isServiceComplete
+            ? "is-complete"
+            : "is-pending";
+        const hereNowBadge = isServiceCurrentHere
+          ? '<span class="waitlist-here-now-badge">Here now</span>'
+          : "";
 
-        const serviceListItems = orderedServices.map(service => {
-            const isServiceInProgress = service.status === 'In-Progress';
-            const isServiceCurrentHere = isServiceInProgress && currentServiceIDs.includes(service.id);
-            const isServiceComplete = service.status === 'Complete';
-            const statusClass = isServiceInProgress
-                ? 'is-current'
-                : (isServiceComplete ? 'is-complete' : 'is-pending');
-            const hereNowBadge = isServiceCurrentHere
-                ? '<span class="waitlist-here-now-badge">Here now</span>'
-                : '';
-
-            return `
+        return `
                 <div class="waitlist-service-item ${statusClass}">
                     <span class="waitlist-service-dot" aria-hidden="true"></span>
                     <span class="waitlist-service-name">${escapeHtml(service.name)}</span>
                     ${hereNowBadge}
                 </div>
             `;
-        }).join('');
-        const serviceListHTML = serviceListItems
-            ? `<div class="waitlist-service-list">${serviceListItems}</div>`
-            : '<div class="small text-muted mt-1">No services assigned</div>';
-        const rowButtonClass = isInProgress ? 'btn-primary' : ((isCompleted || isAbandoned) ? 'btn-outline-secondary' : 'btn-primary');
-        const rowButtonIcon = isInProgress ? 'bi-box-arrow-right' : (isCompleted ? 'bi-check2-all' : 'bi-arrow-right');
-        const rowButtonLabel = isInProgress ? 'Update' : (isCompleted || isAbandoned ? 'View' : 'Update');
-        const rowButtonDisabled = (isCompleted || isAbandoned) ? 'disabled' : '';
-        const actionCellHTML = (isCompleted || isAbandoned)
-            ? ''
-            : `<button class="btn ${rowButtonClass} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${rowButtonLabel}" ${rowButtonDisabled}>
+      })
+      .join("");
+    const serviceListHTML = serviceListItems
+      ? `<div class="waitlist-service-list">${serviceListItems}</div>`
+      : '<div class="small text-muted mt-1">No services assigned</div>';
+    const rowButtonClass = isInProgress
+      ? "btn-primary"
+      : isCompleted || isAbandoned
+        ? "btn-outline-secondary"
+        : "btn-primary";
+    const rowButtonIcon = isInProgress
+      ? "bi-box-arrow-right"
+      : isCompleted
+        ? "bi-check2-all"
+        : "bi-arrow-right";
+    const rowButtonLabel = isInProgress
+      ? "Update"
+      : isCompleted || isAbandoned
+        ? "View"
+        : "Update";
+    const rowButtonDisabled = isCompleted || isAbandoned ? "disabled" : "";
+    const actionCellHTML =
+      isCompleted || isAbandoned
+        ? ""
+        : `<button class="btn ${rowButtonClass} btn-sm rounded-2 px-2 px-sm-3" data-client-id="${client.id}" title="${rowButtonLabel}" ${rowButtonDisabled}>
                     <i class="bi ${rowButtonIcon} d-sm-none" style="font-size: 1rem; line-height: 1;"></i>
                     <span class="d-none d-sm-inline text-nowrap">${rowButtonLabel}</span>
                 </button>`;
-        const row = document.createElement('tr');
-        row.className = `border-bottom ${rowStatusClass}`;
-        row.innerHTML = `
+    const row = document.createElement("tr");
+    row.className = `border-bottom ${rowStatusClass}`;
+    row.innerHTML = `
             <td class="ps-3 py-3">
                 <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                     <div class="rounded-circle border d-flex align-items-center justify-content-center flex-shrink-0 ${avatarClass}" style="width: 30px; height: 30px; cursor: help;" title="${escapeHtml(avatarTooltip)}" aria-label="${escapeHtml(avatarTooltip)}">
@@ -1390,110 +1519,117 @@ function populateWaitlist(clientsToShow = null) {
                 ${actionCellHTML}
             </td>
         `;
-        waitlistBody.appendChild(row);
-    });
+    waitlistBody.appendChild(row);
+  });
 
-    // Reattach event listeners to Update buttons
-    attachUpdateButtonListeners();
+  // Reattach event listeners to Update buttons
+  attachUpdateButtonListeners();
 }
 
 // Attach event listeners to Update buttons
 function attachUpdateButtonListeners() {
-    const updateButtons = document.querySelectorAll('button[data-client-id]');
-    updateButtons.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const clientId = this.getAttribute('data-client-id');
-            console.log('Update button clicked for client:', clientId);
-            showCheckInOutModal(clientId);
-        });
+  const updateButtons = document.querySelectorAll("button[data-client-id]");
+  updateButtons.forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const clientId = this.getAttribute("data-client-id");
+      console.log("Update button clicked for client:", clientId);
+      showCheckInOutModal(clientId);
     });
+  });
 }
 
 // Search/filter the waitlist table
 function filterWaitlist(searchTerm) {
-    const term = searchTerm.toLowerCase().trim();
+  const term = searchTerm.toLowerCase().trim();
 
-    if (term === '') {
-        // Show all clients from current service if search is empty
-        populateWaitlist();
-        return;
-    }
+  if (term === "") {
+    // Show all clients from current service if search is empty
+    populateWaitlist();
+    return;
+  }
 
-    // Filter clients from current service's waitlist by name or ID
-    const filteredClients = {};
-    if (currentServiceKey) {
-        Object.entries(SERVICE_WAITLISTS[currentServiceKey]).forEach(([key, client]) => {
-            if (client.name.toLowerCase().includes(term) || client.id.toLowerCase().includes(term)) {
-                filteredClients[key] = client;
-            }
-        });
-    }
+  // Filter clients from current service's waitlist by name or ID
+  const filteredClients = {};
+  if (currentServiceKey) {
+    Object.entries(SERVICE_WAITLISTS[currentServiceKey]).forEach(
+      ([key, client]) => {
+        if (
+          client.name.toLowerCase().includes(term) ||
+          client.id.toLowerCase().includes(term)
+        ) {
+          filteredClients[key] = client;
+        }
+      },
+    );
+  }
 
-    populateWaitlist(filteredClients);
+  populateWaitlist(filteredClients);
 }
-
-
 
 // Update stats display based on current waitlist
 function updateStatsDisplay() {
-    if (!currentServiceKey) return;
+  if (!currentServiceKey) return;
 
-    const waitlist = SERVICE_WAITLISTS[currentServiceKey];
+  const waitlist = SERVICE_WAITLISTS[currentServiceKey];
 
-    // Count clients by status
-    let waitingCount = 0;
-    let inProgressCount = 0;
-    let completedCount = 0;
+  // Count clients by status
+  let waitingCount = 0;
+  let inProgressCount = 0;
+  let completedCount = 0;
 
-    Object.values(waitlist).forEach(client => {
-        if (client.status === 'waiting') waitingCount++;
-        else if (client.status === 'in-progress') inProgressCount++;
-        else if (client.status === 'completed') completedCount++;
-    });
+  Object.values(waitlist).forEach((client) => {
+    if (client.status === "waiting") waitingCount++;
+    else if (client.status === "in-progress") inProgressCount++;
+    else if (client.status === "completed") completedCount++;
+  });
 
-    // Update stat values in the UI
-    const stat1ValueEl = document.getElementById('stat1Value');
-    const stat2ValueEl = document.getElementById('stat2Value');
-    const stat3ValueEl = document.getElementById('stat3Value');
+  // Update stat values in the UI
+  const stat1ValueEl = document.getElementById("stat1Value");
+  const stat2ValueEl = document.getElementById("stat2Value");
+  const stat3ValueEl = document.getElementById("stat3Value");
 
-    if (stat1ValueEl) stat1ValueEl.textContent = waitingCount;
-    if (stat2ValueEl) stat2ValueEl.textContent = inProgressCount;
-    if (stat3ValueEl) stat3ValueEl.textContent = completedCount;
+  if (stat1ValueEl) stat1ValueEl.textContent = waitingCount;
+  if (stat2ValueEl) stat2ValueEl.textContent = inProgressCount;
+  if (stat3ValueEl) stat3ValueEl.textContent = completedCount;
 }
 
 // ── Availability Bars ────────────────────────────────────────────────────────
 
 // Build one progress-bar row element for a single service slot
 function buildAvailabilityRow(label, data) {
-    const maxCapacity = data ? (data.maxCapacity || 0) : 0;
-    const currentAssigned = data ? (data.currentAssigned || 0) : 0;
-    const standbyCount = data ? (data.standbyCount || 0) : 0;
-    const standbyLimit = data ? (data.standbyLimit || 0) : 0;
+  const maxCapacity = data ? data.maxCapacity || 0 : 0;
+  const currentAssigned = data ? data.currentAssigned || 0 : 0;
+  const standbyCount = data ? data.standbyCount || 0 : 0;
+  const standbyLimit = data ? data.standbyLimit || 0 : 0;
 
-    const percentage = maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
+  const percentage =
+    maxCapacity > 0 ? Math.round((currentAssigned / maxCapacity) * 100) : 0;
 
-    let barClass = 'bg-secondary';
-    if (maxCapacity > 0) {
-        if (percentage > 100)      barClass = 'bg-danger';
-        else if (percentage <= 50) barClass = 'bg-success';
-        else if (percentage < 80)  barClass = 'bg-standby';
-        else                       barClass = 'bg-danger';
-    }
+  let barClass = "bg-secondary";
+  if (maxCapacity > 0) {
+    if (percentage > 100) barClass = "bg-danger";
+    else if (percentage <= 50) barClass = "bg-success";
+    else if (percentage < 80) barClass = "bg-standby";
+    else barClass = "bg-danger";
+  }
 
-    let countStyle = 'background-color:#e9ecef;color:#495057;';
-    if (currentAssigned > maxCapacity) countStyle = 'background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;';
+  let countStyle = "background-color:#e9ecef;color:#495057;";
+  if (currentAssigned > maxCapacity)
+    countStyle =
+      "background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;";
 
-    let standbyHTML = '';
-    if (standbyCount > 0) {
-        const standbyStyle = (standbyLimit > 0 && standbyCount >= standbyLimit)
-            ? 'background-color:#dc3545;color:#fff;border:1px solid #dc3545;'
-            : 'background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;';
-        standbyHTML = `<span class="badge fw-bold ms-1" style="font-size:0.7rem;${standbyStyle}">${standbyCount} standby</span>`;
-    }
+  let standbyHTML = "";
+  if (standbyCount > 0) {
+    const standbyStyle =
+      standbyLimit > 0 && standbyCount >= standbyLimit
+        ? "background-color:#dc3545;color:#fff;border:1px solid #dc3545;"
+        : "background-color:#FFF3CD;color:#7A5A00;border:1px solid #FFDA6A;";
+    standbyHTML = `<span class="badge fw-bold ms-1" style="font-size:0.7rem;${standbyStyle}">${standbyCount} standby</span>`;
+  }
 
-    const div = document.createElement('div');
-    div.className = 'border rounded p-2 px-3 mb-2';
-    div.innerHTML = `
+  const div = document.createElement("div");
+  div.className = "border rounded p-2 px-3 mb-2";
+  div.innerHTML = `
         <div class="d-flex align-items-center justify-content-between mb-1">
             <span class="fw-bold" style="font-size:0.9rem;color:black;">${label}</span>
             <div class="d-flex align-items-center gap-1">
@@ -1504,7 +1640,7 @@ function buildAvailabilityRow(label, data) {
         <div class="progress" style="height:6px;border-radius:3px;">
             <div class="progress-bar ${barClass}" role="progressbar" style="width:${Math.min(percentage, 100)}%;border-radius:3px;"></div>
         </div>`;
-    return div;
+  return div;
 }
 
 // Render availability bars for the currently active service only.
@@ -1512,43 +1648,60 @@ function buildAvailabilityRow(label, data) {
 // Standalone services get a single bar.
 // The container is hidden entirely when there is nothing meaningful to show.
 function renderAvailabilityBars(servicesData) {
-    const container = document.getElementById('availabilityContainer');
-    if (!container) return;
+  const container = document.getElementById("availabilityContainer");
+  if (!container) return;
 
-    if (!servicesData || !serviceHierarchyRaw.length || !currentServiceKey) {
-        container.classList.add('d-none');
-        return;
-    }
+  if (!servicesData || !serviceHierarchyRaw.length || !currentServiceKey) {
+    container.classList.add("d-none");
+    return;
+  }
 
-    const capLookup = {};
-    servicesData.forEach(s => { capLookup[s.serviceID] = s; });
+  const capLookup = {};
+  servicesData.forEach((s) => {
+    capLookup[s.serviceID] = s;
+  });
 
-    const cat = serviceHierarchyRaw.find(c => c.ServiceID.toLowerCase() === currentServiceKey.toLowerCase());
-    if (!cat) { container.classList.add('d-none'); return; }
+  const cat = serviceHierarchyRaw.find(
+    (c) => c.ServiceID.toLowerCase() === currentServiceKey.toLowerCase(),
+  );
+  if (!cat) {
+    container.classList.add("d-none");
+    return;
+  }
 
-    container.innerHTML = '';
+  container.innerHTML = "";
 
-    const hasChildren = cat.children && cat.children.length > 0;
+  const hasChildren = cat.children && cat.children.length > 0;
 
-    if (hasChildren) {
-        cat.children.forEach(child => {
-            let shortLabel = child.ServiceName;
-            if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
-                shortLabel = shortLabel.substring(cat.ServiceName.length).replace(/^[\s\-–—]+/, '');
-            }
-            container.appendChild(buildAvailabilityRow(shortLabel || child.ServiceName, capLookup[child.ServiceID]));
-        });
-    } else {
-        container.appendChild(buildAvailabilityRow(cat.ServiceName, capLookup[cat.ServiceID]));
-    }
+  if (hasChildren) {
+    cat.children.forEach((child) => {
+      let shortLabel = child.ServiceName;
+      if (shortLabel.toLowerCase().startsWith(cat.ServiceName.toLowerCase())) {
+        shortLabel = shortLabel
+          .substring(cat.ServiceName.length)
+          .replace(/^[\s\-–—]+/, "");
+      }
+      container.appendChild(
+        buildAvailabilityRow(
+          shortLabel || child.ServiceName,
+          capLookup[child.ServiceID],
+        ),
+      );
+    });
+  } else {
+    container.appendChild(
+      buildAvailabilityRow(cat.ServiceName, capLookup[cat.ServiceID]),
+    );
+  }
 
-    container.classList.remove('d-none');
+  container.classList.remove("d-none");
 }
 
 // Refresh button — capacity data is now bundled inside fetchServiceData, so one call does everything
-const refreshServiceBtn = document.getElementById('refreshServiceBtn');
+const refreshServiceBtn = document.getElementById("refreshServiceBtn");
 if (refreshServiceBtn) {
-    refreshServiceBtn.addEventListener('click', () => {
-        if (currentServiceKey) spinRefreshBtn(refreshServiceBtn, fetchServiceData(currentServiceKey));
-    });
+  refreshServiceBtn.addEventListener("click", () => {
+    if (currentServiceKey)
+      spinRefreshBtn(refreshServiceBtn, fetchServiceData(currentServiceKey));
+  });
 }

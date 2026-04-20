@@ -1,69 +1,75 @@
 /**
  * ============================================================
- * File:        devMode.js
- * Description: Developer mode toggle, protected by admin PIN.
- *              Activate from the DUO+ logo on the login page.
- *              Desktop: multi-click. Touch devices: long-press
- *              or fewer taps for easier activation.
- *              State persists for the session.
- *              Injects a floating toolbar with page shortcuts
- *              and reveals any .dev-only elements on the page.
+ * File:            devMode.js
+ * Description:     Developer mode activation, toolbar tools, and status helpers.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:16 PM
+ * Changes Made:      Standardized formatting and added clarity comments.
  * ============================================================
  */
-
 (function () {
-    const DEV_KEY = 'duo_dev_mode';
-    const CAMERA_GRANTED_SESSION_KEY = 'duo_camera_permission_granted';
+  const DEV_KEY = "duo_dev_mode";
+  const CAMERA_GRANTED_SESSION_KEY = "duo_camera_permission_granted";
 
-    function isDevMode() {
-        return sessionStorage.getItem(DEV_KEY) === '1';
+  function isDevMode() {
+    return sessionStorage.getItem(DEV_KEY) === "1";
+  }
+
+  function enableDevMode() {
+    sessionStorage.setItem(DEV_KEY, "1");
+    applyDevMode();
+  }
+
+  function disableDevMode() {
+    sessionStorage.removeItem(DEV_KEY);
+    const toolbar = document.getElementById("devToolbar");
+    if (toolbar) toolbar.remove();
+    document
+      .querySelectorAll(".dev-only")
+      .forEach((el) => el.classList.add("d-none"));
+  }
+
+  function applyDevMode() {
+    document
+      .querySelectorAll(".dev-only")
+      .forEach((el) => el.classList.remove("d-none"));
+
+    // On index.html an inline panel lives under the Life Church logo — wire it up,
+    // no floating FAB needed there.
+    const inlinePanel = document.getElementById("devIndexPanel");
+    if (inlinePanel) {
+      wireInlinePanel();
+    } else if (!document.getElementById("devToolbar")) {
+      injectToolbar();
     }
+  }
 
-    function enableDevMode() {
-        sessionStorage.setItem(DEV_KEY, '1');
-        applyDevMode();
-    }
-
-    function disableDevMode() {
-        sessionStorage.removeItem(DEV_KEY);
-        const toolbar = document.getElementById('devToolbar');
-        if (toolbar) toolbar.remove();
-        document.querySelectorAll('.dev-only').forEach(el => el.classList.add('d-none'));
-    }
-
-    function applyDevMode() {
-        document.querySelectorAll('.dev-only').forEach(el => el.classList.remove('d-none'));
-
-        // On index.html an inline panel lives under the Life Church logo — wire it up,
-        // no floating FAB needed there.
-        const inlinePanel = document.getElementById('devIndexPanel');
-        if (inlinePanel) {
-            wireInlinePanel();
-        } else if (!document.getElementById('devToolbar')) {
-            injectToolbar();
-        }
-    }
-
-    function wireInlinePanel() {
-        const btn = document.getElementById('devIndexDisableBtn');
-        if (!btn || btn._wired) return;
-        btn._wired = true;
-        btn.addEventListener('click', () => {
-            disableDevMode();
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'success', title: 'Dev Mode Off', timer: 1000, showConfirmButton: false });
-            }
+  function wireInlinePanel() {
+    const btn = document.getElementById("devIndexDisableBtn");
+    if (!btn || btn._wired) return;
+    btn._wired = true;
+    btn.addEventListener("click", () => {
+      disableDevMode();
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          icon: "success",
+          title: "Dev Mode Off",
+          timer: 1000,
+          showConfirmButton: false,
         });
-    }
+      }
+    });
+  }
 
-    function injectToolbar() {
-        const inPages = window.location.pathname.toLowerCase().includes('/pages/');
-        const p = inPages ? '' : 'pages/';       // prefix for pages/ links
-        const r = inPages ? '../' : '';            // prefix for root links
+  function injectToolbar() {
+    const inPages = window.location.pathname.toLowerCase().includes("/pages/");
+    const p = inPages ? "" : "pages/"; // prefix for pages/ links
+    const r = inPages ? "../" : ""; // prefix for root links
 
-        const toolbar = document.createElement('div');
-        toolbar.id = 'devToolbar';
-        toolbar.innerHTML = `
+    const toolbar = document.createElement("div");
+    toolbar.id = "devToolbar";
+    toolbar.innerHTML = `
             <button id="devFab" title="Developer mode is active">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
@@ -97,247 +103,290 @@
                     <button id="devCameraStatusRefresh" type="button" class="dev-meta-btn" title="Refresh camera permission status">Refresh</button>
                 </div>
             </div>`;
-        document.body.appendChild(toolbar);
+    document.body.appendChild(toolbar);
 
-        const panel = document.getElementById('devPanel');
-        document.getElementById('devFab').addEventListener('click', () => {
-            panel.classList.toggle('dev-panel-open');
+    const panel = document.getElementById("devPanel");
+    document.getElementById("devFab").addEventListener("click", () => {
+      panel.classList.toggle("dev-panel-open");
+    });
+    document.getElementById("devDisableBtn").addEventListener("click", () => {
+      disableDevMode();
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          icon: "success",
+          title: "Dev Mode Off",
+          timer: 1000,
+          showConfirmButton: false,
         });
-        document.getElementById('devDisableBtn').addEventListener('click', () => {
-            disableDevMode();
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'success', title: 'Dev Mode Off', timer: 1000, showConfirmButton: false });
-            }
-        });
+      }
+    });
 
-        const refreshCameraBtn = document.getElementById('devCameraStatusRefresh');
-        if (refreshCameraBtn) {
-            refreshCameraBtn.addEventListener('click', () => updateCameraStatus());
-        }
-
-        updateCameraStatus();
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) updateCameraStatus();
-        });
-
-        // Close panel when clicking outside
-        document.addEventListener('click', e => {
-            if (!toolbar.contains(e.target)) panel.classList.remove('dev-panel-open');
-        });
+    const refreshCameraBtn = document.getElementById("devCameraStatusRefresh");
+    if (refreshCameraBtn) {
+      refreshCameraBtn.addEventListener("click", () => updateCameraStatus());
     }
 
-    function setCameraStatusUI(status, detail) {
-        const badge = document.getElementById('devCameraStatusBadge');
-        const sub = document.getElementById('devCameraStatusSub');
-        if (!badge || !sub) return;
+    updateCameraStatus();
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) updateCameraStatus();
+    });
 
-        badge.className = 'dev-status-chip';
+    // Close panel when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!toolbar.contains(e.target)) panel.classList.remove("dev-panel-open");
+    });
+  }
 
-        if (status === 'granted') {
-            badge.classList.add('dev-status-granted');
-            badge.textContent = 'Granted';
-        } else if (status === 'prompt') {
-            badge.classList.add('dev-status-prompt');
-            badge.textContent = 'Prompt';
-        } else if (status === 'denied') {
-            badge.classList.add('dev-status-denied');
-            badge.textContent = 'Denied';
-        } else if (status === 'unsupported') {
-            badge.classList.add('dev-status-unknown');
-            badge.textContent = 'Unsupported';
-        } else {
-            badge.classList.add('dev-status-unknown');
-            badge.textContent = 'Unknown';
-        }
+  function setCameraStatusUI(status, detail) {
+    const badge = document.getElementById("devCameraStatusBadge");
+    const sub = document.getElementById("devCameraStatusSub");
+    if (!badge || !sub) return;
 
-        sub.textContent = detail || '';
-    }
+    badge.className = "dev-status-chip";
 
-    async function updateCameraStatus() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            setCameraStatusUI('unsupported', 'This browser does not expose camera APIs.');
-            return;
-        }
-
-        const sessionGranted = sessionStorage.getItem(CAMERA_GRANTED_SESSION_KEY) === '1';
-
-        if (!navigator.permissions || !navigator.permissions.query) {
-            setCameraStatusUI('unknown', sessionGranted
-                ? 'Permissions API unavailable. Session flag indicates camera was granted.'
-                : 'Permissions API unavailable. Use scan flow to test prompt behavior.');
-            return;
-        }
-
-        try {
-            const permission = await navigator.permissions.query({ name: 'camera' });
-            const extra = sessionGranted ? ' Session camera flag: yes.' : ' Session camera flag: no.';
-            setCameraStatusUI(permission.state, `Browser camera state: ${permission.state}.${extra}`);
-        } catch (err) {
-            setCameraStatusUI('unknown', sessionGranted
-                ? 'Could not query camera permission. Session camera flag: yes.'
-                : 'Could not query camera permission.');
-        }
-    }
-
-    // Secret trigger: tap/click the DUO+ logo 5 times within 3 seconds
-    function setupSecretTrigger() {
-        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
-        const requiredTaps = isTouchDevice ? 3 : 5;
-        const resetMs = isTouchDevice ? 4000 : 3000;
-
-        const disableLongPressSelection = (el) => {
-            if (!el) return;
-            el.style.webkitUserSelect = 'none';
-            el.style.userSelect = 'none';
-            el.style.webkitTouchCallout = 'none';
-            el.style.webkitTapHighlightColor = 'transparent';
-            el.addEventListener('selectstart', (event) => event.preventDefault());
-            el.addEventListener('dragstart', (event) => event.preventDefault());
-        };
-
-        let count = 0;
-        let timer = null;
-        let longPressTimer = null;
-        let longPressHandled = false;
-
-        const triggerPrompt = () => {
-            if (isDevMode()) {
-                disableDevMode();
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'info', title: 'Dev Mode Off', timer: 1000, showConfirmButton: false });
-                }
-            } else {
-                promptAdminPin();
-            }
-        };
-
-        function onTrigger() {
-            count++;
-            clearTimeout(timer);
-            timer = setTimeout(() => { count = 0; }, resetMs);
-            if (count >= requiredTaps) {
-                count = 0;
-                clearTimeout(timer);
-                triggerPrompt();
-            }
-        }
-
-        // Attach to the logo on the login page
-        const logo = document.querySelector('.logo-section img');
-        if (logo) {
-            disableLongPressSelection(document.querySelector('.logo-section'));
-            disableLongPressSelection(document.getElementById('subtitle'));
-            disableLongPressSelection(logo);
-
-            logo.style.cursor = 'pointer';
-            logo.style.touchAction = 'manipulation';
-            logo.style.webkitTouchCallout = 'none';
-            logo.style.webkitUserSelect = 'none';
-            logo.style.userSelect = 'none';
-            logo.draggable = false;
-            logo.addEventListener('click', onTrigger);
-
-            // Touch-friendly shortcut: press and hold logo to open dev PIN quickly.
-            if (isTouchDevice) {
-                logo.addEventListener('pointerdown', (event) => {
-                    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
-                    longPressHandled = false;
-                    clearTimeout(longPressTimer);
-                    longPressTimer = setTimeout(() => {
-                        longPressHandled = true;
-                        count = 0;
-                        clearTimeout(timer);
-                        triggerPrompt();
-                    }, 700);
-                });
-
-                const clearLongPress = () => {
-                    clearTimeout(longPressTimer);
-                };
-
-                logo.addEventListener('pointerup', clearLongPress);
-                logo.addEventListener('pointercancel', clearLongPress);
-                logo.addEventListener('pointerleave', clearLongPress);
-
-                logo.addEventListener('contextmenu', (event) => {
-                    if (longPressHandled) {
-                        event.preventDefault();
-                    }
-                });
-            }
-        }
-    }
-
-    async function promptAdminPin() {
-        if (typeof Swal === 'undefined') return;
-
-        const { value: pin } = await Swal.fire({
-            title: 'Developer Mode',
-            html: '<p class="text-muted small mb-0">Enter the 6-digit admin PIN for this session.</p>',
-            input: 'tel',
-            inputAttributes: {
-                maxlength: '6',
-                autocomplete: 'one-time-code',
-                inputmode: 'numeric',
-                pattern: '[0-9]*',
-                placeholder: '6-digit admin PIN'
-            },
-            inputValue: '',
-            showCancelButton: true,
-            confirmButtonText: 'Enable',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#174593',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => {
-                const input = Swal.getInput();
-                if (!input) return;
-                input.addEventListener('input', () => {
-                    input.value = input.value.replace(/\D/g, '').slice(0, 6);
-                });
-                setTimeout(() => input.focus(), 50);
-            },
-            preConfirm: (value) => {
-                if (!value || value.trim() === '') {
-                    Swal.showValidationMessage('Please enter the PIN.');
-                    return false;
-                }
-                if (!/^\d{6}$/.test(value)) {
-                    Swal.showValidationMessage('PIN must be exactly 6 digits.');
-                    return false;
-                }
-                return value;
-            }
-        });
-
-        if (!pin) return;
-
-        try {
-            const res = await fetch('/api/VerifyPin.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin, name: 'Developer', pageName: 'devmode', pinType: 'admin' })
-            });
-            const data = await res.json();
-            if (data.success) {
-                enableDevMode();
-            } else {
-                Swal.fire({ icon: 'error', title: 'Access Denied', text: data.error || 'Incorrect PIN.' });
-            }
-        } catch {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Could not reach the server.' });
-        }
-    }
-
-    // Boot
-    function init() {
-        setupSecretTrigger();
-        if (isDevMode()) applyDevMode();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+    if (status === "granted") {
+      badge.classList.add("dev-status-granted");
+      badge.textContent = "Granted";
+    } else if (status === "prompt") {
+      badge.classList.add("dev-status-prompt");
+      badge.textContent = "Prompt";
+    } else if (status === "denied") {
+      badge.classList.add("dev-status-denied");
+      badge.textContent = "Denied";
+    } else if (status === "unsupported") {
+      badge.classList.add("dev-status-unknown");
+      badge.textContent = "Unsupported";
     } else {
-        init();
+      badge.classList.add("dev-status-unknown");
+      badge.textContent = "Unknown";
     }
+
+    sub.textContent = detail || "";
+  }
+
+  async function updateCameraStatus() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraStatusUI(
+        "unsupported",
+        "This browser does not expose camera APIs.",
+      );
+      return;
+    }
+
+    const sessionGranted =
+      sessionStorage.getItem(CAMERA_GRANTED_SESSION_KEY) === "1";
+
+    if (!navigator.permissions || !navigator.permissions.query) {
+      setCameraStatusUI(
+        "unknown",
+        sessionGranted
+          ? "Permissions API unavailable. Session flag indicates camera was granted."
+          : "Permissions API unavailable. Use scan flow to test prompt behavior.",
+      );
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: "camera" });
+      const extra = sessionGranted
+        ? " Session camera flag: yes."
+        : " Session camera flag: no.";
+      setCameraStatusUI(
+        permission.state,
+        `Browser camera state: ${permission.state}.${extra}`,
+      );
+    } catch (err) {
+      setCameraStatusUI(
+        "unknown",
+        sessionGranted
+          ? "Could not query camera permission. Session camera flag: yes."
+          : "Could not query camera permission.",
+      );
+    }
+  }
+
+  // Secret trigger: tap/click the DUO+ logo 5 times within 3 seconds
+  function setupSecretTrigger() {
+    const isTouchDevice =
+      window.matchMedia("(pointer: coarse)").matches ||
+      (navigator.maxTouchPoints || 0) > 0;
+    const requiredTaps = isTouchDevice ? 3 : 5;
+    const resetMs = isTouchDevice ? 4000 : 3000;
+
+    const disableLongPressSelection = (el) => {
+      if (!el) return;
+      el.style.webkitUserSelect = "none";
+      el.style.userSelect = "none";
+      el.style.webkitTouchCallout = "none";
+      el.style.webkitTapHighlightColor = "transparent";
+      el.addEventListener("selectstart", (event) => event.preventDefault());
+      el.addEventListener("dragstart", (event) => event.preventDefault());
+    };
+
+    let count = 0;
+    let timer = null;
+    let longPressTimer = null;
+    let longPressHandled = false;
+
+    const triggerPrompt = () => {
+      if (isDevMode()) {
+        disableDevMode();
+        if (typeof Swal !== "undefined") {
+          Swal.fire({
+            icon: "info",
+            title: "Dev Mode Off",
+            timer: 1000,
+            showConfirmButton: false,
+          });
+        }
+      } else {
+        promptAdminPin();
+      }
+    };
+
+    function onTrigger() {
+      count++;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        count = 0;
+      }, resetMs);
+      if (count >= requiredTaps) {
+        count = 0;
+        clearTimeout(timer);
+        triggerPrompt();
+      }
+    }
+
+    // Attach to the logo on the login page
+    const logo = document.querySelector(".logo-section img");
+    if (logo) {
+      disableLongPressSelection(document.querySelector(".logo-section"));
+      disableLongPressSelection(document.getElementById("subtitle"));
+      disableLongPressSelection(logo);
+
+      logo.style.cursor = "pointer";
+      logo.style.touchAction = "manipulation";
+      logo.style.webkitTouchCallout = "none";
+      logo.style.webkitUserSelect = "none";
+      logo.style.userSelect = "none";
+      logo.draggable = false;
+      logo.addEventListener("click", onTrigger);
+
+      // Touch-friendly shortcut: press and hold logo to open dev PIN quickly.
+      if (isTouchDevice) {
+        logo.addEventListener("pointerdown", (event) => {
+          if (event.pointerType !== "touch" && event.pointerType !== "pen")
+            return;
+          longPressHandled = false;
+          clearTimeout(longPressTimer);
+          longPressTimer = setTimeout(() => {
+            longPressHandled = true;
+            count = 0;
+            clearTimeout(timer);
+            triggerPrompt();
+          }, 700);
+        });
+
+        const clearLongPress = () => {
+          clearTimeout(longPressTimer);
+        };
+
+        logo.addEventListener("pointerup", clearLongPress);
+        logo.addEventListener("pointercancel", clearLongPress);
+        logo.addEventListener("pointerleave", clearLongPress);
+
+        logo.addEventListener("contextmenu", (event) => {
+          if (longPressHandled) {
+            event.preventDefault();
+          }
+        });
+      }
+    }
+  }
+
+  async function promptAdminPin() {
+    if (typeof Swal === "undefined") return;
+
+    const { value: pin } = await Swal.fire({
+      title: "Developer Mode",
+      html: '<p class="text-muted small mb-0">Enter the 6-digit admin PIN for this session.</p>',
+      input: "tel",
+      inputAttributes: {
+        maxlength: "6",
+        autocomplete: "one-time-code",
+        inputmode: "numeric",
+        pattern: "[0-9]*",
+        placeholder: "6-digit admin PIN",
+      },
+      inputValue: "",
+      showCancelButton: true,
+      confirmButtonText: "Enable",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#174593",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        const input = Swal.getInput();
+        if (!input) return;
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/\D/g, "").slice(0, 6);
+        });
+        setTimeout(() => input.focus(), 50);
+      },
+      preConfirm: (value) => {
+        if (!value || value.trim() === "") {
+          Swal.showValidationMessage("Please enter the PIN.");
+          return false;
+        }
+        if (!/^\d{6}$/.test(value)) {
+          Swal.showValidationMessage("PIN must be exactly 6 digits.");
+          return false;
+        }
+        return value;
+      },
+    });
+
+    if (!pin) return;
+
+    try {
+      const res = await fetch("/api/VerifyPin.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pin,
+          name: "Developer",
+          pageName: "devmode",
+          pinType: "admin",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        enableDevMode();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Access Denied",
+          text: data.error || "Incorrect PIN.",
+        });
+      }
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Could not reach the server.",
+      });
+    }
+  }
+
+  // Boot
+  function init() {
+    setupSecretTrigger();
+    if (isDevMode()) applyDevMode();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();

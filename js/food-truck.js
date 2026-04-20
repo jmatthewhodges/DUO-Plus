@@ -1,165 +1,157 @@
 /**
  * ============================================================
- *  File:        food-truck.js
- *  Description: Food truck counter functionality.
+ * File:            food-truck.js
+ * Description:     Food truck counter interactions and stats syncing.
  *
- *  Last Modified By:  Lauren
- *  Last Modified On:  Feb 27 @ 8:15 PM
- *  Changes Made:      Created file
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:16 PM
+ * Changes Made:      Standardized formatting and added clarity comments.
  * ============================================================
-*/
- 
-
+ */
 (function () {
+  // References for counter displays
+  var clientsServed = document.getElementById("clientsServed");
+  var volunteersServed = document.getElementById("volunteersServed");
 
-    // References for counter displays
-    var clientsServed = document.getElementById('clientsServed');
-    var volunteersServed = document.getElementById('volunteersServed');
+  // References for control buttons
+  var clientsPlus = document.getElementById("clientsPlus");
+  var clientsMinus = document.getElementById("clientsMinus");
 
-    // References for control buttons
-    var clientsPlus = document.getElementById('clientsPlus');
-    var clientsMinus = document.getElementById('clientsMinus');
+  var volunteersPlus = document.getElementById("volunteersPlus");
+  var volunteersMinus = document.getElementById("volunteersMinus");
 
-    var volunteersPlus = document.getElementById('volunteersPlus');
-    var volunteersMinus = document.getElementById('volunteersMinus');
+  // References for status text
+  var statusText = document.getElementById("foodTruckStatus");
 
-    // References for status text
-    var statusText = document.getElementById('foodTruckStatus');
+  // Event ID returned by backend (active event)
+  var currentEventID = null;
 
-    // Event ID returned by backend (active event)
-    var currentEventID = null;
+  // Show status message under the buttons
+  function setStatus(message, isError) {
+    if (!statusText) return;
 
+    statusText.textContent = message;
 
-    // Show status message under the buttons
-    function setStatus(message, isError) {
-        if (!statusText) return;
+    // If something failed, make it red
+    if (isError) {
+      statusText.classList.add("text-danger");
+      statusText.classList.remove("text-muted");
+    } else {
+      statusText.classList.remove("text-danger");
+      statusText.classList.add("text-muted");
+    }
+  }
 
-        statusText.textContent = message;
+  // Read number from counter
+  function getCounterValue(element) {
+    return Number.parseInt(element.textContent, 10) || 0;
+  }
 
-        // If something failed, make it red
-        if (isError) {
-            statusText.classList.add('text-danger');
-            statusText.classList.remove('text-muted');
-        } else {
-            statusText.classList.remove('text-danger');
-            statusText.classList.add('text-muted');
+  // Write number to counter
+  function setCounterValue(element, value) {
+    element.textContent = String(Math.max(0, Number.parseInt(value, 10) || 0));
+  }
+
+  // Pull values from backend when reloading
+  function loadStats() {
+    setStatus("Loading latest food truck stats.");
+
+    fetch("../api/food-truck-stats.php", { method: "GET" })
+      .then(function (response) {
+        return response.json();
+      })
+
+      .then(function (result) {
+        if (!result.success) {
+          throw new Error(result.message || "Could not load stats.");
         }
-    }
 
-    // Read number from counter
-    function getCounterValue(element) {
-        return Number.parseInt(element.textContent, 10) || 0;
-    }
+        // Save event ID in case backend just created it
+        currentEventID = result.eventID || currentEventID;
 
-    // Write number to counter
-    function setCounterValue(element, value) {
-        element.textContent = String(Math.max(0, Number.parseInt(value, 10) || 0));
-    }
+        // Update what the user sees
+        setCounterValue(clientsServed, result.stats.clientsServed);
+        setCounterValue(volunteersServed, result.stats.volunteersServed);
 
-    // Pull values from backend when reloading
-    function loadStats() {
-        setStatus('Loading latest food truck stats.');
+        setStatus("Updated from database.");
+      })
 
-        fetch('../api/food-truck-stats.php', { method: 'GET' })
+      .catch(function (error) {
+        setStatus("Load failed: " + error.message, true);
+      });
+  }
 
-            .then(function (response) {
-                return response.json();
-            })
+  // Add or subtract counter in the database after each +/- click
+  function saveCounter(counterName, value) {
+    return fetch("../api/food-truck-stats.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        counterName: counterName,
+        value: value,
+      }),
+    })
+      .then(function (response) {
+        return response.json();
+      })
 
-            .then(function (result) {
+      .then(function (result) {
+        if (!result.success) {
+          throw new Error(result.message || "Save failed.");
+        }
 
-                if (!result.success) {
-                    throw new Error(result.message || 'Could not load stats.');
-                }
+        currentEventID = result.eventID || currentEventID;
 
-                // Save event ID in case backend just created it
-                currentEventID = result.eventID || currentEventID;
+        setStatus("Saved.");
+      })
 
-                // Update what the user sees
-                setCounterValue(clientsServed, result.stats.clientsServed);
-                setCounterValue(volunteersServed, result.stats.volunteersServed);
+      .catch(function (error) {
+        setStatus("Save failed: " + error.message, true);
 
-                setStatus('Updated from database.');
-            })
-
-            .catch(function (error) {
-                setStatus('Load failed: ' + error.message, true);
-            });
-    }
-
-
-    // Add or subtract counter in the database after each +/- click
-    function saveCounter(counterName, value) {
-        return fetch('../api/food-truck-stats.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                counterName: counterName,
-                value: value
-            })
-        })
-
-            .then(function (response) {
-                return response.json();
-            })
-
-            .then(function (result) {
-
-                if (!result.success) {
-                    throw new Error(result.message || 'Save failed.');
-                }
-
-                currentEventID = result.eventID || currentEventID;
-
-                setStatus('Saved.');
-            })
-
-            .catch(function (error) {
-                setStatus('Save failed: ' + error.message, true);
-
-                // If something went wrong, reload real values
-                loadStats();
-            });
-    }
-
-
-
-   // Handles click events for + and - buttons per counter
-    function setupCounter(element, plusBtn, minusBtn, key) {
-
-        if (!element || !plusBtn || !minusBtn) return;
-
-        plusBtn.addEventListener('click', function () {
-            var next = getCounterValue(element) + 1;
-            setCounterValue(element, next);
-            saveCounter(key, next);
-        });
-
-        minusBtn.addEventListener('click', function () {
-            var next = getCounterValue(element) - 1;
-            setCounterValue(element, next);
-            saveCounter(key, next);
-        });
-    }
-
-    // Set up both counters
-    setupCounter(clientsServed, clientsPlus, clientsMinus, 'clientsServed');
-    setupCounter(volunteersServed, volunteersPlus, volunteersMinus, 'volunteersServed');
-
-    // Only load data after PIN is verified
-    function initFoodTruck() {
+        // If something went wrong, reload real values
         loadStats();
-        setInterval(loadStats, 40000);
-    }
+      });
+  }
 
-    document.addEventListener('pinVerified', initFoodTruck);
+  // Handles click events for + and - buttons per counter
+  function setupCounter(element, plusBtn, minusBtn, key) {
+    if (!element || !plusBtn || !minusBtn) return;
 
-    document.addEventListener('DOMContentLoaded', function () {
-        if (document.body.classList.contains('pin-verified')) {
-            initFoodTruck();
-        }
+    plusBtn.addEventListener("click", function () {
+      var next = getCounterValue(element) + 1;
+      setCounterValue(element, next);
+      saveCounter(key, next);
     });
 
+    minusBtn.addEventListener("click", function () {
+      var next = getCounterValue(element) - 1;
+      setCounterValue(element, next);
+      saveCounter(key, next);
+    });
+  }
+
+  // Set up both counters
+  setupCounter(clientsServed, clientsPlus, clientsMinus, "clientsServed");
+  setupCounter(
+    volunteersServed,
+    volunteersPlus,
+    volunteersMinus,
+    "volunteersServed",
+  );
+
+  // Only load data after PIN is verified
+  function initFoodTruck() {
+    loadStats();
+    setInterval(loadStats, 40000);
+  }
+
+  document.addEventListener("pinVerified", initFoodTruck);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.body.classList.contains("pin-verified")) {
+      initFoodTruck();
+    }
+  });
 })();
