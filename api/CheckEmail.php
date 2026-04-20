@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        CheckEmail.php
- *  Purpose:     Returns whether an email is already registered
- *               in tblClientAuth. Used for real-time duplicate
- *               detection on the registration form (step 1).
+ * File:            CheckEmail.php
+ * Description:     Check whether an email is already registered.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 12 @ 12:00 PM
- *  Changes Made:      Initial creation
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

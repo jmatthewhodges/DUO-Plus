@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        LogVolunteerBadgePrint.php
- *  Purpose:     Stores volunteer badge print activity.
+ * File:            LogVolunteerBadgePrint.php
+ * Description:     Record volunteer badge print events.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  April 10, 2026
- *  Changes Made:      Initial creation.
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 header('Content-Type: application/json');
 
 // Require PIN-verified session for dashboard operations.

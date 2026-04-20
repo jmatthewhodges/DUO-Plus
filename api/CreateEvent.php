@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        CreateEvent.php
- *  Purpose:     Handles creating a new event.
+ * File:            CreateEvent.php
+ * Description:     Create a new event record.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:40 PM
- *  Changes Made:      Code cleanup
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');

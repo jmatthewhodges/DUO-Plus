@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        Login.php
- *  Purpose:     Handles user authentication. Validates
- *               credentials against the database and returns
- *               client data on successful login.
- * 
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:44 PM
- *  Changes Made:      Code cleanup
+ * File:            login.php
+ * Description:     Authenticate client credentials for sign-in.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type
 header('Content-Type: application/json');
 

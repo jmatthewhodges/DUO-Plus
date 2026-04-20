@@ -1,16 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        AbandonClient.php
- *  Description: Marks a client as abandoned for the current event.
- *               Sets IsAbandoned = 1 on their visit so the NowServing
- *               logic permanently skips them, releases any active
- *               in-progress service seat(s), and logs 'Abandoned' for
- *               each active service row on the visit.
- *  Method:      POST  { "ClientID": "..." }
+ * File:            AbandonClient.php
+ * Description:     Mark a client visit as abandoned and release active seats.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');

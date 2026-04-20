@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        GrabService.php
- *  Purpose:     Returns stats and waitlist for one or more services.
- *               Accepts ServiceID via query string (comma-separated
- *               or repeated, e.g. ?ServiceID=medicalExam,medicalFollowUp
- *               or ?ServiceID[]=medicalExam&ServiceID[]=medicalFollowUp).
+ * File:            GrabService.php
+ * Description:     Return per-service waitlist and performance stats.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');

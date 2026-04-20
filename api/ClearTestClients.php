@@ -1,13 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        ClearTestClients.php
- *  Purpose:     Deletes only test clients and their dependent rows.
- *               Test clients are identified by tblClients.DateCreated
- *               strictly AFTER the configured cutoff date.
+ * File:            ClearTestClients.php
+ * Description:     Delete only test clients and dependent rows.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 

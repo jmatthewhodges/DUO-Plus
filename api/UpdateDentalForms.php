@@ -1,13 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        UpdateDentalForms.php
- *  Purpose:     Toggle dental forms completion for a checked-in client.
- *  Method:      POST (application/json)
- *  Body:        { "ClientID": "...", "FormsCompleted": true|false }
+ * File:            UpdateDentalForms.php
+ * Description:     Update dental forms completion state per client.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

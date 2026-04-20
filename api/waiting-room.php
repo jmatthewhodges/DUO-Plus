@@ -1,16 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        waiting-room.php
- *  Description: Returns queue data for the waiting-room dashboard.
- *               - NowServing: next client to be served (FIFO by
- *                 FirstCheckedIn) with an assigned service chosen
- *                 by hierarchy + seat availability.
- *               - WaitList: remaining checked-in clients.
- *               - Services: all available service definitions.
+ * File:            waiting-room.php
+ * Description:     Return now-serving and waitlist queue payloads.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

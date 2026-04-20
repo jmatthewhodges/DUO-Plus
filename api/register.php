@@ -1,18 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        Register.php
- *  Purpose:     Handles client registration. Supports both
- *               new user creation and existing user updates
- *               including address, emergency contacts, and
- *               service selections.
+ * File:            register.php
+ * Description:     Handle client registration create/update workflow.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 26 @ 9:28 PM
- *  Changes Made:      Remove pre-fill on login
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');

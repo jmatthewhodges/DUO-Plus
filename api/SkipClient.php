@@ -1,16 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        SkipClient.php
- *  Description: Skips the "Now Serving" client by setting
- *               SkipCount = 1 on their visit. The Now Serving
- *               logic in waiting-room.php will pass over them
- *               once, then decrement so they're eligible again.
- *               No timestamp manipulation — no swap loops.
- *  Method:      POST  { "ClientID": "..." }
+ * File:            SkipClient.php
+ * Description:     Skip the currently serving client once in queue logic.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');

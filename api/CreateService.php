@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        CreateService.php
- *  Purpose:     Handles creating a new service.
+ * File:            CreateService.php
+ * Description:     Create a new service definition.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:42 PM
- *  Changes Made:      Code cleanup
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');

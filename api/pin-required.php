@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- * File:          pin-required.php
- * Description:   API endpoint for PIN code access restriction.
+ * File:            pin-required.php
+ * Description:     Enforce PIN-verified access for protected endpoints.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  Feb 26 11:00 PM
- * Changes Made:      Added exit statements so this file works properly 
- * Comments:          !!!!!!!!!This file should be included at the top of any API endpoint that needs to be 
- *                    protected by PIN verification.!!!!!!!!!!!
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 session_start();
 
 if (!isset($_SESSION['pin_verified']) || $_SESSION['pin_verified'] !== true) {

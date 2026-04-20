@@ -1,16 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        food-truck-stats.php
- *  Purpose:     Backend of food-truck.html, handles loading and saving the counter
+ * File:            food-truck-stats.php
+ * Description:     Load and persist food truck service counters.
  *
- *  Last Modified By:  Lauren
- *  Last Modified On:  Feb 27 @ 8:16 PM
- *  Changes Made:      Created file.
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
-
+ */
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

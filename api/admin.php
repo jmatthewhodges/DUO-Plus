@@ -1,18 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        admin.php
- *  Description: Admin dashboard API. Handles GET (load settings)
- *               and POST (update settings) for all admin-managed
- *               configuration. Modular — each settings section is
- *               a handler that can be added independently.
+ * File:            admin.php
+ * Description:     Admin dashboard endpoint for settings load and updates.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 7, 2026
- *  Changes Made:      Initial creation
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 // Keep API responses JSON-only (avoid HTML warning output breaking JSON.parse)
 ini_set('display_errors', '0');
 

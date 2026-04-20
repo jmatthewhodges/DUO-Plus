@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- * File:          VerifyPin.php
- * Description:   API endpoint for PIN code access restriction.
+ * File:            VerifyPin.php
+ * Description:     Validate submitted PIN and set verification session state.
  *
- * Last Modified By:  Cameron
- * Last Modified On:  Mar 1 9:00 PM
- * Changes Made:      Changed error handling to support sweetalrts JS side
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json');

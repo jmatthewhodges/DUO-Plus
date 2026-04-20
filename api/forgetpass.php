@@ -1,16 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        ForgetPass.php
- *  Purpose:     Backend of forgetpass.html, handles password reset functionality
+ * File:            forgetpass.php
+ * Description:     Handle account verification and password reset requests.
  *
- *  Last Modified By:  Lauren
- *  Last Modified On:  March 5 @ 5:44 PM
- *  Changes Made:      Updatd error codes according to Burchfield
- *                     feedback.
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type
 header('Content-Type: application/json');
 

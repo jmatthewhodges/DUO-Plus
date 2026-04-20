@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        GrabQueue.php
- *  Description: Simple PHP endpoint that gets needed users
- *               from inputted "servicestatus". for use in 
- *               scenarios such as registration dashboard.
+ * File:            registration-dashboard.php
+ * Description:     Provide registration dashboard queue operations.
  *
- *  Last Modified By:  Cameron
- *  Last Modified On:  April 1 @ 11:00 PM
- *  Changes Made:      Added reset password functionality, added soundex matching to search.
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Database connection from other file
 require_once __DIR__ . '/db.php';
 

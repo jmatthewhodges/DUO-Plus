@@ -1,18 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        UpdateVisitServices.php
- *  Description: Add or remove a service from a client's visit.
- *               Does NOT affect queue order (FirstCheckedIn).
- *  Method:      POST
- *  Body:        { "visitID": "...", "serviceID": "...", "action": "add"|"remove" }
+ * File:            UpdateVisitServices.php
+ * Description:     Add or remove assigned services on a visit.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 7, 2026
- *  Changes Made:      Initial creation
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

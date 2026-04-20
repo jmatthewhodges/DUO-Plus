@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        chiropractor-stats.php
- *  Purpose:     Backend of chiropractor.html, handles loading and saving counters
+ * File:            chiropractor-stats.php
+ * Description:     Load and persist chiropractor service counters.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  April 8, 2026
- *  Changes Made:      Created file from food truck flow for chiropractor tracking.
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

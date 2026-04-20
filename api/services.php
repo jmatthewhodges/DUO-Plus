@@ -1,22 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        services.php
- *  Description: Public API for service hierarchy. No PIN required.
- *               Returns categories (for registration) and the
- *               full parent→child tree (for service stations).
+ * File:            services.php
+ * Description:     Return service categories and hierarchy views.
  *
- *  GET ?view=categories   → categories only (registration form)
- *  GET ?view=hierarchy    → categories with children (stations)
- *  GET ?view=all          → flat list with all columns
- *  GET (no param)         → defaults to hierarchy
- *
- *  Last Modified By:  Matthew
- *  Last Modified On:  Mar 8, 2026
- *  Changes Made:      Added IsClosed from tblEventServices
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');

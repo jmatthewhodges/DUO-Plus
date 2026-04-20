@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        ServiceScan.php
- *  Purpose:     Handles checking in or out client after scanning QR code badge.
+ * File:            ServiceScan.php
+ * Description:     Advance client service status from QR scan actions.
  *
- *  Last Modified By:  Matthew
- *  Last Modified On:  March 3 @ 7:30 PM
- *  Changes Made:      Init
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');

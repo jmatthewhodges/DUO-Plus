@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        db.php
- *  Description: Database connection configuration and setup.
- *               Loads environment variables and establishes
- *               a MySQLi connection for use across API endpoints.
+ * File:            db.php
+ * Description:     Initialize and expose the shared MySQL connection.
  *
- *  Last Modified By:  Matthew 
- *  Last Modified On:  Feb 18 @ 2:41 PM 
- *  Changes Made:      Added multi-line comment header and cleaned up code
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Throw exceptions on mysqli errors
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 

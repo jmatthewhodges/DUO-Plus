@@ -1,13 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        event-dashboard.php
- *  Purpose:     Event-selectable dashboard data endpoint.
- *               Returns event list, selected event metrics,
- *               chart data, and service utilization.
+ * File:            event-dashboard.php
+ * Description:     Provide event dashboard metrics and chart datasets.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 require_once __DIR__ . '/pin-required.php';
 require_once __DIR__ . '/db.php';
 

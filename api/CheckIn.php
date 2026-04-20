@@ -1,17 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        CheckIn.php
- *  Purpose:     Update client info and check them into waiting room
- * 
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 7:53 PM
- *  Changes Made:      Renamed CheckInTime -> EnteredWaitingRoom (updates every check-in)
- *                     Added FirstCheckedIn (one-time insert, never overwritten)
- *                     Added checkedIn list to response for registration table
+ * File:            CheckIn.php
+ * Description:     Update client info and perform waiting-room check-in.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');

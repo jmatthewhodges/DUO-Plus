@@ -1,13 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        ResetEventCounts.php
- *  Purpose:     Reset per-event counters without touching core client data.
- *               - GET: return event list for portal dropdown
- *               - POST: reset analytics + availability counters for EventID
+ * File:            ResetEventCounts.php
+ * Description:     Reset selected per-event analytics counters.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
  */
-
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
 

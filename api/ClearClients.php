@@ -1,15 +1,14 @@
 <?php
 /**
  * ============================================================
- *  File:        ClearClients.php
- *  Purpose:     Clear all test/client-related data from the db
- * 
- *  Last Modified By:  Matthew
- *  Last Modified On:  Feb 24 @ 6:39 PM
- *  Changes Made:      Code cleanup
+ * File:            ClearClients.php
+ * Description:     Clear client-related test data from the database.
+ *
+ * Last Modified By:  Matthew
+ * Last Modified On:  April 20 @ 5:20 PM
+ * Changes Made:      Standardized readability structure and comments.
  * ============================================================
-*/
-
+ */
 // Set content-type and default timezone
 header('Content-Type: application/json');
 date_default_timezone_set('America/Chicago');
