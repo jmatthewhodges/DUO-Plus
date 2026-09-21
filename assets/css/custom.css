@@ -1785,6 +1785,128 @@ body.no-scroll .card-body[style*="overflow-y"] {
   margin-top: 0.12rem;
 }
 
+.service-queue-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+}
+
+.service-queue-tile {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 0.65rem;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(16, 24, 40, 0.06);
+}
+
+.service-queue-tile-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.service-queue-tile-heading h6 {
+  margin: 0;
+  color: #174593;
+  font-size: 0.98rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.service-queue-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  color: #174593;
+  background: #eef4ff;
+  border-radius: 50%;
+}
+
+.service-queue-tile-current,
+.service-queue-tile-next {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding-top: 0.6rem;
+}
+
+.service-queue-tile-next {
+  padding-top: 0.7rem;
+}
+
+.service-queue-tile-dental-need {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding-top: 0.7rem;
+}
+
+.service-queue-dental-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-top: 0.7rem;
+}
+
+.service-queue-dental-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid #eaecf0;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.service-queue-dental-column strong {
+  overflow-wrap: anywhere;
+}
+
+.service-queue-dental-column-pinged {
+  border-color: #f79009;
+  animation: service-queue-ping-flash 0.7s ease-in-out infinite;
+}
+
+.service-queue-label {
+  color: #667085;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.service-queue-tile strong {
+  color: #1d2939;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.service-queue-empty {
+  padding: 1rem;
+  color: #667085;
+  text-align: center;
+}
+
+.service-queue-tile-pinged {
+  border-color: #f79009;
+  animation: service-queue-ping-flash 0.7s ease-in-out infinite;
+}
+
+@keyframes service-queue-ping-flash {
+  0%, 100% { background: #fff; box-shadow: 0 2px 5px rgba(16, 24, 40, 0.06); }
+  50% { background: #fff4d6; box-shadow: 0 0 0 0.3rem rgba(247, 144, 9, 0.22); }
+}
+
 .now-serving-seat-header {
   font-size: 0.82rem;
   font-weight: 700;

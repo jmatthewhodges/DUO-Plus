@@ -25,7 +25,6 @@ if (!$event) {
 }
 
 $eventId = $event['EventID'];
-$settingKey = 'ClientPing';
 
 if ($method === 'POST') {
     $body = json_decode(file_get_contents('php://input'), true);
@@ -37,12 +36,17 @@ if ($method === 'POST') {
         exit;
     }
 
-    $ping = json_encode([
+    $serviceKey = preg_replace('/[^a-zA-Z0-9_-]/', '', $serviceId);
+    if ($serviceKey === '') $serviceKey = 'general';
+    $settingKey = 'ClientPing_' . $serviceKey;
+
+    $newPing = [
         'id' => bin2hex(random_bytes(12)),
         'serviceName' => $serviceName,
         'serviceId' => $serviceId,
         'createdAt' => gmdate('c'),
-    ]);
+    ];
+    $ping = json_encode($newPing);
     $stmt = $mysqli->prepare(
         "INSERT INTO tblEventSettings (EventID, SettingKey, SettingValue)
          VALUES (?, ?, ?)
@@ -56,15 +60,23 @@ if ($method === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Unable to save client ping.']);
         exit;
     }
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'ping' => $newPing]);
     exit;
 }
 
-$stmt = $mysqli->prepare("SELECT SettingValue FROM tblEventSettings WHERE EventID = ? AND SettingKey = ? LIMIT 1");
-$stmt->bind_param('ss', $eventId, $settingKey);
+$stmt = $mysqli->prepare("SELECT SettingKey, SettingValue FROM tblEventSettings WHERE EventID = ? AND SettingKey LIKE 'ClientPing_%'");
+$stmt->bind_param('s', $eventId);
 $stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
+$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
-$ping = $row ? json_decode($row['SettingValue'], true) : null;
+$storedPings = [];
+foreach ($rows as $row) {
+    $ping = json_decode($row['SettingValue'], true);
+    if (is_array($ping) && !empty($ping['id'])) $storedPings[] = $ping;
+}
 
-echo json_encode(['success' => true, 'ping' => is_array($ping) ? $ping : null]);
+echo json_encode([
+    'success' => true,
+    'pings' => array_values($storedPings),
+    'ping' => !empty($storedPings) ? end($storedPings) : null,
+]);
