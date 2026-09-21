@@ -199,6 +199,8 @@ function showService(serviceKey) {
   // Update the service title
   const titleEl = document.getElementById("serviceTitle");
   if (titleEl) titleEl.textContent = service.name;
+  const clientPingBtn = document.getElementById("clientPingBtn");
+  if (clientPingBtn) clientPingBtn.disabled = false;
 
   // Update the service header background color
   const headerEl = document.getElementById("serviceHeader");

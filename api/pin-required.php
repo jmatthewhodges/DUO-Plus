@@ -4,16 +4,18 @@
  * File:            pin-required.php
  * Description:     Enforce PIN-verified access for protected endpoints.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  April 20 @ 5:20 PM
- * Changes Made:      Standardized readability structure and comments.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Sept 20, 2026
+ * Changes Made:      Fixed an conflict with new client ping system
  * ============================================================
  */
 session_start();
 
 if (!isset($_SESSION['pin_verified']) || $_SESSION['pin_verified'] !== true) {
     // Check if this is an API request (not HTML)
-    $isAPI = (strpos($_SERVER['SCRIPT_FILENAME'] ?? '', '/api/') !== false);
+    // Determine if the request is for an API endpoint by checking the script path
+    $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME'] ?? '');
+    $isAPI = (strpos($scriptPath, '/api/') !== false);
     
     if ($isAPI) {
         // API request - return JSON error

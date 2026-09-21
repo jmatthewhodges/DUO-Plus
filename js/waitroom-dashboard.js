@@ -3,9 +3,9 @@
  * File:            waitroom-dashboard.js
  * Description:     Waiting room queue display, filters, and service updates.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  April 20 @ 5:16 PM
- * Changes Made:      Standardized formatting and added clarity comments.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Sept 20, 2026
+ * Changes Made:      Added changes for the client ping system and queue display updates.
  * ============================================================
  */
 // 1. GLOBAL SETTINGS & STATE
@@ -21,6 +21,8 @@ let currentSearchTerm = "";
 let autoRefreshEnabled = true;
 let autoRefreshTimerId = null;
 let hasWaitingRoomInitialized = false;
+let latestQueueData = null;
+const activeClientPings = new Map();
 // 10 sec refresh
 const AUTO_REFRESH_INTERVAL_MS = 10 * 1000;
 const QUEUE_FILTER_SERVICE_IDS = {
@@ -47,9 +49,7 @@ const queueFilterButtons = document.querySelectorAll(".queue-filter-btn");
 const autoRefreshToggleBtn = document.getElementById("autoRefreshToggleBtn");
 const autoRefreshToggleText = document.getElementById("autoRefreshToggleText");
 
-// Grab the single element for Now Serving
-const nowServingNameEl = document.querySelector(".queue-name");
-const nowServingServiceEl = document.querySelector(".queue-service");
+const serviceQueueBoardEl = document.getElementById("serviceQueueBoard");
 const nowServingSeatStatsEl = document.getElementById("nowServingSeatStats");
 
 //================================================================================
@@ -86,6 +86,199 @@ function escapeHtml(text) {
     .replace(/'/g, "&#39;");
 }
 
+// if no client qued return "No client queued" else return the full name of the client
+function getClientDisplayName(client) {
+  if (!client) return "No client queued";
+  return [client.FirstName, client.MiddleInitial, client.LastName]
+    .filter(Boolean)
+    .join(" ");
+}
+
+// show both cleaning and extractrion clients
+function getDentalNeedLabel(service) {
+  const serviceText = `${service?.ServiceID || ""} ${service?.ServiceName || ""}`;
+  if (/extraction/i.test(serviceText)) return "Extraction";
+  if (/hygiene|cleaning/i.test(serviceText)) return "Cleaning";
+  return "Not specified";
+}
+
+function isDentalNeed(service, need) {
+  const serviceText = `${service?.ServiceID || ""} ${service?.ServiceName || ""}`;
+  return need === "extraction"
+    ? /extraction/i.test(serviceText)
+    : /hygiene|cleaning/i.test(serviceText);
+}
+
+// render queue board for all services
+function renderServiceQueueBoard(services, patients) {
+  if (!serviceQueueBoardEl) return;
+
+  const serviceRows = Array.isArray(services) ? services : [];
+  // Sorting services: first by parent service, then by SortOrder, then by ServiceName
+  const categoryRows = serviceRows
+    .filter((service) => !service.ParentServiceID)
+    .sort((a, b) => {
+      const preferredOrder = { medical: 0, dental: 1 };
+      const aKey = String(a.ServiceID || "").toLowerCase();
+      const bKey = String(b.ServiceID || "").toLowerCase();
+      const aOrder = preferredOrder[aKey] ?? 2;
+      const bOrder = preferredOrder[bKey] ?? 2;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return Number(a.SortOrder || 0) - Number(b.SortOrder || 0);
+    });
+  const categories = categoryRows.length ? categoryRows : serviceRows;
+  const queue = Array.isArray(patients) ? patients : [];
+
+  //  Create a map of service IDs to their child service IDs for dental services
+  serviceQueueBoardEl.innerHTML = categories
+    .map((category) => {
+      const categoryId = String(category.ServiceID || "");
+      const childIds = serviceRows
+        .filter((service) => String(service.ParentServiceID || "") === categoryId)
+        .map((service) => String(service.ServiceID));
+      const serviceIds = new Set([categoryId, ...childIds]);
+      const current = queue.find((client) =>
+        (client.VisitServices || []).some(
+          (service) =>
+            serviceIds.has(String(service.ServiceID)) &&
+            service.ServiceStatus === "In-Progress",
+        ),
+      );
+      const next = queue.find((client) =>
+        (client.VisitServices || []).some(
+          (service) =>
+            serviceIds.has(String(service.ServiceID)) &&
+            ["Pending", "Standby"].includes(service.ServiceStatus),
+        ),
+      );
+      const currentName = current ? getClientDisplayName(current) : "No one currently";
+      const nextName = next ? getClientDisplayName(next) : "No client queued";
+      const icon = category.IconTag || QUEUE_FILTER_FALLBACK_ICONS[categoryId] || "bi-person-lines-fill";
+      const dentalNeedMarkup = categoryId.toLowerCase() === "dental"
+        ? ["cleaning", "extraction"]
+            .map((need) => {
+              const childService = serviceRows.find(
+                (service) =>
+                  childIds.includes(String(service.ServiceID)) &&
+                  isDentalNeed(service, need),
+              );
+              const nextClient = childService
+                ? queue.find((client) =>
+                    (client.VisitServices || []).some(
+                      (service) =>
+                        String(service.ServiceID) === String(childService.ServiceID) &&
+                        ["Pending", "Standby"].includes(service.ServiceStatus),
+                    ),
+                  )
+                : null;
+              const childId = childService ? String(childService.ServiceID) : "";
+              const isPinged = [...activeClientPings.values()].some(
+                (ping) => ping.serviceId === childId,
+              );
+              return `
+                <div class="service-queue-dental-column${isPinged ? " service-queue-dental-column-pinged" : ""}" data-dental-service-id="${escapeHtml(childId)}">
+                  <span class="service-queue-label">Next ${need === "cleaning" ? "Cleaning" : "Extraction"}</span>
+                  <strong>${escapeHtml(getClientDisplayName(nextClient))}</strong>
+                </div>`;
+            })
+            .join("")
+        : `<div class="service-queue-tile-next">
+            <span class="service-queue-label">Next</span>
+            <strong>${escapeHtml(nextName)}</strong>
+          </div>`;
+
+      return `
+        <article class="service-queue-tile${[...activeClientPings.values()].some((ping) => ping.serviceId === categoryId) ? " service-queue-tile-pinged" : ""}" data-service-id="${escapeHtml(categoryId)}">
+          <div class="service-queue-tile-heading">
+            <span class="service-queue-tile-icon">${renderAvatarIconMarkup(icon, "bi-person-lines-fill")}</span>
+            <h6>${escapeHtml(category.ServiceName || categoryId)}</h6>
+          </div>
+          ${categoryId.toLowerCase() === "dental" ? `<div class="service-queue-dental-columns">${dentalNeedMarkup}</div>` : dentalNeedMarkup}
+        </article>`;
+    })
+    .join("");
+
+  if (!categories.length) {
+    serviceQueueBoardEl.innerHTML = '<div class="service-queue-empty">No services configured.</div>';
+  }
+}
+
+// Flash a service queue tile to indicate it has a pending client ping
+function flashServiceQueueTile(serviceId) {
+  if (!serviceId) return;
+  const targetId = String(serviceId);
+  const dentalColumn = document.querySelector(
+    `.service-queue-dental-column[data-dental-service-id="${CSS.escape(targetId)}"]`,
+  );
+  if (dentalColumn) {
+    dentalColumn.classList.add("service-queue-dental-column-pinged");
+    return;
+  }
+  let tile = document.querySelector(
+    `.service-queue-tile[data-service-id="${CSS.escape(targetId)}"]`,
+  );
+  if (!tile && latestQueueData) {
+    const service = (latestQueueData.Services || []).find(
+      (entry) => String(entry.ServiceID) === targetId,
+    );
+    if (service?.ParentServiceID) {
+      tile = document.querySelector(
+        `.service-queue-tile[data-service-id="${CSS.escape(String(service.ParentServiceID))}"]`,
+      );
+    }
+  }
+  if (!tile) return;
+  tile.classList.add("service-queue-tile-pinged");
+}
+
+// Expose the flashServiceQueueTile function to the global scope
+window.flashServiceQueueTile = flashServiceQueueTile;
+window.setActiveClientPing = (ping) => {
+  if (!ping?.id) return;
+  activeClientPings.set(ping.id, ping);
+  flashServiceQueueTile(ping?.serviceId);
+};
+
+// Clear client pings for a specific service tile
+function clearClientPingsForTile(tile) {
+  const serviceId = tile.dataset.serviceId;
+  const childIds = (latestQueueData?.Services || [])
+    .filter((service) => String(service.ParentServiceID || "") === serviceId)
+    .map((service) => String(service.ServiceID));
+  for (const [pingId, ping] of activeClientPings) {
+    if (ping.serviceId === serviceId || childIds.includes(ping.serviceId)) {
+      activeClientPings.delete(pingId);
+      window.dismissClientPing?.(pingId);
+    }
+  }
+  renderServiceQueueBoard(availableServices, waitListData);
+}
+
+// Clear client pings for a specific dental column
+function clearClientPingsForDentalColumn(column) {
+  const serviceId = column.dataset.dentalServiceId;
+  if (!serviceId) return;
+  for (const [pingId, ping] of activeClientPings) {
+    if (ping.serviceId === serviceId) {
+      activeClientPings.delete(pingId);
+      window.dismissClientPing?.(pingId);
+    }
+  }
+  renderServiceQueueBoard(availableServices, waitListData);
+}
+
+// click to clear flashing queue tile
+serviceQueueBoardEl?.addEventListener("click", (event) => {
+  const dentalColumn = event.target.closest(".service-queue-dental-column");
+  if (dentalColumn) {
+    clearClientPingsForDentalColumn(dentalColumn);
+    return;
+  }
+  const tile = event.target.closest(".service-queue-tile");
+  if (tile) clearClientPingsForTile(tile);
+});
+
+// Retrieve dismissed client ping IDs from localStorage
 function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = "") {
   const safeFallback = fallbackBi || "bi-person";
   const cls = extraClasses ? ` ${extraClasses}` : "";
@@ -105,6 +298,7 @@ function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = "") {
   return `<i class="bi ${safeFallback}${cls}"></i>`;
 }
 
+// Close the update status modal
 function closeUpdateModal() {
   updateModal.classList.add("d-none");
   updateModal.classList.remove("d-flex");
@@ -516,33 +710,16 @@ async function fetchQueueData() {
     const data = await response.json();
 
     if (data.success) {
+      latestQueueData = data;
       waitListData = data.WaitList;
       availableServices = data.Services || [];
       servicePriorityMap = data.ServicePriority || {};
+      renderServiceQueueBoard(availableServices, waitListData);
       renderNowServingSeatStats(availableServices);
 
-      // 1. Update Now Serving safely
-      const skipBtn = document.getElementById("skipNowServingBtn");
-      if (nowServingNameEl) {
-        if (data.NowServing && data.NowServing.length > 0) {
-          const serving = data.NowServing[0];
-          nowServingClientId = serving.ClientID;
-          nowServingNameEl.innerText = `${serving.FirstName} ${serving.LastName}`;
-
-          if (nowServingServiceEl) {
-            nowServingServiceEl.innerText = serving.AssignedServiceName || "";
-          }
-          if (skipBtn) skipBtn.classList.remove("d-none");
-        } else {
-          nowServingClientId = null;
-          nowServingNameEl.innerText = "No one currently";
-          if (nowServingServiceEl) nowServingServiceEl.innerText = "";
-          if (skipBtn) skipBtn.classList.add("d-none");
-        }
-      }
-
-      // 2. Populate the table
+      // Populate the table
       applyTableFiltersAndRender();
+      checkForClientPing();
     } else {
       console.error("Database Error:", data.error);
       Swal.fire({
@@ -985,15 +1162,6 @@ queueFilterButtons.forEach((btn) => {
     applyTableFiltersAndRender();
   });
 });
-
-// Skip Now Serving button (in the Now Serving header area)
-document
-  .getElementById("skipNowServingBtn")
-  .addEventListener("click", function () {
-    this.blur();
-    if (!nowServingClientId) return;
-    skipNowServingClient(nowServingClientId);
-  });
 
 //================================================================================
 // 6. INITIALIZATION

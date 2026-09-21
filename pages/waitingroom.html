@@ -3,9 +3,9 @@
   File:               waitingroom.html
   Description:        Waiting room queue display and update page.
 
-  Last Modified By:   Matthew
-  Last Modified On:   April 20 @ 5:10 PM
-  Changes Made:       Standardized structure and comments for readability consistency.
+  Last Modified By:   Cameron
+  Last Modified On:   Sept 20, 2026
+  Changes Made:       Added changes for the client ping system and queue display updates.
   ============================================================
 -->
 <!doctype html>
@@ -60,27 +60,9 @@
 
           <div class="mb-3 border-bottom pb-3">
             <h6 class="text-dark fw-bold mb-3" style="font-size: 0.9rem">
-              Now Serving
+              Service Queue
             </h6>
-            <div class="d-flex justify-content-between align-items-center pe-4">
-              <div>
-                <div
-                  class="queue-name text-primary"
-                  style="font-size: 1.5rem"
-                ></div>
-                <div
-                  class="queue-service text-muted fw-semibold"
-                  style="font-size: 0.95rem"
-                ></div>
-              </div>
-              <button
-                class="btn btn-outline-danger btn-sm px-3 rounded-2 d-none"
-                id="skipNowServingBtn"
-                title="Skip to next client"
-              >
-                <i class="bi bi-skip-forward me-1"></i>Skip
-              </button>
-            </div>
+            <div id="serviceQueueBoard" class="service-queue-board" aria-live="polite"></div>
           </div>
 
           <div
@@ -217,6 +199,7 @@
     <script src="../assets/js/alerts/sweetalert2.all.min.js"></script>
     <script src="../assets/js/core/libs.min.js"></script>
     <script src="../assets/js/hope-ui.js"></script>
+    <script src="../js/waitingroom-ping.js"></script>
     <script src="../js/waitroom-dashboard.js"></script>
     <script src="../js/devMode.js"></script>
   </body>

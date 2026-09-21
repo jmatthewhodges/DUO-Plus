@@ -3,9 +3,9 @@
   File:               service-scan.html
   Description:        Service scan-in and waitlist management page.
 
-  Last Modified By:   Matthew
-  Last Modified On:   April 20 @ 5:10 PM
-  Changes Made:       Standardized structure and comments for readability consistency.
+  Last Modified By:   Cameron
+  Last Modified On:   Sept 20, 2026
+  Changes Made:       Added changes for the client ping system and queue display updates.
   ============================================================
 -->
 <!doctype html>
@@ -46,6 +46,16 @@
             >
               <h5 class="text-white mb-0 fw-bold" id="serviceTitle">Service</h5>
               <div class="d-flex align-items-center gap-1">
+                <button
+                  id="clientPingBtn"
+                  type="button"
+                  class="btn btn-sm btn-light d-flex align-items-center gap-1"
+                  title="Ask the waiting room for a client"
+                  disabled
+                >
+                  <i class="bi bi-broadcast-pin" aria-hidden="true"></i>
+                  <span>Client Ping</span>
+                </button>
                 <button
                   class="btn btn-sm text-white border-0 p-1"
                   id="refreshServiceBtn"
@@ -215,6 +225,7 @@
     <script src="../assets/js/jsQR.js"></script>
     <script src="../js/pinCode.js"></script>
     <script src="../js/Service.js"></script>
+    <script src="../js/waitingroom-ping.js"></script>
     <script src="../js/devMode.js"></script>
 
     <script>
