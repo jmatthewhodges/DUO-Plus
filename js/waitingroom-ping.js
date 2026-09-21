@@ -1,9 +1,19 @@
+/**
+ * ============================================================
+ * File:            Waitingroom-ping.js
+ * Description:     Shared client ping sender and waiting-room notification display.
+ *
+ * Last Modified By:  Cameron
+ * Last Modified On:  Sept 20, 2026
+ * Changes Made:      JS code for sending client pings and displaying notifications in the waiting room.
+ * ============================================================
+ */
 /** Shared client ping sender and waiting-room notification display. */
-
 const CLIENT_PING_ENDPOINT = "../api/ClientPing.php";
 const CLIENT_PING_STORAGE_KEY = "duo-plus-last-client-ping";
 const DISMISSED_CLIENT_PING_STORAGE_KEY = "duo-plus-dismissed-client-pings";
 
+// Retrieve dismissed client ping IDs from localStorage
 function getDismissedClientPingIds() {
   try {
     const value = JSON.parse(
@@ -15,6 +25,7 @@ function getDismissedClientPingIds() {
   }
 }
 
+// Dismiss a client ping by its ID and store it in localStorage
 window.dismissClientPing = (pingId) => {
   if (!pingId) return;
   const dismissed = getDismissedClientPingIds();
@@ -25,6 +36,7 @@ window.dismissClientPing = (pingId) => {
   );
 };
 
+// Show a client ping alert in the waiting room
 function showClientPingAlert(ping) {
   if (!ping) return;
   if (typeof window.setActiveClientPing === "function") {
@@ -32,6 +44,7 @@ function showClientPingAlert(ping) {
   }
 }
 
+// Send a client ping to the server
 async function sendClientPing(serviceName, serviceId = "") {
   const response = await fetch(CLIENT_PING_ENDPOINT, {
     method: "POST",
@@ -45,10 +58,12 @@ async function sendClientPing(serviceName, serviceId = "") {
   return data;
 }
 
+// Handle the selection of a dental service for pinging
 async function chooseDentalPingService(service) {
   const dentalOptions = (service.serviceIDs || [])
     .map((serviceId) => ({
       id: serviceId,
+      // Determine the label for the service, prioritizing SUB_SERVICE_LABELS, then SERVICE_NAME_BY_ID, and defaulting to the serviceId
       label:
         typeof SUB_SERVICE_LABELS !== "undefined" && SUB_SERVICE_LABELS[serviceId]
           ? /extraction/i.test(serviceId) || /extraction/i.test(SUB_SERVICE_LABELS[serviceId])
@@ -66,9 +81,11 @@ async function chooseDentalPingService(service) {
 
   if (!dentalOptions.length) return null;
 
+  // Create input options for the SweetAlert2 radio input
   const inputOptions = Object.fromEntries(
     dentalOptions.map(({ id, label }) => [id, label]),
   );
+  // Show a SweetAlert2 modal to choose the dental service
   const result = await Swal.fire({
     title: "Which client is needed?",
     input: "radio",
@@ -79,6 +96,7 @@ async function chooseDentalPingService(service) {
     cancelButtonText: "Cancel",
   });
 
+  // If the user cancels the selection, return null
   if (!result.isConfirmed) return null;
   const selected = dentalOptions.find(({ id }) => id === result.value);
   const serviceName = selected?.label || "Dental";
@@ -92,16 +110,19 @@ async function chooseDentalPingService(service) {
     : null;
 }
 
+// Handle the client ping button click event
 async function handleClientPingClick() {
   const service = typeof currentServiceKey !== "undefined" ? SERVICES[currentServiceKey] : null;
   if (!service) return;
 
+  // Determine the ping service based on the current service key
   let pingService = { serviceId: currentServiceKey, serviceName: service.name };
   if (currentServiceKey.toLowerCase() === "dental") {
     pingService = await chooseDentalPingService(service);
     if (!pingService) return;
   }
 
+  // Disable the ping button to prevent multiple clicks
   const button = document.getElementById("clientPingBtn");
   if (button) button.disabled = true;
   try {
@@ -120,6 +141,7 @@ async function handleClientPingClick() {
   }
 }
 
+// Check for client pings from the server and display alerts if needed
 async function checkForClientPing() {
   try {
     const response = await fetch(CLIENT_PING_ENDPOINT, { cache: "no-store" });
@@ -152,5 +174,6 @@ async function checkForClientPing() {
   }
 }
 
+// Set up the client ping button click event listener
 const clientPingButton = document.getElementById("clientPingBtn");
 if (clientPingButton) clientPingButton.addEventListener("click", handleClientPingClick);

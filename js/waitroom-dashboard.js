@@ -3,9 +3,9 @@
  * File:            waitroom-dashboard.js
  * Description:     Waiting room queue display, filters, and service updates.
  *
- * Last Modified By:  Matthew
- * Last Modified On:  April 20 @ 5:16 PM
- * Changes Made:      Standardized formatting and added clarity comments.
+ * Last Modified By:  Cameron
+ * Last Modified On:  Sept 20, 2026
+ * Changes Made:      Added changes for the client ping system and queue display updates.
  * ============================================================
  */
 // 1. GLOBAL SETTINGS & STATE
@@ -86,6 +86,7 @@ function escapeHtml(text) {
     .replace(/'/g, "&#39;");
 }
 
+// if no client qued return "No client queued" else return the full name of the client
 function getClientDisplayName(client) {
   if (!client) return "No client queued";
   return [client.FirstName, client.MiddleInitial, client.LastName]
@@ -93,6 +94,7 @@ function getClientDisplayName(client) {
     .join(" ");
 }
 
+// show both cleaning and extractrion clients
 function getDentalNeedLabel(service) {
   const serviceText = `${service?.ServiceID || ""} ${service?.ServiceName || ""}`;
   if (/extraction/i.test(serviceText)) return "Extraction";
@@ -107,10 +109,12 @@ function isDentalNeed(service, need) {
     : /hygiene|cleaning/i.test(serviceText);
 }
 
+// render queue board for all services
 function renderServiceQueueBoard(services, patients) {
   if (!serviceQueueBoardEl) return;
 
   const serviceRows = Array.isArray(services) ? services : [];
+  // Sorting services: first by parent service, then by SortOrder, then by ServiceName
   const categoryRows = serviceRows
     .filter((service) => !service.ParentServiceID)
     .sort((a, b) => {
@@ -125,6 +129,7 @@ function renderServiceQueueBoard(services, patients) {
   const categories = categoryRows.length ? categoryRows : serviceRows;
   const queue = Array.isArray(patients) ? patients : [];
 
+  //  Create a map of service IDs to their child service IDs for dental services
   serviceQueueBoardEl.innerHTML = categories
     .map((category) => {
       const categoryId = String(category.ServiceID || "");
@@ -198,6 +203,7 @@ function renderServiceQueueBoard(services, patients) {
   }
 }
 
+// Flash a service queue tile to indicate it has a pending client ping
 function flashServiceQueueTile(serviceId) {
   if (!serviceId) return;
   const targetId = String(serviceId);
@@ -225,6 +231,7 @@ function flashServiceQueueTile(serviceId) {
   tile.classList.add("service-queue-tile-pinged");
 }
 
+// Expose the flashServiceQueueTile function to the global scope
 window.flashServiceQueueTile = flashServiceQueueTile;
 window.setActiveClientPing = (ping) => {
   if (!ping?.id) return;
@@ -232,6 +239,7 @@ window.setActiveClientPing = (ping) => {
   flashServiceQueueTile(ping?.serviceId);
 };
 
+// Clear client pings for a specific service tile
 function clearClientPingsForTile(tile) {
   const serviceId = tile.dataset.serviceId;
   const childIds = (latestQueueData?.Services || [])
@@ -246,6 +254,7 @@ function clearClientPingsForTile(tile) {
   renderServiceQueueBoard(availableServices, waitListData);
 }
 
+// Clear client pings for a specific dental column
 function clearClientPingsForDentalColumn(column) {
   const serviceId = column.dataset.dentalServiceId;
   if (!serviceId) return;
@@ -258,6 +267,7 @@ function clearClientPingsForDentalColumn(column) {
   renderServiceQueueBoard(availableServices, waitListData);
 }
 
+// click to clear flashing queue tile
 serviceQueueBoardEl?.addEventListener("click", (event) => {
   const dentalColumn = event.target.closest(".service-queue-dental-column");
   if (dentalColumn) {
@@ -268,6 +278,7 @@ serviceQueueBoardEl?.addEventListener("click", (event) => {
   if (tile) clearClientPingsForTile(tile);
 });
 
+// Retrieve dismissed client ping IDs from localStorage
 function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = "") {
   const safeFallback = fallbackBi || "bi-person";
   const cls = extraClasses ? ` ${extraClasses}` : "";
@@ -287,6 +298,7 @@ function renderAvatarIconMarkup(iconTag, fallbackBi, extraClasses = "") {
   return `<i class="bi ${safeFallback}${cls}"></i>`;
 }
 
+// Close the update status modal
 function closeUpdateModal() {
   updateModal.classList.add("d-none");
   updateModal.classList.remove("d-flex");
