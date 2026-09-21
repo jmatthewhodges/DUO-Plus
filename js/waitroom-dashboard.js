@@ -543,6 +543,7 @@ async function fetchQueueData() {
 
       // 2. Populate the table
       applyTableFiltersAndRender();
+      checkForClientPing();
     } else {
       console.error("Database Error:", data.error);
       Swal.fire({
